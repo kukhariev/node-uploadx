@@ -2,7 +2,8 @@
 
 > Node.js middleware for handling resumable uploads
 
-[![npm version][npm-image]][npm-url]
+<!-- [![npm version][npm-image]][npm-url] -->
+[![Build status][travis-image]][travis-url]
 
 
 
@@ -59,3 +60,5 @@ app.listen(3003);
 
 [npm-image]: https://img.shields.io/npm/v/uploadx.svg
 [npm-url]: https://www.npmjs.com/package/uploadx
+[travis-image]: https://img.shields.io/travis/kukhariev/uploadx/master.svg
+[travis-url]: https://travis-ci.org/kukhariev/uploadx

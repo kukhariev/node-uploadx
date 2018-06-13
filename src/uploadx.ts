@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { Store, UploadXFile } from './storage';
+import * as bytes from 'bytes';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import * as createError from 'http-errors';
 import * as getRawBody from 'raw-body';
-import * as bytes from 'bytes';
+import { Store, UploadXFile } from './storage';
 import debug = require('debug');
 const log = debug('uploadx:main');
 
@@ -20,15 +20,13 @@ export type UploadxOptions = {
   maxUploadSize?: number | string;
   maxChunkSize?: number | string;
   allowMIME?: string[];
-  idKey?: string;
 };
 
 export function uploadx({
   destination,
   maxUploadSize = Number.MAX_SAFE_INTEGER,
   maxChunkSize = Number.MAX_SAFE_INTEGER,
-  allowMIME = [`\/`],
-  idKey = 'upload_id'
+  allowMIME = [`\/`]
 }: UploadxOptions): (
   req: Request,
   res: Response,
@@ -68,8 +66,8 @@ export function uploadx({
     });
     if (file.destination) {
       const location = `${req.protocol}://${req.get('Host') +
-        req.baseUrl}?${idKey}=${file.id}`;
-      log(location);
+        req.baseUrl}?upload_id=${file.id}`;
+      log('location: %s', location);
       res.location(location);
       res.sendStatus(201);
     } else {
@@ -88,9 +86,8 @@ export function uploadx({
     if (!req.user) {
       return next(createError(401));
     }
-    if (req.query[idKey]) {
-      const id = req.query[idKey];
-      const file: UploadXFile = storage.findById(id);
+    if (req.query.upload_id) {
+      const file: UploadXFile = storage.findById(req.query.upload_id);
       if (!file) {
         return next(createError(404));
       }
@@ -111,8 +108,11 @@ export function uploadx({
     if (!req.user) {
       return next(createError(401));
     }
-    if (req.query[idKey]) {
-      const [toRemove] = storage.find({ user: req.user, id: req.query[idKey] });
+    if (req.query.upload_id) {
+      const [toRemove] = storage.find({
+        user: req.user,
+        id: req.query.upload_id
+      });
       storage.remove(toRemove.id);
       res.sendStatus(204);
     } else {
@@ -128,11 +128,10 @@ export function uploadx({
     res: Response,
     next: NextFunction
   ) => {
-    const id = req.query[idKey];
-    if (!id) {
+    if (!req.query.upload_id) {
       return next(createError(404));
     }
-    const file = storage.findById(id);
+    const file = storage.findById(req.query.upload_id);
     if (!file) {
       return next(createError(404));
     }
@@ -182,6 +181,7 @@ export function uploadx({
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
+    log('%s query: %o headers: %o', req.method, req.query, req.headers);
     let handler: RequestHandler = (
       req: Request,
       res: Response,

@@ -37,18 +37,18 @@ describe('Storage', () => {
   before(() => {
     storage.reset();
   });
-  it('should create', () => {
+  it('should create session', () => {
     uploads.forEach(upload => {
       const result = storage.create(upload);
       ids.push(result.id);
       expect(result).to.have.keys(keys);
     });
   });
-  it('should get entry by id', () => {
+  it('should get session by id', () => {
     expect(storage.findById(ids[0])).to.have.keys(keys);
     expect(storage.findById(ids[1])).to.have.keys(keys);
   });
-  it('should list all user entries', () => {
+  it('should list all user sessions', () => {
     const result = storage.find({
       user: { name: 'user656', id: '656' },
       size: 100
@@ -57,7 +57,7 @@ describe('Storage', () => {
     expect(result.length).to.be.eql(2);
     expect(result[0]).to.have.keys(keys);
   });
-  it('should remove', () => {
+  it('should remove session', () => {
     storage.remove(ids[1]);
     const result = storage.find();
     expect(result).to.be.an('array');
