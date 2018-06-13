@@ -91,7 +91,7 @@ export class Store {
       .digest('hex');
     this.json = join(storageDir, `${hash}.json`);
     mkdir(storageDir, err => {
-      if (err.code !== 'EEXIST') {
+      if (err && err.code !== 'EEXIST') {
         throw err;
       }
     });

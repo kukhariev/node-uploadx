@@ -18,7 +18,7 @@ npm install --save uploadx
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { uploadx } = require('../src');
+const { uploadx } = require('uploadx');
 const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
 
