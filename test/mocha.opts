@@ -1,0 +1,5 @@
+--require ts-node/register
+--timeout 5000
+--bail
+--watch-extensions ts
+./test/*.spec.ts

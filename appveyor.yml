@@ -1,0 +1,23 @@
+environment:
+  APPVEYOR_YML_DISABLE_PS_LINUX: true
+image:
+- Visual Studio 2015
+- Ubuntu
+stack: node 6
+
+# Install scripts. (runs after repo cloning)
+install:
+  - ps: Install-Product node 6
+  # install modules
+  - npm install
+
+# Post-install test scripts.
+test_script:
+  # Output useful info for debugging.
+  - node --version
+  - npm --version
+  # run tests
+  - npm test
+
+# Don't actually build.
+build: off
