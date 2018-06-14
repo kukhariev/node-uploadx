@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { uploadx } = require('../src');
+const { uploadx } = require('../lib');
 const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
 
@@ -22,7 +22,7 @@ app.use(
     allowMIME: ['video/*'],
     destination: item => `/tmp/${item.metadata.name}`
   }),
-  (req, res, next) => {
+  (req, res) => {
     if (req.file) {
       res.json(req.file.metadata);
     } else {
