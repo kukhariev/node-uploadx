@@ -1,5 +1,5 @@
 location /you_api/ {
-    proxy_pass http://localhost:3002/;
+    proxy_pass http://localhost:3003/;
     proxy_http_version 1.1;
     proxy_pass_request_headers on;
     proxy_set_header Upgrade $http_upgrade;
