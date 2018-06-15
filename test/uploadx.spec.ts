@@ -95,7 +95,6 @@ describe('UploadX', () => {
         expect(res).to.have.header('location');
         const loc = new URL(res['headers']['location']);
         id = loc.searchParams.get('upload_id');
-        console.log('id =', id);
       }
     });
     it('PUT request should save file', async () => {
@@ -108,7 +107,7 @@ describe('UploadX', () => {
       } finally {
         expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
         expect(res).to.have.status(200);
-        unlinkSync('/tmp/' + id);
+        unlinkSync(res.body.path);
       }
     });
     it('should create other session', async () => {
@@ -146,7 +145,6 @@ describe('UploadX', () => {
           .del(`/upload/v1?upload_id=${id}`)
           .set('authorization', 'Bearer ToKeN');
       } finally {
-        console.log(res.text);
         expect(res).to.have.status(204);
       }
     });
@@ -174,10 +172,8 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        [, id] = res['headers']['location'].split('/upload/v1?upload_id=');
-        try {
-          unlinkSync('/tmp/' + id);
-        } catch {}
+        const loc = new URL(res['headers']['location']);
+        id = loc.searchParams.get('upload_id');
       }
     });
     it('should save', async () => {
@@ -198,12 +194,11 @@ describe('UploadX', () => {
         done = chunk.length < CHUNK_SIZE || res.status === 200;
         start = start + CHUNK_SIZE;
       }
-      expect(statSync('/tmp/' + id).size).to.be.eql(TEST_FILE_SIZE);
-      unlinkSync('/tmp/' + id);
+      expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+      unlinkSync(res.body.path);
     });
   });
   describe('Destination', () => {
-    let filepath: string;
     it('should create session', async () => {
       try {
         res = await chai
@@ -228,10 +223,9 @@ describe('UploadX', () => {
           .send(readFileSync(TEST_FILE_PATH))
           .set('content-type', 'video/mp4');
       } finally {
-        filepath = res.body.path;
         expect(res).to.have.status(200);
-        expect(statSync(filepath).size).to.be.eql(TEST_FILE_SIZE);
-        unlinkSync(filepath);
+        expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+        unlinkSync(res.body.path);
       }
     });
   });
