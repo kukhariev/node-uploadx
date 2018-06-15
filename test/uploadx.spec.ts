@@ -1,8 +1,8 @@
 process.env.NODE_ENV = 'testing';
+const { URL } = require('url');
 import chai = require('chai');
 const expect = chai.expect;
 chai.use(require('chai-http'));
-import { Server } from 'http';
 import { server } from './server';
 import { readFileSync, statSync, open, read, close, unlinkSync } from 'fs';
 const CHUNK_SIZE = 1024 * 64;
@@ -47,6 +47,7 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .post('/upload/v1')
+          .query({ uploadType: 'resumable' })
           .set('authorization', 'Bearer ToKeN')
           .send({ name: 'testfile2.mp4' });
       } finally {
@@ -84,6 +85,7 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .post('/upload/v1')
+          .query({ uploadType: 'resumable' })
           .set('authorization', 'Bearer ToKeN')
           .set('x-upload-content-type', 'video/mp4')
           .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
@@ -91,7 +93,9 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        [, id] = res['headers']['location'].split('/upload/v1?upload_id=');
+        const loc = new URL(res['headers']['location']);
+        id = loc.searchParams.get('upload_id');
+        console.log('id =', id);
       }
     });
     it('PUT request should save file', async () => {
@@ -112,6 +116,7 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .post('/upload/v1')
+          .query({ uploadType: 'resumable' })
           .set('authorization', 'Bearer ToKeN')
           .set('x-upload-content-type', 'video/mp4')
           .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
@@ -119,7 +124,8 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        [, id] = res['headers']['location'].split('/upload/v1?upload_id=');
+        const loc = new URL(res['headers']['location']);
+        id = loc.searchParams.get('upload_id');
       }
     });
     it('should list user sessions', async () => {
@@ -138,9 +144,9 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .del(`/upload/v1?upload_id=${id}`)
-          .set('authorization', 'Bearer ToKeN')
-          .send({ name: 'testfile.mp4' });
+          .set('authorization', 'Bearer ToKeN');
       } finally {
+        console.log(res.text);
         expect(res).to.have.status(204);
       }
     });
@@ -149,8 +155,7 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .del('/upload/v1')
-          .set('authorization', 'Bearer ToKeN')
-          .send({ name: 'testfile.mp4' });
+          .set('authorization', 'Bearer ToKeN');
       } finally {
         expect(res).to.have.status(400);
       }
@@ -162,6 +167,7 @@ describe('UploadX', () => {
         res = await chai
           .request(server)
           .post('/upload/v1')
+          .query({ uploadType: 'resumable' })
           .set('authorization', 'Bearer ToKeN')
           .set('x-upload-content-type', 'video/mp4')
           .set('x-upload-content-length', `${TEST_FILE_SIZE}`);
@@ -210,7 +216,8 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        [, id] = res['headers']['location'].split('/upload/v2?upload_id=');
+        const loc = new URL(res['headers']['location']);
+        id = loc.searchParams.get('upload_id');
       }
     });
     it('should save', async () => {
