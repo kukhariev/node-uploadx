@@ -15,28 +15,21 @@ import debug = require('debug');
 const log = debug('uploadx:storage');
 const debounceTime = 3000;
 
-export interface UploadXOptions {
-  metadata;
-  user;
-  size: number;
-  mimetype: string;
-}
-
-export class UploadXFile implements UploadXOptions {
-  metadata;
-  private _destination;
+export class UploadxFile {
+  metadata: any;
+  private _destination: string;
   user;
   size: number;
   path: string;
   filename: string;
   id: string;
-  mimetype;
+  mimetype: string;
   created: Date;
   bytesWritten: number;
   public get destination() {
     return this._destination;
   }
-  public set destination(value) {
+  public set destination(value: string | Function) {
     if (typeof value === 'string') {
       this.filename = this.id;
       this.path = resolve(value, this.id);
@@ -59,37 +52,30 @@ export class UploadXFile implements UploadXOptions {
     }
   }
 
-  constructor(data: Partial<UploadXFile>) {
+  constructor(data: Partial<UploadxFile>) {
     Object.assign(this, data);
     try {
       this.bytesWritten = statSync(this.path).size;
     } catch {
       this.bytesWritten = 0;
     }
-    this.created = new Date();
+    this.created = this.created || new Date();
   }
 }
 
-/**
- * Uploads db
- */
 export class Store {
-  map: UploadXFile[] = [];
+  data: UploadxFile[] = [];
   private json: string;
-  private isWaitToSave;
+  private isDirty;
+  id: string;
 
-  /**
-   * Creates an instance of uploads db.
-   * @param [destination]
-   * @param [name]
-   */
   constructor(public destination: string | Function = tmpdir()) {
     const storageDir = `${process.env.XDG_CONFIG_HOME ||
       join(homedir(), '.config', 'uploadx')}`;
-    const hash = createHash('md5')
+    this.id = createHash('md5')
       .update(this.destination.toString() + process.env.NODE_ENV)
       .digest('hex');
-    this.json = join(storageDir, `${hash}.json`);
+    this.json = join(storageDir, `${this.id}.json`);
     mkdir(storageDir, err => {
       if (err && err.code !== 'EEXIST') {
         throw err;
@@ -97,32 +83,43 @@ export class Store {
     });
 
     try {
-      JSON.parse(readFileSync(this.json).toString()).forEach(el => {
-        this.map.push(new UploadXFile(el));
+      <UploadxFile[]>JSON.parse(
+        readFileSync(this.json, 'utf8').toString(),
+        (key, value) => {
+          return key === 'created' ? new Date(value) : value;
+        }
+      ).forEach(entry => {
+        this.data.push(new UploadxFile(entry));
       });
       log(`read data from ${this.json}`);
     } catch (err) {
       if (err.code !== 'ENOENT') {
+        log('reset store:', err.message);
         this.reset();
       }
     }
   }
 
-  create(data: UploadXOptions): UploadXFile {
+  create(data: {
+    metadata: any;
+    user: any;
+    size: number;
+    mimetype: string;
+  }): UploadxFile {
     const id = createHash('md5')
       .update(JSON.stringify(data))
       .digest('hex');
-    const file = new UploadXFile({
+    const file = new UploadxFile({
       ...data,
       id,
       destination: this.destination
     });
-    this.map = [...this.map.filter(el => el.id !== id), ...[file]];
-    this.save();
+    this.data = [...this.data.filter(el => el.id !== id), ...[file]];
+    this.dumpToDisk();
     return file;
   }
 
-  write(file: UploadXFile, buf: Buffer): Promise<number> {
+  write(file: UploadxFile, buf: Buffer): Promise<number> {
     return new Promise((resolve, reject) => {
       if (file.bytesWritten >= file.size) {
         resolve(file.bytesWritten);
@@ -131,7 +128,7 @@ export class Store {
           if (err) {
             reject(err);
           } else {
-            file.bytesWritten = file.bytesWritten + buf.length;
+            file.bytesWritten += buf.length;
             resolve(file.bytesWritten);
           }
         });
@@ -147,40 +144,41 @@ export class Store {
         throw err;
       }
     }
-    this.map = [];
+    this.data = [];
   }
 
-  save() {
-    if (this.isWaitToSave) {
+  private dumpToDisk() {
+    if (this.isDirty) {
       return;
-    } else {
-      this.isWaitToSave = setTimeout(() => {
-        writeFile(this.json, JSON.stringify(this.map, undefined, 2), err => {
-          if (err) {
-            log(err.message);
-          }
-        });
-        clearTimeout(this.isWaitToSave);
-        this.isWaitToSave = undefined;
-      }, debounceTime);
     }
+    this.isDirty = setTimeout(() => {
+      writeFile(this.json, JSON.stringify(this.data, undefined, '\t'), err => {
+        if (err) {
+          log(err.message);
+        }
+      });
+      clearTimeout(this.isDirty);
+      this.isDirty = false;
+    }, debounceTime);
   }
 
   remove(id: string) {
-    this.map = this.map.filter(el => el.id !== id);
-    this.save();
+    this.data = this.data.filter(el => el.id !== id);
+    this.dumpToDisk();
   }
 
   findById(id: string) {
-    return this.map.find(el => el.id === id);
+    return this.data.find(el => el.id === id);
   }
 
-  find(query?: any) {
+  find(query?: Partial<UploadxFile>) {
     if (query) {
-      return this.map.filter(v =>
-        Object.keys(query).every(k => String(v[k]) === String(query[k]))
+      return this.data.filter(v =>
+        Object.keys(query).every(
+          key => JSON.stringify(v[key]) === JSON.stringify(query[key])
+        )
       );
     }
-    return this.map;
+    return this.data;
   }
 }

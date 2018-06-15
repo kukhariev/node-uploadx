@@ -40,8 +40,21 @@ app.use(
     allowMIME: ['video/*'],
     destination: item => `/tmp/${item.metadata.name}`
   }),
-  (req, res, next) => {
+  (req, res) => {
     if (req.file) {
+      console.log(req.file);
+      /*
+      { metadata: { name: 'title.mp4', mimeType: 'video/mp4' },
+        mimetype: 'video/mp4',
+        size: 83869253,
+        user: { id: 'userId' },
+        id: '250886f74c5a1596ed42e43d4ced526d',
+        path: '/tmp/title.mp4',
+        filename: 'title.mp4',
+        _destination: '/tmp',
+        bytesWritten: 83869253,
+        created: 2018-05-24T19:26:56.121Z }
+      */
       res.json(req.file.metadata);
     } else {
       res.send();

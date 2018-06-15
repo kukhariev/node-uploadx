@@ -1,4 +1,4 @@
-import { UploadXOptions, Store } from '../src/storage';
+import { Store } from '../src/';
 import chai = require('chai');
 const expect = chai.expect;
 const storage = new Store('/tmp');
@@ -14,7 +14,7 @@ const keys = [
   'size',
   'user'
 ];
-const uploads: UploadXOptions[] = [
+const uploads = [
   {
     metadata: {
       name: 'file1'
@@ -49,17 +49,15 @@ describe('Storage', () => {
     expect(storage.findById(ids[1])).to.have.keys(keys);
   });
   it('should list all user sessions', () => {
-    const result = storage.find({
-      user: { name: 'user656', id: '656' },
-      size: 100
-    });
+    const result = storage.find({ user: { name: 'user656', id: '656' } });
     expect(result).to.be.an('array');
     expect(result.length).to.be.eql(2);
     expect(result[0]).to.have.keys(keys);
   });
+
   it('should remove session', () => {
     storage.remove(ids[1]);
-    const result = storage.find();
+    const result = storage.find({ user: { name: 'user656', id: '656' } });
     expect(result).to.be.an('array');
     expect(result.length).to.be.eql(1);
     expect(result[0]).to.have.keys(keys);
