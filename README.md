@@ -2,7 +2,7 @@
 
 > Express middleware for handling resumable uploads
 
-<!-- [![npm version][npm-image]][npm-url] -->
+[![npm version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
 
 
