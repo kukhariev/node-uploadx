@@ -1,7 +1,7 @@
 {
   "name": "node-uploadx",
   "version": "0.0.1",
-  "description": "Express middleware for handling resumable uploads",
+  "description": "Node.js middleware for handling resumable uploads",
   "keywords": [
     "upload",
     "chunk",
