@@ -1,7 +1,7 @@
 {
-  "name": "uploadx",
+  "name": "node-uploadx",
   "version": "0.0.1",
-  "description": "Node.js middleware for handling uploads",
+  "description": "Express middleware for handling resumable uploads",
   "keywords": [
     "upload",
     "chunk",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kukhariev/uploadx.git"
+    "url": "git+https://github.com/kukhariev/node-uploadx.git"
   },
   "license": "MIT",
   "engines": {
@@ -26,7 +26,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "start": "DEBUG=* node example/index.js",
+    "start": "DEBUG=uploadx* node example/index.js",
     "dev": "./node_modules/nodemon/bin/nodemon.js",
     "clean": "rimraf lib",
     "build": "npm run tslint && npm run clean && npm run build-ts",

@@ -1,6 +1,6 @@
-# uploadx
+# node-uploadx
 
-> Node.js middleware for handling resumable uploads
+> Express middleware for handling resumable uploads
 
 <!-- [![npm version][npm-image]][npm-url] -->
 [![Build status][travis-image]][travis-url]
@@ -10,7 +10,7 @@
 ## Install
 
 ```sh
-npm install --save uploadx
+npm install --save node-uploadx
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ npm install --save uploadx
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { uploadx } = require('uploadx');
+const { uploadx } = require('node-uploadx');
 const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
 
@@ -71,7 +71,7 @@ app.listen(3003);
 
 [MIT](LICENSE)
 
-[npm-image]: https://img.shields.io/npm/v/uploadx.svg
-[npm-url]: https://www.npmjs.com/package/uploadx
-[travis-image]: https://img.shields.io/travis/kukhariev/uploadx/master.svg
-[travis-url]: https://travis-ci.org/kukhariev/uploadx
+[npm-image]: https://img.shields.io/npm/v/node-uploadx.svg
+[npm-url]: https://www.npmjs.com/package/node-uploadx
+[travis-image]: https://img.shields.io/travis/kukhariev/node-uploadx/master.svg
+[travis-url]: https://travis-ci.org/kukhariev/node-uploadx
