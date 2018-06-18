@@ -20,7 +20,7 @@ app.use(
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: item => `/tmp/${item.metadata.name}`
+    destination: item => `/tmp/upload/${item.metadata.name}`
   }),
   (req, res) => {
     if (req.file) {

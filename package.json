@@ -26,7 +26,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "start": "ts-node test/server.ts",
+    "start": "DEBUG=* node example/index.js",
     "dev": "./node_modules/nodemon/bin/nodemon.js",
     "clean": "rimraf lib",
     "build": "npm run tslint && npm run clean && npm run build-ts",

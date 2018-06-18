@@ -71,7 +71,8 @@ export function uploadx({
       );
       log('query: ', query);
       const location = `${req.protocol}://${req.get('Host') +
-        req.baseUrl}?upload_id=${file.id}`;
+        req.baseUrl +
+        query}`;
       log('location: %s', location);
       res.location(location);
       res.sendStatus(201);
