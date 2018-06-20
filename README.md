@@ -65,14 +65,25 @@ app.use(errorHandler);
 app.listen(3003);
 ```
 
+## API
+
 ### Options
 
 | Name                | Description                                                                                                  |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **[destination]**   | _Upload directory or functtion to set file path_                                                             |
 | **[allowMIME]**     | _Array of allowed MIME types_                                                                                |
-| **[maxUploadSize]** | _Limit file size_                                                                         |
+| **[maxUploadSize]** | _Limit file size_                                                                                            |
 | **[maxChunkSize]**  | _Sets the maximum allowed chunk size. \*The default value for nginx client_max_body_size directive is 1 MiB_ |
+
+### Requests
+
+| Method     | Action                         |
+| ---------- | ------------------------------ |
+| **POST**   | _Create upload session_        |
+| **PUT**    | _Save file_                    |
+| **GET**    | _List not finished session(s)_ |
+| **DELETE** | _Remove session_               |
 
 ## License
 
