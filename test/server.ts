@@ -76,6 +76,6 @@ app.use(
 // ------------------------------  ERROR HANDLER  ------------------------------
 app.use(errorHandler);
 
-export const server: Server = app.listen(PORT, () => {
-  log(`listening on port: ${server.address()['port']}`);
+export const server: Server = app.listen(PORT, 'localhost', () => {
+  log('listening on port:', server.address()['port']);
 });

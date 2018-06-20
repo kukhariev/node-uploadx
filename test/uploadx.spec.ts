@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'testing';
-const { URL } = require('url');
+import { URL } from 'url';
 import chai = require('chai');
 const expect = chai.expect;
 chai.use(require('chai-http'));
@@ -93,7 +93,7 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        const loc = new URL(res['headers']['location']);
+        const loc = new URL(res['headers']['location'], 'http://localhost');
         id = loc.searchParams.get('upload_id');
       }
     });
@@ -104,7 +104,7 @@ describe('UploadX', () => {
           .put(`/upload/v1`)
           .query({ uploadType: 'uploadX', upload_id: id })
           .send(readFileSync(TEST_FILE_PATH))
-          .set('content-type', 'video/mp4');
+          .set('content-type', 'application/octet-stream');
       } finally {
         expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
         expect(res).to.have.status(200);
@@ -124,7 +124,7 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        const loc = new URL(res['headers']['location']);
+        const loc = new URL(res['headers']['location'], 'http://localhost');
         id = loc.searchParams.get('upload_id');
       }
     });
@@ -175,7 +175,7 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        const loc = new URL(res['headers']['location']);
+        const loc = new URL(res['headers']['location'], 'http://localhost');
         id = loc.searchParams.get('upload_id');
       }
     });
@@ -193,7 +193,7 @@ describe('UploadX', () => {
           .query({ uploadType: 'uploadX', upload_id: id })
           .redirects(0)
           .send(chunk)
-          .set('content-type', 'video/mp4')
+          .set('content-type', 'application/octet-stream')
           .set('content-range', `bytes ${start}-${end - 1}/${size}`);
         done = chunk.length < CHUNK_SIZE || res.status === 200;
         start = start + CHUNK_SIZE;
@@ -216,7 +216,7 @@ describe('UploadX', () => {
       } finally {
         expect(res).to.have.status(201);
         expect(res).to.have.header('location');
-        const loc = new URL(res['headers']['location']);
+        const loc = new URL(res['headers']['location'], 'http://localhost');
         id = loc.searchParams.get('upload_id');
       }
     });
@@ -227,7 +227,7 @@ describe('UploadX', () => {
           .put(`/upload/v2`)
           .query({ uploadType: 'uploadX', upload_id: id })
           .send(readFileSync(TEST_FILE_PATH))
-          .set('content-type', 'video/mp4');
+          .set('content-type', 'application/octet-stream');
       } finally {
         expect(res).to.have.status(200);
         expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);

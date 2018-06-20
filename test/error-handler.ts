@@ -7,12 +7,6 @@ const errorHandler: ErrorRequestHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log({
-    error: {
-      code: err.name,
-      message: err.message
-    }
-  });
   res.status(err.status || 500).json({
     error: {
       code: err.name,
