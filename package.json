@@ -26,7 +26,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "start": "DEBUG=uploadx* node example/index.js",
+    "start": "DEBUG=uploadx* ts-node test/server.ts",
     "dev": "./node_modules/nodemon/bin/nodemon.js",
     "clean": "rimraf lib",
     "build": "npm run tslint && npm run clean && npm run build-ts",
@@ -34,6 +34,7 @@
     "test:watch": "./node_modules/.bin/mocha --watch",
     "build-ts": "tsc",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
+    "demo": "DEBUG=uploadx* node example/index.js",
     "preversion": "npm run build",
     "postversion": "git push --follow-tags && npm publish"
   },

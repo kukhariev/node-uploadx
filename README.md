@@ -5,8 +5,6 @@
 [![npm version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
 
-
-
 ## Install
 
 ```sh
@@ -66,6 +64,15 @@ app.use(errorHandler);
 
 app.listen(3003);
 ```
+
+### Options
+
+| Name                | Description                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **[destination]**   | _Upload directory or functtion to set file path_                                                             |
+| **[allowMIME]**     | _Array of allowed MIME types_                                                                                |
+| **[maxUploadSize]** | _Limit file size_                                                                         |
+| **[maxChunkSize]**  | _Sets the maximum allowed chunk size. \*The default value for nginx client_max_body_size directive is 1 MiB_ |
 
 ## License
 
