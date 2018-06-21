@@ -33,7 +33,7 @@ export class UploadxFile {
   public get destination() {
     return this._destination;
   }
-  public set destination(value: string | Function) {
+  public set destination(value: string | ((file: UploadxFile) => string)) {
     if (typeof value === 'string') {
       this.filename = this.id;
       this.path = resolve(value, this.id);
@@ -73,7 +73,9 @@ export class Store {
   private isDirty;
   id: string;
 
-  constructor(public destination: string | Function = tmpdir()) {
+  constructor(
+    public destination: string | ((file: UploadxFile) => string) = tmpdir()
+  ) {
     const storageDir = `${process.env.XDG_CONFIG_HOME ||
       join(homedir(), '.config', 'uploadx')}`;
     this.id = createHash('md5')

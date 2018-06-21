@@ -16,7 +16,7 @@ declare global {
 }
 
 export type UploadxConfig = {
-  destination?: string | Function;
+  destination?: string | ((file: UploadxFile) => string);
   maxUploadSize?: number | string;
   maxChunkSize?: number | string;
   allowMIME?: string[];
@@ -188,7 +188,7 @@ export function uploadx({
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
-    log('%s query: %o headers: %o', req.method, req.query, req.headers);
+    log('M: %s q: %o h: %o', req.method, req.query, req.headers);
     let handler: RequestHandler = (
       req: Request,
       res: Response,
