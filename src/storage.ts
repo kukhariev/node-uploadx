@@ -2,18 +2,22 @@ import { createHash } from 'crypto';
 import {
   mkdirSync,
   readFileSync,
-  unlinkSync,
   writeFile,
   appendFile,
   statSync,
-  mkdir
+  mkdir,
+  unlink
 } from 'fs';
 import { join, resolve, basename, dirname } from 'path';
 import { homedir, tmpdir } from 'os';
 import { inspect } from 'util';
 import debug = require('debug');
 const log = debug('uploadx:storage');
+
 const debounceTime = 3000;
+
+// Session expired after 7 days
+const sessionTimeout = 24 * 60 * 60 * 1000 * 7;
 
 export class UploadxFile {
   metadata: any;
@@ -99,6 +103,33 @@ export class Store {
       }
     }
   }
+  private dumpToDisk() {
+    if (this.isDirty) {
+      return;
+    }
+    this.isDirty = setTimeout(() => {
+      this.removeExpired();
+      writeFile(this.json, JSON.stringify(this.data, undefined, '\t'), err => {
+        if (err) {
+          log(err.message);
+        }
+      });
+      clearTimeout(this.isDirty);
+      this.isDirty = false;
+    }, debounceTime);
+  }
+
+  private removeExpired() {
+    this.data.forEach((file, i) => {
+      if (Date.now() - sessionTimeout > file.created.getTime()) {
+        if (file.bytesWritten) {
+          unlink(file.path, () => {});
+        }
+        this.data.splice(i, 1);
+        log('Deleted expired session %o', file);
+      }
+    });
+  }
 
   create(data: {
     metadata: any;
@@ -137,29 +168,12 @@ export class Store {
   }
 
   reset() {
-    try {
-      unlinkSync(this.json);
-    } catch (err) {
-      if (err.code !== 'ENOENT') {
-        throw err;
-      }
-    }
     this.data = [];
-  }
-
-  private dumpToDisk() {
-    if (this.isDirty) {
-      return;
-    }
-    this.isDirty = setTimeout(() => {
-      writeFile(this.json, JSON.stringify(this.data, undefined, '\t'), err => {
-        if (err) {
-          log(err.message);
-        }
-      });
-      clearTimeout(this.isDirty);
-      this.isDirty = false;
-    }, debounceTime);
+    unlink(this.json, err => {
+      if (err && err.code !== 'ENOENT') {
+        log(err);
+      }
+    });
   }
 
   remove(id: string) {
