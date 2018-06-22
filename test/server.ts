@@ -48,7 +48,7 @@ app.use(
 app.use(
   '/upload/v2/',
   uploadx({
-    destination: item => `${tmpdir()}/${item.user.id}/${item.metadata.name}`
+    destination: item => `${tmpdir()}/${item.user.name}/${item.metadata.name}`
   }),
   (req: express.Request, res: express.Response) => {
     if (req.file) {

@@ -49,7 +49,7 @@ describe('Storage', () => {
     expect(storage.findById(ids[1])).to.have.keys(keys);
   });
   it('should list all user sessions', () => {
-    const result = storage.find({ user: { name: 'user656', id: '656' } });
+    const result = storage.findByUser({ name: 'user656', id: '656' });
     expect(result).to.be.an('array');
     expect(result.length).to.be.eql(2);
     expect(result[0]).to.have.keys(keys);
@@ -57,14 +57,14 @@ describe('Storage', () => {
 
   it('should remove session', () => {
     storage.remove(ids[1]);
-    const result = storage.find({ user: { name: 'user656', id: '656' } });
+    const result = storage.findByUser({ name: 'user656', id: '656' });
     expect(result).to.be.an('array');
     expect(result.length).to.be.eql(1);
     expect(result[0]).to.have.keys(keys);
   });
   it('should reset', () => {
     storage.reset();
-    const result = storage.find();
+    const result = storage.files;
     expect(result).to.be.an('array');
     expect(result.length).to.be.eql(0);
   });

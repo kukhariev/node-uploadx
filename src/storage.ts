@@ -1,15 +1,15 @@
 import { createHash } from 'crypto';
 import {
+  appendFile,
+  mkdir,
   mkdirSync,
   readFileSync,
-  writeFile,
-  appendFile,
   statSync,
-  mkdir,
-  unlink
+  unlink,
+  writeFile
 } from 'fs';
-import { join, resolve, basename, dirname } from 'path';
 import { homedir, tmpdir } from 'os';
+import { basename, dirname, join, resolve } from 'path';
 import { inspect } from 'util';
 import debug = require('debug');
 const log = debug('uploadx:storage');
@@ -19,10 +19,24 @@ const debounceTime = 3000;
 // Session expired after 7 days
 const sessionTimeout = 24 * 60 * 60 * 1000 * 7;
 
+function generateID(data: any) {
+  return createHash('md5')
+    .update(JSON.stringify(data))
+    .digest('hex');
+}
+type User = { id: string; [key: string]: any };
+function normalizeUserObject(user: any, allowed?: string[]): User {
+  const normalized = { id: user.id || user._id };
+  allowed = allowed || [];
+  for (const key of allowed) {
+    normalized[key] = user[key];
+  }
+  return normalized;
+}
 export class UploadxFile {
   metadata: any;
   private _destination: string;
-  user;
+  user: User;
   size: number;
   path: string;
   filename: string;
@@ -47,6 +61,7 @@ export class UploadxFile {
         `Destination must be a string or function. Received ${inspect(value)}`
       );
     }
+    this.user = normalizeUserObject(this.user, ['name']);
     try {
       mkdirSync(this._destination);
     } catch (err) {
@@ -63,24 +78,41 @@ export class UploadxFile {
     } catch {
       this.bytesWritten = 0;
     }
-    this.created = this.created || new Date();
+  }
+
+  write(buf: Buffer): Promise<number> {
+    return new Promise((resolve, reject) => {
+      if (this.bytesWritten + buf.length <= this.size) {
+        appendFile(this.path, buf, { encoding: undefined }, err => {
+          if (err) {
+            reject(err);
+          } else {
+            this.bytesWritten += buf.length;
+            resolve(this.bytesWritten);
+          }
+        });
+      } else {
+        unlink(this.path, () => {
+          this.bytesWritten = 0;
+          reject(new Error('File Error'));
+        });
+      }
+    });
   }
 }
 
 export class Store {
-  data: UploadxFile[] = [];
+  files: UploadxFile[] = [];
   private json: string;
   private isDirty;
-  id: string;
+  private id: string;
 
   constructor(
     public destination: string | ((file: UploadxFile) => string) = tmpdir()
   ) {
     const storageDir = `${process.env.XDG_CONFIG_HOME ||
       join(homedir(), '.config', 'uploadx')}`;
-    this.id = createHash('md5')
-      .update(this.destination.toString() + process.env.NODE_ENV)
-      .digest('hex');
+    this.id = generateID(this.destination.toString() + process.env.NODE_ENV);
     this.json = join(storageDir, `${this.id}.json`);
     mkdir(storageDir, err => {
       if (err && err.code !== 'EEXIST') {
@@ -95,7 +127,7 @@ export class Store {
           return key === 'created' ? new Date(value) : value;
         }
       ).forEach(entry => {
-        this.data.push(new UploadxFile(entry));
+        this.files.push(new UploadxFile(entry));
       });
       log(`read data from ${this.json}`);
     } catch (err) {
@@ -111,7 +143,7 @@ export class Store {
     }
     this.isDirty = setTimeout(() => {
       this.removeExpired();
-      writeFile(this.json, JSON.stringify(this.data, undefined, '\t'), err => {
+      writeFile(this.json, JSON.stringify(this.files, undefined, '\t'), err => {
         if (err) {
           log(err.message);
         }
@@ -122,12 +154,12 @@ export class Store {
   }
 
   private removeExpired() {
-    this.data.forEach((file, i) => {
+    this.files.forEach((file, i) => {
       if (Date.now() - sessionTimeout > file.created.getTime()) {
         if (file.bytesWritten) {
           unlink(file.path, () => {});
         }
-        this.data.splice(i, 1);
+        this.files.splice(i, 1);
         log('Deleted expired session %o', file);
       }
     });
@@ -139,38 +171,23 @@ export class Store {
     size: number;
     mimetype: string;
   }): UploadxFile {
-    const id = createHash('md5')
-      .update(JSON.stringify(data))
-      .digest('hex');
-    const file = new UploadxFile({
+    const newFile = new UploadxFile({
       ...data,
-      id,
+      id: generateID({ ...data, user: normalizeUserObject(data.user) }),
+      created: new Date(),
       destination: this.destination
     });
-    this.data = [...this.data.filter(el => el.id !== id), ...[file]];
+    log('%o', newFile);
+    this.files = [
+      ...this.files.filter(file => file.id !== newFile.id),
+      ...[newFile]
+    ];
     this.dumpToDisk();
-    return file;
-  }
-
-  write(file: UploadxFile, buf: Buffer): Promise<number> {
-    return new Promise((resolve, reject) => {
-      if (file.bytesWritten >= file.size) {
-        resolve(file.bytesWritten);
-      } else {
-        appendFile(file.path, buf, { encoding: undefined }, err => {
-          if (err) {
-            reject(err);
-          } else {
-            file.bytesWritten += buf.length;
-            resolve(file.bytesWritten);
-          }
-        });
-      }
-    });
+    return newFile;
   }
 
   reset() {
-    this.data = [];
+    this.files = [];
     unlink(this.json, err => {
       if (err && err.code !== 'ENOENT') {
         log(err);
@@ -179,22 +196,18 @@ export class Store {
   }
 
   remove(id: string) {
-    this.data = this.data.filter(el => el.id !== id);
+    this.files = this.files.filter(file => file.id !== id);
     this.dumpToDisk();
   }
 
   findById(id: string) {
-    return this.data.find(el => el.id === id);
+    return this.files.find(file => file.id === id);
   }
 
-  find(query?: Partial<UploadxFile>) {
-    if (query) {
-      return this.data.filter(v =>
-        Object.keys(query).every(
-          key => JSON.stringify(v[key]) === JSON.stringify(query[key])
-        )
-      );
-    }
-    return this.data;
+  findByUser(user, id?) {
+    const userID = normalizeUserObject(user).id;
+    return this.files.filter(
+      file => file.user.id === userID && file.id === (id || file.id)
+    );
   }
 }
