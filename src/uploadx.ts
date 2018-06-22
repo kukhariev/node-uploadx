@@ -43,14 +43,15 @@ export function uploadx({
     res: Response,
     next: NextFunction
   ) => {
-    if (!req.user) {
-      return next(createError(401));
-    }
     const mimetype = req.get('x-upload-content-type');
     const size = +req.get('x-upload-content-length');
     if (!mimetype) {
       return next();
     }
+    if (!req.user) {
+      return next(createError(401));
+    }
+
     if (size > bytes.parse(maxUploadSize)) {
       return next(createError(413));
     }
@@ -69,7 +70,6 @@ export function uploadx({
         (acc, key) => acc + `&${key}=${req.query[key]}`,
         `?upload_id=${file.id}`
       );
-      log('query: ', query);
       const location = `${req.baseUrl + query}`;
       log('location: %s', location);
       res.location(location);
@@ -91,13 +91,13 @@ export function uploadx({
       return next(createError(401));
     }
     if (req.query.upload_id) {
-      const [file] = storage.find({ user: req.user, id: req.query.upload_id });
+      const [file] = storage.findByUser(req.user, req.query.upload_id);
       if (!file) {
         return next(createError(404));
       }
       res.json(file);
     } else {
-      res.json(storage.find({ user: req.user }));
+      res.json(storage.findByUser(req.user));
     }
   };
 
@@ -115,10 +115,7 @@ export function uploadx({
     if (!req.query.upload_id) {
       return next(createError(400));
     }
-    const [toRemove] = storage.find({
-      user: req.user,
-      id: req.query.upload_id
-    });
+    const [toRemove] = storage.findByUser(req.user, req.query.upload_id);
     if (toRemove) {
       storage.remove(toRemove.id);
       res.sendStatus(204);
@@ -163,7 +160,7 @@ export function uploadx({
       const buf = await getRawBody(req, { limit: maxChunkSize });
       if (!contentRange) {
         // -------- full file --------
-        await storage.write(file, buf);
+        await file.write(buf);
         req.file = Object.assign({}, file);
         storage.remove(file.id);
         next();
@@ -172,7 +169,7 @@ export function uploadx({
         const [, , , total] = contentRange
           .match(/(\d+)-(\d+)\/(\d+)/)
           .map(s => +s);
-        await storage.write(file, buf);
+        await file.write(buf);
         if (file.bytesWritten < total) {
           res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
           res.status(308).send('Resume Incomplete');
@@ -188,7 +185,7 @@ export function uploadx({
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
-    log('M: %s q: %o h: %o', req.method, req.query, req.headers);
+    log('%s\nquery: %o\nheaders: %o', req.method, req.query, req.headers);
     let handler: RequestHandler = (
       req: Request,
       res: Response,
