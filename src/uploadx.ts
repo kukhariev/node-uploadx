@@ -70,7 +70,7 @@ export function uploadx({
         (acc, key) => acc + `&${key}=${req.query[key]}`,
         `?upload_id=${file.id}`
       );
-      const location = `${req.baseUrl + query}`;
+      const location = `${query}`;
       log('location: %s', location);
       res.location(location);
       res.sendStatus(201);
@@ -185,7 +185,7 @@ export function uploadx({
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
-    log('%s\nquery: %o\nheaders: %o', req.method, req.query, req.headers);
+    log('%s\n%s\nquery: %o\nheaders: %o', req.baseUrl, req.method, req.query, req.headers);
     let handler: RequestHandler = (
       req: Request,
       res: Response,
