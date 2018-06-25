@@ -20,13 +20,15 @@ export type UploadxConfig = {
   maxUploadSize?: number | string;
   maxChunkSize?: number | string;
   allowMIME?: string[];
+  useRelativeURL?: boolean;
 };
 
 export function uploadx({
   destination,
   maxUploadSize = Number.MAX_SAFE_INTEGER,
   maxChunkSize = Number.MAX_SAFE_INTEGER,
-  allowMIME = [`\/`]
+  allowMIME = [`\/`],
+  useRelativeURL = true
 }: UploadxConfig): (
   req: Request,
   res: Response,
@@ -70,7 +72,9 @@ export function uploadx({
         (acc, key) => acc + `&${key}=${req.query[key]}`,
         `?upload_id=${file.id}`
       );
-      const location = `${query}`;
+      const location = useRelativeURL
+        ? `${req.baseUrl}${search}`
+        : `//${req.get('host')}${req.baseUrl}${search}`;
       log('location: %s', location);
       res.location(location);
       res.sendStatus(201);
