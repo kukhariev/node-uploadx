@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const { uploadx } = require('../lib');
 const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
-
+const tmpdir = require('os').tmpdir();
 const app = express();
 app.enable('trust proxy');
 const corsOptions = {
@@ -16,11 +16,11 @@ app.use(bodyParser.json());
 app.use(auth);
 
 app.use(
-  '/upload/',
+  '/api_v1/upload/',
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: item => `/tmp/upload/${item.metadata.name}`
+    destination: req => `${tmpdir}/${req.body.name}`
   }),
   (req, res) => {
     if (req.file) {
