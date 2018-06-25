@@ -16,7 +16,7 @@ declare global {
 }
 
 export type UploadxConfig = {
-  destination?: string | ((file: UploadxFile) => string);
+  destination?: string | ((req: Request) => string);
   maxUploadSize?: number | string;
   maxChunkSize?: number | string;
   allowMIME?: string[];
@@ -28,7 +28,7 @@ export function uploadx({
   maxUploadSize = Number.MAX_SAFE_INTEGER,
   maxChunkSize = Number.MAX_SAFE_INTEGER,
   allowMIME = [`\/`],
-  useRelativeURL = true
+  useRelativeURL = false
 }: UploadxConfig): (
   req: Request,
   res: Response,
@@ -61,14 +61,9 @@ export function uploadx({
       return next(createError(415));
     }
 
-    const file: UploadxFile = storage.create({
-      metadata: req.body,
-      mimetype,
-      size,
-      user: req.user
-    });
+    const file: UploadxFile = storage.create(req);
     if (file.destination) {
-      const query = Object.keys(req.query).reduce(
+      const search = Object.keys(req.query).reduce(
         (acc, key) => acc + `&${key}=${req.query[key]}`,
         `?upload_id=${file.id}`
       );
@@ -149,8 +144,8 @@ export function uploadx({
     const contentRange = req.get('content-range');
     // ---------- resume upload ----------
     if (contentRange && contentRange.includes('*')) {
-      const [, total] = contentRange.match(/\*\/(\d+)/g);
-      if (+total === file.bytesWritten) {
+      const [, total] = contentRange.match(/\*\/(\d+)/g).map(s => +s);
+      if (total === file.bytesWritten) {
         req.file = Object.assign({}, file);
         storage.remove(file.id);
         return next();
@@ -164,16 +159,16 @@ export function uploadx({
       const buf = await getRawBody(req, { limit: maxChunkSize });
       if (!contentRange) {
         // -------- full file --------
-        await file.write(buf);
+        await file.write(buf, 0);
         req.file = Object.assign({}, file);
         storage.remove(file.id);
         next();
       } else {
         // --------- by chunks ---------
-        const [, , , total] = contentRange
+        const [, start, end, total] = contentRange
           .match(/(\d+)-(\d+)\/(\d+)/)
           .map(s => +s);
-        await file.write(buf);
+        await file.write(buf, start);
         if (file.bytesWritten < total) {
           res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
           res.status(308).send('Resume Incomplete');
@@ -189,7 +184,13 @@ export function uploadx({
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
-    log('%s\n%s\nquery: %o\nheaders: %o', req.baseUrl, req.method, req.query, req.headers);
+    log(
+      '%s\n%s\nquery: %o\nheaders: %o',
+      req.baseUrl,
+      req.method,
+      req.query,
+      req.headers
+    );
     let handler: RequestHandler = (
       req: Request,
       res: Response,

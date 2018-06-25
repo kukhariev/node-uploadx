@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { Request } from 'express';
 import {
   appendFile,
   mkdir,
@@ -9,8 +10,7 @@ import {
   writeFile
 } from 'fs';
 import { homedir, tmpdir } from 'os';
-import { basename, dirname, join, resolve } from 'path';
-import { inspect } from 'util';
+import { basename, dirname, join } from 'path';
 import debug = require('debug');
 const log = debug('uploadx:storage');
 
@@ -24,55 +24,32 @@ function generateID(data: any) {
     .update(JSON.stringify(data))
     .digest('hex');
 }
-type User = { id: string; [key: string]: any };
-function normalizeUserObject(user: any, allowed?: string[]): User {
-  const normalized = { id: user.id || user._id };
-  allowed = allowed || [];
-  for (const key of allowed) {
-    normalized[key] = user[key];
-  }
-  return normalized;
+function getuser_id(user: any): string {
+  return user.id || user._id;
 }
 export class UploadxFile {
   metadata: any;
-  private _destination: string;
-  user: User;
+  destination: string;
+  user_id: string;
   size: number;
   path: string;
   filename: string;
   id: string;
-  mimetype: string;
   created: Date;
   bytesWritten: number;
-  public get destination() {
-    return this._destination;
-  }
-  public set destination(value: string | ((file: UploadxFile) => string)) {
-    if (typeof value === 'string') {
-      this.filename = this.id;
-      this.path = resolve(value, this.id);
-      this._destination = value;
-    } else if (typeof value === 'function') {
-      this.path = value(this);
-      this.filename = basename(this.path);
-      this._destination = dirname(this.path);
-    } else {
-      throw new TypeError(
-        `Destination must be a string or function. Received ${inspect(value)}`
-      );
-    }
-    this.user = normalizeUserObject(this.user, ['name']);
-    try {
-      mkdirSync(this._destination);
-    } catch (err) {
-      if (err.code !== 'EEXIST') {
-        this._destination = undefined;
-      }
-    }
-  }
 
   constructor(data: Partial<UploadxFile>) {
     Object.assign(this, data);
+    this.destination = dirname(this.path);
+    this.filename = basename(this.path);
+
+    try {
+      mkdirSync(this.destination);
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        this.destination = undefined;
+      }
+    }
     try {
       this.bytesWritten = statSync(this.path).size;
     } catch {
@@ -103,10 +80,10 @@ export class Store {
   private json: string;
   private isDirty;
   private id: string;
+  private setPath = (req: Request): string =>
+    join(<string>this.destination, req.body.upload_id);
 
-  constructor(
-    public destination: string | ((file: UploadxFile) => string) = tmpdir()
-  ) {
+  constructor(public destination: string | ((req) => string) = tmpdir()) {
     const storageDir = `${process.env.XDG_CONFIG_HOME ||
       join(homedir(), '.config', 'uploadx')}`;
     this.id = generateID(this.destination.toString() + process.env.NODE_ENV);
@@ -134,6 +111,7 @@ export class Store {
       }
     }
   }
+
   private dumpToDisk() {
     if (this.isDirty) {
       return;
@@ -162,17 +140,22 @@ export class Store {
     });
   }
 
-  create(data: {
-    metadata: any;
-    user: any;
-    size: number;
-    mimetype: string;
-  }): UploadxFile {
+  create(req: Request): UploadxFile {
+    const user_id = getuser_id(req.user);
+    const size = +req.get('x-upload-content-length');
+    const id = generateID({ ...req.body, user_id, size });
+    req.body.upload_id = req.body.upload_id || id;
+    if (typeof this.destination === 'function') {
+      this.setPath = this.destination;
+    }
+    const path = this.setPath(req);
     const newFile = new UploadxFile({
-      ...data,
-      id: generateID({ ...data, user: normalizeUserObject(data.user) }),
+      id,
+      metadata: req.body,
+      path,
+      size,
       created: new Date(),
-      destination: this.destination
+      user_id
     });
     log('%o', newFile);
     this.files = [
@@ -183,7 +166,7 @@ export class Store {
     return newFile;
   }
 
-  reset() {
+  private reset() {
     this.files = [];
     unlink(this.json, err => {
       if (err && err.code !== 'ENOENT') {
@@ -202,9 +185,9 @@ export class Store {
   }
 
   findByUser(user, id?) {
-    const userID = normalizeUserObject(user).id;
+    const user_id = getuser_id(user);
     return this.files.filter(
-      file => file.user.id === userID && file.id === (id || file.id)
+      file => file.user_id === user_id && file.id === (id || file.id)
     );
   }
 }

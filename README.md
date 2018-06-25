@@ -36,7 +36,7 @@ app.use(
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: item => `/tmp/${item.metadata.name}`
+    destination: req => `/tmp/${req.user.id}/${req.body.name}`
   }),
   (req, res) => {
     if (req.file) {
@@ -45,9 +45,9 @@ app.use(
       { metadata: { name: 'title.mp4', mimeType: 'video/mp4' },
         mimetype: 'video/mp4',
         size: 83869253,
-        user: { id: 'userId' },
+        userid: 'b0755e0676120ee',
         id: '250886f74c5a1596ed42e43d4ced526d',
-        path: '/tmp/title.mp4',
+        path: '/tmp/b0755e0676120ee/title.mp4',
         filename: 'title.mp4',
         _destination: '/tmp',
         bytesWritten: 83869253,
@@ -69,12 +69,13 @@ app.listen(3003);
 
 ### Options
 
-| Name                | Description                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **[destination]**   | _Upload directory or functtion to set file path_                                                             |
-| **[allowMIME]**     | _Array of allowed MIME types_                                                                                |
-| **[maxUploadSize]** | _Limit file size_                                                                                            |
-| **[maxChunkSize]**  | _Sets the maximum allowed chunk size. \*The default value for nginx client_max_body_size directive is 1 MiB_ |
+| Name                 | Description                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **[destination]**    | _Upload directory or functtion to set file path_                                                             |
+| **[allowMIME]**      | _Array of allowed MIME types_                                                                                |
+| **[maxUploadSize]**  | _Limit file size_                                                                                            |
+| **[maxChunkSize]**   | _Sets the maximum allowed chunk size. \*The default value for nginx client_max_body_size directive is 1 MiB_ |
+| **[useRelativeURL]** | _Generate relative upload link_                                                                              |
 
 ### Requests
 

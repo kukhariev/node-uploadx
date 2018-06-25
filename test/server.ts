@@ -7,13 +7,14 @@ import cors = require('cors');
 import bodyParser = require('body-parser');
 import { Server } from 'http';
 import { tmpdir } from 'os';
+import { join } from 'path';
 import debug = require('debug');
 const log = debug('uploadx:server');
 // ----------------------------------  CONFIG  ---------------------------------
 
 const PORT = 3003;
 const maxUploadSize = '180MB';
-const destination = tmpdir();
+const destination = join(tmpdir(), 'uploads');
 const maxChunkSize = '20MB';
 const allowMIME = ['video/*'];
 
@@ -48,7 +49,7 @@ app.use(
 app.use(
   '/upload/v2/',
   uploadx({
-    destination: item => `${tmpdir()}/${item.user.name}/${item.metadata.name}`
+    destination: req => join(tmpdir(), req.user.name, req.body.name)
   }),
   (req: express.Request, res: express.Response) => {
     if (req.file) {
@@ -63,7 +64,7 @@ app.use(
   uploadx({
     maxUploadSize,
     allowMIME,
-    destination: item => `${tmpdir()}/ngx/${item.metadata.name}`
+    destination: req => `${tmpdir()}/ngx/${req.body.name}`
   }),
   (req: express.Request, res: express.Response, next) => {
     if (req.file) {
