@@ -80,9 +80,9 @@ export class UploadxFile {
     }
   }
 
-  write(buf: Buffer): Promise<number> {
+  write(buf: Buffer, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      if (this.bytesWritten + buf.length <= this.size) {
+      if (this.bytesWritten === start) {
         appendFile(this.path, buf, { encoding: undefined }, err => {
           if (err) {
             reject(err);
@@ -92,10 +92,7 @@ export class UploadxFile {
           }
         });
       } else {
-        unlink(this.path, () => {
-          this.bytesWritten = 0;
-          reject(new Error('File Error'));
-        });
+        resolve(this.bytesWritten);
       }
     });
   }
