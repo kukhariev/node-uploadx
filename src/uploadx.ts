@@ -29,22 +29,14 @@ export function uploadx({
   maxChunkSize = Number.MAX_SAFE_INTEGER,
   allowMIME = [`\/`],
   useRelativeURL = false
-}: UploadxConfig): (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => RequestHandler {
+}: UploadxConfig): (req: Request, res: Response, next: NextFunction) => RequestHandler {
   // init database
   const storage = new Store(destination);
 
   /**
    * Create new
    */
-  const create: RequestHandler = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const create: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
     const mimetype = req.get('x-upload-content-type');
     const size = +req.get('x-upload-content-length');
     if (!mimetype) {
@@ -82,11 +74,7 @@ export function uploadx({
   /**
    * List sessions
    */
-  const find: RequestHandler = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const find: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(createError(401));
     }
@@ -104,11 +92,7 @@ export function uploadx({
   /**
    * Cancel upload session
    */
-  const remove: RequestHandler = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const remove: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(createError(401));
     }
@@ -127,11 +111,7 @@ export function uploadx({
   /**
    * Save content
    */
-  const save: RequestHandler = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const save: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.query.upload_id) {
       return next(createError(404));
     }
@@ -166,9 +146,7 @@ export function uploadx({
         next();
       } else {
         // --------- by chunks ---------
-        const [, start, end, total] = contentRange
-          .match(/(\d+)-(\d+)\/(\d+)/)
-          .map(s => +s);
+        const [, start, end, total] = contentRange.match(/(\d+)-(\d+)\/(\d+)/).map(s => +s);
         await file.write(buf, start);
         if (file.bytesWritten < total) {
           res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
@@ -180,23 +158,13 @@ export function uploadx({
         }
       }
     } catch (err) {
-      next(createError(500));
+      next(createError(err));
     }
   };
 
   return (req: Request, res: Response, next: NextFunction) => {
-    log(
-      '%s\n%s\nquery: %o\nheaders: %o',
-      req.baseUrl,
-      req.method,
-      req.query,
-      req.headers
-    );
-    let handler: RequestHandler = (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ) => {
+    log('%s\n%s\nquery: %o\nheaders: %o', req.baseUrl, req.method, req.query, req.headers);
+    let handler: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
       return next();
     };
     switch (req.method) {

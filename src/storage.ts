@@ -1,14 +1,6 @@
 import { createHash } from 'crypto';
 import { Request } from 'express';
-import {
-  appendFile,
-  mkdir,
-  mkdirSync,
-  readFileSync,
-  statSync,
-  unlink,
-  writeFile
-} from 'fs';
+import { appendFile, mkdir, mkdirSync, readFileSync, statSync, unlink, writeFile } from 'fs';
 import { homedir, tmpdir } from 'os';
 import { basename, dirname, join } from 'path';
 import debug = require('debug');
@@ -80,12 +72,10 @@ export class Store {
   private json: string;
   private isDirty;
   private id: string;
-  private setPath = (req: Request): string =>
-    join(<string>this.destination, req.body.upload_id);
+  private setPath = (req: Request): string => join(<string>this.destination, req.body.upload_id);
 
   constructor(public destination: string | ((req) => string) = tmpdir()) {
-    const storageDir = `${process.env.XDG_CONFIG_HOME ||
-      join(homedir(), '.config', 'uploadx')}`;
+    const storageDir = `${process.env.XDG_CONFIG_HOME || join(homedir(), '.config', 'uploadx')}`;
     this.id = generateID(this.destination.toString() + process.env.NODE_ENV);
     this.json = join(storageDir, `${this.id}.json`);
     mkdir(storageDir, err => {
@@ -95,12 +85,9 @@ export class Store {
     });
 
     try {
-      <UploadxFile[]>JSON.parse(
-        readFileSync(this.json, 'utf8').toString(),
-        (key, value) => {
-          return key === 'created' ? new Date(value) : value;
-        }
-      ).forEach(entry => {
+      <UploadxFile[]>JSON.parse(readFileSync(this.json, 'utf8').toString(), (key, value) => {
+        return key === 'created' ? new Date(value) : value;
+      }).forEach(entry => {
         this.files.push(new UploadxFile(entry));
       });
       log(`read data from ${this.json}`);
@@ -144,6 +131,10 @@ export class Store {
     const user_id = getuser_id(req.user);
     const size = +req.get('x-upload-content-length');
     const id = generateID({ ...req.body, user_id, size });
+    // const isExist = this.findById(id);
+    // if (isExist) {
+    //   return isExist;
+    // }
     req.body.upload_id = req.body.upload_id || id;
     if (typeof this.destination === 'function') {
       this.setPath = this.destination;
@@ -158,10 +149,7 @@ export class Store {
       user_id
     });
     log('%o', newFile);
-    this.files = [
-      ...this.files.filter(file => file.id !== newFile.id),
-      ...[newFile]
-    ];
+    this.files = [...this.files.filter(file => file.id !== newFile.id), ...[newFile]];
     this.dumpToDisk();
     return newFile;
   }
@@ -186,8 +174,6 @@ export class Store {
 
   findByUser(user, id?) {
     const user_id = getuser_id(user);
-    return this.files.filter(
-      file => file.user_id === user_id && file.id === (id || file.id)
-    );
+    return this.files.filter(file => file.user_id === user_id && file.id === (id || file.id));
   }
 }
