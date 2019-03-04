@@ -70,9 +70,10 @@ export function uploadx({
       const location = useRelativeURL
         ? `${req.baseUrl}${search}`
         : `//${req.get('host')}${req.baseUrl}${search}`;
-      log('location: %s', location);
+      const status = size === file.bytesWritten ? 200 : 201;
+      log('location: %s, status: %d', location, status);
       res.location(location);
-      res.sendStatus(201);
+      res.sendStatus(status);
     } else {
       next(createError(500));
     }
