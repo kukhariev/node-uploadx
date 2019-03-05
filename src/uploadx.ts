@@ -65,7 +65,7 @@ export function uploadx({
       const status = size === file.bytesWritten ? 200 : 201;
       log('location: %s, status: %d', location, status);
       res.location(location);
-      res.sendStatus(status);
+      res.status(status).json({ Location: location });
     } else {
       next(createError(500));
     }
@@ -102,7 +102,7 @@ export function uploadx({
     const [toRemove] = storage.findByUser(req.user, req.query.upload_id);
     if (toRemove) {
       storage.remove(toRemove.id);
-      res.sendStatus(204);
+      res.sendStatus(200);
     } else {
       return next(createError(404));
     }
@@ -132,7 +132,7 @@ export function uploadx({
         return next();
       } else {
         res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
-        res.status(308).send('Resume Incomplete');
+        res.status(308).json({ Range: `bytes=0-${file.bytesWritten - 1}` });
         return;
       }
     }
@@ -150,7 +150,7 @@ export function uploadx({
         await file.write(buf, start);
         if (file.bytesWritten < total) {
           res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
-          res.status(308).send('Resume Incomplete');
+          res.status(308).json({ Range: `bytes=0-${file.bytesWritten - 1}` });
         } else {
           req.file = Object.assign({}, file);
           storage.remove(file.id);
