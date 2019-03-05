@@ -1,6 +1,8 @@
 # node-uploadx
 
-> Express middleware for handling resumable uploads
+> Express middleware for handling resumable uploads.
+
+> Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 [![npm version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
@@ -8,10 +10,10 @@
 ## Install
 
 ```sh
-npm install --save node-uploadx
+npm install node-uploadx
 ```
 
-## Usage
+## Example
 
 ```js
 const express = require('express');
@@ -86,6 +88,14 @@ app.listen(3003);
 | **GET**    | _List not finished session(s)_ |
 | **DELETE** | _Remove session_               |
 
+## Contributing
+
+If you'd like to contribute, please fork the repository and make changes as you'd like.
+Pull requests are welcome!
+
+## References
+
+- [https://developers.google.com/drive/v3/web/resumable-upload](https://developers.google.com/drive/v3/web/resumable-upload)
 ## License
 
 [MIT](LICENSE)
