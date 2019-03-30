@@ -2,13 +2,27 @@
   "compileOnSave": true,
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "./lib",
+    "outDir": "./dist/lib",
+    "baseUrl": "src",
     "target": "es2015",
     "moduleResolution": "node",
     "declaration": true,
-    // "noUnusedLocals":true
-    // "noImplicitAny": true
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": false,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "stripInternal": true,
+    "keyofStringsOnly": true,
+    "strictFunctionTypes": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["./test/*.spec.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "./test/*.spec.ts"]
 }
