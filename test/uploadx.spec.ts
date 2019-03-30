@@ -36,7 +36,7 @@ describe('UploadX', () => {
         .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
         .send({ name: 'testfile2.mp4' });
     } finally {
-      expect(res).to.have.status(400);
+      expect(res).to.have.status(403);
       expect(res).to.not.have.header('location');
     }
   });
