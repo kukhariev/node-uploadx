@@ -46,6 +46,7 @@ app.use(
 app.use(errorHandler);
 app.listen(3003);
 ```
+
 ### Node
 
 ```js
@@ -76,15 +77,15 @@ server.listen(3003, error => {
   }
   console.log('listening on port:', server.address()['port']);
 });
-
 ```
+
 ## API
 
 ### Options
 
 | Name                 | Description                                                                                                  |
 | -------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **[destination]**    | _Upload directory or function to set file path_                                                             |
+| **[destination]**    | _Upload directory or function to set file path_                                                              |
 | **[allowMIME]**      | _Array of allowed MIME types_                                                                                |
 | **[maxUploadSize]**  | _Limit file size_                                                                                            |
 | **[maxChunkSize]**   | _Sets the maximum allowed chunk size. \*The default value for nginx client_max_body_size directive is 1 MiB_ |

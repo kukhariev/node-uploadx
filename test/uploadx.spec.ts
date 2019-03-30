@@ -65,7 +65,7 @@ describe('UploadX', () => {
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(TEST_FILE_PATH));
     } finally {
-      expect(res).to.have.status(403);
+      expect(res).to.have.status(400);
     }
   });
   it('chunks', done => {
