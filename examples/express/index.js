@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const { uploadx } = require('../lib');
+const { uploadx } = require('../../dist');
 const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
 const tmpdir = require('os').tmpdir();
@@ -11,24 +10,18 @@ const corsOptions = {
   exposedHeaders: ['Range', 'Location']
 };
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.use(auth);
 
 app.use(
-  '/api_v1/upload/',
+  '/upload/',
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: req => `${tmpdir}/${req.body.name}`
+    destination: (req, file) => `${tmpdir}/${file.id}`
   }),
-  (req, res) => {
-    if (req.file) {
-      res.json(req.file.metadata);
-    } else {
-      res.send();
-    }
-  }
+  (req, res) => res.json(req.file)
 );
 
 app.use(errorHandler);

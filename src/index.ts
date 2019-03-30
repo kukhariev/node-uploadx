@@ -1,3 +1,3 @@
-
 export * from './uploadx';
-export * from './storage';
+export * from './disk-storage';
+export * from './core';
