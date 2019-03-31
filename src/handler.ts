@@ -60,7 +60,7 @@ export class Handler extends BaseHandler {
   /**
    * Create File from request and send File URI to client
    */
-  async create(req: http.IncomingMessage, res: http.ServerResponse) {
+  async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const urlObject = url.parse(req.url!, true);
     const originalQuery = urlObject.query;
     const baseUrl = req['baseUrl'] || urlObject.pathname!.toLowerCase();
@@ -78,6 +78,7 @@ export class Handler extends BaseHandler {
     res.setHeader('Access-Control-Expose-Headers', 'Location');
     res.setHeader('Location', location);
     this.send(res, statusCode);
+    return file;
   }
   /**
    * Write chunk to file or/and return chunk offset
@@ -107,7 +108,7 @@ export class Handler extends BaseHandler {
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse) {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const urlObject = url.parse(req.url!, true);
     const id = urlObject.query.upload_id as string;
     const file = await this.storage.delete(id);

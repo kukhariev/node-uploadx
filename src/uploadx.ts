@@ -38,8 +38,8 @@ export class Uploadx extends EventEmitter {
       this.handler.setOrigin(req, res);
       switch (req.method) {
         case 'POST':
-          await this.handler.create(req, res);
-          this.emit('created', req.file);
+          const file = await this.handler.create(req, res);
+          this.emit('created', file);
           break;
         case 'PUT':
           await this.handler.write(req, res);
@@ -49,8 +49,8 @@ export class Uploadx extends EventEmitter {
           }
           break;
         case 'DELETE':
-          const file = await this.handler.delete(req, res);
-          this.emit('deleted', file);
+          const deleted = await this.handler.delete(req, res);
+          this.emit('deleted', deleted);
           next ? next() : this.handler.send(res, 200);
           break;
         case 'OPTIONS':

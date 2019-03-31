@@ -1,10 +1,10 @@
 import * as http from 'http';
-
+import { File } from './interfaces';
 export abstract class BaseHandler {
   /**
    * Create file
    */
-  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> | void;
+  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | File;
   /**
    * Chunks
    */
@@ -12,11 +12,11 @@ export abstract class BaseHandler {
   /**
    * Delete by id
    */
-  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): any;
+  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | File;
   /**
    * Make formated httpError response
    */
-  abstract sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): any;
+  abstract sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void;
 
   /**
    * Make response
