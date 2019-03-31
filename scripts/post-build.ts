@@ -8,7 +8,7 @@ const DIST = 'dist';
     const pkg = JSON.parse(fs.readFileSync('package.json').toString());
     delete pkg['devDependencies'];
     delete pkg['scripts'];
-    fs.writeFileSync(`${DIST}/package`, JSON.stringify(pkg, undefined, 2));
+    fs.writeFileSync(`${DIST}/package.json`, JSON.stringify(pkg, undefined, 2));
     await copyFile('LICENSE', `${DIST}/LICENSE`);
     await copyFile('README.md', `${DIST}/README.md`);
   } catch (error) {
