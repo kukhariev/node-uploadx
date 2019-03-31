@@ -1,34 +1,82 @@
-import { createHash } from 'crypto';
 import * as express from 'express';
-import { createReadStream } from 'fs';
-import { tmpdir } from 'os';
-import { DiskStorage, Uploadx } from '../src';
+import { uploadx } from '../src';
+import { auth } from './auth';
 import { errorHandler } from './error-handler';
+
+import cors = require('cors');
+import bodyParser = require('body-parser');
+import { Server } from 'http';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import debug = require('debug');
+const log = debug('uploadx:server');
+// ----------------------------------  CONFIG  ---------------------------------
 
 const PORT = 3003;
 const maxUploadSize = '180MB';
+const destination = join(tmpdir(), 'uploads');
+const maxChunkSize = '20MB';
 const allowMIME = ['video/*'];
 
-const app = express();
+// ----------------------------  CONFIGURE EXPRESS  ----------------------------
+const app: express.Application = express();
+app.enable('trust proxy');
+const corsOptions: cors.CorsOptions = {
+  exposedHeaders: ['Range', 'Location']
+};
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
 
-const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
-const uploads = new Uploadx({ storage, maxUploadSize, allowMIME });
+app.use(auth);
 
-app.use('/upload' as any, uploads.handle, onComplete);
+// ------------ upload route ------------
+app.use(
+  '/upload/v1/',
+  uploadx({
+    destination,
+    maxUploadSize,
+    allowMIME,
+    maxChunkSize
+  }),
+  (req: express.Request, res: express.Response, next) => {
+    if (req.file) {
+      res.json(req.file);
+    } else {
+      res.send('next');
+    }
+  }
+);
+app.use(
+  '/upload/v2/',
+  uploadx({
+    destination: req => join(tmpdir(), req.user.name, req.body.name)
+  }),
+  (req: express.Request, res: express.Response) => {
+    if (req.file) {
+      res.json(req.file);
+    } else {
+      res.send('next');
+    }
+  }
+);
+app.use(
+  '/upload/',
+  uploadx({
+    maxUploadSize,
+    allowMIME,
+    destination: req => `${tmpdir()}/ngx/${req.body.name}`
+  }),
+  (req: express.Request, res: express.Response, next) => {
+    if (req.file) {
+      res.json(req.file);
+    } else {
+      res.send('next');
+    }
+  }
+);
+// ------------------------------  ERROR HANDLER  ------------------------------
 app.use(errorHandler);
 
-export const server = app.listen(PORT, 'localhost');
-
-function onComplete(req, res) {
-  const hash = createHash('md5');
-  const input = createReadStream(req.file.path);
-  input.on('readable', () => {
-    const data = input.read();
-    if (data) hash.update(data);
-    else {
-      const md5 = hash.digest('hex');
-      // console.log('\x1b[36m%s\x1b[0m', `\n<<<COMPLETED>>> ${md5} ${req.file.path}`);
-      res.json({ ...req.file, md5 });
-    }
-  });
-}
+export const server: Server = app.listen(PORT, 'localhost', () => {
+  log('listening on port:', server.address()['port']);
+});

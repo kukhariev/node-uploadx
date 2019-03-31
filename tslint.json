@@ -37,18 +37,6 @@
     "no-trailing-whitespace": true,
     "no-null-keyword": true,
     "prefer-const": true,
-    "jsdoc-format": true,
-    "prefer-object-spread": true,
-    "no-string-throw": true,
-    "no-return-await": true,
-    "promise-function-async": false,
-    "await-promise": true,
-    "interface-name": false,
-    "no-irregular-whitespace": true,
-    "no-this-assignment": true,
-    "arrow-return-shorthand": true,
-    "adjacent-overload-signatures": true,
-    "callable-types": true,
-    "completed-docs": false
+    "jsdoc-format": true
   }
 }

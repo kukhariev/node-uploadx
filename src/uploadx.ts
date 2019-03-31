@@ -1,75 +1,188 @@
-import { parse } from 'bytes';
-import { EventEmitter } from 'events';
-import { DiskStorageConfig, NextFunction, Request, Response, UploadxConfig, EVENT } from './core';
-import { DiskStorage } from './disk-storage';
-import { Handler } from './handler';
+import * as bytes from 'bytes';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
+import * as createError from 'http-errors';
+import * as getRawBody from 'raw-body';
+import { Store, UploadxFile } from './storage';
+import debug = require('debug');
+const log = debug('uploadx:main');
 
-export interface Uploadx {
-  on(event: EVENT, listener: (...arg: any[]) => void): this;
-  off(event: EVENT, listener: (...arg: any[]) => void): this;
-  emit(event: EVENT, ...arg: any[]): boolean;
-}
-/**
- *
- */
-export class Uploadx extends EventEmitter {
-  useRelativeURL: boolean = false;
-  private handler: Handler;
-
-  constructor(private options: UploadxConfig & DiskStorageConfig) {
-    super();
-    options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
-    options.storage = options.storage || new DiskStorage(options as DiskStorageConfig);
-    this.handler = new Handler(this.options);
+declare global {
+  namespace Express {
+    interface Request {
+      user: any;
+      file: UploadxFile;
+    }
   }
+}
+
+export type UploadxConfig = {
+  destination?: string | ((req: Request) => string);
+  maxUploadSize?: number | string;
+  maxChunkSize?: number | string;
+  allowMIME?: string[];
+  useRelativeURL?: boolean;
+};
+
+export function uploadx({
+  destination,
+  maxUploadSize = Number.MAX_SAFE_INTEGER,
+  maxChunkSize = Number.MAX_SAFE_INTEGER,
+  allowMIME = [`\/`],
+  useRelativeURL = false
+}: UploadxConfig): (req: Request, res: Response, next: NextFunction) => RequestHandler {
+  // init database
+  const storage = new Store(destination);
 
   /**
-   * Uploads handler
+   * Create new
    */
-  handle = (req: Request, res: Response, next?: NextFunction) => {
-    Promise.resolve(this._handle_(req, res, next)).catch(next);
-  };
-  /**
-   * Async handler
-   * @internal
-   */
-  private _handle_ = async (req: Request, res: Response, next?: NextFunction) => {
-    try {
-      this.handler.setOrigin(req, res);
-      switch (req.method) {
-        case 'POST':
-          await this.handler.create(req, res);
-          this.emit('created', req.file);
-          break;
-        case 'PUT':
-          await this.handler.write(req, res);
-          if (req.file) {
-            this.emit('complete', req.file);
-            next ? next() : this.handler.send(res, 200, {}, req.file!.metadata);
-          }
-          break;
-        case 'DELETE':
-          const file = await this.handler.delete(req, res);
-          this.emit('deleted', file);
-          next ? next() : this.handler.send(res, 200);
-          break;
-        case 'OPTIONS':
-          this.handler.preFlight(req, res);
-          break;
-        default:
-          this.handler.send(res, 404);
-      }
-    } catch (error) {
-      this.emit('error', error);
-      next ? next(error) : this.handler.sendError(req, res, error);
+  const create: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+    const mimetype = req.get('x-upload-content-type');
+    const size = +req.get('x-upload-content-length');
+    if (!mimetype) {
+      return next();
+    }
+    if (!req.user) {
+      return next(createError(401));
+    }
+
+    if (size > bytes.parse(maxUploadSize)) {
+      return next(createError(413));
+    }
+    if (!new RegExp(allowMIME.join('|')).test(mimetype)) {
+      return next(createError(415));
+    }
+
+    const file: UploadxFile = storage.create(req);
+    if (file.destination) {
+      const search = Object.keys(req.query).reduce(
+        (acc, key) => acc + `&${key}=${req.query[key]}`,
+        `?upload_id=${file.id}`
+      );
+      const location = useRelativeURL
+        ? `${req.baseUrl}${search}`
+        : `//${req.get('host')}${req.baseUrl}${search}`;
+      const status = size === file.bytesWritten ? 200 : 201;
+      log('location: %s, status: %d', location, status);
+      res.location(location);
+      res.sendStatus(status);
+    } else {
+      next(createError(500));
     }
   };
-}
-/**
- * Basic wrapper
- * @param options
- */
-export function uploadx(options: UploadxConfig & DiskStorageConfig) {
-  const upl = new Uploadx(options);
-  return upl.handle;
+
+  /**
+   * List sessions
+   */
+  const find: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(createError(401));
+    }
+    if (req.query.upload_id) {
+      const [file] = storage.findByUser(req.user, req.query.upload_id);
+      if (!file) {
+        return next(createError(404));
+      }
+      res.json(file);
+    } else {
+      res.json(storage.findByUser(req.user));
+    }
+  };
+
+  /**
+   * Cancel upload session
+   */
+  const remove: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(createError(401));
+    }
+    if (!req.query.upload_id) {
+      return next(createError(400));
+    }
+    const [toRemove] = storage.findByUser(req.user, req.query.upload_id);
+    if (toRemove) {
+      storage.remove(toRemove.id);
+      res.sendStatus(204);
+    } else {
+      return next(createError(404));
+    }
+  };
+
+  /**
+   * Save content
+   */
+  const save: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.query.upload_id) {
+      return next(createError(404));
+    }
+    const file = storage.findById(req.query.upload_id);
+    if (!file) {
+      return next(createError(404));
+    }
+    if (+req.get('content-length') > maxChunkSize) {
+      return next(createError(413));
+    }
+    const contentRange = req.get('content-range');
+    // ---------- resume upload ----------
+    if (contentRange && contentRange.includes('*')) {
+      const [, total] = contentRange.match(/\*\/(\d+)/g).map(s => +s);
+      if (total === file.bytesWritten) {
+        req.file = Object.assign({}, file);
+        storage.remove(file.id);
+        return next();
+      } else {
+        res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
+        res.status(308).send('Resume Incomplete');
+        return;
+      }
+    }
+    try {
+      const buf = await getRawBody(req, { limit: maxChunkSize });
+      if (!contentRange) {
+        // -------- full file --------
+        await file.write(buf, 0);
+        req.file = Object.assign({}, file);
+        storage.remove(file.id);
+        next();
+      } else {
+        // --------- by chunks ---------
+        const [, start, end, total] = contentRange.match(/(\d+)-(\d+)\/(\d+)/).map(s => +s);
+        await file.write(buf, start);
+        if (file.bytesWritten < total) {
+          res.set('Range', `bytes=0-${file.bytesWritten - 1}`);
+          res.status(308).send('Resume Incomplete');
+        } else {
+          req.file = Object.assign({}, file);
+          storage.remove(file.id);
+          next();
+        }
+      }
+    } catch (err) {
+      next(createError(err));
+    }
+  };
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    log('%s\n%s\nquery: %o\nheaders: %o', req.baseUrl, req.method, req.query, req.headers);
+    let handler: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+      return next();
+    };
+    switch (req.method) {
+      case 'PUT':
+        handler = save(req, res, next);
+        break;
+      case 'POST':
+        handler = create(req, res, next);
+        break;
+      case 'GET':
+        handler = find(req, res, next);
+        break;
+      case 'DELETE':
+        handler = remove(req, res, next);
+        break;
+      default:
+        break;
+    }
+    return handler;
+  };
 }

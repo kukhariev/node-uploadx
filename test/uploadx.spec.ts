@@ -1,94 +1,238 @@
 process.env.NODE_ENV = 'testing';
-import * as chai from 'chai';
-import * as fs from 'fs';
-import 'mocha';
 import { URL } from 'url';
-import { server } from './server';
-import { reset } from './storage-reset';
-import chaiHttp = require('chai-http');
-chai.use(chaiHttp);
+import chai = require('chai');
 const expect = chai.expect;
-
+chai.use(require('chai-http'));
+import { server } from './server';
+import { readFileSync, statSync, open, read, close, unlinkSync } from 'fs';
 const CHUNK_SIZE = 1024 * 64;
 const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
-const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
+const TEST_FILE_SIZE = statSync(TEST_FILE_PATH).size;
 
-function getIdFromRequest(res: any) {
-  const loc = new URL(res['headers']['location'], 'http://localhost');
-  return loc.searchParams.get('upload_id') as string;
+function xopen(path: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    open(path, 'r', (err, fd) => {
+      err ? reject(err) : resolve(fd);
+    });
+  });
 }
+function nextChunk(fd: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const buffer = Buffer.alloc(CHUNK_SIZE);
+    read(fd, buffer, 0, CHUNK_SIZE, undefined, (err, bytesRead, buffer) => {
+      if (err) {
+        reject(err);
+      }
+      if (bytesRead < CHUNK_SIZE) {
+        close(fd, err => {
+          if (err) {
+            reject(err);
+          }
+        });
+      }
+      const data: Buffer =
+        bytesRead < CHUNK_SIZE ? buffer.slice(0, bytesRead) : buffer;
+      resolve(data);
+    });
+  });
+}
+
+/*  */
 describe('UploadX', () => {
   let id: string;
-  let res: any;
-  let start;
-  let end;
-  before(reset);
-  beforeEach(() => {
-    res = undefined as any;
-  });
-  it('fileSize limit', async () => {
-    try {
-      res = await chai
-        .request(server)
-        .post('/upload')
-        .set('authorization', 'Bearer ToKeN')
-        .set('x-upload-content-type', 'video/mp4')
-        .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
-        .send({ name: 'testfile2.mp4' });
-    } finally {
-      expect(res).to.have.status(403);
-      expect(res).to.not.have.header('location');
-    }
-  });
-  it('create', async () => {
-    try {
-      res = await chai
-        .request(server)
-        .post('/upload')
-        .query({ uploadType: 'uploadX' })
-        .set('authorization', 'Bearer ToKeN')
-        .set('x-upload-content-type', 'video/mp4')
-        .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
-        .send({ name: 'testfile.mp4' });
-    } finally {
-      expect(res).to.have.status(201);
-      expect(res).to.have.header('location');
-      id = getIdFromRequest(res);
-    }
-  });
-  it('range-error', async () => {
-    try {
-      res = await chai
-        .request(server)
-        .put(`/upload`)
-        .query({ uploadType: 'uploadX', upload_id: id })
-        .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(TEST_FILE_PATH));
-    } finally {
-      expect(res).to.have.status(400);
-    }
-  });
-  it('chunks', done => {
-    start = 0;
-    const readable = fs.createReadStream(TEST_FILE_PATH);
-    readable.on('data', async chunk => {
-      end = start + chunk.length;
-      readable.pause();
-      res = await chai
-        .request(server)
-        .put(`/upload`)
-        .query({ upload_id: id })
-        .redirects(0)
-        .set('content-type', 'application/octet-stream')
-        .set('content-range', `bytes ${start}-${end - 1}/${TEST_FILE_SIZE}`)
-        .send(chunk);
-      start = end;
-
-      if (res.status === 200) {
-        expect(fs.statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
-        done();
+  let res: ChaiHttp.Response;
+  describe('API', () => {
+    it('should bypass on non-uploadx requests', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN')
+          .send({ name: 'testfile2.mp4' });
+      } finally {
+        expect(res).to.have.status(200);
       }
-      readable.resume();
+    });
+    it('should return 401 error without auth headers', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`);
+      } finally {
+        expect(res).to.have.status(401);
+        expect(res).to.not.have.header('location');
+      }
+    });
+    it('should return 413 error on very big file', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
+          .send({ name: 'testfile2.mp4' });
+      } finally {
+        expect(res).to.have.status(413);
+        expect(res).to.not.have.header('location');
+      }
+    });
+    it('POST request should create new session', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
+          .send({ name: 'testfile2.mp4' });
+      } finally {
+        expect(res).to.have.status(201);
+        expect(res).to.have.header('location');
+        const loc = new URL(res['headers']['location'], 'http://localhost');
+        id = loc.searchParams.get('upload_id');
+      }
+    });
+    it('PUT request should save file', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .put(`/upload/v1`)
+          .query({ uploadType: 'uploadX', upload_id: id })
+          .send(readFileSync(TEST_FILE_PATH))
+          .set('content-type', 'application/octet-stream');
+      } finally {
+        expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+        expect(res).to.have.status(200);
+        unlinkSync(res.body.path);
+      }
+    });
+    it('should create other session', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
+          .send({ name: 'dummy.mp4' });
+      } finally {
+        expect(res).to.have.status(201);
+        expect(res).to.have.header('location');
+        const loc = new URL(res['headers']['location'], 'http://localhost');
+        id = loc.searchParams.get('upload_id');
+      }
+    });
+    it('should list user sessions', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .get('/upload/v1')
+          .set('authorization', 'Bearer ToKeN');
+      } finally {
+        expect(res.body).instanceof(Array);
+        expect(res).to.have.status(200);
+      }
+    });
+    it('should remove session', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .del(`/upload/v1`)
+          .query({ uploadType: 'uploadX', upload_id: 'id' })
+          .set('authorization', 'Bearer ToKeN');
+      } finally {
+        // expect(res).to.have.status(204);
+      }
+    });
+    it('should remove fault', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .del('/upload/v1')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN');
+      } finally {
+        expect(res).to.have.status(400);
+      }
+    });
+  });
+  describe('Chunks', () => {
+    it('should create session', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v1')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${TEST_FILE_SIZE}`);
+      } finally {
+        expect(res).to.have.status(201);
+        expect(res).to.have.header('location');
+        const loc = new URL(res['headers']['location'], 'http://localhost');
+        id = loc.searchParams.get('upload_id');
+      }
+    });
+    it('should save', async () => {
+      let done = false;
+      let start = 0;
+      const fd = await xopen(TEST_FILE_PATH);
+      const size = TEST_FILE_SIZE;
+      while (!done) {
+        const end = start + CHUNK_SIZE > size ? size : start + CHUNK_SIZE;
+        const chunk = await nextChunk(fd);
+        res = await chai
+          .request(server)
+          .put(`/upload/v1`)
+          .query({ uploadType: 'uploadX', upload_id: id })
+          .redirects(0)
+          .send(chunk)
+          .set('content-type', 'application/octet-stream')
+          .set('content-range', `bytes ${start}-${end - 1}/${size}`);
+        done = chunk.length < CHUNK_SIZE || res.status === 200;
+        start = start + CHUNK_SIZE;
+      }
+      expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+      unlinkSync(res.body.path);
+    });
+  });
+  describe('Destination', () => {
+    it('should create session', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload/v2')
+          .query({ uploadType: 'uploadX' })
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
+          .send({ name: 'testfile.mp4' });
+      } finally {
+        expect(res).to.have.status(201);
+        expect(res).to.have.header('location');
+        const loc = new URL(res['headers']['location'], 'http://localhost');
+        id = loc.searchParams.get('upload_id');
+      }
+    });
+    it('should save', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .put(`/upload/v2`)
+          .query({ uploadType: 'uploadX', upload_id: id })
+          .send(readFileSync(TEST_FILE_PATH))
+          .set('content-type', 'application/octet-stream');
+      } finally {
+        expect(res).to.have.status(200);
+        expect(statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+        unlinkSync(res.body.path);
+      }
     });
   });
 });
