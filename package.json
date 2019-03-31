@@ -29,7 +29,7 @@
     "start": "ts-node test/server.ts",
     "dev": "nodemon",
     "storereset": "ts-node test/storage-reset.ts",
-    "clean": "rimraf dist/lib",
+    "clean": "rimraf dist",
     "postbuild": "ts-node scripts/post-build.ts",
     "build": "npm run tslint && npm run clean && npm run build-ts &&  npm run postbuild",
     "test": "mocha",
