@@ -1,3 +1,5 @@
+// @ts-check
+
 const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');
@@ -6,6 +8,7 @@ const { tmpdir } = require('os');
 const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
 const uploads = new Uploadx({ storage });
 uploads.on('error', console.error);
+uploads.on('created', console.log);
 uploads.on('complete', console.log);
 uploads.on('deleted', console.log);
 

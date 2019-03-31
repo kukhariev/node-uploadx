@@ -10,7 +10,6 @@ const maxUploadSize = '180MB';
 const allowMIME = ['video/*'];
 
 const app = express();
-app.enable('trust proxy');
 
 const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
 const uploads = new Uploadx({ storage, maxUploadSize, allowMIME });
@@ -20,7 +19,7 @@ app.use(errorHandler);
 
 export const server = app.listen(PORT, 'localhost');
 
-function onComplete(req: any, res) {
+function onComplete(req, res) {
   const hash = createHash('md5');
   const input = createReadStream(req.file.path);
   input.on('readable', () => {
