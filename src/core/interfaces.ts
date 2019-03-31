@@ -1,11 +1,8 @@
 import { BaseStorage } from '.';
 import * as http from 'http';
-
+export type EVENT = 'created' | 'complete' | 'deleted' | 'error';
 export type NextFunction = (err?: Error) => void;
 export interface Request extends http.IncomingMessage, Express.Request {
-  /**
-   *
-   */
   body?: any;
   file?: File;
 }

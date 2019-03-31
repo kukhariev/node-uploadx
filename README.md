@@ -24,7 +24,6 @@ const { auth } = require('./auth');
 const { errorHandler } = require('./error-handler');
 
 const app = express();
-app.enable('trust proxy');
 app.use(express.json());
 
 app.use(auth);
@@ -37,7 +36,7 @@ app.use(
     destination: req => `/tmp/${req.user.id}/${req.body.name}`
   }),
   (req, res) => {
-      console.log(req.file.path);
+      console.log(req.file);
       res.json(req.file.metadata);
     }
   }
@@ -58,6 +57,7 @@ const { tmpdir } = require('os');
 const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
 const uploads = new Uploadx({ storage });
 uploads.on('error', console.error);
+uploads.on('created', console.log);
 uploads.on('complete', console.log);
 uploads.on('deleted', console.log);
 

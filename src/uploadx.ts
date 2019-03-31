@@ -1,8 +1,14 @@
 import { parse } from 'bytes';
 import { EventEmitter } from 'events';
-import { DiskStorageConfig, NextFunction, Request, Response, UploadxConfig } from './core';
+import { DiskStorageConfig, NextFunction, Request, Response, UploadxConfig, EVENT } from './core';
 import { DiskStorage } from './disk-storage';
 import { Handler } from './handler';
+
+export interface Uploadx {
+  on(event: EVENT, listener: (...arg: any[]) => void): this;
+  off(event: EVENT, listener: (...arg: any[]) => void): this;
+  emit(event: EVENT, ...arg: any[]): boolean;
+}
 /**
  *
  */
@@ -10,12 +16,13 @@ export class Uploadx extends EventEmitter {
   useRelativeURL: boolean = false;
   private handler: Handler;
 
-  constructor(private options: UploadxConfig) {
+  constructor(private options: UploadxConfig & DiskStorageConfig) {
     super();
     options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
     options.storage = options.storage || new DiskStorage(options as DiskStorageConfig);
     this.handler = new Handler(this.options);
   }
+
   /**
    * Uploads handler
    */
@@ -32,6 +39,7 @@ export class Uploadx extends EventEmitter {
       switch (req.method) {
         case 'POST':
           await this.handler.create(req, res);
+          this.emit('created', req.file);
           break;
         case 'PUT':
           await this.handler.write(req, res);
