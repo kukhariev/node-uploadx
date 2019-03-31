@@ -39,7 +39,7 @@
     "demo:node": "node examples/node/index.js",
     "demo:express": "node examples/express/index.js",
     "preversion": "npm run build",
-    "postversion": "git push --follow-tags && npm publish"
+    "postversion": "git push --follow-tags"
   },
   "devDependencies": {
     "@types/bytes": "^3.0.0",
