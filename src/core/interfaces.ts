@@ -1,18 +1,25 @@
 import { BaseStorage } from '.';
 import * as http from 'http';
-export type EVENT = 'created' | 'complete' | 'deleted' | 'error';
+
 export type NextFunction = (err?: Error) => void;
-export interface Request extends http.IncomingMessage, Express.Request {
+
+export interface Request extends http.IncomingMessage {
   body?: any;
   file?: File;
 }
-export interface Response extends http.ServerResponse, Express.Response {}
+
+export interface Response extends http.ServerResponse {}
+
+/**
+ * @internal
+ */
 export interface Range {
   total?: number;
   end?: number;
   start?: number;
   id: string;
 }
+
 export interface File {
   bytesWritten: number;
   filename: string;
@@ -31,7 +38,9 @@ export interface UploadxConfig {
   storage?: BaseStorage;
   useRelativeURL?: boolean | string;
 }
+
 export type Destination = string | ((req: Request, file: File) => string);
+
 export interface DiskStorageConfig {
   /**
    * Where uploaded files will be stored
@@ -41,4 +50,12 @@ export interface DiskStorageConfig {
    *  Where uploaded files will be stored
    */
   dest?: Destination;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      file: File;
+    }
+  }
 }

@@ -1,13 +1,24 @@
 import { parse } from 'bytes';
 import { EventEmitter } from 'events';
-import { DiskStorageConfig, NextFunction, Request, Response, UploadxConfig, EVENT } from './core';
+import {
+  DiskStorageConfig,
+  File,
+  NextFunction,
+  Request,
+  Response,
+  UploadxConfig,
+  UploadXError
+} from './core';
 import { DiskStorage } from './disk-storage';
 import { Handler } from './handler';
 
 export interface Uploadx {
-  on(event: EVENT, listener: (...arg: any[]) => void): this;
-  off(event: EVENT, listener: (...arg: any[]) => void): this;
-  emit(event: EVENT, ...arg: any[]): boolean;
+  on(event: 'error', listener: (error: UploadXError) => void): this;
+  on(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
+  off(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
+  off(event: 'error', listener: (error: UploadXError) => void): this;
+  emit(event: 'created' | 'complete' | 'deleted', file: File): boolean;
+  emit(event: 'error', error: UploadXError): boolean;
 }
 /**
  *
