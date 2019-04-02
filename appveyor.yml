@@ -3,11 +3,11 @@ environment:
 image:
 - Visual Studio 2015
 - Ubuntu
-stack: node 6
+stack: node 8
 
 # Install scripts. (runs after repo cloning)
 install:
-  - ps: Install-Product node 6
+  - ps: Install-Product node 8
   # install modules
   - npm install
 
@@ -16,8 +16,9 @@ test_script:
   # Output useful info for debugging.
   - node --version
   - npm --version
-  # run tests
+  # run
   - npm test
+  - npm run build
 
 # Don't actually build.
 build: off

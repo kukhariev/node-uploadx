@@ -4,7 +4,7 @@
     "module": "commonjs",
     "outDir": "./dist/lib",
     "baseUrl": "src",
-    "target": "es2015",
+    "target": "es2017",
     "moduleResolution": "node",
     "declaration": true,
     "strict": true,
