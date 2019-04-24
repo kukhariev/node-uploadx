@@ -84,6 +84,9 @@ export class Handler extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async write(req: http.IncomingMessage, res: http.ServerResponse) {
+    if (this.options.maxChunkSize && +req.headers['content-length']! > this.options.maxChunkSize) {
+      throw new UploadXError(ERRORS.CHUNK_SIZE_TOO_BIG);
+    }
     const urlObject = url.parse(req.url!, true);
     const id = urlObject.query.upload_id as string;
     const rangeHeader = req.headers['content-range'];

@@ -24,6 +24,11 @@ export const ERRORS = {
     statusCode: 403,
     message: 'File too big'
   },
+  CHUNK_SIZE_TOO_BIG: {
+    code: 'CHUNK_SIZE_TOO_BIG'.toLowerCase(),
+    statusCode: 413,
+    message: 'Chunk too big'
+  },
   FILE_NOT_FOUND: {
     code: 'FILE_NOT_FOUND'.toLowerCase(),
     statusCode: 404,

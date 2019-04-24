@@ -30,6 +30,7 @@ export class Uploadx extends EventEmitter {
   constructor(private options: UploadxConfig & DiskStorageConfig) {
     super();
     options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
+    options.maxChunkSize = parse(options.maxChunkSize || Number.MAX_SAFE_INTEGER);
     options.storage = options.storage || new DiskStorage(options as DiskStorageConfig);
     this.handler = new Handler(this.options);
   }
