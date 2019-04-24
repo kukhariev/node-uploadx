@@ -6,20 +6,25 @@ import { DiskStorage, Uploadx } from '../src';
 import { errorHandler } from './error-handler';
 
 const PORT = 3003;
-const maxUploadSize = '180MB';
+const maxUploadSize = '1000MB';
 const allowMIME = ['video/*'];
+const maxChunkSize = '8MB';
 
 const app = express();
 
 const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
-const uploads = new Uploadx({ storage, maxUploadSize, allowMIME });
+const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
 
 app.use('/upload' as any, uploads.handle, onComplete);
 app.use(errorHandler);
 
-export const server = app.listen(PORT, 'localhost');
+export const server = app.listen(PORT, '0.0.0.0');
 
 function onComplete(req, res) {
+  if (!req.file) {
+    res.send();
+    return;
+  }
   const hash = createHash('md5');
   const input = createReadStream(req.file.path);
   input.on('readable', () => {
