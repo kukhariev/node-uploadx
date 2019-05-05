@@ -3,18 +3,22 @@ import * as express from 'express';
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
 import { DiskStorage, Uploadx } from '../src';
+import { auth } from './auth';
 import { errorHandler } from './error-handler';
 
 const PORT = 3003;
 const maxUploadSize = '1000MB';
 const allowMIME = ['video/*'];
 const maxChunkSize = '8MB';
-
+const DEST_ROOT = `${tmpdir()}/ngx/`;
 const app = express();
 
-const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
+const storage = new DiskStorage({
+  dest: (req, file) => `${DEST_ROOT}${req.user.id}/${file.filename}`
+});
 const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
 
+app.use(auth);
 app.use('/upload' as any, uploads.handle, onComplete);
 app.use(errorHandler);
 

@@ -5,6 +5,7 @@ export type NextFunction = (err?: Error) => void;
 
 export interface Request extends http.IncomingMessage {
   body?: any;
+  user?: any;
   file?: File;
 }
 
