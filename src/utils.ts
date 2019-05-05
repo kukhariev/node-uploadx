@@ -32,16 +32,6 @@ export async function ensureFile(filePath: string, overwrite = false) {
   }
 }
 
-async function mkDir(dir: string) {
-  try {
-    await fsMkdir(dir);
-  } catch (error) {
-    if (error.code !== 'EEXIST') {
-      throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
-    }
-  }
-}
-
 export async function ensureDir(dir: string) {
   dir = path.normalize(dir);
   const paths = dir.split(path.sep);
@@ -49,6 +39,12 @@ export async function ensureDir(dir: string) {
   let parent = path.parse(dir).root;
   for (const p of paths) {
     parent = path.join(parent, p);
-    await mkDir(parent);
+    try {
+      await fsMkdir(parent);
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
+    }
   }
 }
