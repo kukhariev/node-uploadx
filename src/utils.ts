@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs';
-import { dirname } from 'path';
+import * as path from 'path';
 import { promisify } from 'util';
 import { ERRORS, UploadXError } from './core';
 export const fsMkdir = promisify(fs.mkdir);
@@ -25,19 +25,29 @@ export function hashObject(data: any) {
  */
 export async function ensureFile(filePath: string, overwrite = false) {
   try {
-    await ensureDir(dirname(filePath));
+    await ensureDir(path.dirname(filePath));
     await fsClose(await fsOpen(filePath, overwrite ? 'w' : 'a'));
   } catch (error) {
     throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
   }
 }
 
-async function ensureDir(dir: string) {
+async function mkDir(dir: string) {
   try {
-    await fsMkdir(dir, { recursive: true });
+    await fsMkdir(dir);
   } catch (error) {
     if (error.code !== 'EEXIST') {
       throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
     }
+  }
+}
+
+export async function ensureDir(dir: string) {
+  dir = path.normalize(dir);
+  const paths = dir.split(path.sep);
+  let parent = path.parse(dir).root;
+  for (const p of paths) {
+    parent = path.join(parent, p);
+    await mkDir(parent);
   }
 }
