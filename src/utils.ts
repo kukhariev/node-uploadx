@@ -45,6 +45,7 @@ async function mkDir(dir: string) {
 export async function ensureDir(dir: string) {
   dir = path.normalize(dir);
   const paths = dir.split(path.sep);
+  path.isAbsolute(dir) && paths.shift();
   let parent = path.parse(dir).root;
   for (const p of paths) {
     parent = path.join(parent, p);

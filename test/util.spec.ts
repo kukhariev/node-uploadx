@@ -9,7 +9,7 @@ const expect = chai.expect;
 const ROOT = `${tmpdir()}/ngx`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;
-const REL = '../tmp/1/2';
+const REL = './tmp/1/2';
 
 describe('util', function() {
   beforeEach(() => rimraf.sync(ROOT));
