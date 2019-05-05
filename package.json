@@ -29,6 +29,7 @@
   "scripts": {
     "start": "ts-node test/server.ts",
     "dev": "nodemon",
+    "prettier": "prettier --write \"**/*.{json,md,ts}\"",
     "storereset": "ts-node test/storage-reset.ts",
     "clean": "rimraf dist",
     "postbuild": "ts-node scripts/post-build.ts",
@@ -39,34 +40,49 @@
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "demo:node": "node examples/node/index.js",
     "demo:express": "node examples/express/index.js",
-    "preversion": "npm run build",
-    "postversion": "git push --follow-tags"
+    "postversion": "npm run build && git push --follow-tags"
   },
   "devDependencies": {
     "@types/bytes": "^3.0.0",
     "@types/chai": "^4.1.7",
     "@types/configstore": "^4.0.0",
-    "@types/cors": "^2.8.4",
-    "@types/debug": "^4.1.2",
+    "@types/cors": "^2.8.5",
+    "@types/debug": "^4.1.4",
     "@types/express": "^4.16.1",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^10.14.4",
+    "@types/node": "^10.14.6",
     "@types/rimraf": "^2.0.2",
     "chai": "^4.2.0",
-    "chai-http": "^4.2.1",
+    "chai-http": "^4.3.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
-    "mocha": "^6.0.2",
-    "nodemon": "^1.18.10",
+    "husky": "^2.2.0",
+    "lint-staged": "^8.1.6",
+    "mocha": "^6.1.4",
+    "nodemon": "^1.19.0",
+    "prettier": "^1.17.0",
     "rimraf": "^2.6.3",
-    "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
-    "typescript": "^2.9.2"
+    "ts-node": "^8.1.0",
+    "tslint": "^5.16.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "typescript": "^3.2.4"
   },
   "dependencies": {
     "bytes": "^3.1.0",
     "configstore": "^4.0.0",
     "debug": "^4.1.1",
-    "raw-body": "^2.3.3"
+    "raw-body": "^2.4.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{json,md,ts}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
