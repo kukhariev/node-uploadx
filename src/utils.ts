@@ -19,16 +19,22 @@ export function hashObject(data: any) {
     .digest('hex');
 }
 /**
- *
  * Ensures that the file exists.
  * @param filePath
  * @param overwrite if true: reset file
  */
 export async function ensureFile(filePath: string, overwrite = false) {
   try {
-    // FIX THIS: required node > 10 !!!
-    await fsMkdir(dirname(filePath), { recursive: true });
+    await ensureDir(dirname(filePath));
     await fsClose(await fsOpen(filePath, overwrite ? 'w' : 'a'));
+  } catch (error) {
+    throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
+  }
+}
+
+async function ensureDir(dir: string) {
+  try {
+    await fsMkdir(dir, { recursive: true });
   } catch (error) {
     if (error.code !== 'EEXIST') {
       throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
