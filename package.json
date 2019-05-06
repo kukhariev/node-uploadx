@@ -33,7 +33,7 @@
     "storereset": "ts-node test/storage-reset.ts",
     "clean": "rimraf dist",
     "postbuild": "ts-node scripts/post-build.ts",
-    "build": "npm run tslint && npm run clean && npm run build-ts &&  npm run postbuild",
+    "build": "npm run tslint && npm run clean && npm run build-ts",
     "test": "mocha",
     "test:watch": "mocha --watch",
     "build-ts": "tsc",
