@@ -5,7 +5,13 @@ const http = require('http');
 const url = require('url');
 const { tmpdir } = require('os');
 
-const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
+class DiskStorageEx extends DiskStorage {
+  // allow to get list of all files
+  list(req) {
+    return Promise.resolve(Object.values(this.metaStore.all).filter(f => req.user.id === f.userId));
+  }
+}
+const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
 const uploads = new Uploadx({ storage });
 uploads.on('error', console.error);
 uploads.on('created', console.log);

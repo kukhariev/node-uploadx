@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import * as express from 'express';
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
-import { DiskStorage, Uploadx } from '../src';
+import { DiskStorage, Uploadx, File } from '../src';
 import { auth } from './auth';
 import { errorHandler } from './error-handler';
 
@@ -12,17 +12,23 @@ const allowMIME = ['video/*'];
 const maxChunkSize = '8MB';
 const DEST_ROOT = `${tmpdir()}/ngx/`;
 const app = express();
-
-const storage = new DiskStorage({
+class DiskStorageEx extends DiskStorage {
+  // override
+  // allow to get list of all files
+  list(): Promise<File[]> {
+    return Promise.resolve(Object.values(this.metaStore.all));
+  }
+}
+export const storage = new DiskStorageEx({
   dest: (req, file) => `${DEST_ROOT}${req.user.id}/${file.filename}`
 });
-const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
+export const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
 
 app.use(auth);
 app.use('/upload' as any, uploads.handle, onComplete);
 app.use(errorHandler);
 
-export const server = app.listen(PORT, '0.0.0.0');
+export const server = app.listen(PORT);
 
 function onComplete(req, res) {
   if (!req.file) {

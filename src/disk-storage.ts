@@ -98,15 +98,6 @@ export class DiskStorage extends BaseStorage {
   }
 
   /**
-   * Return all uploads object
-   * @beta
-   */
-
-  list(req?: http.IncomingMessage): Promise<any> {
-    return this.metaStore.all;
-  }
-
-  /**
    * Get file size
    * @internal
    */

@@ -63,7 +63,11 @@ export class Uploadx extends EventEmitter {
         case 'DELETE':
           const deleted = await this.handler.delete(req, res);
           this.emit('deleted', deleted);
-          next ? next() : this.handler.send(res, 200);
+          this.handler.send(res, 200, {}, deleted);
+          break;
+        case 'GET':
+          const files = await this.handler.list(req, res);
+          this.handler.send(res, 200, {}, files);
           break;
         case 'OPTIONS':
           this.handler.preFlight(req, res);

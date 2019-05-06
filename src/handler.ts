@@ -108,14 +108,16 @@ export class Handler extends BaseHandler {
       this.send(res, 308);
     }
   }
+  list(req: http.IncomingMessage, res: http.ServerResponse) {
+    return this.storage.list(req);
+  }
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const urlObject = url.parse(req.url!, true);
     const id = urlObject.query.upload_id as string;
-    const file = await this.storage.delete(id);
-    return file;
+    return this.storage.delete(id);
   }
   /**
    * Set Origin header

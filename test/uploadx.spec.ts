@@ -91,4 +91,23 @@ describe('UploadX', () => {
       readable.resume();
     });
   });
+  it('get files', async () => {
+    try {
+      res = await chai.request(server).get(`/upload`);
+    } finally {
+      // expect(res.body[0]).to.have.property('filename');
+      expect(res).to.have.status(200);
+    }
+  });
+  it('delete file', async () => {
+    try {
+      res = await chai
+        .request(server)
+        .delete(`/upload`)
+        .query({ upload_id: id });
+    } finally {
+      expect(res.body).to.have.property('filename');
+      expect(res).to.have.status(200);
+    }
+  });
 });

@@ -10,4 +10,11 @@ export abstract class BaseStorage {
    */
   abstract write(req: http.IncomingMessage, range: Range): Promise<File>;
   abstract delete(fileId: string): Promise<File>;
+
+  /**
+   * Return uploads array
+   */
+  list(req?: any): Promise<File[]> {
+    return Promise.resolve([] as File[]);
+  }
 }
