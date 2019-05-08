@@ -58,7 +58,7 @@
   {"name":"file.mp4","mimeType":"video/mp4","size":2469036,"lastModified":1497077951924}
   ```
 
-  - `resume:`
+- `resume:`
 
   ```http
   PUT http://example.com/upload?upload_id=471e97554f21dec3b8bb5d4602939c51
