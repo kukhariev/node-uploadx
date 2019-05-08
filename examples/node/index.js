@@ -8,7 +8,7 @@ const { tmpdir } = require('os');
 class DiskStorageEx extends DiskStorage {
   // allow to get list of all files
   list(req) {
-    return Promise.resolve(Object.values(this.metaStore.all).filter(f => req.user.id === f.userId));
+    return Promise.resolve(Object.values(this.metaStore.all));
   }
 }
 const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
