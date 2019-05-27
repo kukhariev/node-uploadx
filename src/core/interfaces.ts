@@ -12,7 +12,8 @@ export interface Request extends http.IncomingMessage {
 export interface Response extends http.ServerResponse {}
 
 /**
- * @internal
+ *
+ *
  */
 export interface Range {
   total?: number;
