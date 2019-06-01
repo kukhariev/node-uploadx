@@ -1,4 +1,9 @@
 export const ERRORS = {
+  BAD_REQUEST: {
+    code: 'BAD_REQUEST'.toLowerCase(),
+    statusCode: 400,
+    message: 'Bad Request'
+  },
   INVALID_CONTENT_TYPE: {
     code: 'INVALID_CONTENT_TYPE'.toLowerCase(),
     statusCode: 400,

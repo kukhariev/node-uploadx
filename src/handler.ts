@@ -39,19 +39,24 @@ export class Handler extends BaseHandler {
         });
         req.body = JSON.parse(raw);
       } catch (error) {
-        throw new UploadXError(ERRORS.UNKNOWN_ERROR, error);
+        throw new UploadXError(ERRORS.BAD_REQUEST, error);
       }
     }
     const file = {} as File;
+
     const user = req['user'];
     file.userId = user && (user.id || user._id);
+
     file.mimeType = req.headers['x-upload-content-type'] || req.body.mimeType;
     if (!new RegExp((this.options.allowMIME || [`\/`]).join('|')).test(file.mimeType))
       throw new UploadXError(ERRORS.INVALID_FILE_TYPE);
+
     file.size = Number.parseInt(req.headers['x-upload-content-length'] || req.body.size);
     if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
     if (file.size > this.options.maxUploadSize!) throw new UploadXError(ERRORS.FILE_TOO_BIG);
+
     file.metadata = req.body;
+
     file.filename = req.body.name || req.body.title;
     if (!file.filename) throw new UploadXError(ERRORS.INVALID_FILE_NAME);
     return file;
@@ -135,7 +140,6 @@ export class Handler extends BaseHandler {
     res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers']!);
     this.send(res, 204);
   }
-
   /**
    * Send Error object to client
    */
