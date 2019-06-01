@@ -48,3 +48,8 @@ export async function ensureDir(dir: string) {
     }
   }
 }
+
+export async function getFileSize(filePath: string) {
+  const fileStat = await fsStat(filePath);
+  return fileStat.size;
+}

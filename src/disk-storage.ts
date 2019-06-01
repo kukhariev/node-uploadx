@@ -11,7 +11,7 @@ import {
   Range,
   UploadXError
 } from './core';
-import { ensureFile, fsUnlink, hashObject, fsStat } from './utils';
+import { ensureFile, fsUnlink, getFileSize, hashObject } from './utils';
 //
 const pkg = JSON.parse(fs.readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
 
@@ -45,7 +45,7 @@ export class DiskStorage extends BaseStorage {
     file.id = hashObject(file);
     this.setFilePath(file, req);
     await ensureFile(file.path);
-    const bytesWritten = await this.getFileSize(file.path);
+    const bytesWritten = await getFileSize(file.path);
     this.metaStore.set(file.id, file);
     return { ...file, bytesWritten } as File;
   }
@@ -69,7 +69,7 @@ export class DiskStorage extends BaseStorage {
     if (!file || !file.path) throw new UploadXError(ERRORS.FILE_NOT_FOUND);
     if (total !== file.size) throw new UploadXError(ERRORS.INVALID_RANGE);
     if (!start) {
-      file.bytesWritten = await this.getFileSize(file.path);
+      file.bytesWritten = await getFileSize(file.path);
       if (start !== 0 || file.bytesWritten > 0) {
         return file;
       }
@@ -95,15 +95,6 @@ export class DiskStorage extends BaseStorage {
         resolve(start + fileStream.bytesWritten);
       });
     });
-  }
-
-  /**
-   * Get file size
-   * @internal
-   */
-  private async getFileSize(filePath: string) {
-    const fileStat = await fsStat(filePath);
-    return fileStat.size;
   }
 
   async delete(id: string): Promise<File> {
