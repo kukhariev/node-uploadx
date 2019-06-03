@@ -12,7 +12,7 @@ import {
   UploadXError
 } from './core';
 import { ensureFile, fsUnlink, getFileSize, hashObject } from './utils';
-//
+
 const pkg = JSON.parse(fs.readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
 
 /**
@@ -89,7 +89,7 @@ export class DiskStorage extends BaseStorage {
         start: start
       });
       fileStream.on('error', error => {
-        return reject(new UploadXError(ERRORS.FILE_WRITE_ERROR, error));
+        return reject(new UploadXError(ERRORS.FILE_ERROR, error));
       });
       req.pipe(fileStream).on('finish', () => {
         resolve(start + fileStream.bytesWritten);

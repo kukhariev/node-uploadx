@@ -7,7 +7,7 @@
     "comment-format": [true, "check-space"],
     "no-var-keyword": true,
     "no-internal-module": true,
-    "no-null-keyword": true,
+    "no-null-keyword": false,
     "prefer-const": true,
     "jsdoc-format": true,
     "prefer-object-spread": true,

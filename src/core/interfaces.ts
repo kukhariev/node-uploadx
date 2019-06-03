@@ -11,10 +11,6 @@ export interface Request extends http.IncomingMessage {
 
 export interface Response extends http.ServerResponse {}
 
-/**
- *
- *
- */
 export interface Range {
   total?: number;
   end?: number;

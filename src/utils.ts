@@ -11,7 +11,6 @@ export const fsUnlink = promisify(fs.unlink);
 
 /**
  * Return md5 checksum
- * @param data
  */
 export function hashObject(data: any) {
   return createHash('md5')
@@ -20,15 +19,13 @@ export function hashObject(data: any) {
 }
 /**
  * Ensures that the file exists.
- * @param filePath
- * @param overwrite if true: reset file
  */
 export async function ensureFile(filePath: string, overwrite = false) {
   try {
     await ensureDir(path.dirname(filePath));
     await fsClose(await fsOpen(filePath, overwrite ? 'w' : 'a'));
   } catch (error) {
-    throw new UploadXError(ERRORS.FILE_WRITE_ERROR, error);
+    throw new UploadXError(ERRORS.FILE_ERROR, error);
   }
 }
 
