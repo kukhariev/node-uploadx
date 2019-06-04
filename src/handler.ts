@@ -25,8 +25,9 @@ export class Handler extends BaseHandler {
     super();
     this.storage = options.storage as BaseStorage;
   }
+
   /**
-   * Parse  Create request
+   * Build File from `create` request
    * @internal
    */
   private async buildFileFromRequest(req: Request) {
@@ -44,47 +45,64 @@ export class Handler extends BaseHandler {
     }
     const file = {} as File;
 
+    file.metadata = req.body;
     const user = req['user'];
     file.userId = user && (user.id || user._id);
-
+    file.filename = req.body.name || req.body.title;
+    file.size = Number.parseInt(req.headers['x-upload-content-length'] || req.body.size);
     file.mimeType = req.headers['x-upload-content-type'] || req.body.mimeType;
+
     if (!new RegExp((this.options.allowMIME || [`\/`]).join('|')).test(file.mimeType))
       throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
-
-    file.size = Number.parseInt(req.headers['x-upload-content-length'] || req.body.size);
     if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
     if (file.size > this.options.maxUploadSize!) throw new UploadXError(ERRORS.FILE_TOO_LARGE);
-
-    file.metadata = req.body;
-
-    file.filename = req.body.name || req.body.title;
     if (!file.filename) throw new UploadXError(ERRORS.INVALID_FILE_NAME);
+
     return file;
   }
 
   /**
-   * Create File from request and send File URI to client
+   * Build file url from request
+   * @internal
    */
-  async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  private buildFileUrl(req: http.IncomingMessage, id: string) {
     const urlObject = url.parse(req.url!, true);
-    const originalQuery = urlObject.query;
-    const baseUrl = req['baseUrl'] || urlObject.pathname!.toLowerCase();
-    const file = await this.buildFileFromRequest(req);
-    const { bytesWritten, id } = await this.storage.create(req as any, file);
-    const statusCode = bytesWritten ? 200 : 201;
-    const query: string = Object.keys(originalQuery).reduce(
-      (acc, key) => acc + `&${key}=${originalQuery[key] || 'true'}`,
+    const query = urlObject.query;
+    const baseUrl = (req['baseUrl'] as string) || urlObject.pathname;
+    const search = Object.keys(query).reduce(
+      (acc, key) => acc + `&${key}=${query[key] || ''}`,
       `?upload_id=${id}`
     );
     const location: string =
       !this.options.useRelativeURL && req.headers.host
-        ? `//${req.headers.host}${baseUrl || ''}${query}`
-        : `${baseUrl || ''}${query}`;
+        ? `//${req.headers.host}${baseUrl || ''}${search}`
+        : `${baseUrl || ''}${search}`;
+    return location;
+  }
+
+  /**
+   * Get `upload_id` from request
+   * @internal
+   */
+  private getFileId(req: http.IncomingMessage) {
+    const query = url.parse(req.url!, true).query;
+    return query && (query.upload_id as string);
+  }
+
+  /**
+   * Create File from request and send file url to client
+   */
+  async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+    const file = await this.buildFileFromRequest(req);
+    const { bytesWritten, id } = await this.storage.create(req as any, file);
+    const statusCode = bytesWritten ? 200 : 201;
+    const location = this.buildFileUrl(req, id);
     res.setHeader('Access-Control-Expose-Headers', 'Location');
     res.setHeader('Location', location);
     this.send(res, statusCode);
     return file;
   }
+
   /**
    * Write chunk to file or/and return chunk offset
    */
@@ -92,8 +110,7 @@ export class Handler extends BaseHandler {
     if (this.options.maxChunkSize && +req.headers['content-length']! > this.options.maxChunkSize) {
       throw new UploadXError(ERRORS.CHUNK_TOO_BIG);
     }
-    const urlObject = url.parse(req.url!, true);
-    const id = urlObject.query.upload_id as string;
+    const id = this.getFileId(req);
     const rangeHeader = req.headers['content-range'];
     if (!rangeHeader) throw new UploadXError(ERRORS.INVALID_RANGE);
     const [total, end, start] = rangeHeader!
@@ -113,39 +130,24 @@ export class Handler extends BaseHandler {
       this.send(res, 308);
     }
   }
+
   list(req: http.IncomingMessage, res: http.ServerResponse) {
     return this.storage.list(req);
   }
+
   /**
    * Delete upload by id
    */
   delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const urlObject = url.parse(req.url!, true);
-    const id = urlObject.query.upload_id as string;
+    const id = this.getFileId(req);
     return this.storage.delete(id);
   }
-  /**
-   * Set Origin header
-   * @internal
-   */
-  setOrigin(req: http.IncomingMessage, res: http.ServerResponse) {
-    req.headers.origin && res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  }
-  /**
-   * OPTIONS preflight Request
-   * @internal
-   */
-  preFlight(req: http.IncomingMessage, res: http.ServerResponse) {
-    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers']!);
-    this.send(res, 204);
-  }
+
   /**
    * Send Error object to client
    */
   sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void {
     const statusCode = error.statusCode || 500;
-    res.statusMessage = 'ERROR';
     const errorBody = {
       error: {
         code: error.code,

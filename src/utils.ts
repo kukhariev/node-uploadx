@@ -17,6 +17,7 @@ export function hashObject(data: any) {
     .update(JSON.stringify(data))
     .digest('hex');
 }
+
 /**
  * Ensures that the file exists.
  */

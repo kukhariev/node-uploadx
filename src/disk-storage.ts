@@ -32,12 +32,14 @@ export class DiskStorage extends BaseStorage {
    * Where store files
    */
   private dest: Destination | undefined;
+
   constructor(private options: DiskStorageConfig) {
     super();
     this.dest = this.options.destination || this.options.dest;
     if (!this.dest) throw new Error('Destination option required');
     this.metaStore = new Configstore(this.metaVersion);
   }
+
   /**
    * Add file to storage
    */
@@ -60,8 +62,9 @@ export class DiskStorage extends BaseStorage {
       file.path = join(this.dest!, file.id);
     }
   }
+
   /**
-   * Chunks
+   * Write chunks
    */
   async write(req: http.IncomingMessage, range: Range): Promise<File> {
     const { total, end, start } = range;
