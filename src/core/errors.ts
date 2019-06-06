@@ -38,7 +38,10 @@ export const ERRORS = {
     statusCode: 404,
     message: 'File not found'
   },
-
+  FILE_GONE: {
+    statusCode: 410,
+    message: 'File gone'
+  },
   UNKNOWN_ERROR: {
     statusCode: 500,
     message: 'Something went wrong receiving the file'

@@ -46,7 +46,11 @@ export class DiskStorage extends BaseStorage {
   async create(req: http.IncomingMessage, file: File): Promise<File> {
     file.id = hashObject(file);
     this.setFilePath(file, req);
-    await ensureFile(file.path);
+    try {
+      await ensureFile(file.path);
+    } catch (error) {
+      throw new UploadXError(ERRORS.FILE_ERROR, error);
+    }
     const bytesWritten = await getFileSize(file.path);
     this.metaStore.set(file.id, file);
     return { ...file, bytesWritten } as File;
@@ -72,15 +76,19 @@ export class DiskStorage extends BaseStorage {
     if (!file || !file.path) throw new UploadXError(ERRORS.FILE_NOT_FOUND);
     if (total !== file.size) throw new UploadXError(ERRORS.INVALID_RANGE);
     if (!start) {
-      file.bytesWritten = await getFileSize(file.path);
-      if (start !== 0 || file.bytesWritten > 0) {
-        return file;
+      try {
+        file.bytesWritten = await getFileSize(file.path);
+        if (start !== 0 || file.bytesWritten > 0) {
+          return file;
+        }
+      } catch (error) {
+        const rethrow = error.code === 'ENOENT' ? ERRORS.FILE_GONE : ERRORS.FILE_ERROR;
+        throw new UploadXError(rethrow, error);
       }
     }
     file.bytesWritten = await this._write(req, file.path, start);
     return file;
   }
-
   /**
    * Append chunk to file
    * @internal

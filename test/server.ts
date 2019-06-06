@@ -7,7 +7,7 @@ import { auth } from './auth';
 import { errorHandler } from './error-handler';
 
 const PORT = 3003;
-const maxUploadSize = '1000MB';
+const maxUploadSize = '6000MB';
 const allowMIME = ['video/*'];
 const maxChunkSize = '8MB';
 const DEST_ROOT = `${tmpdir()}/ngx/`;
