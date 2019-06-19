@@ -34,7 +34,8 @@ export abstract class BaseHandler {
   preFlight(req: http.IncomingMessage, res: http.ServerResponse) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,HEAD');
     res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers']!);
-    this.send(res, 204);
+    res.writeHead(204);
+    res.end();
   }
 
   /**
