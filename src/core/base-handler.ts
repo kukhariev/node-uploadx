@@ -45,17 +45,13 @@ export abstract class BaseHandler {
     res: http.ServerResponse,
     statusCode: number,
     headers = {},
-    raw?: { [key: string]: any } | string
+    body?: { [key: string]: any } | string | undefined
   ) {
-    const json = typeof raw === 'object';
-    const body: string = json ? JSON.stringify(raw) : (raw as string) || '';
-
-    const contentHeaders = {
-      'Content-Length': Buffer.byteLength(body),
-      'Content-Type': json ? 'application/json' : 'text/plain'
-    };
-
-    res.writeHead(statusCode, { ...headers, ...contentHeaders });
-    res.end(body);
+    const json = typeof body === 'object';
+    const data = json ? JSON.stringify(body) : (body as string) || '';
+    res.setHeader('Content-Length', Buffer.byteLength(data));
+    json && data && res.setHeader('Content-Type', 'application/json');
+    res.writeHead(statusCode, headers);
+    res.end(data);
   }
 }
