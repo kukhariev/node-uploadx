@@ -2,9 +2,9 @@
  * @beta
  */
 export const ERRORS = {
-  INVALID_REQUEST: {
+  BAD_REQUEST: {
     statusCode: 400,
-    message: 'Invalid request'
+    message: 'Bad request'
   },
   INVALID_CONTENT_TYPE: {
     statusCode: 400,
@@ -52,11 +52,13 @@ export const ERRORS = {
   }
 };
 
+type UploadXErrorType = typeof ERRORS[keyof typeof ERRORS];
+
 export class UploadXError extends Error {
   code: string;
   statusCode: number;
   message: string;
-  constructor(error: typeof ERRORS[keyof typeof ERRORS], public inner?: any) {
+  constructor(error: UploadXErrorType, public details?: any) {
     super(error.message);
     this.code = Object.keys(ERRORS)
       .find(k => ERRORS[k] === error)!
@@ -64,6 +66,6 @@ export class UploadXError extends Error {
     this.statusCode = error.statusCode;
     this.message = error.message;
     Object.setPrototypeOf(this, new.target.prototype);
-    Error.captureStackTrace(this, this.constructor);
+    Error.stackTraceLimit = 3;
   }
 }

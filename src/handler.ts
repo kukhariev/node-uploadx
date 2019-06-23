@@ -4,12 +4,12 @@ import * as url from 'url';
 import {
   BaseHandler,
   BaseStorage,
+  DiskStorageConfig,
   ERRORS,
-  Request,
   File,
-  UploadXError,
+  Request,
   UploadxConfig,
-  DiskStorageConfig
+  UploadXError
 } from './core';
 
 /**
@@ -20,6 +20,7 @@ export class Handler extends BaseHandler {
    * Where store files
    */
   storage: BaseStorage;
+  static idKey = 'upload_id';
 
   constructor(public options: UploadxConfig & DiskStorageConfig) {
     super();
@@ -28,9 +29,8 @@ export class Handler extends BaseHandler {
 
   /**
    * Build File from `create` request
-   * @internal
    */
-  private async buildFileFromRequest(req: Request) {
+  protected async buildFileFromRequest(req: Request): Promise<File> {
     if (!req.body) {
       try {
         const raw = await getRawBody(req, {
@@ -40,14 +40,13 @@ export class Handler extends BaseHandler {
         });
         req.body = JSON.parse(raw);
       } catch (error) {
-        throw new UploadXError(ERRORS.INVALID_REQUEST, error);
+        throw new UploadXError(ERRORS.BAD_REQUEST, error);
       }
     }
     const file = {} as File;
 
     file.metadata = req.body;
-    const user = req['user'];
-    file.userId = user && (user.id || user._id);
+    'user' in req && (file.userId = req.user.id || req.user._id);
     file.filename = req.body.name || req.body.title;
     file.size = Number.parseInt(req.headers['x-upload-content-length'] || req.body.size);
     file.mimeType = req.headers['x-upload-content-type'] || req.body.mimeType;
@@ -55,38 +54,36 @@ export class Handler extends BaseHandler {
     if (!new RegExp((this.options.allowMIME || [`\/`]).join('|')).test(file.mimeType))
       throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
-    if (file.size > this.options.maxUploadSize!) throw new UploadXError(ERRORS.FILE_TOO_LARGE);
+    if (file.size > this.options.maxUploadSize!)
+      throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
     if (!file.filename) throw new UploadXError(ERRORS.INVALID_FILE_NAME);
-
     return file;
   }
 
   /**
    * Build file url from request
-   * @internal
    */
-  private buildFileUrl(req: http.IncomingMessage, id: string) {
+  protected buildFileUrl(req: http.IncomingMessage, id: string): string {
     const urlObject = url.parse(req.url!, true);
     const query = urlObject.query;
-    const baseUrl = (req['baseUrl'] as string) || urlObject.pathname;
+    const baseUrl = (req['baseUrl'] as string) || urlObject.pathname || '';
     const search = Object.keys(query).reduce(
       (acc, key) => acc + `&${key}=${query[key] || ''}`,
-      `?upload_id=${id}`
+      `?${Handler.idKey}=${id}`
     );
     const location: string =
       !this.options.useRelativeURL && req.headers.host
-        ? `//${req.headers.host}${baseUrl || ''}${search}`
-        : `${baseUrl || ''}${search}`;
+        ? `//${req.headers.host}${baseUrl}${search}`
+        : `${baseUrl}${search}`;
     return location;
   }
 
   /**
    * Get `upload_id` from request
-   * @internal
    */
-  private getFileId(req: http.IncomingMessage) {
+  protected getFileId(req: http.IncomingMessage): string | undefined {
     const query = url.parse(req.url!, true).query;
-    return query && (query.upload_id as string);
+    return query && (query[Handler.idKey] as string);
   }
 
   /**
@@ -106,21 +103,19 @@ export class Handler extends BaseHandler {
   /**
    * Write chunk to file or/and return chunk offset
    */
-  async write(req: http.IncomingMessage, res: http.ServerResponse) {
+  async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     if (this.options.maxChunkSize && +req.headers['content-length']! > this.options.maxChunkSize) {
       throw new UploadXError(ERRORS.CHUNK_TOO_BIG);
     }
     const id = this.getFileId(req);
+    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST);
     const rangeHeader = req.headers['content-range'];
     if (!rangeHeader) throw new UploadXError(ERRORS.INVALID_RANGE);
-    const [total, end, start] = rangeHeader!
+    const [total, end, start] = rangeHeader
       .split(/\D+/)
       .filter(v => v.length)
       .map(s => +s)
       .reverse();
-    req.on('error', () => {
-      throw new UploadXError(ERRORS.UNKNOWN_ERROR);
-    });
     const file = await this.storage.write(req as any, { total, end, start, id });
     if (file.bytesWritten === file.size) {
       req['file'] = file;
@@ -129,6 +124,7 @@ export class Handler extends BaseHandler {
       res.setHeader('Range', `bytes=0-${file.bytesWritten! - 1}`);
       this.send(res, 308);
     }
+    return file;
   }
 
   list(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -140,6 +136,7 @@ export class Handler extends BaseHandler {
    */
   delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
+    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     return this.storage.delete(id);
   }
 

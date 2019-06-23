@@ -9,7 +9,7 @@ export abstract class BaseHandler {
   /**
    * Chunks
    */
-  abstract write(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> | void;
+  abstract write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | void;
   /**
    * Delete by id
    */

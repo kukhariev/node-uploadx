@@ -31,11 +31,11 @@ export class DiskStorage extends BaseStorage {
   /**
    * Where store files
    */
-  private dest: Destination | undefined;
+  private dest: Destination;
 
   constructor(private options: DiskStorageConfig) {
     super();
-    this.dest = this.options.destination || this.options.dest;
+    this.dest = this.options.destination! || this.options.dest!;
     if (!this.dest) throw new Error('Destination option required');
     this.metaStore = new Configstore(this.metaVersion);
   }
@@ -45,7 +45,7 @@ export class DiskStorage extends BaseStorage {
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
     file.id = hashObject(file);
-    this.setFilePath(file, req);
+    file.path = this.setFilePath(req, file);
     try {
       await ensureFile(file.path);
     } catch (error) {
@@ -56,14 +56,14 @@ export class DiskStorage extends BaseStorage {
     return { ...file, bytesWritten } as File;
   }
   /**
-   * @internal
+   *
    */
-  private setFilePath(file: File, req: http.IncomingMessage): void {
+  protected setFilePath(req: http.IncomingMessage, file: File): string {
     if (this.dest instanceof Function) {
       const path = this.dest(req as any, file);
-      file.path = path.endsWith('/') ? join(path, file.id) : path;
+      return path.endsWith('/') ? join(path, file.id) : path;
     } else {
-      file.path = join(this.dest!, file.id);
+      return join(this.dest, file.id);
     }
   }
 
@@ -91,11 +91,11 @@ export class DiskStorage extends BaseStorage {
   }
   /**
    * Append chunk to file
-   * @internal
+   *
    */
-  private _write(req: http.IncomingMessage, path: string, start: number): Promise<number> {
+  protected _write(req: http.IncomingMessage, path: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      const fileStream: fs.WriteStream = fs.createWriteStream(path, {
+      const fileStream = fs.createWriteStream(path, {
         flags: 'r+',
         start: start
       });
