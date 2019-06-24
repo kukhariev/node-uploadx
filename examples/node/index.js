@@ -12,14 +12,14 @@ class DiskStorageEx extends DiskStorage {
   }
 }
 const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
-const uploads = new Uploadx({ storage });
-uploads.on('error', console.error);
-uploads.on('created', console.log);
-uploads.on('complete', console.log);
-uploads.on('deleted', console.log);
+const uploads = new Uploadx({ storage, maxUploadSize: '5GB' });
+uploads.on('error', error => console.error('error: ', error));
+uploads.on('complete', ({ path }) => console.log('completed: ', path));
+uploads.on('created', ({ path }) => console.log('created: ', path));
+uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
 
 const server = http.createServer((req, res) => {
-  const pathname = url.parse(req.url).pathname.toLowerCase();
+  const { pathname } = url.parse(req.url);
   if (pathname === '/upload') {
     uploads.handle(req, res);
   } else {
