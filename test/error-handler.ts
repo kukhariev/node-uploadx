@@ -8,7 +8,8 @@ const errorHandler: ErrorRequestHandler = (
   res.status(err.statusCode || 500).json({
     error: {
       code: err.code,
-      message: err.message
+      message: err.message,
+      details: err.details
     }
   });
 };

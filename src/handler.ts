@@ -1,3 +1,4 @@
+import * as bytes from 'bytes';
 import * as http from 'http';
 import * as getRawBody from 'raw-body';
 import * as url from 'url';
@@ -105,10 +106,13 @@ export class Handler extends BaseHandler {
    */
   async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     if (this.options.maxChunkSize && +req.headers['content-length']! > this.options.maxChunkSize) {
-      throw new UploadXError(ERRORS.CHUNK_TOO_BIG);
+      throw new UploadXError(
+        ERRORS.CHUNK_TOO_BIG,
+        `Chunk size limit: ${bytes(this.options.maxChunkSize as number)}`
+      );
     }
     const id = this.getFileId(req);
-    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST);
+    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     const rangeHeader = req.headers['content-range'];
     if (!rangeHeader) throw new UploadXError(ERRORS.INVALID_RANGE);
     const [total, end, start] = rangeHeader
@@ -147,7 +151,7 @@ export class Handler extends BaseHandler {
     const statusCode = error.statusCode || 500;
     const errorBody = {
       error: {
-        code: error.code,
+        code: error.code || 'unknown_error',
         message: error.message || 'unknown error'
       }
     };
