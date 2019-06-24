@@ -52,19 +52,15 @@ export const ERRORS = {
   }
 };
 
-type UploadXErrorType = typeof ERRORS[keyof typeof ERRORS];
-
 export class UploadXError extends Error {
   code: string;
   statusCode: number;
-  message: string;
-  constructor(error: UploadXErrorType, public details?: any) {
+  constructor(error: typeof ERRORS[keyof typeof ERRORS], public details?: any) {
     super(error.message);
     this.code = Object.keys(ERRORS)
       .find(k => ERRORS[k] === error)!
       .toLowerCase();
     this.statusCode = error.statusCode;
-    this.message = error.message;
     Object.setPrototypeOf(this, new.target.prototype);
     Error.stackTraceLimit = 3;
   }
