@@ -59,13 +59,16 @@ export async function getFileSize(filePath: string): Promise<number> {
   return fileStat.size;
 }
 
-export function getBody(req: http.IncomingMessage): Promise<object> {
+/**
+ * Parse the JSON body of an request
+ */
+export function getBody<T extends http.IncomingMessage>(req: T): Promise<object> {
   return new Promise(resolve => {
     if ('body' in req) {
       resolve(req['body']);
     } else {
-      const buffer: any[] = [];
-      req.on('data', (chunk: any) => buffer.push(chunk));
+      const buffer: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => buffer.push(chunk));
       req.on('end', () => {
         resolve(JSON.parse(buffer.concat().toString()));
       });
