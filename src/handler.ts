@@ -1,6 +1,5 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import * as getRawBody from 'raw-body';
 import * as url from 'url';
 import {
   BaseHandler,
@@ -12,6 +11,7 @@ import {
   UploadxConfig,
   UploadXError
 } from './core';
+import { getBody } from './utils';
 
 /**
  * X-headers  protocol implementation
@@ -32,32 +32,21 @@ export class Handler extends BaseHandler {
    * Build File from `create` request
    */
   protected async buildFileFromRequest(req: Request): Promise<File> {
-    if (!req.body) {
-      try {
-        const raw = await getRawBody(req, {
-          length: req.headers['content-length'],
-          limit: '1mb',
-          encoding: true
-        });
-        req.body = JSON.parse(raw);
-      } catch (error) {
-        throw new UploadXError(ERRORS.BAD_REQUEST, error);
-      }
-    }
     const file = {} as File;
-
-    file.metadata = req.body;
-    'user' in req && (file.userId = req.user.id || req.user._id);
-    file.filename = req.body.name || req.body.title;
-    file.size = Number.parseInt(req.headers['x-upload-content-length'] || req.body.size);
-    file.mimeType = req.headers['x-upload-content-type'] || req.body.mimeType;
-
+    try {
+      file.metadata = await getBody(req);
+      'user' in req && (file.userId = req.user.id || req.user._id);
+      file.filename = file.metadata.name || file.metadata.title;
+      file.size = Number.parseInt(req.headers['x-upload-content-length'] || file.metadata.size);
+      file.mimeType = req.headers['x-upload-content-type'] || file.metadata.mimeType;
+    } catch (error) {
+      throw new UploadXError(ERRORS.BAD_REQUEST, error);
+    }
     if (!new RegExp((this.options.allowMIME || [`\/`]).join('|')).test(file.mimeType))
       throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
     if (file.size > this.options.maxUploadSize!)
       throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
-    if (!file.filename) throw new UploadXError(ERRORS.INVALID_FILE_NAME);
     return file;
   }
 

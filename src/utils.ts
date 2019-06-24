@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as http from 'http';
 import { promisify, isObject } from 'util';
 
 export const fsMkdir = promisify(fs.mkdir);
@@ -56,4 +57,18 @@ export async function ensureDir(dir: string): Promise<void> {
 export async function getFileSize(filePath: string): Promise<number> {
   const fileStat = await fsStat(filePath);
   return fileStat.size;
+}
+
+export function getBody(req: http.IncomingMessage): Promise<object> {
+  return new Promise(resolve => {
+    if ('body' in req) {
+      resolve(req['body']);
+    } else {
+      const buffer: any[] = [];
+      req.on('data', (chunk: any) => buffer.push(chunk));
+      req.on('end', () => {
+        resolve(JSON.parse(buffer.concat().toString()));
+      });
+    }
+  });
 }
