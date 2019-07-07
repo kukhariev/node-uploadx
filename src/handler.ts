@@ -4,7 +4,6 @@ import * as url from 'url';
 import {
   BaseHandler,
   BaseStorage,
-  DiskStorageConfig,
   ERRORS,
   File,
   Request,
@@ -23,7 +22,7 @@ export class Handler extends BaseHandler {
   storage: BaseStorage;
   static idKey = 'upload_id';
 
-  constructor(public options: UploadxConfig & DiskStorageConfig) {
+  constructor(public options: UploadxConfig) {
     super();
     this.storage = options.storage as BaseStorage;
   }
@@ -69,7 +68,7 @@ export class Handler extends BaseHandler {
   }
 
   /**
-   * Get `upload_id` from request
+   * Get id from request
    */
   protected getFileId(req: http.IncomingMessage): string | undefined {
     const query = url.parse(req.url!, true).query;
@@ -106,8 +105,8 @@ export class Handler extends BaseHandler {
     if (!rangeHeader) throw new UploadXError(ERRORS.INVALID_RANGE);
     const [total, end, start] = rangeHeader
       .split(/\D+/)
-      .filter(v => v.length)
-      .map(s => +s)
+      .filter(Boolean)
+      .map(Number)
       .reverse();
     const file = await this.storage.write(req as any, { total, end, start, id });
     if (file.bytesWritten === file.size) {
@@ -120,7 +119,7 @@ export class Handler extends BaseHandler {
     return file;
   }
 
-  list(req: http.IncomingMessage, res: http.ServerResponse) {
+  list(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[]> {
     return this.storage.list(req);
   }
 

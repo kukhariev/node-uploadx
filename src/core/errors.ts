@@ -34,6 +34,10 @@ export const ERRORS = {
     statusCode: 413,
     message: 'Chunk too big'
   },
+  TOO_MANY_REQUESTS: {
+    statusCode: 429,
+    message: 'Too Many Requests'
+  },
   FILE_NOT_FOUND: {
     statusCode: 404,
     message: 'File not found'

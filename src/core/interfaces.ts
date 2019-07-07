@@ -23,7 +23,7 @@ export interface File {
   filename: string;
   id: string;
   metadata: any;
-  mimeType: any;
+  mimeType: string;
   path: string;
   size: number;
   userId: string;
