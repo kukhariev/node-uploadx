@@ -27,7 +27,7 @@ export class Uploadx extends EventEmitter {
   useRelativeURL: boolean = false;
   private handler: Handler;
 
-  constructor(private options: UploadxConfig) {
+  constructor(private options: UploadxConfig & DiskStorageConfig) {
     super();
     options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
     options.maxChunkSize = parse(options.maxChunkSize || Number.MAX_SAFE_INTEGER);

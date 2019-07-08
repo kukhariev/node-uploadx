@@ -1,15 +1,7 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import * as url from 'url';
-import {
-  BaseHandler,
-  BaseStorage,
-  ERRORS,
-  File,
-  Request,
-  UploadxConfig,
-  UploadXError
-} from './core';
+import { BaseHandler, BaseStorage, ERRORS, File, UploadxConfig, UploadXError } from './core';
 import { getBody } from './utils';
 
 /**
@@ -22,6 +14,8 @@ export class Handler extends BaseHandler {
   storage: BaseStorage;
   static idKey = 'upload_id';
 
+  private readonly mimeRegExp = new RegExp((this.options.allowMIME || [`\/`]).join('|'));
+
   constructor(public options: UploadxConfig) {
     super();
     this.storage = options.storage as BaseStorage;
@@ -30,23 +24,33 @@ export class Handler extends BaseHandler {
   /**
    * Build File from `create` request
    */
-  protected async buildFileFromRequest(req: Request): Promise<File> {
+  protected async buildFileFromRequest(req: http.IncomingMessage): Promise<File> {
     const file = {} as File;
     try {
       file.metadata = await getBody(req);
-      'user' in req && (file.userId = req.user.id || req.user._id);
+      file.userId = this.getUserId(req);
       file.filename = file.metadata.name || file.metadata.title;
-      file.size = Number.parseInt(req.headers['x-upload-content-length'] || file.metadata.size);
+      file.size = +(req.headers['x-upload-content-length'] || file.metadata.size);
       file.mimeType = req.headers['x-upload-content-type'] || file.metadata.mimeType;
     } catch (error) {
       throw new UploadXError(ERRORS.BAD_REQUEST, error);
     }
-    if (!new RegExp((this.options.allowMIME || [`\/`]).join('|')).test(file.mimeType))
-      throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
+    if (!this.mimeRegExp.test(file.mimeType)) throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
     if (file.size > this.options.maxUploadSize!)
       throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
     return file;
+  }
+
+  protected getUserId(req: any): string {
+    return 'user' in req ? req.user.id || req.user._id : '';
+  }
+  /**
+   * Get id from request
+   */
+  protected getFileId(req: http.IncomingMessage): string | undefined {
+    const query = url.parse(req.url!, true).query;
+    return query && (query[Handler.idKey] as string);
   }
 
   /**
@@ -68,14 +72,6 @@ export class Handler extends BaseHandler {
   }
 
   /**
-   * Get id from request
-   */
-  protected getFileId(req: http.IncomingMessage): string | undefined {
-    const query = url.parse(req.url!, true).query;
-    return query && (query[Handler.idKey] as string);
-  }
-
-  /**
    * Create File from request and send file url to client
    */
   async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
@@ -93,7 +89,7 @@ export class Handler extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    if (this.options.maxChunkSize && +req.headers['content-length']! > this.options.maxChunkSize) {
+    if (+req.headers['content-length']! > this.options.maxChunkSize!) {
       throw new UploadXError(
         ERRORS.CHUNK_TOO_BIG,
         `Chunk size limit: ${bytes(this.options.maxChunkSize as number)}`
