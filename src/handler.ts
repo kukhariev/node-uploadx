@@ -50,7 +50,7 @@ export class Handler extends BaseHandler {
    */
   protected getFileId(req: http.IncomingMessage): string | undefined {
     const query = url.parse(req.url!, true).query;
-    return query && (query[Handler.idKey] as string);
+    return query[Handler.idKey] as string;
   }
 
   /**

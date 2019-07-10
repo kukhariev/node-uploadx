@@ -2,9 +2,10 @@ import * as http from 'http';
 import { File } from './interfaces';
 
 export abstract class BaseHandler {
-  allowedMethods = 'GET,PUT,PATCH,POST,DELETE';
+  allowedMethods = 'GET,PUT,POST,DELETE';
   allowedHeaders = '';
   corsMaxAge = 600;
+  withCredentials = false;
   /**
    * Create file
    */
@@ -38,6 +39,7 @@ export abstract class BaseHandler {
     const allowedHeaders = this.allowedHeaders || req.headers['access-control-request-headers']!;
     this.setHeader(res, 'Access-Control-Allow-Headers', allowedHeaders);
     this.setHeader(res, 'Access-Control-Max-Age', this.corsMaxAge);
+    this.withCredentials && this.setHeader(res, 'Access-Control-Allow-Credentials', 'true');
     res.writeHead(204);
     res.end();
   }
