@@ -32,9 +32,11 @@ export function hashObject(data: any): string {
 /**
  * Ensures that the file exists.
  */
-export async function ensureFile(filePath: string, overwrite = false): Promise<void> {
+export async function ensureFile(filePath: string, overwrite = false): Promise<number> {
   await ensureDir(path.dirname(filePath));
   await fsClose(await fsOpen(filePath, overwrite ? 'w' : 'a'));
+  const { size } = await fsStat(filePath);
+  return size;
 }
 
 export async function ensureDir(dir: string): Promise<void> {
