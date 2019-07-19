@@ -18,10 +18,10 @@
     "allowSyntheticDefaultImports": false,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
     "stripInternal": true,
     "keyofStringsOnly": true,
-    "strictFunctionTypes": true
+    "strictFunctionTypes": true,
+    "declarationDir": "./dist/types"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "./test/*.spec.ts"]
