@@ -76,7 +76,7 @@ export class Uploadx extends EventEmitter {
           this.handler.send(res, 404);
       }
     } catch (error) {
-      this.emit('error', error);
+      this.listenerCount('error') && this.emit('error', error);
       next ? next(error) : this.handler.sendError(req, res, error);
     }
   };
