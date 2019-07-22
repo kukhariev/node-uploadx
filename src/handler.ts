@@ -89,17 +89,20 @@ export class Handler extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    if (+req.headers['content-length']! > this.options.maxChunkSize!) {
+    const id = this.getFileId(req);
+    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
+    const contentLenght = +req.headers['content-length']!;
+    if (contentLenght > this.options.maxChunkSize!) {
       throw new UploadXError(
         ERRORS.CHUNK_TOO_BIG,
         `Chunk size limit: ${bytes(this.options.maxChunkSize as number)}`
       );
     }
-    const id = this.getFileId(req);
-    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
-    const rangeHeader = req.headers['content-range'];
-    const { start, total } = rangeParser(rangeHeader);
-    const file = await this.storage.write(req as any, { total, start, id });
+    const contentRange = req.headers['content-range'];
+    const { start, total } = contentRange
+      ? rangeParser(contentRange)
+      : { start: 0, total: contentLenght };
+    const file = await this.storage.write(req as any, { start, total, id });
     if (file.bytesWritten === file.size) {
       req['file'] = file;
     } else {
@@ -138,8 +141,8 @@ export class Handler extends BaseHandler {
   }
 }
 export function rangeParser(rangeHeader = '') {
-  const par = rangeHeader.split(/\s+|\//);
-  const total = parseInt(par[2]);
-  const start = parseInt(par[1]);
+  const parts = rangeHeader.split(/\s+|\//);
+  const total = parseInt(parts[2]);
+  const start = parseInt(parts[1]);
   return { start, total };
 }

@@ -30,6 +30,10 @@ export const ERRORS = {
     statusCode: 403,
     message: 'File type not allowed'
   },
+  FILE_CONFLICT: {
+    statusCode: 409,
+    message: 'File conflict'
+  },
   CHUNK_TOO_BIG: {
     statusCode: 413,
     message: 'Chunk too big'

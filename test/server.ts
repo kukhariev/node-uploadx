@@ -1,10 +1,25 @@
 import { createHash } from 'crypto';
 import * as express from 'express';
+
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
 import { DiskStorage, File, Uploadx } from '../src';
-import { auth } from './auth';
-import { errorHandler } from './error-handler';
+
+const auth = (req, res, next) => {
+  if (req.headers.authorization) {
+    req['user'] = { id: '5678', name: 'user656', password: 'password1234' };
+  }
+  next();
+};
+const errorHandler = (err, req, res, next) => {
+  res.status(err.statusCode || 500).json({
+    error: {
+      code: err.code,
+      message: err.message,
+      details: err.details
+    }
+  });
+};
 
 const PORT = 3003;
 const maxUploadSize = '6000MB';

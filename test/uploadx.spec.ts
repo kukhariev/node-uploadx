@@ -9,13 +9,12 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe('UploadX', () => {
+describe('uploadx', () => {
   let id: string;
   let res: any;
   let start: number;
   let end: number;
   let server: Server;
-  const CHUNK_SIZE = 1024 * 64;
   const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
   const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
   function getIdFromRequest(res: any) {
@@ -31,7 +30,7 @@ describe('UploadX', () => {
     res = undefined as any;
   });
 
-  it('fileSize limit', async () => {
+  it('size limit', async () => {
     try {
       res = await chai
         .request(server)
@@ -46,7 +45,7 @@ describe('UploadX', () => {
     }
   });
 
-  it('create', async () => {
+  it('create(x-headers)', async () => {
     try {
       res = await chai
         .request(server)
@@ -62,7 +61,7 @@ describe('UploadX', () => {
     }
   });
 
-  it('chunks', done => {
+  it('multiple chunks', done => {
     start = 0;
     const readable = fs.createReadStream(TEST_FILE_PATH);
     readable.on('data', async chunk => {
@@ -95,7 +94,7 @@ describe('UploadX', () => {
     }
   });
 
-  it('delete file', async () => {
+  it('delete', async () => {
     try {
       res = await chai
         .request(server)
@@ -104,6 +103,35 @@ describe('UploadX', () => {
     } finally {
       expect(res.body).to.have.property('filename');
       expect(res).to.have.status(200);
+    }
+  });
+
+  it('create(metadata)', async () => {
+    try {
+      res = await chai
+        .request(server)
+        .post('/upload')
+        .set('authorization', 'Bearer ToKeN')
+        .send({ name: 'testfileSingle.mp4', mimeType: 'video/mp4', size: TEST_FILE_SIZE });
+    } finally {
+      expect(res).to.have.status(201);
+      expect(res).to.have.header('location');
+      id = getIdFromRequest(res);
+    }
+  });
+
+  it('single request', async () => {
+    try {
+      res = await chai
+        .request(server)
+        .put(`/upload`)
+        .query({ upload_id: id })
+        .set('content-type', 'application/octet-stream')
+        .send(fs.readFileSync(TEST_FILE_PATH));
+    } finally {
+      expect(res).to.have.status(200);
+      expect(fs.statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+      fs.unlinkSync(res.body.path);
     }
   });
 
