@@ -1,10 +1,25 @@
 import { createHash } from 'crypto';
 import * as express from 'express';
+
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
-import { DiskStorage, Uploadx, File } from '../src';
-import { auth } from './auth';
-import { errorHandler } from './error-handler';
+import { DiskStorage, File, Uploadx } from '../src';
+
+const auth = (req, res, next) => {
+  if (req.headers.authorization) {
+    req['user'] = { id: '5678', name: 'user656', password: 'password1234' };
+  }
+  next();
+};
+const errorHandler = (err, req, res, next) => {
+  res.status(err.statusCode || 500).json({
+    error: {
+      code: err.code,
+      message: err.message,
+      details: err.details
+    }
+  });
+};
 
 const PORT = 3003;
 const maxUploadSize = '6000MB';
@@ -12,6 +27,7 @@ const allowMIME = ['video/*'];
 const maxChunkSize = '8MB';
 const DEST_ROOT = `${tmpdir()}/ngx/`;
 const app = express();
+
 class DiskStorageEx extends DiskStorage {
   // override
   // allow to get list of all files
@@ -39,10 +55,10 @@ function onComplete(req, res) {
   const input = createReadStream(req.file.path);
   input.on('readable', () => {
     const data = input.read();
-    if (data) hash.update(data);
-    else {
+    if (data) {
+      hash.update(data);
+    } else {
       const md5 = hash.digest('hex');
-      // console.log('\x1b[36m%s\x1b[0m', `\n<<<COMPLETED>>> ${md5} ${req.file.path}`);
       res.json({ ...req.file, md5 });
     }
   });

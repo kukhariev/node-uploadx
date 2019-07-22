@@ -14,7 +14,7 @@ export interface Response extends http.ServerResponse {}
 export interface Range {
   total?: number;
   end?: number;
-  start?: number;
+  start: number;
   id: string;
 }
 

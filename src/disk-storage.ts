@@ -2,16 +2,8 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import { join, resolve } from 'path';
-import {
-  BaseStorage,
-  Destination,
-  DiskStorageConfig,
-  ERRORS,
-  File,
-  Range,
-  UploadXError
-} from './core';
-import { ensureFile, fsUnlink, getFileSize, hashObject } from './utils';
+import { BaseStorage, Destination, DiskStorageConfig, ERRORS, File, UploadXError } from './core';
+import { ensureFile, fsUnlink, hashObject } from './utils';
 
 const pkg = JSON.parse(fs.readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
 
@@ -54,9 +46,7 @@ export class DiskStorage extends BaseStorage {
     this.metaStore.set(file.id, file);
     return file;
   }
-  /**
-   *
-   */
+
   protected setFilePath(req: http.IncomingMessage, file: File): string {
     if (this.dest instanceof Function) {
       const path = this.dest(req as any, file);
@@ -69,11 +59,10 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async write(req: http.IncomingMessage, range: Range): Promise<File> {
-    const { total, start } = range;
-    const file: File = this.metaStore.get(range.id);
+  async write(req: http.IncomingMessage, { start, total, id }): Promise<File> {
+    const file: File = this.metaStore.get(id);
     if (!file || !file.path) throw new UploadXError(ERRORS.FILE_NOT_FOUND);
-    if (total !== file.size) throw new UploadXError(ERRORS.INVALID_RANGE);
+    if (total >= 0 && total !== file.size) throw new UploadXError(ERRORS.INVALID_RANGE);
     if (!start) {
       try {
         file.bytesWritten = await ensureFile(file.path);
@@ -94,15 +83,15 @@ export class DiskStorage extends BaseStorage {
    */
   protected _write(req: http.IncomingMessage, path: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      const fileStream = fs.createWriteStream(path, {
+      const file = fs.createWriteStream(path, {
         flags: 'r+',
         start
       });
-      fileStream.on('error', error => {
+      file.on('error', error => {
         return reject(new UploadXError(ERRORS.FILE_ERROR, error));
       });
-      req.pipe(fileStream).on('finish', () => {
-        resolve(start + fileStream.bytesWritten);
+      req.pipe(file).on('finish', () => {
+        resolve(start + file.bytesWritten);
       });
     });
   }

@@ -2,31 +2,35 @@ process.env.NODE_ENV = 'testing';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import 'mocha';
+import { Server } from 'net';
 import { URL } from 'url';
-import { server } from './server';
-import { reset } from './storage-reset';
+
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-const CHUNK_SIZE = 1024 * 64;
-const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
-const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
-
-function getIdFromRequest(res: any) {
-  const loc = new URL(res['headers']['location'], 'http://localhost');
-  return loc.searchParams.get('upload_id') as string;
-}
-describe('UploadX', () => {
+describe('uploadx', () => {
   let id: string;
   let res: any;
-  let start;
-  let end;
-  before(reset);
+  let start: number;
+  let end: number;
+  let server: Server;
+  const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
+  const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
+  function getIdFromRequest(res: any) {
+    const loc = new URL(res['headers']['location'], 'http://localhost');
+    return loc.searchParams.get('upload_id') as string;
+  }
+
+  before(() => {
+    server = require('./server').server;
+  });
+
   beforeEach(() => {
     res = undefined as any;
   });
-  it('fileSize limit', async () => {
+
+  it('size limit', async () => {
     try {
       res = await chai
         .request(server)
@@ -40,12 +44,12 @@ describe('UploadX', () => {
       expect(res).to.not.have.header('location');
     }
   });
-  it('create', async () => {
+
+  it('create(x-headers)', async () => {
     try {
       res = await chai
         .request(server)
         .post('/upload')
-        .query({ uploadType: 'uploadX' })
         .set('authorization', 'Bearer ToKeN')
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
@@ -56,19 +60,8 @@ describe('UploadX', () => {
       id = getIdFromRequest(res);
     }
   });
-  it('range-error', async () => {
-    try {
-      res = await chai
-        .request(server)
-        .put(`/upload`)
-        .query({ uploadType: 'uploadX', upload_id: id })
-        .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(TEST_FILE_PATH));
-    } finally {
-      expect(res).to.have.status(400);
-    }
-  });
-  it('chunks', done => {
+
+  it('multiple chunks', done => {
     start = 0;
     const readable = fs.createReadStream(TEST_FILE_PATH);
     readable.on('data', async chunk => {
@@ -91,6 +84,7 @@ describe('UploadX', () => {
       readable.resume();
     });
   });
+
   it('get files', async () => {
     try {
       res = await chai.request(server).get(`/upload`);
@@ -99,7 +93,8 @@ describe('UploadX', () => {
       expect(res).to.have.status(200);
     }
   });
-  it('delete file', async () => {
+
+  it('delete', async () => {
     try {
       res = await chai
         .request(server)
@@ -109,5 +104,38 @@ describe('UploadX', () => {
       expect(res.body).to.have.property('filename');
       expect(res).to.have.status(200);
     }
+  });
+
+  it('create(metadata)', async () => {
+    try {
+      res = await chai
+        .request(server)
+        .post('/upload')
+        .set('authorization', 'Bearer ToKeN')
+        .send({ name: 'testfileSingle.mp4', mimeType: 'video/mp4', size: TEST_FILE_SIZE });
+    } finally {
+      expect(res).to.have.status(201);
+      expect(res).to.have.header('location');
+      id = getIdFromRequest(res);
+    }
+  });
+
+  it('single request', async () => {
+    try {
+      res = await chai
+        .request(server)
+        .put(`/upload`)
+        .query({ upload_id: id })
+        .set('content-type', 'application/octet-stream')
+        .send(fs.readFileSync(TEST_FILE_PATH));
+    } finally {
+      expect(res).to.have.status(200);
+      expect(fs.statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
+      fs.unlinkSync(res.body.path);
+    }
+  });
+
+  after(function() {
+    server && server.close();
   });
 });
