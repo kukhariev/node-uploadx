@@ -11,7 +11,7 @@ try {
   newPackage.repository = oldPackage.repository;
   newPackage.homepage = oldPackage.homepage;
   newPackage.license = oldPackage.license;
-  newPackage.files = ['lib'];
+  newPackage.files = ['lib', 'types'];
   newPackage.typings = 'types/index.d.ts';
   newPackage.main = 'lib/index.js';
   newPackage.dependencies = oldPackage.dependencies;
