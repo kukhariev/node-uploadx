@@ -98,13 +98,8 @@ export class Handler extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     const rangeHeader = req.headers['content-range'];
-    if (!rangeHeader) throw new UploadXError(ERRORS.INVALID_RANGE);
-    const [total, end, start] = rangeHeader
-      .split(/\D+/)
-      .filter(Boolean)
-      .map(Number)
-      .reverse();
-    const file = await this.storage.write(req as any, { total, end, start, id });
+    const { start, total } = rangeParser(rangeHeader);
+    const file = await this.storage.write(req as any, { total, start, id });
     if (file.bytesWritten === file.size) {
       req['file'] = file;
     } else {
@@ -141,4 +136,10 @@ export class Handler extends BaseHandler {
     };
     this.send(res, statusCode, {}, errorBody);
   }
+}
+export function rangeParser(rangeHeader = '') {
+  const par = rangeHeader.split(/\s+|\//);
+  const total = parseInt(par[2]);
+  const start = parseInt(par[1]);
+  return { start, total };
 }

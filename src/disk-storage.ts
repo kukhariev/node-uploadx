@@ -70,10 +70,9 @@ export class DiskStorage extends BaseStorage {
    * Write chunks
    */
   async write(req: http.IncomingMessage, range: Range): Promise<File> {
-    const { total, start } = range;
+    const { start } = range;
     const file: File = this.metaStore.get(range.id);
     if (!file || !file.path) throw new UploadXError(ERRORS.FILE_NOT_FOUND);
-    if (total !== file.size) throw new UploadXError(ERRORS.INVALID_RANGE);
     if (!start) {
       try {
         file.bytesWritten = await ensureFile(file.path);
