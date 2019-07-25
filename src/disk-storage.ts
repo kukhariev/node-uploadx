@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { join, resolve } from 'path';
 import { BaseStorage, Destination, DiskStorageConfig, ERRORS, File, UploadXError } from './core';
-import { ensureFile, fsUnlink, hashObject } from './utils';
+import { ensureFile, fsUnlink, hashObject, fsOpen, fsClose } from './utils';
 
 const pkg = JSON.parse(fs.readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
 
@@ -41,6 +41,7 @@ export class DiskStorage extends BaseStorage {
     try {
       file.bytesWritten = await ensureFile(file.path);
     } catch (error) {
+      console.log(error);
       throw new UploadXError(ERRORS.FILE_ERROR, error);
     }
     this.metaStore.set(file.id, file);
@@ -90,6 +91,7 @@ export class DiskStorage extends BaseStorage {
       file.on('error', error => {
         return reject(new UploadXError(ERRORS.FILE_ERROR, error));
       });
+      req.on('aborted', () => file.close());
       req.pipe(file).on('finish', () => {
         resolve(start + file.bytesWritten);
       });
