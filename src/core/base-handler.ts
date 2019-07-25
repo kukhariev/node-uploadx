@@ -2,7 +2,7 @@ import * as http from 'http';
 import { File } from './interfaces';
 
 export abstract class BaseHandler {
-  allowedMethods = 'GET,PUT,POST,DELETE';
+  allowedMethods = ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'HEAD'];
   allowedHeaders = '';
   corsMaxAge = 600;
   withCredentials = false;
@@ -29,17 +29,18 @@ export abstract class BaseHandler {
    */
   setOrigin(req: http.IncomingMessage, res: http.ServerResponse) {
     req.headers.origin && this.setHeader(res, 'Access-Control-Allow-Origin', req.headers.origin);
+    this.withCredentials && this.setHeader(res, 'Access-Control-Allow-Credentials', 'true');
   }
 
   /**
    * OPTIONS preflight Request
    */
   preFlight(req: http.IncomingMessage, res: http.ServerResponse) {
-    this.setHeader(res, 'Access-Control-Allow-Methods', this.allowedMethods);
     const allowedHeaders = this.allowedHeaders || req.headers['access-control-request-headers']!;
+    this.setHeader(res, 'Access-Control-Allow-Methods', this.allowedMethods.join(','));
     this.setHeader(res, 'Access-Control-Allow-Headers', allowedHeaders);
     this.setHeader(res, 'Access-Control-Max-Age', this.corsMaxAge);
-    this.withCredentials && this.setHeader(res, 'Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Content-Length', '0');
     res.writeHead(204);
     res.end();
   }
