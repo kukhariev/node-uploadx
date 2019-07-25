@@ -91,8 +91,8 @@ export class Handler extends BaseHandler {
   async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
     if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
-    const contentLenght = +req.headers['content-length']!;
-    if (contentLenght > this.options.maxChunkSize!) {
+    const contentLength = +req.headers['content-length']!;
+    if (contentLength > this.options.maxChunkSize!) {
       throw new UploadXError(
         ERRORS.CHUNK_TOO_BIG,
         `Chunk size limit: ${bytes(this.options.maxChunkSize as number)}`
@@ -101,7 +101,7 @@ export class Handler extends BaseHandler {
     const contentRange = req.headers['content-range'];
     const { start, total } = contentRange
       ? rangeParser(contentRange)
-      : { start: 0, total: contentLenght };
+      : { start: 0, total: contentLength };
     const file = await this.storage.write(req as any, { start, total, id });
     if (file.bytesWritten === file.size) {
       req['file'] = file;
