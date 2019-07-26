@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import 'mocha';
-import { rangeParser } from '../src/handler';
+import { rangeParser } from '../src/uploadx';
 const expect = chai.expect;
 
 describe('content-range parser', function() {

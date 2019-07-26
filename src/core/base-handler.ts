@@ -1,8 +1,17 @@
 import * as http from 'http';
 import { File, UploadxConfig } from './interfaces';
 import { BaseStorage, UploadXError, ERRORS } from './';
-
-export abstract class BaseHandler {
+import { parse } from 'bytes';
+import { EventEmitter } from 'events';
+export interface BaseHandler {
+  on(event: 'error', listener: (error: UploadXError) => void): this;
+  on(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
+  off(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
+  off(event: 'error', listener: (error: UploadXError) => void): this;
+  emit(event: 'created' | 'complete' | 'deleted', file: File): boolean;
+  emit(event: 'error', error: UploadXError): boolean;
+}
+export abstract class BaseHandler extends EventEmitter {
   private readonly mimeRegExp = new RegExp((this.options.allowMIME || [`\/`]).join('|'));
   allowedMethods = ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'HEAD'];
   allowedHeaders = '';
@@ -14,6 +23,9 @@ export abstract class BaseHandler {
   storage: BaseStorage;
 
   constructor(public options: UploadxConfig) {
+    super();
+    options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
+    options.maxChunkSize = parse(options.maxChunkSize || Number.MAX_SAFE_INTEGER);
     this.storage = options.storage as BaseStorage;
   }
 
