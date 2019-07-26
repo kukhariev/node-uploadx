@@ -1,11 +1,25 @@
 import * as http from 'http';
-import { File } from './interfaces';
+import { File, UploadxConfig } from './interfaces';
+import { BaseStorage, UploadXError, ERRORS } from './';
 
 export abstract class BaseHandler {
+  private readonly mimeRegExp = new RegExp((this.options.allowMIME || [`\/`]).join('|'));
   allowedMethods = ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'HEAD'];
   allowedHeaders = '';
   corsMaxAge = 600;
   withCredentials = false;
+  /**
+   * Where store files
+   */
+  storage: BaseStorage;
+
+  constructor(public options: UploadxConfig) {
+    this.storage = options.storage as BaseStorage;
+  }
+
+  protected getUserId(req: any): string {
+    return 'user' in req ? req.user.id || req.user._id : '';
+  }
   /**
    * Create file
    */
@@ -23,6 +37,12 @@ export abstract class BaseHandler {
    */
   abstract sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void;
 
+  validateFile(file: File) {
+    if (!this.mimeRegExp.test(file.mimeType)) throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
+    if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
+    if (file.size > this.options.maxUploadSize!)
+      throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
+  }
   /**
    * Set Origin header
    * @internal
@@ -60,6 +80,7 @@ export abstract class BaseHandler {
     const json = typeof body === 'object';
     const data = json ? JSON.stringify(body) : (body as string) || '';
     res.setHeader('Content-Length', Buffer.byteLength(data));
+    res.setHeader('Cache-Control', 'no-store');
     json && data && res.setHeader('Content-Type', 'application/json');
     res.writeHead(statusCode, headers);
     res.end(data);

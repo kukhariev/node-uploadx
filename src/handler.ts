@@ -1,25 +1,15 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, File, UploadxConfig, UploadXError } from './core';
+import { BaseHandler, ERRORS, File, UploadXError, NextFunction, Request, Response } from './core';
 import { getBody } from './utils';
 
 /**
  * X-headers  protocol implementation
  */
 export class Handler extends BaseHandler {
-  /**
-   * Where store files
-   */
-  storage: BaseStorage;
+  emit(arg0: string, file: any) {}
   static idKey = 'upload_id';
-
-  private readonly mimeRegExp = new RegExp((this.options.allowMIME || [`\/`]).join('|'));
-
-  constructor(public options: UploadxConfig) {
-    super();
-    this.storage = options.storage as BaseStorage;
-  }
 
   /**
    * Build File from `create` request
@@ -35,16 +25,44 @@ export class Handler extends BaseHandler {
     } catch (error) {
       throw new UploadXError(ERRORS.BAD_REQUEST, error);
     }
-    if (!this.mimeRegExp.test(file.mimeType)) throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
-    if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
-    if (file.size > this.options.maxUploadSize!)
-      throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
     return file;
   }
 
-  protected getUserId(req: any): string {
-    return 'user' in req ? req.user.id || req.user._id : '';
-  }
+  handle = async (req: Request, res: Response, next?: NextFunction) => {
+    try {
+      this.setOrigin(req, res);
+      switch (req.method) {
+        case 'POST':
+          const file = await this.create(req, res);
+          this.emit('created', file);
+          break;
+        case 'PUT':
+          await this.write(req, res);
+          if (req.file) {
+            this.emit('complete', req.file);
+            next ? next() : this.send(res, 200, {}, req.file!.metadata);
+          }
+          break;
+        case 'DELETE':
+          const deleted = await this.delete(req, res);
+          this.emit('deleted', deleted);
+          this.send(res, 200, {}, deleted);
+          break;
+        case 'GET':
+          const files = await this.list(req, res);
+          this.send(res, 200, {}, files);
+          break;
+        case 'OPTIONS':
+          this.preFlight(req, res);
+          break;
+        default:
+          this.send(res, 404);
+      }
+    } catch (error) {
+      this.emit('error', error);
+      next ? next(error) : this.sendError(req, res, error);
+    }
+  };
   /**
    * Get id from request
    */
@@ -76,6 +94,7 @@ export class Handler extends BaseHandler {
    */
   async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const file = await this.buildFileFromRequest(req);
+    this.validateFile(file);
     const { bytesWritten, id } = await this.storage.create(req as any, file);
     const statusCode = bytesWritten ? 200 : 201;
     const location = this.buildFileUrl(req, id);
@@ -92,12 +111,6 @@ export class Handler extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     const contentLength = +req.headers['content-length']!;
-    if (contentLength > this.options.maxChunkSize!) {
-      throw new UploadXError(
-        ERRORS.CHUNK_TOO_BIG,
-        `Chunk size limit: ${bytes(this.options.maxChunkSize as number)}`
-      );
-    }
     const contentRange = req.headers['content-range'];
     const { start, total } = contentRange
       ? rangeParser(contentRange)
@@ -140,6 +153,7 @@ export class Handler extends BaseHandler {
     this.send(res, statusCode, {}, errorBody);
   }
 }
+
 export function rangeParser(rangeHeader = '') {
   const parts = rangeHeader.split(/\s+|\//);
   const total = parseInt(parts[2]);

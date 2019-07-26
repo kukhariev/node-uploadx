@@ -39,46 +39,7 @@ export class Uploadx extends EventEmitter {
    * Uploads handler
    */
   handle = (req: Request, res: Response, next?: NextFunction) => {
-    Promise.resolve(this._handle_(req, res, next)).catch(next);
-  };
-  /**
-   * Async handler
-   * @internal
-   */
-  private _handle_ = async (req: Request, res: Response, next?: NextFunction) => {
-    try {
-      this.handler.setOrigin(req, res);
-      switch (req.method) {
-        case 'POST':
-          const file = await this.handler.create(req, res);
-          this.emit('created', file);
-          break;
-        case 'PUT':
-          await this.handler.write(req, res);
-          if (req.file) {
-            this.emit('complete', req.file);
-            next ? next() : this.handler.send(res, 200, {}, req.file!.metadata);
-          }
-          break;
-        case 'DELETE':
-          const deleted = await this.handler.delete(req, res);
-          this.emit('deleted', deleted);
-          this.handler.send(res, 200, {}, deleted);
-          break;
-        case 'GET':
-          const files = await this.handler.list(req, res);
-          this.handler.send(res, 200, {}, files);
-          break;
-        case 'OPTIONS':
-          this.handler.preFlight(req, res);
-          break;
-        default:
-          this.handler.send(res, 404);
-      }
-    } catch (error) {
-      this.listenerCount('error') && this.emit('error', error);
-      next ? next(error) : this.handler.sendError(req, res, error);
-    }
+    Promise.resolve(this.handler.handle(req, res, next)).catch(next);
   };
 }
 /**
