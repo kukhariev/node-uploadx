@@ -1,0 +1,7 @@
+{
+  "include": ["src/**/*.ts"],
+  "extension": [".ts"],
+  "require": ["ts-node/register"],
+  "reporter": ["text-summary", "html"],
+  "all": true
+}

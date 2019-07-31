@@ -31,7 +31,7 @@
     "reset": "ts-node test/storage-reset.ts",
     "build": "rimraf dist && tsc",
     "postbuild": "ts-node scripts/post-build.ts",
-    "test": "nyc --reporter=text mocha",
+    "test": "nyc mocha",
     "test:watch": "mocha --watch",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "demo:node": "node examples/node/index.js",
