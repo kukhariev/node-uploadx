@@ -11,6 +11,15 @@ const pkg = JSON.parse(fs.readFileSync(resolve(__dirname, '../package.json'), 'u
  * Local Disk Storage
  */
 export class DiskStorage extends BaseStorage {
+  reset() {
+    const files = this.metaStore.all;
+    for (const id in files) {
+      try {
+        fs.unlinkSync(files[id].path);
+      } catch {}
+    }
+    this.metaStore.clear();
+  }
   /**
    * Meta Format version
    * @beta
@@ -97,6 +106,7 @@ export class DiskStorage extends BaseStorage {
     const file = this.metaStore.get(id) as File;
     file && file.path && (await fsUnlink(file.path));
     this.metaStore.delete(id);
+    file.status = 'deleted';
     return file;
   }
 }

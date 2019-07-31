@@ -38,7 +38,7 @@ class DiskStorageEx extends DiskStorage {
 export const storage = new DiskStorageEx({
   dest: (req, file) => `${DEST_ROOT}${req.user.id}/${file.filename}`
 });
-export const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
+export const uploads = new Uploadx({ storage, maxUploadSize, allowMIME });
 
 app.use(auth);
 app.use('/upload' as any, uploads.handle, onComplete);

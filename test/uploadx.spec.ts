@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import 'mocha';
 import { Server } from 'net';
 import { URL } from 'url';
+import { rangeParser } from '../src/uploadx';
+import { storage } from './server';
 
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
@@ -11,19 +13,21 @@ const expect = chai.expect;
 
 describe('uploadx', () => {
   let id: string;
-  let res: any;
+  let res: ChaiHttp.Response;
   let start: number;
   let end: number;
   let server: Server;
   const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
   const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
-  function getIdFromRequest(res: any) {
-    const loc = new URL(res['headers']['location'], 'http://localhost');
-    return loc.searchParams.get('upload_id') as string;
+
+  function getId(res: ChaiHttp.Response) {
+    const location = new URL(res.header.location, 'http://localhost');
+    return location.searchParams.get('upload_id');
   }
 
   before(() => {
     server = require('./server').server;
+    storage.reset();
   });
 
   beforeEach(() => {
@@ -57,7 +61,8 @@ describe('uploadx', () => {
     } finally {
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
-      id = getIdFromRequest(res);
+      id = getId(res)!;
+      expect(id.length).to.gt(1);
     }
   });
 
@@ -101,7 +106,7 @@ describe('uploadx', () => {
         .delete(`/upload`)
         .query({ upload_id: id });
     } finally {
-      expect(res.body).to.have.property('filename');
+      expect(res.body).to.have.property('name');
       expect(res).to.have.status(200);
     }
   });
@@ -116,7 +121,8 @@ describe('uploadx', () => {
     } finally {
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
-      id = getIdFromRequest(res);
+      id = getId(res)!;
+      expect(id.length).to.gt(1);
     }
   });
 
@@ -137,5 +143,30 @@ describe('uploadx', () => {
 
   after(function() {
     server && server.close();
+    storage.reset();
+  });
+});
+describe('content-range parser', function() {
+  it('resume', function(done) {
+    const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
+    samples.forEach(sample => {
+      const res = rangeParser(sample);
+      expect(res.start).to.satisfy(Number.isNaN);
+    });
+    done();
+  });
+  it('write', function(done) {
+    const samples = [
+      'bytes 0-*/7777777',
+      'bytes 0-333333/7777777',
+      'bytes 0-*/*',
+      'bytes 4000-*/7777777',
+      'bytes 0--1/*'
+    ];
+    samples.forEach(sample => {
+      const res = rangeParser(sample);
+      expect(res.start).to.satisfy(Number.isInteger);
+    });
+    done();
   });
 });
