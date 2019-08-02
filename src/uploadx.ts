@@ -1,16 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
-import {
-  BaseHandler,
-  ERRORS,
-  File,
-  UploadXError,
-  NextFunction,
-  Request,
-  Response,
-  DiskStorageConfig,
-  UploadxConfig
-} from './core';
+import * as querystring from 'querystring';
+import { BaseHandler, ERRORS, File, DiskStorageConfig, UploadxConfig, fail } from './core';
 import { getBody } from './utils';
 import { DiskStorage } from './disk-storage';
 
@@ -19,69 +10,29 @@ import { DiskStorage } from './disk-storage';
  */
 export class Uploadx extends BaseHandler {
   static idKey = 'upload_id';
-
-  constructor(options) {
+  handlers = {
+    POST: 'create',
+    PUT: 'write',
+    DELETE: 'delete'
+  };
+  constructor(public options: UploadxConfig) {
     super(options);
     this.storage = options.storage || new DiskStorage(options as DiskStorageConfig);
   }
+
   /**
    * Build File from `create` request
    */
   protected async buildFileFromRequest(req: http.IncomingMessage): Promise<File> {
     const file = {} as File;
-    try {
-      file.metadata = await getBody(req);
-      file.userId = this.getUserId(req);
-      file.filename = file.metadata.name || file.metadata.title;
-      file.size = +(req.headers['x-upload-content-length'] || file.metadata.size);
-      file.mimeType = req.headers['x-upload-content-type'] || file.metadata.mimeType;
-    } catch (error) {
-      throw new UploadXError(ERRORS.BAD_REQUEST, error);
-    }
+    file.metadata = await getBody(req);
+    file.userId = this.getUserId(req);
+    file.filename = file.metadata.name || file.metadata.title;
+    file.size = +(req.headers['x-upload-content-length'] || file.metadata.size);
+    file.mimeType = req.headers['x-upload-content-type'] || file.metadata.mimeType;
     return file;
   }
 
-  /**
-   * Uploads handler
-   */
-  handle = (req: Request, res: Response, next?: NextFunction) => {
-    this.setOrigin(req, res);
-    Promise.resolve(this._handle(req, res, next)).catch(next);
-  };
-  _handle = async (req: Request, res: Response, next?: NextFunction) => {
-    try {
-      switch (req.method) {
-        case 'POST':
-          const file = await this.create(req, res);
-          this.emit('created', file);
-          break;
-        case 'PUT':
-          await this.write(req, res);
-          if (req.file && req.file.metadata) {
-            this.emit('complete', req.file);
-            next ? next() : this.send(res, 200, {}, req.file.metadata);
-          }
-          break;
-        case 'DELETE':
-          const deleted = await this.delete(req, res);
-          this.emit('deleted', deleted);
-          this.send(res, 200, {}, deleted);
-          break;
-        case 'GET':
-          const files = await this.list(req, res);
-          this.send(res, 200, {}, files);
-          break;
-        case 'OPTIONS':
-          this.preFlight(req, res);
-          break;
-        default:
-          this.send(res, 404);
-      }
-    } catch (error) {
-      this.emit('error', error);
-      next ? next(error) : this.sendError(req, res, error);
-    }
-  };
   /**
    * Get id from request
    */
@@ -94,17 +45,11 @@ export class Uploadx extends BaseHandler {
    * Build file url from request
    */
   protected buildFileUrl(req: http.IncomingMessage, id: string): string {
-    const urlObject = url.parse(req.url!, true);
-    const query = urlObject.query;
-    const baseUrl = (req['baseUrl'] as string) || urlObject.pathname || '';
-    const search = Object.keys(query).reduce(
-      (acc, key) => acc + `&${key}=${query[key] || ''}`,
-      `?${Uploadx.idKey}=${id}`
-    );
+    const { query, pathname } = url.parse(req.url!, true);
+    const baseUrl = (req['baseUrl'] as string) || pathname || '';
+    const uri = `${baseUrl}?${querystring.stringify({ ...query, ...{ [Uploadx.idKey]: id } })}`;
     const location: string =
-      !this.options.useRelativeURL && req.headers.host
-        ? `//${req.headers.host}${baseUrl}${search}`
-        : `${baseUrl}${search}`;
+      !this.options.useRelativeURL && req.headers.host ? `//${req.headers.host}${uri}` : `${uri}`;
     return location;
   }
 
@@ -112,14 +57,15 @@ export class Uploadx extends BaseHandler {
    * Create File from request and send file url to client
    */
   async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const file = await this.buildFileFromRequest(req);
-    this.validateFile(file);
-    const { bytesWritten, id } = await this.storage.create(req as any, file);
-    const statusCode = bytesWritten ? 200 : 201;
-    const location = this.buildFileUrl(req, id);
+    let file = await this.buildFileFromRequest(req);
+    await this.validateFile(file);
+    file = await this.storage.create(req, file);
+    const statusCode = file.bytesWritten ? 200 : 201;
+    const location = this.buildFileUrl(req, file.id);
     res.setHeader('Access-Control-Expose-Headers', 'Location');
     res.setHeader('Location', location);
     this.send(res, statusCode);
+    file.status = 'created';
     return file;
   }
 
@@ -128,36 +74,37 @@ export class Uploadx extends BaseHandler {
    */
   async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
-    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
+    if (!id) return fail(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     const contentLength = +req.headers['content-length']!;
     const contentRange = req.headers['content-range'];
     const { start, total } = contentRange
       ? rangeParser(contentRange)
       : { start: 0, total: contentLength };
-    const file = await this.storage.write(req as any, { start, total, id });
-    if (file.bytesWritten === file.size) {
-      req['file'] = file;
-    } else {
+    const file = await this.storage.write(req, { start, total, id });
+    if (file.bytesWritten < file.size) {
       res.setHeader('Access-Control-Expose-Headers', 'Range');
       res.setHeader('Range', `bytes=0-${file.bytesWritten! - 1}`);
       this.send(res, 308);
+    } else {
+      file.status = 'complete';
     }
     return file;
-  }
-
-  list(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[]> {
-    return this.storage.list(req);
   }
 
   /**
    * Delete upload by id
    */
-  delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
-    if (!id) throw new UploadXError(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
-    return this.storage.delete(id);
+    if (!id) return fail(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
+    const file = await this.storage.delete(id);
+    this.send(res, 200, {}, file.metadata);
+    file.status = 'deleted';
+    return file;
   }
-
+  list(req: http.IncomingMessage, res: http.ServerResponse) {
+    return this.storage.list(req);
+  }
   /**
    * Send Error object to client
    */
@@ -181,8 +128,7 @@ export function rangeParser(rangeHeader = '') {
 }
 
 /**
- * Basic wrapper
- * @param options
+ * Basic express wrapper
  */
 export function uploadx(options: UploadxConfig & DiskStorageConfig) {
   const upl = new Uploadx(options);

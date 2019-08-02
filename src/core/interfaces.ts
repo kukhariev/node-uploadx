@@ -1,5 +1,5 @@
-import { BaseStorage } from '.';
 import * as http from 'http';
+import { BaseStorage } from '.';
 
 export type NextFunction = (err?: Error) => void;
 
@@ -27,16 +27,16 @@ export interface File {
   path: string;
   size: number;
   userId: string;
+  status: 'created' | 'complete' | 'deleted' | 'error';
 }
-
-export interface UploadxConfig {
+export interface StorageConfig {}
+export interface UploadxConfig extends StorageConfig {
+  storage?: BaseStorage;
+  useRelativeURL?: boolean | string;
   allowMIME?: string[];
   maxChunkSize?: number | string;
   maxUploadSize?: number | string;
-  storage?: BaseStorage;
-  useRelativeURL?: boolean | string;
 }
-
 export type Destination = string | ((req: Request, file: File) => string);
 
 export interface DiskStorageConfig {

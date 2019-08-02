@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import 'mocha';
 import { Server } from 'net';
 import { URL } from 'url';
-import { rangeParser } from '../src/uploadx';
+import { rangeParser, Uploadx } from '../src/uploadx';
 import { storage } from './server';
 
 import chaiHttp = require('chai-http');
@@ -22,7 +22,7 @@ describe('uploadx', () => {
 
   function getId(res: ChaiHttp.Response) {
     const location = new URL(res.header.location, 'http://localhost');
-    return location.searchParams.get('upload_id');
+    return location.searchParams.get(Uploadx.idKey);
   }
 
   before(() => {
@@ -33,20 +33,35 @@ describe('uploadx', () => {
   beforeEach(() => {
     res = undefined as any;
   });
-
-  it('size limit', async () => {
-    try {
-      res = await chai
-        .request(server)
-        .post('/upload')
-        .set('authorization', 'Bearer ToKeN')
-        .set('x-upload-content-type', 'video/mp4')
-        .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
-        .send({ name: 'testfile2.mp4' });
-    } finally {
-      expect(res).to.have.status(403);
-      expect(res).to.not.have.header('location');
-    }
+  describe('limits', () => {
+    it('size', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload')
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'video/mp4')
+          .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
+          .send({ name: 'testfile2.mp4' });
+      } finally {
+        expect(res).to.have.status(403);
+        expect(res).to.not.have.header('location');
+      }
+    });
+    it('mimetype', async () => {
+      try {
+        res = await chai
+          .request(server)
+          .post('/upload')
+          .set('authorization', 'Bearer ToKeN')
+          .set('x-upload-content-type', 'text/json')
+          .set('x-upload-content-length', '3000')
+          .send({ name: 'testfile2.json' });
+      } finally {
+        expect(res).to.have.status(403);
+        expect(res).to.not.have.header('location');
+      }
+    });
   });
 
   it('create(x-headers)', async () => {
@@ -94,7 +109,6 @@ describe('uploadx', () => {
     try {
       res = await chai.request(server).get(`/upload`);
     } finally {
-      // expect(res.body[0]).to.have.property('filename');
       expect(res).to.have.status(200);
     }
   });
@@ -125,7 +139,6 @@ describe('uploadx', () => {
       expect(id.length).to.gt(1);
     }
   });
-
   it('single request', async () => {
     try {
       res = await chai
@@ -141,32 +154,33 @@ describe('uploadx', () => {
     }
   });
 
+  describe('content-range parser', function() {
+    it('resume', function(done) {
+      const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
+      samples.forEach(sample => {
+        const res = rangeParser(sample);
+        expect(res.start).to.satisfy(Number.isNaN);
+      });
+      done();
+    });
+    it('write', function(done) {
+      const samples = [
+        'bytes 0-*/7777777',
+        'bytes 0-333333/7777777',
+        'bytes 0-*/*',
+        'bytes 4000-*/7777777',
+        'bytes 0--1/*'
+      ];
+      samples.forEach(sample => {
+        const res = rangeParser(sample);
+        expect(res.start).to.satisfy(Number.isInteger);
+      });
+      done();
+    });
+  });
+
   after(function() {
     server && server.close();
     storage.reset();
-  });
-});
-describe('content-range parser', function() {
-  it('resume', function(done) {
-    const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
-    samples.forEach(sample => {
-      const res = rangeParser(sample);
-      expect(res.start).to.satisfy(Number.isNaN);
-    });
-    done();
-  });
-  it('write', function(done) {
-    const samples = [
-      'bytes 0-*/7777777',
-      'bytes 0-333333/7777777',
-      'bytes 0-*/*',
-      'bytes 4000-*/7777777',
-      'bytes 0--1/*'
-    ];
-    samples.forEach(sample => {
-      const res = rangeParser(sample);
-      expect(res.start).to.satisfy(Number.isInteger);
-    });
-    done();
   });
 });

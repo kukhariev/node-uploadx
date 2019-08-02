@@ -72,7 +72,8 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<object>
       const buffer: Buffer[] = [];
       req.on('data', (chunk: Buffer) => buffer.push(chunk));
       req.on('end', () => {
-        resolve(JSON.parse(buffer.concat().toString()));
+        req['body'] = JSON.parse(buffer.concat().toString());
+        resolve(req['body']);
       });
     }
   });

@@ -3,18 +3,15 @@ import * as chai from 'chai';
 import 'mocha';
 const expect = chai.expect;
 
-describe.skip('storage', function() {
+describe('storage', function() {
   let storage;
   before(() => {
     storage = require('./server').storage;
   });
 
-  it('should return files array', async function() {
+  it('should return files', async function() {
     const files = await storage.list();
-    const filenames: string[] = [];
-    files.forEach(e => {
-      filenames.push(e.filename);
-    });
-    expect(filenames).to.have.members(['testfile.mp4']);
+    expect(files).to.be.an('object');
+    expect(files).to.be.empty;
   });
 });

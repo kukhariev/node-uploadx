@@ -60,16 +60,16 @@ export const ERRORS = {
   }
 };
 
-export class UploadXError extends Error {
-  code: string;
+export interface ErrorStatus {
   statusCode: number;
-  constructor(error: typeof ERRORS[keyof typeof ERRORS], public details?: any) {
-    super(error.message);
-    this.code = Object.keys(ERRORS)
-      .find(k => ERRORS[k] === error)!
-      .toLowerCase();
-    this.statusCode = error.statusCode;
-    Object.setPrototypeOf(this, new.target.prototype);
-    Error.stackTraceLimit = 3;
-  }
+  message: string;
+  code?: any;
+  details?: any;
+}
+
+export function fail<T>(error: ErrorStatus, details?: any) {
+  // error.code = Object.keys(ERRORS)
+  //   .find(k => ERRORS[k] === error)!
+  //   .toLowerCase();
+  return Promise.reject<T>({ ...error, details });
 }

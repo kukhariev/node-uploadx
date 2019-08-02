@@ -1,6 +1,6 @@
+process.env.NODE_ENV = 'testing';
 import { createHash } from 'crypto';
 import * as express from 'express';
-
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
 import { DiskStorage, File, Uploadx } from '../src';
@@ -22,20 +22,13 @@ const errorHandler = (err, req, res, next) => {
 };
 
 const PORT = 3003;
-const maxUploadSize = '6000MB';
+const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
 const maxChunkSize = '8MB';
-const DEST_ROOT = `${tmpdir()}/ngx/`;
+const DEST_ROOT = `${tmpdir()}/node-uploadx/`;
 const app = express();
 
-class DiskStorageEx extends DiskStorage {
-  // override
-  // allow to get list of all files
-  list(): Promise<File[]> {
-    return Promise.resolve(Object.values(this.metaStore.all));
-  }
-}
-export const storage = new DiskStorageEx({
+export const storage = new DiskStorage({
   dest: (req, file) => `${DEST_ROOT}${req.user.id}/${file.filename}`
 });
 export const uploads = new Uploadx({ storage, maxUploadSize, allowMIME });

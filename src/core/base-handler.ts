@@ -1,77 +1,129 @@
-import * as http from 'http';
-import { File, UploadxConfig } from './interfaces';
-import { BaseStorage, UploadXError, ERRORS } from './';
-import { parse } from 'bytes';
+import * as bytes from 'bytes';
 import { EventEmitter } from 'events';
-export interface BaseHandler {
-  on(event: 'error', listener: (error: UploadXError) => void): this;
+import * as http from 'http';
+import { BaseStorage, ERRORS, ErrorStatus, fail } from './';
+import { File, UploadxConfig } from './interfaces';
+export interface BaseHandle {
+  on(event: 'error', listener: (error: ErrorStatus) => void): this;
   on(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
   off(event: 'created' | 'complete' | 'deleted', listener: (file: File) => void): this;
-  off(event: 'error', listener: (error: UploadXError) => void): this;
-  emit(event: 'created' | 'complete' | 'deleted', file: File): boolean;
-  emit(event: 'error', error: UploadXError): boolean;
+  off(event: 'error', listener: (error: ErrorStatus) => void): this;
+  emit(event: 'created' | 'complete' | 'deleted' | 'error', evt: File | ErrorStatus): boolean;
 }
 export abstract class BaseHandler extends EventEmitter {
   private readonly mimeRegExp = new RegExp((this.options.allowMIME || [`\/`]).join('|'));
-  allowedMethods = ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'HEAD'];
-  allowedHeaders = '';
-  corsMaxAge = 600;
-  withCredentials = false;
+  cors = {
+    allowedMethods: ['GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: '',
+    maxAge: 600,
+    withCredentials: false,
+    origin: []
+  };
+
   /**
    * Where store files
    */
   storage: BaseStorage;
-
+  /**
+   * Uploads handler
+   */
+  handle = <T extends http.IncomingMessage, U extends http.ServerResponse>(
+    req: T,
+    res: U,
+    next?: any
+  ) => {
+    Promise.resolve(this._handler(req, res, next)).catch(next);
+  };
+  handlers = {
+    POST: 'create',
+    PUT: 'write'
+  };
   constructor(public options: UploadxConfig) {
     super();
-    options.maxUploadSize = parse(options.maxUploadSize || Number.MAX_SAFE_INTEGER);
-    options.maxChunkSize = parse(options.maxChunkSize || Number.MAX_SAFE_INTEGER);
-    this.storage = options.storage as BaseStorage;
+
+    this.storage = options.storage!;
+    Object.assign(this.storage.options, options);
   }
 
-  protected getUserId(req: any): string {
-    return 'user' in req ? req.user.id || req.user._id : '';
+  async _handler<T extends http.IncomingMessage, U extends http.ServerResponse>(
+    req: T,
+    res: U,
+    next?: any
+  ) {
+    let file: File = {} as File;
+
+    this.setOrigin(req, res);
+    if (req.method === 'OPTIONS') {
+      return this.preFlight(req, res);
+    }
+    const method = this.handlers[req.method!];
+
+    if (method) {
+      file = await this[method](req, res).catch((error: any) => {
+        this.listenerCount('error') && this.emit('error', error);
+        next ? next(error) : this.sendError(req, res, error);
+      });
+    } else {
+      next ? next() : this.send(res, 405);
+    }
+    if (!file) {
+      next ? next() : this.send(res, 415);
+    } else {
+      file.status && this.emit(file.status, file);
+      if (file.status === 'complete') {
+        req['file'] = file;
+        next ? next() : this.send(res, 200, {}, file.metadata);
+      }
+    }
   }
   /**
    * Create file
    */
-  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | File;
+  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File | undefined>;
   /**
    * Chunks
    */
-  abstract write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | void;
+  abstract write(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    next?: any
+  ): Promise<File | undefined>;
   /**
    * Delete by id
    */
-  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> | File;
+  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File | undefined>;
   /**
    * Make formated httpError response
    */
   abstract sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void;
-
-  validateFile(file: File) {
-    if (!this.mimeRegExp.test(file.mimeType)) throw new UploadXError(ERRORS.FILE_TYPE_NOT_ALLOWED);
-    if (isNaN(file.size)) throw new UploadXError(ERRORS.INVALID_FILE_SIZE);
-    if (file.size > this.options.maxUploadSize!)
-      throw new UploadXError(ERRORS.FILE_TOO_LARGE, `Max file size: ${this.options.maxUploadSize}`);
+  protected getUserId(req: any): string {
+    return 'user' in req ? req.user.id || req.user._id : '';
+  }
+  protected validateFile(file: File) {
+    const maxUploadSize = bytes.parse(this.options.maxUploadSize || Number.MAX_SAFE_INTEGER);
+    if (!this.mimeRegExp.test(file.mimeType)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
+    if (file.size > maxUploadSize)
+      return fail(ERRORS.FILE_TOO_LARGE, `Max file size limit: ${bytes(maxUploadSize)}`);
+    return Promise.resolve(file);
   }
   /**
    * Set Origin header
-   * @internal
    */
   setOrigin(req: http.IncomingMessage, res: http.ServerResponse) {
-    req.headers.origin && this.setHeader(res, 'Access-Control-Allow-Origin', req.headers.origin);
-    this.withCredentials && this.setHeader(res, 'Access-Control-Allow-Credentials', 'true');
+    const origin = this.cors.origin.length ? this.cors.origin.join(',') : req.headers.origin;
+    origin && this.setHeader(res, 'Access-Control-Allow-Origin', origin);
+    this.cors.withCredentials && this.setHeader(res, 'Access-Control-Allow-Credentials', 'true');
   }
 
   /**
    * OPTIONS preflight Request
    */
   preFlight(req: http.IncomingMessage, res: http.ServerResponse) {
-    const allowedHeaders = this.allowedHeaders || req.headers['access-control-request-headers']!;
-    this.setHeader(res, 'Access-Control-Allow-Methods', this.allowedMethods.join(','));
+    const allowedHeaders =
+      this.cors.allowedHeaders || req.headers['access-control-request-headers']!;
+    this.setHeader(res, 'Access-Control-Allow-Methods', this.cors.allowedMethods.join(','));
     this.setHeader(res, 'Access-Control-Allow-Headers', allowedHeaders);
-    this.setHeader(res, 'Access-Control-Max-Age', this.corsMaxAge);
+    this.setHeader(res, 'Access-Control-Max-Age', this.cors.maxAge);
     res.setHeader('Content-Length', '0');
     res.writeHead(204);
     res.end();
