@@ -36,7 +36,7 @@ export abstract class BaseHandler extends EventEmitter {
   };
   handlers = {
     POST: 'create',
-    PUT: 'write'
+    PUT: 'update'
   };
   constructor(public options: UploadxConfig) {
     super();
@@ -63,17 +63,17 @@ export abstract class BaseHandler extends EventEmitter {
         this.listenerCount('error') && this.emit('error', error);
         next ? next(error) : this.sendError(req, res, error);
       });
+      if (!file) {
+        next ? next() : this.send(res, 415);
+      } else {
+        file.status && this.emit(file.status, file);
+        if (file.status === 'complete') {
+          req['file'] = file;
+          next ? next() : this.send(res, 200, {}, file.metadata);
+        }
+      }
     } else {
       next ? next() : this.send(res, 405);
-    }
-    if (!file) {
-      next ? next() : this.send(res, 415);
-    } else {
-      file.status && this.emit(file.status, file);
-      if (file.status === 'complete') {
-        req['file'] = file;
-        next ? next() : this.send(res, 200, {}, file.metadata);
-      }
     }
   }
   /**
@@ -83,7 +83,7 @@ export abstract class BaseHandler extends EventEmitter {
   /**
    * Chunks
    */
-  abstract write(
+  abstract update(
     req: http.IncomingMessage,
     res: http.ServerResponse,
     next?: any
@@ -97,13 +97,13 @@ export abstract class BaseHandler extends EventEmitter {
    */
   abstract sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void;
   protected getUserId(req: any): string {
-    return 'user' in req ? req.user.id || req.user._id : '';
+    return 'user' in req && (req.user.id || req.user._id);
   }
   protected validateFile(file: File) {
     const maxUploadSize = bytes.parse(this.options.maxUploadSize || Number.MAX_SAFE_INTEGER);
     if (!this.mimeRegExp.test(file.mimeType)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (file.size > maxUploadSize)
-      return fail(ERRORS.FILE_TOO_LARGE, `Max file size limit: ${bytes(maxUploadSize)}`);
+      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${bytes(maxUploadSize)}`);
     return Promise.resolve(file);
   }
   /**

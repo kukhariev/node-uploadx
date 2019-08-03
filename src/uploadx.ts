@@ -12,8 +12,9 @@ export class Uploadx extends BaseHandler {
   static idKey = 'upload_id';
   handlers = {
     POST: 'create',
-    PUT: 'write',
-    DELETE: 'delete'
+    PUT: 'update',
+    DELETE: 'delete',
+    GET: 'read'
   };
   constructor(public options: UploadxConfig) {
     super(options);
@@ -72,7 +73,7 @@ export class Uploadx extends BaseHandler {
   /**
    * Write chunk to file or/and return chunk offset
    */
-  async write(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async update(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
     const contentLength = +req.headers['content-length']!;
@@ -80,7 +81,7 @@ export class Uploadx extends BaseHandler {
     const { start, total } = contentRange
       ? rangeParser(contentRange)
       : { start: 0, total: contentLength };
-    const file = await this.storage.write(req, { start, total, id });
+    const file = await this.storage.update(req, { start, total, id });
     if (file.bytesWritten < file.size) {
       res.setHeader('Access-Control-Expose-Headers', 'Range');
       res.setHeader('Range', `bytes=0-${file.bytesWritten! - 1}`);
@@ -102,8 +103,15 @@ export class Uploadx extends BaseHandler {
     file.status = 'deleted';
     return file;
   }
-  list(req: http.IncomingMessage, res: http.ServerResponse) {
-    return this.storage.list(req);
+  async read(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[] | undefined> {
+    const userId = this.getUserId(req);
+    if (userId) {
+      return;
+    }
+    const all = await this.storage.read();
+    const files = all.filter(f => f.userId === userId);
+    this.send(res, 200, {}, files);
+    return files;
   }
   /**
    * Send Error object to client

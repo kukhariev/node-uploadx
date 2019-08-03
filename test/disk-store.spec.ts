@@ -10,8 +10,7 @@ describe('storage', function() {
   });
 
   it('should return files', async function() {
-    const files = await storage.list();
-    expect(files).to.be.an('object');
+    const files = await storage.read();
     expect(files).to.be.empty;
   });
 });

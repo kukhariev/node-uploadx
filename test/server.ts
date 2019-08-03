@@ -40,10 +40,6 @@ app.use(errorHandler);
 export const server = app.listen(PORT);
 
 function onComplete(req, res) {
-  if (!req.file) {
-    res.send();
-    return;
-  }
   const hash = createHash('md5');
   const input = createReadStream(req.file.path);
   input.on('readable', () => {

@@ -57,7 +57,7 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async write(req: http.IncomingMessage, { start, total, id }): Promise<File> {
+  async update(req: http.IncomingMessage, { start, total, id }): Promise<File> {
     const file: File = this.metaStore.get(id);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     if (total >= 0 && total !== file.size) return fail(ERRORS.INVALID_RANGE);
@@ -100,7 +100,9 @@ export class DiskStorage extends BaseStorage {
     file.status = 'deleted';
     return file;
   }
-
+  read(): Promise<File[]> {
+    return Promise.resolve(Object.values(this.metaStore.all));
+  }
   reset() {
     const files = this.metaStore.all;
     for (const id in files) {

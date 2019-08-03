@@ -48,7 +48,7 @@ describe('uploadx', () => {
         expect(res).to.not.have.header('location');
       }
     });
-    it('mimetype', async () => {
+    it('filetype', async () => {
       try {
         res = await chai
           .request(server)

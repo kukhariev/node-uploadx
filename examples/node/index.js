@@ -11,8 +11,8 @@ class DiskStorageEx extends DiskStorage {
     return Promise.resolve(Object.values(this.metaStore.all));
   }
 }
-const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
-const uploads = new Uploadx({ storage, maxChunkSize: '8MB', maxUploadSize: '5GB' });
+const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/uploadx/${file.filename}` });
+const uploads = new Uploadx({ storage, maxUploadSize: '5GB' });
 uploads.on('error', error => console.error('error: ', error));
 uploads.on('complete', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));
