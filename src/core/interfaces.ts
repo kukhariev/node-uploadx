@@ -9,7 +9,7 @@ export interface Request extends http.IncomingMessage {
   file?: File;
 }
 
-export interface Response extends http.ServerResponse {}
+export type Response = http.ServerResponse;
 
 export interface Range {
   total?: number;
@@ -27,19 +27,20 @@ export interface File {
   path: string;
   size: number;
   userId: string;
-  status: 'created' | 'complete' | 'deleted' | 'error';
+  status: 'created' | 'completed' | 'deleted' | 'error';
 }
-export interface StorageConfig {}
-export interface UploadxConfig extends StorageConfig {
-  storage?: BaseStorage;
-  useRelativeURL?: boolean | string;
+export interface BaseConfig<T> extends DiskStorageConfig {
+  storage?: BaseStorage<T>;
   allowMIME?: string[];
-  maxChunkSize?: number | string;
   maxUploadSize?: number | string;
+  useRelativeURL?: boolean | string;
 }
-export type Destination = string | ((req: Request, file: File) => string);
+export interface StorageConfig {
+  name?: string;
+}
 
-export interface DiskStorageConfig {
+export type Destination = string | ((req: Request, file: File) => string);
+export interface DiskStorageConfig extends StorageConfig {
   /**
    * Where uploaded files will be stored
    */
@@ -49,8 +50,14 @@ export interface DiskStorageConfig {
    */
   dest?: Destination;
 }
+type HttpMethods = 'GET' | 'HEAD' | 'PATCH' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS';
+type HandlerMethods = 'create' | 'update' | 'delete' | 'read';
+export type MethodsMap = {
+  [x in HttpMethods]?: HandlerMethods;
+};
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       file: File;

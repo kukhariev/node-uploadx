@@ -1,32 +1,24 @@
-process.env.NODE_ENV = 'testing';
+/* eslint-disable @typescript-eslint/camelcase */
 import * as chai from 'chai';
 import * as fs from 'fs';
-import 'mocha';
-import { Server } from 'net';
 import { URL } from 'url';
-import { rangeParser, Uploadx } from '../src/uploadx';
-import { storage } from './server';
-
+import { app, storage } from '../app';
 import chaiHttp = require('chai-http');
+
 chai.use(chaiHttp);
 const expect = chai.expect;
-
+const TEST_FILE_PATH = `${__dirname}/../testfile.mp4`;
+const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
+const getId = (res: ChaiHttp.Response) => {
+  const location = new URL(res.header.location, 'http://localhost');
+  return location.searchParams.get('upload_id') || '';
+};
 describe('uploadx', () => {
   let id: string;
   let res: ChaiHttp.Response;
   let start: number;
-  let end: number;
-  let server: Server;
-  const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
-  const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
-
-  function getId(res: ChaiHttp.Response) {
-    const location = new URL(res.header.location, 'http://localhost');
-    return location.searchParams.get(Uploadx.idKey);
-  }
 
   before(() => {
-    server = require('./server').server;
     storage.reset();
   });
 
@@ -37,13 +29,14 @@ describe('uploadx', () => {
     it('size', async () => {
       try {
         res = await chai
-          .request(server)
+          .request(app)
           .post('/upload')
           .set('authorization', 'Bearer ToKeN')
           .set('x-upload-content-type', 'video/mp4')
           .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
           .send({ name: 'testfile2.mp4' });
       } finally {
+        expect(res).to.be.json;
         expect(res).to.have.status(403);
         expect(res).to.not.have.header('location');
       }
@@ -51,13 +44,14 @@ describe('uploadx', () => {
     it('filetype', async () => {
       try {
         res = await chai
-          .request(server)
+          .request(app)
           .post('/upload')
           .set('authorization', 'Bearer ToKeN')
           .set('x-upload-content-type', 'text/json')
           .set('x-upload-content-length', '3000')
           .send({ name: 'testfile2.json' });
       } finally {
+        expect(res).to.be.json;
         expect(res).to.have.status(403);
         expect(res).to.not.have.header('location');
       }
@@ -67,7 +61,7 @@ describe('uploadx', () => {
   it('create(x-headers)', async () => {
     try {
       res = await chai
-        .request(server)
+        .request(app)
         .post('/upload')
         .set('authorization', 'Bearer ToKeN')
         .set('x-upload-content-type', 'video/mp4')
@@ -76,7 +70,7 @@ describe('uploadx', () => {
     } finally {
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
-      id = getId(res)!;
+      id = getId(res);
       expect(id.length).to.gt(1);
     }
   });
@@ -85,19 +79,19 @@ describe('uploadx', () => {
     start = 0;
     const readable = fs.createReadStream(TEST_FILE_PATH);
     readable.on('data', async chunk => {
-      end = start + chunk.length;
       readable.pause();
       res = await chai
-        .request(server)
+        .request(app)
         .put(`/upload`)
         .query({ upload_id: id })
         .redirects(0)
         .set('content-type', 'application/octet-stream')
-        .set('content-range', `bytes ${start}-${end - 1}/${TEST_FILE_SIZE}`)
+        .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${TEST_FILE_SIZE}`)
         .send(chunk);
-      start = end;
+      start += chunk.length;
 
       if (res.status === 200) {
+        expect(res).to.be.json;
         expect(fs.statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
         done();
       }
@@ -107,8 +101,9 @@ describe('uploadx', () => {
 
   it('get files', async () => {
     try {
-      res = await chai.request(server).get(`/upload`);
+      res = await chai.request(app).get(`/upload`);
     } finally {
+      expect(res).to.be.json;
       expect(res).to.have.status(200);
     }
   });
@@ -116,7 +111,7 @@ describe('uploadx', () => {
   it('delete', async () => {
     try {
       res = await chai
-        .request(server)
+        .request(app)
         .delete(`/upload`)
         .query({ upload_id: id });
     } finally {
@@ -128,59 +123,34 @@ describe('uploadx', () => {
   it('create(metadata)', async () => {
     try {
       res = await chai
-        .request(server)
+        .request(app)
         .post('/upload')
         .set('authorization', 'Bearer ToKeN')
         .send({ name: 'testfileSingle.mp4', mimeType: 'video/mp4', size: TEST_FILE_SIZE });
     } finally {
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
-      id = getId(res)!;
+      id = getId(res);
       expect(id.length).to.gt(1);
     }
   });
   it('single request', async () => {
     try {
       res = await chai
-        .request(server)
+        .request(app)
         .put(`/upload`)
         .query({ upload_id: id })
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(TEST_FILE_PATH));
     } finally {
+      expect(res).to.be.json;
       expect(res).to.have.status(200);
       expect(fs.statSync(res.body.path).size).to.be.eql(TEST_FILE_SIZE);
       fs.unlinkSync(res.body.path);
     }
   });
 
-  describe('content-range parser', function() {
-    it('resume', function(done) {
-      const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
-      samples.forEach(sample => {
-        const res = rangeParser(sample);
-        expect(res.start).to.satisfy(Number.isNaN);
-      });
-      done();
-    });
-    it('write', function(done) {
-      const samples = [
-        'bytes 0-*/7777777',
-        'bytes 0-333333/7777777',
-        'bytes 0-*/*',
-        'bytes 4000-*/7777777',
-        'bytes 0--1/*'
-      ];
-      samples.forEach(sample => {
-        const res = rangeParser(sample);
-        expect(res.start).to.satisfy(Number.isInteger);
-      });
-      done();
-    });
-  });
-
   after(function() {
-    server && server.close();
     storage.reset();
   });
 });

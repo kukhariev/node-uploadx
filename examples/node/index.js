@@ -1,5 +1,3 @@
-// @ts-check
-
 const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');
@@ -14,7 +12,7 @@ class DiskStorageEx extends DiskStorage {
 const storage = new DiskStorageEx({ dest: (req, file) => `${tmpdir()}/uploadx/${file.filename}` });
 const uploads = new Uploadx({ storage, maxUploadSize: '5GB' });
 uploads.on('error', error => console.error('error: ', error));
-uploads.on('complete', ({ path }) => console.log('completed: ', path));
+uploads.on('completed', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));
 uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
 

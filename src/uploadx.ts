@@ -1,32 +1,61 @@
 import * as http from 'http';
-import * as url from 'url';
 import * as querystring from 'querystring';
-import { BaseHandler, ERRORS, File, DiskStorageConfig, UploadxConfig, fail } from './core';
-import { getBody } from './utils';
+import * as url from 'url';
+import {
+  BaseConfig,
+  BaseHandler,
+  BaseStorage,
+  DiskStorageConfig,
+  ERRORS,
+  fail,
+  File
+} from './core';
 import { DiskStorage } from './disk-storage';
-
+import { getBody } from './utils';
+export function rangeParser(rangeHeader = '') {
+  const parts = rangeHeader.split(/\s+|\//);
+  const total = parseInt(parts[2]);
+  const start = parseInt(parts[1]);
+  return { start, total };
+}
 /**
  * X-headers  protocol implementation
  */
-export class Uploadx extends BaseHandler {
-  static idKey = 'upload_id';
-  handlers = {
-    POST: 'create',
-    PUT: 'update',
-    DELETE: 'delete',
-    GET: 'read'
-  };
-  constructor(public options: UploadxConfig) {
+export class Uploadx<T> extends BaseHandler<DiskStorageConfig> {
+  idKey = 'upload_id';
+  storage: BaseStorage<T> | DiskStorage;
+  constructor(public options: BaseConfig<T>) {
     super(options);
     this.storage = options.storage || new DiskStorage(options as DiskStorageConfig);
+    this.handlers = {
+      POST: 'create',
+      PUT: 'update',
+      DELETE: 'delete',
+      GET: 'read'
+    };
+    this.responseType = 'json';
   }
 
   /**
    * Build File from `create` request
    */
   protected async buildFileFromRequest(req: http.IncomingMessage): Promise<File> {
-    const file = {} as File;
-    file.metadata = await getBody(req);
+    const file = ({} as unknown) as File;
+    try {
+      if (req.headers['content-type'] || ''.includes('json')) {
+        if ('body' in req) {
+          file.metadata = req['body'];
+        } else {
+          const body = (await getBody(req)) as Buffer;
+          file.metadata = JSON.parse(body.toString());
+        }
+      } else {
+        return fail(ERRORS.INVALID_CONTENT_TYPE, req.headers['content-type']);
+      }
+    } catch (error) {
+      return fail(ERRORS.BAD_REQUEST, error.message);
+    }
+
     file.userId = this.getUserId(req);
     file.filename = file.metadata.name || file.metadata.title;
     file.size = +(req.headers['x-upload-content-length'] || file.metadata.size);
@@ -38,17 +67,17 @@ export class Uploadx extends BaseHandler {
    * Get id from request
    */
   protected getFileId(req: http.IncomingMessage): string | undefined {
-    const query = url.parse(req.url!, true).query;
-    return query[Uploadx.idKey] as string;
+    const { query } = url.parse(req.url || '', true);
+    return query[this.idKey] as string;
   }
 
   /**
    * Build file url from request
    */
   protected buildFileUrl(req: http.IncomingMessage, id: string): string {
-    const { query, pathname } = url.parse(req.url!, true);
-    const baseUrl = (req['baseUrl'] as string) || pathname || '';
-    const uri = `${baseUrl}?${querystring.stringify({ ...query, ...{ [Uploadx.idKey]: id } })}`;
+    const { query, pathname } = url.parse(req.url || '', true);
+    const baseUrl = 'baseUrl' in req ? req['baseUrl'] : pathname || '';
+    const uri = `${baseUrl}?${querystring.stringify({ ...query, ...{ [this.idKey]: id } })}`;
     const location: string =
       !this.options.useRelativeURL && req.headers.host ? `//${req.headers.host}${uri}` : `${uri}`;
     return location;
@@ -59,7 +88,7 @@ export class Uploadx extends BaseHandler {
    */
   async create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     let file = await this.buildFileFromRequest(req);
-    await this.validateFile(file);
+    await this.checkLimits(file);
     file = await this.storage.create(req, file);
     const statusCode = file.bytesWritten ? 200 : 201;
     const location = this.buildFileUrl(req, file.id);
@@ -76,7 +105,7 @@ export class Uploadx extends BaseHandler {
   async update(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.BAD_REQUEST, 'File id cannot be retrieved');
-    const contentLength = +req.headers['content-length']!;
+    const contentLength = Number(req.headers['content-length']);
     const contentRange = req.headers['content-range'];
     const { start, total } = contentRange
       ? rangeParser(contentRange)
@@ -84,10 +113,10 @@ export class Uploadx extends BaseHandler {
     const file = await this.storage.update(req, { start, total, id });
     if (file.bytesWritten < file.size) {
       res.setHeader('Access-Control-Expose-Headers', 'Range');
-      res.setHeader('Range', `bytes=0-${file.bytesWritten! - 1}`);
+      res.setHeader('Range', `bytes=0-${file.bytesWritten - 1}`);
       this.send(res, 308);
     } else {
-      file.status = 'complete';
+      file.status = 'completed';
     }
     return file;
   }
@@ -109,36 +138,16 @@ export class Uploadx extends BaseHandler {
       return;
     }
     const all = await this.storage.read();
-    const files = all.filter(f => f.userId === userId);
+    const files = all.filter(file => file.userId === userId);
     this.send(res, 200, {}, files);
     return files;
   }
-  /**
-   * Send Error object to client
-   */
-  sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void {
-    const statusCode = error.statusCode || 500;
-    const errorBody = {
-      error: {
-        code: error.code || 'unknown_error',
-        message: error.message || 'unknown error'
-      }
-    };
-    this.send(res, statusCode, {}, errorBody);
-  }
-}
-
-export function rangeParser(rangeHeader = '') {
-  const parts = rangeHeader.split(/\s+|\//);
-  const total = parseInt(parts[2]);
-  const start = parseInt(parts[1]);
-  return { start, total };
 }
 
 /**
  * Basic express wrapper
  */
-export function uploadx(options: UploadxConfig & DiskStorageConfig) {
+export function uploadx(options: BaseConfig<DiskStorageConfig>) {
   const upl = new Uploadx(options);
   return upl.handle;
 }

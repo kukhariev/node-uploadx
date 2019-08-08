@@ -1,3 +1,5 @@
+// @ts-check
+
 const express = require('express');
 const { uploadx } = require('../../dist');
 const { auth } = require('./auth');
@@ -12,17 +14,17 @@ app.use(
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: tmpdir
+    destination: tmpdir // FIXME
   }),
   (req, res) => {
-    console.log(`file upload complete:\n`, req.file);
+    console.log(`file upload completed:\n`, req.file);
     res.json(req.file);
   }
 );
 
 app.use(errorHandler);
 
-const server = app.listen(3003, error => {
+app.listen(3003, error => {
   if (error) {
     return console.error('something bad happened', error);
   }

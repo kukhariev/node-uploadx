@@ -68,8 +68,5 @@ export interface ErrorStatus {
 }
 
 export function fail<T>(error: ErrorStatus, details?: any) {
-  // error.code = Object.keys(ERRORS)
-  //   .find(k => ERRORS[k] === error)!
-  //   .toLowerCase();
   return Promise.reject<T>({ ...error, details });
 }

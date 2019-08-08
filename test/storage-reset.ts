@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg = require('../package.json');
 import * as Configstore from 'configstore';
 import * as fs from 'fs';
