@@ -67,6 +67,6 @@ export interface ErrorStatus {
   details?: any;
 }
 
-export function fail<T>(error: ErrorStatus, details?: any) {
-  return Promise.reject<T>({ ...error, details });
+export function fail(error: ErrorStatus, details?: any) {
+  return Promise.reject({ ...error, details });
 }

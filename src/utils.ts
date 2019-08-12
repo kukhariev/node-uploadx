@@ -77,3 +77,15 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<unknown
     }
   });
 }
+export function typeis(req: http.IncomingMessage, types: string[]): string | false {
+  const contentType = req.headers['content-type'] || '';
+  return typeis.is(contentType, types);
+}
+typeis.is = function(mime: string, types: string[] = ['/']): string | false {
+  const mimeRegExp = new RegExp(types.map(str => str.replace(/\*/g, '')).join('|'));
+  return mime.search(mimeRegExp) !== -1 ? mime : false;
+};
+typeis.hasBody = function(req: http.IncomingMessage): number | false {
+  const bodySize = Number(req.headers['content-length']);
+  return !isNaN(bodySize) && bodySize;
+};

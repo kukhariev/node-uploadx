@@ -34,14 +34,15 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "mocha test/unit",
     "test:integration": "mocha test/integration",
-    "lint": "eslint \"**/*.ts\" --quiet --fix",
-    "demo:node": "node examples/node/index.js",
-    "demo:express": "node examples/express/index.js"
+    "lint": "eslint '{src,test,examples}/**/*.{ts,js}' --fix",
+    "demo:node": "npm run build && node examples/node/index.js",
+    "demo:express": "npm run build && node examples/express/index.js"
   },
   "devDependencies": {
     "@types/bytes": "^3.0.0",
     "@types/chai": "^4.1.7",
     "@types/configstore": "^4.0.0",
+    "@types/debug": "^4.1.5",
     "@types/express": "^4.17.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.8",
@@ -50,6 +51,7 @@
     "@typescript-eslint/parser": "^1.13.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
+    "debug": "^4.1.1",
     "eslint": "^6.1.0",
     "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-prettier": "^3.1.0",

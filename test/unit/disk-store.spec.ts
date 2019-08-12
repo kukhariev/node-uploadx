@@ -8,7 +8,9 @@ const storage = new DiskStorage({
   dest: (req, file) => `${DEST_ROOT}${file.userId}/${file.filename}`
 });
 describe('storage', function() {
-  after(() => {});
+  before(() => {
+    storage.reset();
+  });
   it('should return files', async function() {
     const files = await storage.read();
     expect(files).to.be.empty;

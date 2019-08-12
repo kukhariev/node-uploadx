@@ -34,6 +34,7 @@ module.exports = {
     '@typescript-eslint/prefer-function-type': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'error',
     '@typescript-eslint/promise-function-async': 'off',
+    '@typescript-eslint/member-ordering': 'error',
     'arrow-body-style': 'error',
     'linebreak-style': ['error', 'unix'],
     'no-alert': 'error',

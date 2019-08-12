@@ -1,20 +1,24 @@
 import * as bytes from 'bytes';
+import * as debug from 'debug';
+
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import { ERRORS, ErrorStatus, fail } from './';
-import { File, BaseConfig } from './interfaces';
-export interface BaseHandle {
+import { File, BaseConfig, AsyncHandler } from './interfaces';
+import { typeis } from '../utils';
+const log = debug('uploadx:BaseHandle');
+
+export interface BaseHandle extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
   on(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
   off(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
   emit(event: 'created' | 'completed' | 'deleted' | 'error', evt: File | ErrorStatus): boolean;
 }
-interface Indexable {
-  [key: string]: any;
-}
-export abstract class BaseHandler<T> extends EventEmitter {
-  private readonly mimeRegExp = new RegExp((this.options.allowMIME || ['/']).join('|'));
+
+export abstract class BaseHandler extends EventEmitter {
+  static handlers: Map<string, AsyncHandler> = new Map();
+
   cors = {
     allowedMethods: ['GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: '',
@@ -23,14 +27,14 @@ export abstract class BaseHandler<T> extends EventEmitter {
     origin: []
   };
   responseType: 'text' | 'json' = 'text';
-  protected handlers: any = { GET: 'read' };
   private readonly maxUploadSize = bytes.parse(
     this.options.maxUploadSize || Number.MAX_SAFE_INTEGER
   );
 
-  constructor(public options: BaseConfig<T>) {
+  constructor(public options: BaseConfig) {
     super();
   }
+
   /**
    * Uploads handler
    */
@@ -39,14 +43,15 @@ export abstract class BaseHandler<T> extends EventEmitter {
     res: U,
     next?: any
   ): void => {
+    log(`[request]: %s`, req.method, req.url);
     this.setOrigin(req, res);
     if (req.method === 'OPTIONS') {
       return this.preFlight(req, res);
     }
-    if (req.method) {
-      const method = this.handlers[req.method];
-      (this as Indexable)
-        [method](req, res)
+    const handler = BaseHandler.handlers.get(req.method as string);
+    if (handler) {
+      handler
+        .call(this, req, res)
         .then((file: File | File[]) => {
           if (!file) {
             next ? next() : this.send(res, 415);
@@ -60,34 +65,14 @@ export abstract class BaseHandler<T> extends EventEmitter {
         })
         .catch((error: any) => {
           this.listenerCount('error') && this.emit('error', error);
-          next ? next(error) : this.sendError(req, res, error);
+          log('\x1b[31m[error]: %j', error);
+          this.sendError(req, res, error);
         });
     } else {
       next ? next() : this.send(res, 405);
     }
   };
-  /**
-   * Create file
-   */
-  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File>;
-  /**
-   * Chunks
-   */
-  abstract update(req: http.IncomingMessage, res: http.ServerResponse, next?: any): Promise<File>;
-  /**
-   * Delete by id
-   */
-  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File>;
 
-  protected getUserId(req: any): string {
-    return 'user' in req && (req.user.id || req.user._id);
-  }
-  protected checkLimits(file: File) {
-    if (!this.mimeRegExp.test(file.mimeType)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
-    if (file.size > this.maxUploadSize)
-      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${bytes(this.maxUploadSize)}`);
-    return Promise.resolve(file);
-  }
   /**
    * Set Origin header
    */
@@ -111,9 +96,6 @@ export abstract class BaseHandler<T> extends EventEmitter {
     res.end();
   }
 
-  private setHeader(res: http.ServerResponse, name: string, value: string | string[] | number) {
-    !res.hasHeader(name) && res.setHeader(name, value);
-  }
   /**
    * Make response
    */
@@ -141,4 +123,29 @@ export abstract class BaseHandler<T> extends EventEmitter {
     const body = this.responseType === 'json' ? error : error.message;
     this.send(res, statusCode, {}, body);
   }
+  protected getUserId(req: any): string {
+    return 'user' in req && (req.user.id || req.user._id);
+  }
+  protected checkLimits(file: File) {
+    if (!typeis.is(file.mimeType, this.options.allowMIME))
+      return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
+    if (file.size > this.maxUploadSize)
+      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${bytes(this.maxUploadSize)}`);
+    return Promise.resolve(file);
+  }
+  private setHeader(res: http.ServerResponse, name: string, value: string | string[] | number) {
+    !res.hasHeader(name) && res.setHeader(name, value);
+  }
+  /**
+   * Create file
+   */
+  abstract create(req: http.IncomingMessage, res: http.ServerResponse): Promise<File>;
+  /**
+   * Chunks
+   */
+  abstract update(req: http.IncomingMessage, res: http.ServerResponse, next?: any): Promise<File>;
+  /**
+   * Delete by id
+   */
+  abstract delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File>;
 }

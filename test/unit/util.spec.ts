@@ -41,4 +41,28 @@ describe('utils', function() {
       expect(utils.isObject(Buffer.from('buffer'))).to.be.false;
     });
   });
+  describe('typeis', function() {
+    it('no content-type', () => {
+      expect(utils.typeis({ headers: {} } as any, ['json'])).to.be.false;
+    });
+
+    it('application/json', () => {
+      expect(
+        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['json'])
+      ).to.be.equal('application/json');
+    });
+    it('multi', () => {
+      expect(
+        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['xml', 'json'])
+      ).to.be.equal('application/json');
+    });
+    describe('typeis.is', () => {
+      it('video/mp4', function() {
+        expect(utils.typeis.is('video/mp4', ['video'])).to.be.equal('video/mp4');
+      });
+      it('*/*', function() {
+        expect(utils.typeis.is('video/mp4', ['*/*'])).to.be.equal('video/mp4');
+      });
+    });
+  });
 });

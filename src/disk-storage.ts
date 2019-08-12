@@ -2,7 +2,7 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { Destination, DiskStorageConfig, ERRORS, fail, File, BaseStorage, Range } from './core';
+import { Destination, DiskStorageOptions, ERRORS, fail, File, BaseStorage, Range } from './core';
 import { ensureFile, fsUnlink, hashObject } from './utils';
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
@@ -10,26 +10,27 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'
 /**
  * Local Disk Storage
  */
-export class DiskStorage extends BaseStorage<DiskStorageConfig> {
+export class DiskStorage extends BaseStorage {
+  /**
+   * Where store uploads info
+   */
+  metaStore: Configstore;
+  options: DiskStorageOptions;
+  /**
+   * Where store files
+   */
+  private dest: Destination;
+
   /**
    * Meta Format version
    * @beta
    */
   private readonly metaVersion = `${pkg.name}@${pkg.version}`;
-  /**
-   * Where store uploads info
-   */
-  metaStore: Configstore;
-  /**
-   * Where store files
-   */
-  private dest: Destination;
-  options: DiskStorageConfig;
-  constructor(options: DiskStorageConfig) {
+  constructor(options: DiskStorageOptions) {
     super();
     this.options = options;
     this.dest = this.options.destination || this.options.dest || '';
-    if (!this.dest) throw new Error('Destination option required');
+    if (!this.dest) throw new TypeError('Destination option required');
     this.metaStore = new Configstore(this.metaVersion);
   }
 
@@ -37,20 +38,11 @@ export class DiskStorage extends BaseStorage<DiskStorageConfig> {
    * Add file to storage
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
-    file.id = hashObject(file);
+    file.id = file.id || hashObject(file);
     file.path = this.setFilePath(req, file);
     file.bytesWritten = await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
     this.metaStore.set(file.id, file);
     return file;
-  }
-
-  protected setFilePath(req: http.IncomingMessage, file: File): string {
-    if (this.dest instanceof Function) {
-      const filePath = this.dest(req, file);
-      return filePath.endsWith('/') ? path.join(filePath, file.id) : filePath;
-    } else {
-      return path.join(this.dest, file.id);
-    }
   }
 
   /**
@@ -74,6 +66,38 @@ export class DiskStorage extends BaseStorage<DiskStorageConfig> {
     }
   }
 
+  async delete(id: string): Promise<File> {
+    const file = this.metaStore.get(id) as File;
+    file && file.path && (await fsUnlink(file.path));
+    this.metaStore.delete(id);
+    file.status = 'deleted';
+    return file;
+  }
+
+  read(id?: string): Promise<File | File[]> {
+    const files = id
+      ? (this.metaStore.get(id) as File)
+      : (Object.values(this.metaStore.all) as File[]);
+    return Promise.resolve(files);
+  }
+  reset(): void {
+    const files = this.metaStore.all;
+    for (const id in files) {
+      try {
+        fs.unlinkSync(files[id].path);
+      } catch {}
+    }
+    this.metaStore.clear();
+  }
+
+  protected setFilePath(req: http.IncomingMessage, file: File): string {
+    if (this.dest instanceof Function) {
+      const filePath = this.dest(req, file);
+      return filePath.endsWith('/') ? path.join(filePath, file.id) : filePath;
+    } else {
+      return path.join(this.dest, file.id);
+    }
+  }
   /**
    * Append chunk to file
    *
@@ -84,31 +108,11 @@ export class DiskStorage extends BaseStorage<DiskStorageConfig> {
         flags: 'r+',
         start
       });
-      file.on('error', error => {
+      file.once('error', error => {
         fail(ERRORS.FILE_ERROR, error); // FIXME
       });
-      req.on('aborted', () => file.close());
+      req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
     });
-  }
-
-  async delete(id: string): Promise<File> {
-    const file = this.metaStore.get(id) as File;
-    file && file.path && (await fsUnlink(file.path));
-    this.metaStore.delete(id);
-    file.status = 'deleted';
-    return file;
-  }
-  read(): Promise<File[]> {
-    return Promise.resolve(Object.values(this.metaStore.all));
-  }
-  reset(): void {
-    const files = this.metaStore.all;
-    for (const id in files) {
-      try {
-        fs.unlinkSync(files[id].path);
-      } catch {}
-    }
-    this.metaStore.clear();
   }
 }

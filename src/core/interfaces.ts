@@ -1,15 +1,5 @@
 import * as http from 'http';
-import { BaseStorage } from '.';
-
-export type NextFunction = (err?: Error) => void;
-
-export interface Request extends http.IncomingMessage {
-  body?: any;
-  user?: any;
-  file?: File;
-}
-
-export type Response = http.ServerResponse;
+import { BaseStorage } from './base-storage';
 
 export interface Range {
   total?: number;
@@ -29,18 +19,20 @@ export interface File {
   userId: string;
   status: 'created' | 'completed' | 'deleted' | 'error';
 }
-export interface BaseConfig<T> extends DiskStorageConfig {
-  storage?: BaseStorage<T>;
+export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<File>;
+
+export interface BaseConfig {
+  storage?: BaseStorage;
   allowMIME?: string[];
   maxUploadSize?: number | string;
-  useRelativeURL?: boolean | string;
 }
-export interface StorageConfig {
-  name?: string;
+export interface StorageOptions {
+  type?: string;
 }
 
-export type Destination = string | ((req: Request, file: File) => string);
-export interface DiskStorageConfig extends StorageConfig {
+export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
+
+export interface DiskStorageOptions extends StorageOptions {
   /**
    * Where uploaded files will be stored
    */
@@ -50,11 +42,6 @@ export interface DiskStorageConfig extends StorageConfig {
    */
   dest?: Destination;
 }
-type HttpMethods = 'GET' | 'HEAD' | 'PATCH' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS';
-type HandlerMethods = 'create' | 'update' | 'delete' | 'read';
-export type MethodsMap = {
-  [x in HttpMethods]?: HandlerMethods;
-};
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
