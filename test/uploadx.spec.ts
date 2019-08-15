@@ -2,18 +2,19 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { URL } from 'url';
-import { app, storage } from '../app';
+import { app, storage } from './app/app';
 import chaiHttp = require('chai-http');
 
 chai.use(chaiHttp);
 const expect = chai.expect;
-const TEST_FILE_PATH = `${__dirname}/../testfile.mp4`;
+const TEST_FILE_PATH = `${__dirname}/app/testfile.mp4`;
 const TEST_FILE_SIZE = fs.statSync(TEST_FILE_PATH).size;
 const getId = (res: ChaiHttp.Response) => {
   const location = new URL(res.header.location, 'http://localhost');
   return location.searchParams.get('upload_id') || '';
 };
-describe('uploadx', () => {
+const TOKEN = 'Bearer ToKeN';
+describe('Integration::uploadx', () => {
   let id: string;
   let res: ChaiHttp.Response;
   let start: number;
@@ -31,7 +32,7 @@ describe('uploadx', () => {
         res = await chai
           .request(app)
           .post('/upload')
-          .set('authorization', 'Bearer ToKeN')
+          .set('authorization', TOKEN)
           .set('x-upload-content-type', 'video/mp4')
           .set('x-upload-content-length', `${Number.MAX_SAFE_INTEGER}`)
           .send({ name: 'testfile2.mp4' });
@@ -46,7 +47,7 @@ describe('uploadx', () => {
         res = await chai
           .request(app)
           .post('/upload')
-          .set('authorization', 'Bearer ToKeN')
+          .set('authorization', TOKEN)
           .set('x-upload-content-type', 'text/json')
           .set('x-upload-content-length', '3000')
           .send({ name: 'testfile2.json' });
@@ -63,7 +64,7 @@ describe('uploadx', () => {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', 'Bearer ToKeN')
+        .set('authorization', TOKEN)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', `${TEST_FILE_SIZE}`)
         .send({ name: 'testfile.mp4' });
@@ -125,7 +126,7 @@ describe('uploadx', () => {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', 'Bearer ToKeN')
+        .set('authorization', TOKEN)
         .send({ name: 'testfileSingle.mp4', mimeType: 'video/mp4', size: TEST_FILE_SIZE });
     } finally {
       expect(res).to.have.status(201);

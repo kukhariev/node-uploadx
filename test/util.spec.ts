@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import { tmpdir } from 'os';
 import * as rimraf from 'rimraf';
-import * as utils from '../../src/utils';
+import * as utils from '../src/utils';
 
 describe('utils', function() {
   describe('fs', function() {
@@ -41,28 +41,46 @@ describe('utils', function() {
       expect(utils.isObject(Buffer.from('buffer'))).to.be.false;
     });
   });
-  describe('typeis', function() {
+  describe('is', function() {
     it('no content-type', () => {
-      expect(utils.typeis({ headers: {} } as any, ['json'])).to.be.false;
+      expect(utils.is({ headers: {} } as any, ['json'])).to.be.false;
     });
 
-    it('application/json', () => {
+    it('json', () => {
       expect(
-        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['json'])
+        utils.is({ headers: { 'content-type': 'application/json' } } as any, ['json'])
       ).to.be.equal('application/json');
     });
     it('multi', () => {
       expect(
-        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['xml', 'json'])
+        utils.is({ headers: { 'content-type': 'application/json' } } as any, ['xml', 'json'])
       ).to.be.equal('application/json');
     });
-    describe('typeis.is', () => {
+    describe('is.is', () => {
       it('video/mp4', function() {
-        expect(utils.typeis.is('video/mp4', ['video'])).to.be.equal('video/mp4');
+        expect(utils.is.is('video/mp4', ['video'])).to.be.equal('video/mp4');
       });
       it('*/*', function() {
-        expect(utils.typeis.is('video/mp4', ['*/*'])).to.be.equal('video/mp4');
+        expect(utils.is.is('video/mp4', ['*/*'])).to.be.equal('video/mp4');
       });
+    });
+  });
+
+  describe('toHeaderString', () => {
+    it('string', () => {
+      expect(utils.toHeaderString('string')).to.be.equal('string');
+    });
+    it('number', () => {
+      expect(utils.toHeaderString(10)).to.be.equal('10');
+    });
+    it('boolean', () => {
+      expect(utils.toHeaderString(true)).to.be.equal('true');
+    });
+    it('undefined', () => {
+      expect(utils.toHeaderString(undefined)).to.be.undefined;
+    });
+    it('string[]', () => {
+      expect(utils.toHeaderString(['post', 'patch'])).to.be.equal('post,patch');
     });
   });
 });

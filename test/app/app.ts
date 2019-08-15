@@ -3,7 +3,7 @@ import * as express from 'express';
 import { NextFunction, Request, Response } from 'express';
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
-import { DiskStorage, Uploadx } from '../src';
+import { DiskStorage, Uploadx } from '../../src';
 
 const auth = (req: Request, res: Response, next: NextFunction) => {
   if (req.headers.authorization) {
