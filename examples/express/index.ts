@@ -1,9 +1,7 @@
-// @ts-check
-
-const express = require('express');
-const { uploadx } = require('../../dist');
-const { auth } = require('./auth');
-const { errorHandler } = require('./error-handler');
+import * as express from 'express';
+import { uploadx } from '../../dist';
+import { auth } from './auth';
+import { errorHandler } from './error-handler';
 const tmpdir = require('os').tmpdir();
 const app = express();
 app.use(express.json());
