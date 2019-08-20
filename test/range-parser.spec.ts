@@ -1,14 +1,14 @@
 import { expect } from 'chai';
-import { rangeParser } from '../src/uploadx';
-describe('content-range parser', function() {
-  it('resume', function() {
+import { rangeParser } from '../src/Uploadx';
+describe('Content-Range parser', function() {
+  it('should parse `resume` ranges', function() {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
     samples.forEach(sample => {
       const res = rangeParser(sample);
       expect(res.start).to.satisfy(Number.isNaN);
     });
   });
-  it('write', function() {
+  it('should parse `write` ranges', function() {
     const samples = [
       'bytes 0-*/7777777',
       'bytes 0-333333/7777777',

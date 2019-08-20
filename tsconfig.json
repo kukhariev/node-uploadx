@@ -2,7 +2,7 @@
   "compileOnSave": true,
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "./dist/lib",
+    "outDir": "./dist",
     "baseUrl": "src",
     "target": "es2018",
     "moduleResolution": "node",

@@ -6,7 +6,7 @@ const { tmpdir } = require('os');
 const storage = new DiskStorage({
   dest: (req, file) => `${tmpdir()}/node-uploadx/${file.filename}`
 });
-const uploads = new Uploadx({ storage, maxUploadSize: '5GB' });
+const uploads = new Uploadx({ storage, maxUploadSize: '5GB', allowMIME: ['video/*'] });
 uploads.on('error', error => console.error('error: ', error));
 uploads.on('completed', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));

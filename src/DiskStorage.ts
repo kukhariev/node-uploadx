@@ -2,9 +2,20 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { Destination, DiskStorageOptions, ERRORS, fail, File, BaseStorage, Range } from './core';
+import { ERRORS, fail, File, BaseStorage, Range, StorageOptions } from './core';
 import { ensureFile, fsUnlink, hashObject } from './utils';
+export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
+export interface DiskStorageOptions extends StorageOptions {
+  /**
+   * Where uploaded files will be stored
+   */
+  destination?: Destination;
+  /**
+   *  Where uploaded files will be stored
+   */
+  dest?: Destination;
+}
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
 
 /**
@@ -66,11 +77,13 @@ export class DiskStorage extends BaseStorage {
     }
   }
 
-  async delete(id: string): Promise<File> {
+  async delete(id: string, userId: string): Promise<File> {
     const file = this.metaStore.get(id) as File;
-    file && file.path && (await fsUnlink(file.path));
-    this.metaStore.delete(id);
-    file.status = 'deleted';
+    if (!file || file.userId !== userId || !file.path) return fail(ERRORS.FILE_NOT_FOUND);
+    try {
+      await fsUnlink(file.path);
+      this.metaStore.delete(id);
+    } catch {}
     return file;
   }
 
@@ -103,13 +116,13 @@ export class DiskStorage extends BaseStorage {
    *
    */
   protected _write(req: http.IncomingMessage, filePath: string, start: number): Promise<number> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(filePath, {
         flags: 'r+',
         start
       });
       file.once('error', error => {
-        fail(ERRORS.FILE_ERROR, error); // FIXME
+        reject(error);
       });
       req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));

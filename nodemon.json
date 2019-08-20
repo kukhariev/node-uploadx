@@ -1,8 +1,0 @@
-{
-  "$schema": "http://json.schemastore.org/nodemon",
-  "ignore": ["**/*.test.ts", "**/*.spec.ts", ".git", "node_modules"],
-  "watch": ["src", "test"],
-  "exec": "npm start",
-  "ext": "ts",
-  "delay": 1
-}

@@ -1,4 +1,4 @@
-export * from './uploadx';
-export * from './disk-storage';
+export * from './Uploadx';
+export * from './DiskStorage';
 export * from './core';
 export * from './utils';

@@ -34,9 +34,9 @@ export const ERRORS = {
     statusCode: 409,
     message: 'File conflict'
   },
-  CHUNK_TOO_BIG: {
+  REQUEST_ENTITY_TOO_LARGE: {
     statusCode: 413,
-    message: 'Chunk too big'
+    message: 'Request Entity Too Large'
   },
   TOO_MANY_REQUESTS: {
     statusCode: 429,
@@ -58,7 +58,7 @@ export const ERRORS = {
     statusCode: 500,
     message: 'Something went wrong writing the file'
   }
-};
+} as const;
 
 export interface ErrorStatus {
   statusCode: number;

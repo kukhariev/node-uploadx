@@ -13,11 +13,12 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
+    'plugin:promise/recommended',
     'prettier',
     'prettier/@typescript-eslint',
     'plugin:prettier/recommended'
   ],
-  plugins: ['@typescript-eslint', 'prettier'],
+  plugins: ['@typescript-eslint', 'prettier', 'promise', 'mocha'],
   rules: {
     'prettier/prettier': 'warn',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
@@ -50,9 +51,9 @@ module.exports = {
     'no-useless-concat': 'error',
     'no-var': 'error',
     'prefer-const': 'error',
-    'prefer-const': 'error',
     'prefer-object-spread': 'error',
-    'require-atomic-updates': 'off'
+    'require-atomic-updates': 'off',
+    'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }]
   },
   overrides: [
     {
