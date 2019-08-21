@@ -11,9 +11,8 @@ try {
   newPackage.repository = oldPackage.repository;
   newPackage.homepage = oldPackage.homepage;
   newPackage.license = oldPackage.license;
-  newPackage.files = ['lib', 'types'];
   newPackage.typings = 'types/index.d.ts';
-  newPackage.main = 'lib/index.js';
+  newPackage.main = 'index.js';
   newPackage.dependencies = oldPackage.dependencies;
   newPackage.engines = oldPackage.engines;
   fs.writeFileSync(`dist/package.json`, JSON.stringify(newPackage, undefined, 2));

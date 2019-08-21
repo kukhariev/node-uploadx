@@ -1,17 +1,17 @@
 import { createHash } from 'crypto';
 import * as express from 'express';
-
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
-import { DiskStorage, File, Uploadx } from '../src';
+import { DiskStorage, Uploadx } from '../src';
 
-const auth = (req, res, next) => {
+const auth: express.RequestHandler = (req, res, next) => {
   if (req.headers.authorization) {
-    req['user'] = { id: '5678', name: 'user656', password: 'password1234' };
+    (req as any).user = { id: req.headers.authorization };
   }
   next();
 };
-const errorHandler = (err, req, res, next) => {
+const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+  !err.statusCode && console.log(err);
   res.status(err.statusCode || 500).json({
     error: {
       code: err.code,
@@ -21,45 +21,45 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-const PORT = 3003;
-const maxUploadSize = '6000MB';
+const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
-const maxChunkSize = '8MB';
-const DEST_ROOT = `${tmpdir()}/ngx/`;
-const app = express();
+export const UPLOADS_DIR = `${tmpdir()}/node-uploadx-test/`;
 
-class DiskStorageEx extends DiskStorage {
-  // override
-  // allow to get list of all files
-  list(): Promise<File[]> {
-    return Promise.resolve(Object.values(this.metaStore.all));
+const onComplete: express.RequestHandler = (req, res) => {
+  if (req.file) {
+    const hash = createHash('md5');
+    const input = createReadStream(req.file.path);
+    input.on('readable', () => {
+      const data = input.read();
+      if (data) {
+        hash.update(data);
+      } else {
+        const md5 = hash.digest('hex');
+        res.json({ ...req.file, md5 });
+      }
+    });
   }
-}
-export const storage = new DiskStorageEx({
-  dest: (req, file) => `${DEST_ROOT}${req.user.id}/${file.filename}`
+};
+export const app = express();
+export const storage = new DiskStorage({
+  dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`
 });
-export const uploads = new Uploadx({ storage, maxUploadSize, allowMIME, maxChunkSize });
+export const uploads = new Uploadx({
+  storage,
+  maxUploadSize,
+  allowMIME,
+  useRelativeLocation: true
+});
 
 app.use(auth);
-app.use('/upload' as any, uploads.handle, onComplete);
+app.use('/upload', uploads.handle, onComplete);
 app.use(errorHandler);
 
-export const server = app.listen(PORT);
-
-function onComplete(req, res) {
-  if (!req.file) {
-    res.send();
-    return;
-  }
-  const hash = createHash('md5');
-  const input = createReadStream(req.file.path);
-  input.on('readable', () => {
-    const data = input.read();
-    if (data) {
-      hash.update(data);
-    } else {
-      const md5 = hash.digest('hex');
-      res.json({ ...req.file, md5 });
+if (!module.parent) {
+  app.listen(3003, error => {
+    if (error) {
+      return console.error('something bad happened', error);
     }
+    console.log('listening on port:', 3003);
   });
 }

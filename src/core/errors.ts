@@ -34,9 +34,9 @@ export const ERRORS = {
     statusCode: 409,
     message: 'File conflict'
   },
-  CHUNK_TOO_BIG: {
+  REQUEST_ENTITY_TOO_LARGE: {
     statusCode: 413,
-    message: 'Chunk too big'
+    message: 'Request Entity Too Large'
   },
   TOO_MANY_REQUESTS: {
     statusCode: 429,
@@ -58,18 +58,15 @@ export const ERRORS = {
     statusCode: 500,
     message: 'Something went wrong writing the file'
   }
-};
+} as const;
 
-export class UploadXError extends Error {
-  code: string;
+export interface ErrorStatus {
   statusCode: number;
-  constructor(error: typeof ERRORS[keyof typeof ERRORS], public details?: any) {
-    super(error.message);
-    this.code = Object.keys(ERRORS)
-      .find(k => ERRORS[k] === error)!
-      .toLowerCase();
-    this.statusCode = error.statusCode;
-    Object.setPrototypeOf(this, new.target.prototype);
-    Error.stackTraceLimit = 3;
-  }
+  message: string;
+  code?: any;
+  details?: any;
+}
+
+export function fail(error: ErrorStatus, details?: any) {
+  return Promise.reject({ ...error, details });
 }
