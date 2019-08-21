@@ -1,18 +1,14 @@
-import * as chai from 'chai';
-import 'mocha';
-import { rangeParser } from '../src/handler';
-const expect = chai.expect;
-
-describe('content-range parser', function() {
-  it('resume', function(done) {
+import { expect } from 'chai';
+import { rangeParser } from '../src/Uploadx';
+describe('Content-Range parser', function() {
+  it('should parse `resume` ranges', function() {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
     samples.forEach(sample => {
       const res = rangeParser(sample);
       expect(res.start).to.satisfy(Number.isNaN);
     });
-    done();
   });
-  it('write', function(done) {
+  it('should parse `write` ranges', function() {
     const samples = [
       'bytes 0-*/7777777',
       'bytes 0-333333/7777777',
@@ -24,6 +20,5 @@ describe('content-range parser', function() {
       const res = rangeParser(sample);
       expect(res.start).to.satisfy(Number.isInteger);
     });
-    done();
   });
 });

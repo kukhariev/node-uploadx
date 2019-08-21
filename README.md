@@ -58,7 +58,7 @@ const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.f
 const uploads = new Uploadx({ storage });
 uploads.on('error', console.error);
 uploads.on('created', console.log);
-uploads.on('complete', console.log);
+uploads.on('completed', console.log);
 uploads.on('deleted', console.log);
 
 const server = http.createServer((req, res) => {
