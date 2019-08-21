@@ -23,7 +23,7 @@ const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
 
 const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
-const ROOT = `${tmpdir()}/node-uploadx/`;
+export const UPLOADS_DIR = `${tmpdir()}/node-uploadx-test/`;
 
 const onComplete: express.RequestHandler = (req, res) => {
   if (req.file) {
@@ -42,7 +42,7 @@ const onComplete: express.RequestHandler = (req, res) => {
 };
 export const app = express();
 export const storage = new DiskStorage({
-  dest: (req, file) => `${ROOT}${file.userId}/${file.filename}`
+  dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`
 });
 export const uploads = new Uploadx({
   storage,

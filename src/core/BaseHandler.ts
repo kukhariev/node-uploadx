@@ -23,11 +23,11 @@ export interface BaseConfig {
   maxUploadSize?: number | string;
   useRelativeLocation?: boolean;
 }
-const handlers = ['post', 'head', 'patch', 'put', 'options', 'get', 'delete'] as const;
-export type Handlers = typeof handlers[number];
+const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
+type Handlers = typeof handlers[number];
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type MethodHandler = {
-  [k in Handlers]?: AsyncHandler;
+  [h in Handlers]?: AsyncHandler;
 };
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
@@ -37,31 +37,22 @@ export interface BaseHandler extends EventEmitter {
   emit(event: 'created' | 'completed' | 'deleted' | 'error', evt: File | ErrorStatus): boolean;
 }
 
-export function logMethods(obj: any, name: string) {
-  const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), name.toLowerCase());
-  console.log(desc);
-}
 export class BaseHandler extends EventEmitter implements MethodHandler {
-  static handlers: Map<string, AsyncHandler> = new Map();
-  options = undefined;
+  options?: AsyncHandler;
   responseType: 'text' | 'json' = 'text';
-
+  private __registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor(public config: BaseConfig) {
     super();
-
     this.registerHandlers();
-  }
-  static registerHandler(httpMethod: string, fn: AsyncHandler) {
-    BaseHandler.handlers.set(httpMethod.toUpperCase(), fn);
   }
   registerHandlers() {
     handlers.forEach(method => {
       const enabled = (this as MethodHandler)[method];
       if (enabled) {
-        BaseHandler.handlers.set(method.toUpperCase(), enabled);
+        this.__registeredHandlers.set(method.toUpperCase(), enabled);
       }
     });
-    log('%O', BaseHandler.handlers);
+    log('Handlers', this.__registeredHandlers);
   }
 
   /**
@@ -76,7 +67,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
     if (Cors.preflight(req, res)) {
       return;
     }
-    const handler = BaseHandler.handlers.get(req.method as string);
+    const handler = this.__registeredHandlers.get(req.method as string);
     if (handler) {
       handler
         .call(this, req, res)
@@ -136,18 +127,11 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   protected getUserId(req: any): string {
     return 'user' in req && (req.user.id || req.user._id);
   }
+
   protected checkLimits(file: File) {
     if (!typeis.is(file.mimeType, this.config.allowMIME)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER))
       return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${this.config.maxUploadSize}`);
     return Promise.resolve(file);
   }
-}
-
-export function Route(httpMethod: string) {
-  const func: MethodDecorator = (target, key, descriptor) => {
-    const fn = descriptor.value;
-    BaseHandler.registerHandler(httpMethod.toUpperCase(), fn as any);
-  };
-  return func;
 }

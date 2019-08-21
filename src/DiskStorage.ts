@@ -2,20 +2,18 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { ERRORS, fail, File, BaseStorage, Range, StorageOptions } from './core';
+import { ERRORS, fail, File, BaseStorage, Range } from './core';
 import { ensureFile, fsUnlink, hashObject } from './utils';
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
-export interface DiskStorageOptions extends StorageOptions {
-  /**
-   * Where uploaded files will be stored
-   */
-  destination?: Destination;
-  /**
-   *  Where uploaded files will be stored
-   */
-  dest?: Destination;
-}
+export type DiskStorageOptions =
+  | {
+      destination: Destination;
+    }
+  | {
+      dest: Destination;
+    };
+
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
 
 /**
@@ -26,7 +24,6 @@ export class DiskStorage extends BaseStorage {
    * Where store uploads info
    */
   metaStore: Configstore;
-  options: DiskStorageOptions;
   /**
    * Where store files
    */
@@ -37,10 +34,9 @@ export class DiskStorage extends BaseStorage {
    * @beta
    */
   private readonly metaVersion = `${pkg.name}@${pkg.version}`;
-  constructor(options: DiskStorageOptions) {
+  constructor(opts: DiskStorageOptions) {
     super();
-    this.options = options;
-    this.dest = this.options.destination || this.options.dest || '';
+    this.dest = 'dest' in opts ? opts.dest : opts.destination;
     if (!this.dest) throw new TypeError('Destination option required');
     this.metaStore = new Configstore(this.metaVersion);
   }

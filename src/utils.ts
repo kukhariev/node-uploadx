@@ -123,7 +123,7 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<
   });
 }
 
-export function logMemoryUsage() {
+export function memUsage() {
   const { heapUsed } = process.memoryUsage();
   return (heapUsed / 1024 / 1024).toFixed(2);
 }

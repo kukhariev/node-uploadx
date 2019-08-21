@@ -1,5 +1,3 @@
-/* eslint-disable mocha/no-exclusive-tests */
-/* eslint-disable mocha/no-setup-in-describe */
 /* eslint-disable @typescript-eslint/camelcase */
 import * as chai from 'chai';
 import * as fs from 'fs';
@@ -16,7 +14,7 @@ const testFile = {
   mimeType: 'video/mp4'
 };
 const TOKEN = 'userToken';
-describe.only('::Uploadx', function() {
+describe('::Uploadx', function() {
   let res: ChaiHttp.Response;
   let start: number;
   const files: any[] = [];

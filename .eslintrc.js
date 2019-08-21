@@ -18,7 +18,7 @@ module.exports = {
     'prettier/@typescript-eslint',
     'plugin:prettier/recommended'
   ],
-  plugins: ['@typescript-eslint', 'prettier', 'promise', 'mocha'],
+  plugins: ['@typescript-eslint', 'prettier', 'promise'],
   rules: {
     'prettier/prettier': 'warn',
     '@typescript-eslint/adjacent-overload-signatures': 'error',

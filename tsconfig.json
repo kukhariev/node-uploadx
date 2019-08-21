@@ -15,6 +15,7 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "strictNullChecks": true,
+    "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": false,
     "experimentalDecorators": true,
@@ -22,6 +23,7 @@
     "stripInternal": true,
     "keyofStringsOnly": true,
     "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
     "declarationDir": "./dist/types"
   },
   "include": ["src/**/*"],

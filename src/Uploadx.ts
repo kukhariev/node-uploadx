@@ -115,7 +115,8 @@ export class Uploadx extends BaseHandler {
    * Build file url from request
    */
   protected buildFileUrl(req: http.IncomingMessage, id: string): string {
-    const { query, pathname } = url.parse(req.url || '', true);
+    const s = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
+    const { query, pathname } = url.parse(s, true);
     const baseUrl = 'baseUrl' in req ? req['baseUrl'] : pathname || '';
     const uri = `${baseUrl}?${querystring.stringify({
       ...query,

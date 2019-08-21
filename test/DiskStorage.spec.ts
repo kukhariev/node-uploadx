@@ -2,10 +2,9 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as http from 'http';
 import { Socket } from 'net';
-import { tmpdir } from 'os';
-import * as rimraf from 'rimraf';
 import { File } from '../src/core';
 import { DiskStorage, DiskStorageOptions } from '../src/DiskStorage';
+import { UPLOADS_DIR } from './server';
 
 const FILE = ({
   userId: 'userId',
@@ -17,21 +16,13 @@ const FILE = ({
     lastModified: 1497077951924
   }
 } as unknown) as File;
-const TEST_ROOT = tmpdir();
+
 const OPTIONS: DiskStorageOptions = {
-  dest: (req, file) => `${TEST_ROOT}/${file.userId}/${file.filename}`
+  dest: (req, file) => `${UPLOADS_DIR}/${file.userId}/${file.filename}`
 };
-const FILEPATH = '/tmp/userId/file.mp4'; // FIXME: Win
-const DIR = '/tmp/userId/';
-function cleanup() {
-  rimraf.sync(DIR);
-}
+const FILEPATH = `${UPLOADS_DIR}/userId/file.mp4`;
 
 describe('DiskStorage', function() {
-  before(function() {
-    cleanup();
-  });
-
   it('should create file', async function() {
     const req = new http.IncomingMessage(new Socket());
     req.method = 'POST';
@@ -55,9 +46,5 @@ describe('DiskStorage', function() {
     storage.reset();
     const files = await storage.read();
     expect(files).to.be.empty;
-  });
-
-  after(function() {
-    cleanup();
   });
 });

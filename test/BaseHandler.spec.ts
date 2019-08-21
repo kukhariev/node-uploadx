@@ -7,8 +7,8 @@ describe('BaseHandler', function() {
     uploader = new TestUploader({});
     expect(uploader).to.be.instanceOf(BaseHandler);
   });
-  it('should have `options` property', function() {
+  it('should have `config` property', function() {
     uploader = new TestUploader({ allowMIME: ['video'] });
-    expect(uploader).to.be.haveOwnProperty('options');
+    expect(uploader).to.be.haveOwnProperty('config');
   });
 });
