@@ -4,6 +4,6 @@ import { File, Range } from './';
 export abstract class BaseStorage {
   abstract create(req: http.IncomingMessage, file: File): Promise<File>;
   abstract update(req: http.IncomingMessage, range: Range): Promise<File>;
-  abstract delete(fileId: string, userId: string): Promise<any>;
-  abstract read(fileId?: string): Promise<any>;
+  abstract delete(file: Partial<File>): Promise<File[]>;
+  abstract get(file: Partial<File>): Promise<File[]>;
 }

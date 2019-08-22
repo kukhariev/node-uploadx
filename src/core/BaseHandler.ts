@@ -15,6 +15,7 @@ export interface Range {
   end?: number;
   start: number;
   id: string;
+  userId: string;
 }
 
 export interface BaseConfig {
