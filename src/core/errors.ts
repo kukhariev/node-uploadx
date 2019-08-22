@@ -4,59 +4,63 @@
 export const ERRORS = {
   BAD_REQUEST: {
     statusCode: 400,
-    message: 'Bad request'
+    message: 'bad request'
   },
   INVALID_CONTENT_TYPE: {
     statusCode: 400,
-    message: 'Invalid or missing Content-Type header'
+    message: 'invalid or missing content-type header'
   },
   INVALID_RANGE: {
     statusCode: 400,
-    message: 'Invalid or missing Content-Range header'
+    message: 'invalid or missing content-range header'
   },
   INVALID_FILE_SIZE: {
     statusCode: 400,
-    message: 'File size cannot be retrieved'
+    message: 'file size cannot be retrieved'
   },
   INVALID_FILE_NAME: {
     statusCode: 400,
-    message: 'File name cannot be retrieved'
+    message: 'file name cannot be retrieved'
+  },
+  FORBIDDEN: {
+    statusCode: 403,
+    message: 'authenticated user is not allowed access'
   },
   FILE_TOO_LARGE: {
     statusCode: 403,
-    message: 'File is too large'
+    message: 'file is too large'
   },
   FILE_TYPE_NOT_ALLOWED: {
     statusCode: 403,
-    message: 'File type not allowed'
+    message: 'file type not allowed'
   },
   FILE_CONFLICT: {
     statusCode: 409,
-    message: 'File conflict'
+    message: 'file conflict'
   },
   REQUEST_ENTITY_TOO_LARGE: {
     statusCode: 413,
-    message: 'Request Entity Too Large'
+    message: 'request entity too large'
   },
   TOO_MANY_REQUESTS: {
     statusCode: 429,
-    message: 'Too Many Requests'
+    message: 'too many requests'
   },
   FILE_NOT_FOUND: {
     statusCode: 404,
-    message: 'File not found'
+    message: 'not found'
   },
-  FILE_GONE: {
+  GONE: {
     statusCode: 410,
-    message: 'File gone'
+    message: 'gone'
   },
   UNKNOWN_ERROR: {
     statusCode: 500,
-    message: 'Something went wrong receiving the file'
+    message: 'something went wrong receiving the file'
   },
   FILE_ERROR: {
     statusCode: 500,
-    message: 'Something went wrong writing the file'
+    message: 'something went wrong writing the file'
   }
 } as const;
 

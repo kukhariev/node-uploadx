@@ -53,7 +53,8 @@ export class Uploadx extends BaseHandler {
     const { start, total } = contentRange
       ? rangeParser(contentRange)
       : { start: 0, total: contentLength };
-    const file = await this.storage.update(req, { start, total, id });
+    const userId = this.getUserId(req);
+    const file = await this.storage.update(req, { start, total, id, userId });
     if (file.bytesWritten < file.size) {
       const headers = {
         'Access-Control-Expose-Headers': 'Range',
@@ -74,7 +75,7 @@ export class Uploadx extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.FILE_NOT_FOUND);
     const userId = this.getUserId(req);
-    const file = await this.storage.delete(id, userId);
+    const [file] = await this.storage.delete({ id, userId });
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
@@ -83,8 +84,7 @@ export class Uploadx extends BaseHandler {
   async get(req: http.IncomingMessage, res: http.ServerResponse) {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
-    const all = (await this.storage.read(id)) as File[];
-    const files = all.filter(file => file.userId === userId);
+    const files = await this.storage.get({ id, userId });
     this.send({ res, statusCode: 200, body: files });
     return files;
   }

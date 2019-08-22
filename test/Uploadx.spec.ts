@@ -19,14 +19,14 @@ describe('::Uploadx', function() {
   let start: number;
   const files: any[] = [];
   before(function() {
-    storage.reset();
+    storage.delete({ userId: TOKEN });
   });
 
   beforeEach(function() {
     res = undefined as any;
   });
   describe('POST', function() {
-    it('should return 403 on size limit', async function() {
+    it('should 403 on size limit', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -39,7 +39,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(403);
       expect(res).to.not.have.header('location');
     });
-    it('should return 403 on unsupported filetype', async function() {
+    it('should 403 on unsupported filetype', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -51,7 +51,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(403);
       expect(res).to.not.have.header('location');
     });
-    it('should return 400 on bad request', async function() {
+    it('should 400 on bad request', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -59,7 +59,7 @@ describe('::Uploadx', function() {
         .send('');
       expect(res).to.have.status(400);
     });
-    it('should return 201 (x-upload-content)', async function() {
+    it('should 201 (x-upload-content)', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -71,7 +71,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.header('location');
       files.push(res.header.location);
     });
-    it('should return 201 (metadata)', async function() {
+    it('should 201 (metadata)', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -93,7 +93,7 @@ describe('::Uploadx', function() {
     // });
   });
   describe('PUT', function() {
-    it('should multiple chunks', function(done) {
+    it('should 200 (chunks)', function(done) {
       start = 0;
       const readable = fs.createReadStream(testFile.src);
       readable.on('data', async chunk => {
@@ -102,6 +102,7 @@ describe('::Uploadx', function() {
           .request(app)
           .put(files[0])
           .redirects(0)
+          .set('authorization', TOKEN)
           .set('content-type', 'application/octet-stream')
           .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${testFile.size}`)
           .send(chunk);
@@ -114,17 +115,27 @@ describe('::Uploadx', function() {
         readable.resume();
       });
     });
-    it('should single request', async function() {
+    it('should 200 (single request)', async function() {
       res = await chai
         .request(app)
         .put(files[1])
+        .set('authorization', TOKEN)
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(testFile.src));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
       expect(fs.statSync(res.body.path).size).to.be.eql(testFile.size);
     });
-    it('should return 404 without id', async function() {
+    it('should 403 on user auth', async function() {
+      res = await chai
+        .request(app)
+        .put(files[1])
+        .set('authorization', 'otherUser')
+        .set('content-type', 'application/octet-stream')
+        .send(fs.readFileSync(testFile.src));
+      expect(res).to.have.status(403);
+    });
+    it('should 404 without id', async function() {
       res = await chai
         .request(app)
         .put('/upload')
@@ -152,6 +163,13 @@ describe('::Uploadx', function() {
     });
   });
   describe('DELETE', function() {
+    it('should 403 on user auth', async function() {
+      res = await chai
+        .request(app)
+        .delete(files[1])
+        .set('authorization', 'otherUser');
+      expect(res).to.have.status(403);
+    });
     it('should delete', async function() {
       res = await chai
         .request(app)
@@ -168,6 +186,6 @@ describe('::Uploadx', function() {
     });
   });
   after(function() {
-    storage.reset();
+    storage.delete({ userId: TOKEN });
   });
 });
