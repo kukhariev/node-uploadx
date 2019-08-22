@@ -77,7 +77,8 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
             log('[%s]: %s', file.status, file.path);
             this.listenerCount(file.status) && this.emit(file.status, file);
             if (file.status === 'completed') {
-              (req as any).file = file;
+              (req as any)._body = true;
+              (req as any).body = file;
               next ? next() : this.send({ res, statusCode: 200, headers: {}, body: file.metadata });
             }
           }

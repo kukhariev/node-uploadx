@@ -6,7 +6,7 @@ const tmpdir = require('os').tmpdir();
 const app = express();
 app.use(express.json());
 app.use(auth);
-app.get('/upload', (req, res) => res.json([]));
+
 app.use(
   '/upload/',
   uploadx({
@@ -15,8 +15,8 @@ app.use(
     destination: tmpdir
   }),
   (req, res) => {
-    console.log(`file upload completed:\n`, req.file);
-    res.json(req.file);
+    console.log(`file upload completed:\n`, req.body);
+    res.json(req.body);
   }
 );
 
