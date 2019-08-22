@@ -20,22 +20,30 @@ const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
     }
   });
 };
-
+export class ExtendedUploadX extends Uploadx {
+  async get(req: express.Request, res: express.Response) {
+    const userId = this.getUserId(req);
+    const id = this.getFileId(req);
+    const files = await this.storage.get({ id, userId });
+    id ? res.download(files[0].path) : res.json(files);
+    return files;
+  }
+}
 const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
 export const UPLOADS_DIR = `${tmpdir()}/node-uploadx-test/`;
 
 const onComplete: express.RequestHandler = (req, res) => {
-  if (req.file) {
+  if (req.body) {
     const hash = createHash('md5');
-    const input = createReadStream(req.file.path);
+    const input = createReadStream(req.body.path);
     input.on('readable', () => {
       const data = input.read();
       if (data) {
         hash.update(data);
       } else {
         const md5 = hash.digest('hex');
-        res.json({ ...req.file, md5 });
+        res.json({ ...req.body, md5 });
       }
     });
   }
@@ -44,7 +52,7 @@ export const app = express();
 export const storage = new DiskStorage({
   dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`
 });
-export const uploads = new Uploadx({
+export const uploads = new ExtendedUploadX({
   storage,
   maxUploadSize,
   allowMIME,

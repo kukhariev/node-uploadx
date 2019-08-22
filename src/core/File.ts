@@ -9,10 +9,3 @@ export interface File {
   userId: string;
   status: 'created' | 'completed' | 'deleted' | 'error';
 }
-declare global {
-  namespace Express {
-    interface Request {
-      file?: File;
-    }
-  }
-}

@@ -17,7 +17,7 @@ const TOKEN = 'userToken';
 describe('::Uploadx', function() {
   let res: ChaiHttp.Response;
   let start: number;
-  const files: any[] = [];
+  const files: string[] = [];
   before(function() {
     storage.delete({ userId: TOKEN });
   });
@@ -26,7 +26,7 @@ describe('::Uploadx', function() {
     res = undefined as any;
   });
   describe('POST', function() {
-    it('should 403 on size limit', async function() {
+    it('should 403 (size limit)', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -39,7 +39,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(403);
       expect(res).to.not.have.header('location');
     });
-    it('should 403 on unsupported filetype', async function() {
+    it('should 403 (unsupported filetype)', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -51,7 +51,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(403);
       expect(res).to.not.have.header('location');
     });
-    it('should 400 on bad request', async function() {
+    it('should 400 (bad request)', async function() {
       res = await chai
         .request(app)
         .post('/upload')
@@ -126,7 +126,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(200);
       expect(fs.statSync(res.body.path).size).to.be.eql(testFile.size);
     });
-    it('should 403 on user auth', async function() {
+    it('should 403 (userId check)', async function() {
       res = await chai
         .request(app)
         .put(files[1])
@@ -135,7 +135,7 @@ describe('::Uploadx', function() {
         .send(fs.readFileSync(testFile.src));
       expect(res).to.have.status(403);
     });
-    it('should 404 without id', async function() {
+    it('should 404 (no id)', async function() {
       res = await chai
         .request(app)
         .put('/upload')
@@ -146,7 +146,7 @@ describe('::Uploadx', function() {
     });
   });
   describe('GET', function() {
-    it('should return empty without auth', async function() {
+    it('should return empty array (no userId)', async function() {
       res = await chai.request(app).get(`/upload`);
       expect(res).to.be.json;
       expect(res.body).to.be.empty;
@@ -161,16 +161,25 @@ describe('::Uploadx', function() {
       expect(res.body).to.have.lengthOf(2);
       expect(res).to.have.status(200);
     });
+    it('should download file', async function() {
+      res = await chai
+        .request(app)
+        .get(files[0])
+        .set('authorization', TOKEN);
+      expect(res).to.have.header('content-type', 'video/mp4');
+      expect(res.body).to.have.lengthOf(testFile.size);
+      expect(res).to.have.status(200);
+    });
   });
   describe('DELETE', function() {
-    it('should 403 on user auth', async function() {
+    it('should 403 (userId check)', async function() {
       res = await chai
         .request(app)
         .delete(files[1])
         .set('authorization', 'otherUser');
       expect(res).to.have.status(403);
     });
-    it('should delete', async function() {
+    it('should 204', async function() {
       res = await chai
         .request(app)
         .delete(files[1])
@@ -180,7 +189,7 @@ describe('::Uploadx', function() {
   });
 
   describe('OPTIONS', function() {
-    it('should return 404', async function() {
+    it('should 404', async function() {
       res = await chai.request(app).options('/upload');
       expect(res).to.have.status(404);
     });
