@@ -127,3 +127,9 @@ export function memUsage() {
   const { heapUsed } = process.memoryUsage();
   return (heapUsed / 1024 / 1024).toFixed(2);
 }
+
+export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
+  const result: any = {};
+  whitelist.forEach(key => (result[key] = obj[key]));
+  return result;
+};

@@ -2,7 +2,7 @@ import * as bytes from 'bytes';
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import { ERRORS, ErrorStatus, fail } from '.';
-import { logger, typeis } from '../utils';
+import { logger, typeis, pick } from '../utils';
 import { BaseStorage } from './BaseStorage';
 import { Cors } from './Cors';
 import { File } from './File';
@@ -35,7 +35,8 @@ export interface BaseHandler extends EventEmitter {
   on(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
   off(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit(event: 'created' | 'completed' | 'deleted' | 'error', evt: File | ErrorStatus): boolean;
+  emit(event: 'created' | 'completed' | 'deleted', evt: File): boolean;
+  emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
 export class BaseHandler extends EventEmitter implements MethodHandler {
@@ -79,7 +80,12 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
             if (file.status === 'completed') {
               (req as any)._body = true;
               (req as any).body = file;
-              next ? next() : this.send({ res, statusCode: 200, headers: {}, body: file.metadata });
+              next
+                ? next()
+                : this.send({
+                    res,
+                    body: pick(file, ['metadata', 'id'])
+                  });
             }
           }
           return;
@@ -99,12 +105,12 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
    */
   send({
     res,
-    statusCode,
+    statusCode = 200,
     headers = {},
     body = ''
   }: {
     res: http.ServerResponse;
-    statusCode: number;
+    statusCode?: number;
     headers?: Record<string, any>;
     body?: Record<string, any> | string;
   }) {
