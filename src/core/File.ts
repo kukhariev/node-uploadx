@@ -7,5 +7,5 @@ export interface File {
   path: string;
   size: number;
   userId: string;
-  status: 'created' | 'completed' | 'deleted' | 'error';
+  status: 'created' | 'completed' | 'deleted';
 }

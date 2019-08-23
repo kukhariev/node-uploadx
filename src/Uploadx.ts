@@ -3,7 +3,7 @@ import * as querystring from 'querystring';
 import * as url from 'url';
 import { BaseConfig, BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './DiskStorage';
-import { getBody, logger } from './utils';
+import { getBody, logger, pick } from './utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(rangeHeader = '') {
@@ -85,7 +85,8 @@ export class Uploadx extends BaseHandler {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
     const files = await this.storage.get({ id, userId });
-    this.send({ res, statusCode: 200, body: files });
+    const body = files.map(file => pick(file, ['metadata', 'id']));
+    this.send({ res, body });
     return files;
   }
 
