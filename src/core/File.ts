@@ -6,6 +6,13 @@ export interface File {
   mimeType: string;
   path: string;
   size: number;
-  userId: string;
+  userId: string | null;
   status: 'created' | 'completed' | 'deleted';
+}
+export interface FilePart {
+  userId: string | null;
+  total?: number;
+  end?: number;
+  start: number;
+  id: string;
 }

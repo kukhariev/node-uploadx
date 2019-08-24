@@ -2,9 +2,10 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { ERRORS, fail, File, BaseStorage, Range } from './core';
-import { ensureFile, fsUnlink, hashObject } from './utils';
+import { BaseStorage, ERRORS, fail, File, FilePart } from './core';
+import { cp, ensureFile, fsUnlink } from './utils';
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
+
 interface MetaStore extends Configstore {
   get: (id: string) => File | undefined;
   set: (id: any, file?: File) => void;
@@ -44,7 +45,11 @@ export class DiskStorage extends BaseStorage {
   constructor(opts: DiskStorageOptions) {
     super();
     this.destination = 'dest' in opts ? opts.dest : opts.destination;
-    if (!this.destination) throw new TypeError('Destination option required');
+    if (
+      !this.destination ||
+      (typeof this.destination !== 'string' && typeof this.destination !== 'function')
+    )
+      throw new TypeError('Invalid Destination Parameter');
     this.metaStore = new Configstore(this.metaVersion);
   }
 
@@ -52,7 +57,6 @@ export class DiskStorage extends BaseStorage {
    * Add file to storage
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
-    file.id = file.id || hashObject(file);
     file.path = this.setFilePath(req, file);
     file.bytesWritten = await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
     this.metaStore.set(file.id, file);
@@ -62,7 +66,8 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async update(req: http.IncomingMessage, { start, total, id, userId }: Range): Promise<File> {
+  async write(req: http.IncomingMessage, chunk: FilePart): Promise<File> {
+    const { start, total, id, userId } = chunk;
     const [file] = await this.get({ id, userId });
     if (total && total !== file.size) return fail(ERRORS.INVALID_RANGE);
     try {
@@ -78,15 +83,14 @@ export class DiskStorage extends BaseStorage {
       return fail(ERRORS.FILE_ERROR, error);
     }
   }
-  async get({ id, userId }: Partial<File>): Promise<File[]> {
-    if (id) {
-      const file = this.metaStore.get(id);
-      if (!file) return fail(ERRORS.FILE_NOT_FOUND);
-      const isForbidden = userId !== (file.userId || userId);
-      if (this.accessCheck && isForbidden) return fail(ERRORS.FORBIDDEN);
-      return [file];
+  async get(query: Partial<File>): Promise<File[]> {
+    if (query.id) {
+      const file = this.metaStore.get(query.id);
+      if (file && cp(file, query)) return [file];
+      if (query.userId) return fail(ERRORS.FORBIDDEN);
+      return fail(ERRORS.FILE_NOT_FOUND);
     } else {
-      return Object.values(this.metaStore.all).filter(file => userId === (file.userId || userId));
+      return Object.values(this.metaStore.all).filter(file => cp(file, query));
     }
   }
 
@@ -102,9 +106,9 @@ export class DiskStorage extends BaseStorage {
     }
     return deleted;
   }
-
+  // TODO: move to constructor
   protected setFilePath(req: http.IncomingMessage, file: File): string {
-    if (this.destination instanceof Function) {
+    if (typeof this.destination === 'function') {
       const filePath = this.destination(req, file);
       return filePath.endsWith('/') ? path.join(filePath, file.id) : filePath;
     } else {
