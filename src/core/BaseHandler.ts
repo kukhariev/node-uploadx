@@ -10,13 +10,6 @@ import { File } from './File';
 const log = logger.extend('core');
 
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
-export interface Range {
-  total?: number;
-  end?: number;
-  start: number;
-  id: string;
-  userId: string;
-}
 
 export interface BaseConfig {
   storage?: BaseStorage;
@@ -32,44 +25,40 @@ export type MethodHandler = {
 };
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
-  on(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
-  off(event: 'created' | 'completed' | 'deleted', listener: (file: File) => void): this;
+  on(event: 'created' | 'completed' | 'deleted' | 'partial', listener: (file: File) => void): this;
+  off(event: 'created' | 'completed' | 'deleted' | 'partial', listener: (file: File) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit(event: 'created' | 'completed' | 'deleted', evt: File): boolean;
+  emit(event: 'created' | 'completed' | 'deleted' | 'partial', evt: File): boolean;
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
 export class BaseHandler extends EventEmitter implements MethodHandler {
   options?: AsyncHandler;
   responseType: 'text' | 'json' = 'text';
-  private __registeredHandlers: Map<string, AsyncHandler> = new Map();
+  private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor(public config: BaseConfig) {
     super();
     this.registerHandlers();
   }
-  registerHandlers() {
+  registerHandlers(): void {
     handlers.forEach(method => {
       const enabled = (this as MethodHandler)[method];
       if (enabled) {
-        this.__registeredHandlers.set(method.toUpperCase(), enabled);
+        this._registeredHandlers.set(method.toUpperCase(), enabled);
       }
     });
-    log('Handlers', this.__registeredHandlers);
+    log('Handlers', this._registeredHandlers);
   }
 
   /**
    * Uploads handler
    */
-  public handle = <T extends http.IncomingMessage, U extends http.ServerResponse>(
-    req: T,
-    res: U,
-    next: Function
-  ): void => {
+  public handle = (req: http.IncomingMessage, res: http.ServerResponse, next: Function): void => {
     log(`[request]: %s`, req.method, req.url);
     if (Cors.preflight(req, res)) {
       return;
     }
-    const handler = this.__registeredHandlers.get(req.method as string);
+    const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
       handler
         .call(this, req, res)
@@ -113,7 +102,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
     statusCode?: number;
     headers?: Record<string, any>;
     body?: Record<string, any> | string;
-  }) {
+  }): void {
     const json = typeof body !== 'string';
     const data = json ? JSON.stringify(body) : (body as string);
     res.setHeader('Content-Length', Buffer.byteLength(data));
@@ -132,11 +121,11 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
     const body = this.responseType === 'json' ? error : error.message;
     this.send({ res, statusCode, headers: {}, body });
   }
-  protected getUserId(req: any): string {
-    return 'user' in req && (req.user.id || req.user._id);
+  protected getUserId(req: any): string | null {
+    return 'user' in req ? req.user.id || req.user._id : null;
   }
 
-  protected checkLimits(file: File) {
+  protected checkLimits(file: File): Promise<File> {
     if (!typeis.is(file.mimeType, this.config.allowMIME)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
     if (file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER))
       return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${this.config.maxUploadSize}`);

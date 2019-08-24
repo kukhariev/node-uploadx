@@ -1,9 +1,10 @@
 import { createHash } from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as http from 'http';
-import { promisify } from 'util';
 import * as debug from 'debug';
+import * as fs from 'fs';
+import * as http from 'http';
+import * as path from 'path';
+import { promisify } from 'util';
+
 export const logger = debug('uploadx');
 
 export const fsMkdir = promisify(fs.mkdir);
@@ -123,7 +124,7 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<
   });
 }
 
-export function memUsage() {
+export function memUsage(): string {
   const { heapUsed } = process.memoryUsage();
   return (heapUsed / 1024 / 1024).toFixed(2);
 }
@@ -133,3 +134,18 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
   whitelist.forEach(key => (result[key] = obj[key]));
   return result;
 };
+export const cp = (obj: any, query: any): boolean => {
+  for (const key in query) {
+    const value = query[key];
+    if ((typeof value !== 'object' && value === null) || value !== undefined) {
+      if (value !== obj[key]) return false;
+    }
+  }
+  return true;
+};
+
+export const find = <T>(list: T[], query: Partial<T>): T[] => list.filter(obj => cp(obj, query));
+export function getHeader(req: http.IncomingMessage, name: string): string {
+  const raw = req.headers[name];
+  return Array.isArray(raw) ? raw[0] : raw || '';
+}

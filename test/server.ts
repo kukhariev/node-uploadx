@@ -1,16 +1,18 @@
+/* eslint-disable no-console */
+
 import { createHash } from 'crypto';
 import * as express from 'express';
 import { createReadStream } from 'fs';
 import { tmpdir } from 'os';
-import { DiskStorage, Uploadx } from '../src';
+import { DiskStorage, Uploadx, File } from '../src';
 
-const auth: express.RequestHandler = (req, res, next) => {
+const auth: express.RequestHandler = (req, res, next): void => {
   if (req.headers.authorization) {
     (req as any).user = { id: req.headers.authorization };
   }
   next();
 };
-const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+const errorHandler: express.ErrorRequestHandler = (err, req, res, next): void => {
   !err.statusCode && console.log(err);
   res.status(err.statusCode || 500).json({
     error: {
@@ -21,7 +23,7 @@ const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
   });
 };
 export class ExtendedUploadX extends Uploadx {
-  async get(req: express.Request, res: express.Response) {
+  async get(req: express.Request, res: express.Response): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
     const files = await this.storage.get({ id, userId });
@@ -33,7 +35,7 @@ const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
 export const UPLOADS_DIR = `${tmpdir()}/node-uploadx-test/`;
 
-const onComplete: express.RequestHandler = (req, res) => {
+const onComplete: express.RequestHandler = (req, res): void => {
   if (req.body) {
     const hash = createHash('md5');
     const input = createReadStream(req.body.path);
