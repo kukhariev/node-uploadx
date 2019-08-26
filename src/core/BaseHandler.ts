@@ -50,7 +50,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   /**
    * Uploads handler
    */
-  handle = (req: http.IncomingMessage, res: http.ServerResponse, next: Function): void => {
+  handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
     log(`[request]: %s`, req.method, req.url);
     if (Cors.preflight(req, res)) {
       return;

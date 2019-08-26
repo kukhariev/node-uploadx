@@ -1,12 +1,16 @@
+// @ts-check
+/* eslint-disable no-console */
 const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');
 const { tmpdir } = require('os');
 
 const storage = new DiskStorage({
-  dest: (req, file) => `${tmpdir()}/node-uploadx/${file.filename}`
+  dest: (req, file) => `${tmpdir()}/node-uploadx/${file.filename}`,
+  maxUploadSize: '5GB',
+  allowMIME: ['video/*']
 });
-const uploads = new Uploadx({ storage, maxUploadSize: '5GB', allowMIME: ['video/*'] });
+const uploads = new Uploadx({ storage });
 uploads.on('error', error => console.error('error: ', error));
 uploads.on('completed', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));

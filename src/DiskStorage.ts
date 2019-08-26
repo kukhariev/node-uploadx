@@ -7,26 +7,32 @@ import { cp, ensureFile, fsUnlink, typeis } from './utils';
 import bytes = require('bytes');
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
-interface MetaStore extends Configstore {
+export interface MetaStore extends Configstore {
   get: (id: string) => File | undefined;
   set: (id: any, file?: File) => void;
   delete: (id: string) => void;
   clear: () => void;
   all: Record<string, File>;
 }
-export type DiskStorageOptions =
-  | {
-      destination: Destination;
-      allowMIME?: string[];
-      maxUploadSize?: number | string;
-    }
-  | {
-      allowMIME?: string[];
-      maxUploadSize?: number | string;
-      dest: Destination;
-    };
+export interface DiskStorageOptions {
+  dest?: Destination;
+  destination?: Destination;
+  allowMIME?: string[];
+  maxUploadSize?: number | string;
+}
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
+
+type ValidatorFn = (file: File) => string | false;
+function fileTypeLimit(this: DiskStorage, file: File): string | false {
+  return !typeis.is(file.mimeType, this.config.allowMIME) && `The filetype is not allowed`;
+}
+function fileSizeLimit(this: DiskStorage, file: File): string | false {
+  return (
+    file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER) &&
+    `File size limit: ${this.config.maxUploadSize}`
+  );
+}
 
 /**
  * Local Disk Storage
@@ -37,6 +43,7 @@ export class DiskStorage extends BaseStorage {
    */
   metaStore: MetaStore;
   accessCheck = true;
+  validators: Set<ValidatorFn> = new Set();
   /**
    * Where store files
    */
@@ -50,19 +57,37 @@ export class DiskStorage extends BaseStorage {
 
   constructor(public config: DiskStorageOptions) {
     super();
-    this.destination = 'dest' in config ? config.dest : config.destination;
+    this.destination = config.dest || config.destination || './upload';
     if (typeof this.destination !== 'string' && typeof this.destination !== 'function')
       throw new TypeError('Invalid Destination Parameter');
     this.metaStore = new Configstore(this.metaVersion);
+
+    this.config.allowMIME && this.validators.add(fileTypeLimit);
+    this.config.maxUploadSize && this.validators.add(fileSizeLimit);
   }
 
+  validate(file: File): string[] {
+    const errors: string[] = [];
+    for (const validator of this.validators) {
+      const error = validator.call(this, file);
+      if (error) errors.push(error);
+    }
+    return errors;
+  }
   /**
    * Add file to storage
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
-    await this.checkLimits(file);
-    file.path = this.setFilePath(req, file);
-    file.bytesWritten = await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
+    try {
+      file.path = this.setFilePath(req, file);
+    } catch (error) {
+      return fail(ERRORS.FILE_NOT_ALLOWED);
+    }
+    const errors = this.validate(file);
+    if (errors.length) {
+      return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
+    }
+    await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
     this.metaStore.set(file.id, file);
     return file;
   }
@@ -70,8 +95,8 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async write(req: http.IncomingMessage, chunk: FilePart): Promise<File> {
-    const { start, total, id, userId } = chunk;
+  async write(req: http.IncomingMessage, filePart: FilePart): Promise<File> {
+    const { start, total, id, userId } = filePart;
     const [file] = await this.get({ id, userId });
     if (total && total !== file.size) return fail(ERRORS.INVALID_RANGE);
     try {
@@ -109,15 +134,6 @@ export class DiskStorage extends BaseStorage {
       } catch {}
     }
     return deleted;
-  }
-  checkLimits(file: File): Promise<File> {
-    const isValidType = !typeis.is(file.mimeType, this.config.allowMIME);
-    if (isValidType) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
-    const isValidSize =
-      file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER);
-    if (isValidSize)
-      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${this.config.maxUploadSize}`);
-    return Promise.resolve(file);
   }
 
   // TODO: move to constructor
