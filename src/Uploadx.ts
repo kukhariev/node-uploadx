@@ -36,7 +36,6 @@ export class Uploadx extends BaseHandler {
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const meta = await this.buildFileFromRequest(req);
-    await this.checkLimits(meta);
     const file = await this.storage.create(req, meta);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const location = this.buildFileUrl(req, file.id);
@@ -107,7 +106,6 @@ export class Uploadx extends BaseHandler {
     file.mimeType =
       req.headers['x-upload-content-type'] || metadata.mimeType || 'application/octet-stream';
     file.id = this.getFileId(req) || hashObject(file);
-
     return file;
   }
 

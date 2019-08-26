@@ -52,12 +52,12 @@ const onComplete: express.RequestHandler = (req, res): void => {
 };
 export const app = express();
 export const storage = new DiskStorage({
-  dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`
+  dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`,
+  maxUploadSize,
+  allowMIME
 });
 export const uploads = new ExtendedUploadX({
   storage,
-  maxUploadSize,
-  allowMIME,
   useRelativeLocation: true
 });
 

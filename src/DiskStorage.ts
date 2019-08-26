@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart } from './core';
-import { cp, ensureFile, fsUnlink } from './utils';
+import { cp, ensureFile, fsUnlink, typeis } from './utils';
+import bytes = require('bytes');
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
 interface MetaStore extends Configstore {
@@ -16,8 +17,12 @@ interface MetaStore extends Configstore {
 export type DiskStorageOptions =
   | {
       destination: Destination;
+      allowMIME?: string[];
+      maxUploadSize?: number | string;
     }
   | {
+      allowMIME?: string[];
+      maxUploadSize?: number | string;
       dest: Destination;
     };
 
@@ -42,13 +47,11 @@ export class DiskStorage extends BaseStorage {
    * @beta
    */
   private readonly metaVersion = `${pkg.name}@${pkg.version}`;
-  constructor(opts: DiskStorageOptions) {
+
+  constructor(public config: DiskStorageOptions) {
     super();
-    this.destination = 'dest' in opts ? opts.dest : opts.destination;
-    if (
-      !this.destination ||
-      (typeof this.destination !== 'string' && typeof this.destination !== 'function')
-    )
+    this.destination = 'dest' in config ? config.dest : config.destination;
+    if (typeof this.destination !== 'string' && typeof this.destination !== 'function')
       throw new TypeError('Invalid Destination Parameter');
     this.metaStore = new Configstore(this.metaVersion);
   }
@@ -57,6 +60,7 @@ export class DiskStorage extends BaseStorage {
    * Add file to storage
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
+    await this.checkLimits(file);
     file.path = this.setFilePath(req, file);
     file.bytesWritten = await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
     this.metaStore.set(file.id, file);
@@ -106,6 +110,16 @@ export class DiskStorage extends BaseStorage {
     }
     return deleted;
   }
+  checkLimits(file: File): Promise<File> {
+    const isValidType = !typeis.is(file.mimeType, this.config.allowMIME);
+    if (isValidType) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
+    const isValidSize =
+      file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER);
+    if (isValidSize)
+      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${this.config.maxUploadSize}`);
+    return Promise.resolve(file);
+  }
+
   // TODO: move to constructor
   protected setFilePath(req: http.IncomingMessage, file: File): string {
     if (typeof this.destination === 'function') {
