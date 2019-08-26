@@ -26,6 +26,11 @@ export const ERRORS = {
     statusCode: 403,
     message: 'authenticated user is not allowed access'
   },
+
+  FILE_NOT_ALLOWED: {
+    statusCode: 403,
+    message: 'file not allowed'
+  },
   FILE_TOO_LARGE: {
     statusCode: 403,
     message: 'file is too large'
@@ -71,6 +76,6 @@ export interface ErrorStatus {
   details?: any;
 }
 
-export function fail(error: ErrorStatus, details?: any) {
+export function fail(error: ErrorStatus, details?: any): Promise<never> {
   return Promise.reject({ ...error, details });
 }

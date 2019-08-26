@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as express from 'express';
 import { uploadx } from '../../dist';
 import { auth } from './auth';

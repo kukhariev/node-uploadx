@@ -34,7 +34,7 @@
     "postbuild": "tsnd scripts/post-build.ts",
     "test": "mocha",
     "test:watch": "mocha --watch",
-    "lint": "eslint '{src,test,examples}/**/*.{ts,js}' --fix",
+    "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
     "demo:node": "npm run build && node examples/node",
     "demo:express": "npm run build && tsnd examples/express"
   },

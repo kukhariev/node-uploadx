@@ -4,7 +4,7 @@ export class Cors {
   static maxAge = 600;
   static origin = ['*'];
 
-  static preflight(req: http.IncomingMessage, res: http.ServerResponse) {
+  static preflight(req: http.IncomingMessage, res: http.ServerResponse): boolean {
     const origin = req.headers.origin as string;
     if (!origin) return false;
     res.setHeader('Access-Control-Allow-Origin', '*');
