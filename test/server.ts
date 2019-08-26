@@ -22,7 +22,7 @@ const errorHandler: express.ErrorRequestHandler = (err, req, res, next): void =>
     }
   });
 };
-export class ExtendedUploadX extends Uploadx {
+export class ExtendedUploadx extends Uploadx {
   async get(req: express.Request, res: express.Response): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
@@ -54,11 +54,11 @@ export const app = express();
 export const storage = new DiskStorage({
   dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`,
   maxUploadSize,
-  allowMIME
-});
-export const uploads = new ExtendedUploadX({
-  storage,
+  allowMIME,
   useRelativeLocation: true
+});
+export const uploads = new ExtendedUploadx({
+  storage
 });
 
 app.use(auth);

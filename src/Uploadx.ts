@@ -1,9 +1,9 @@
 import * as http from 'http';
 import * as querystring from 'querystring';
 import * as url from 'url';
-import { BaseConfig, BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
+import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './DiskStorage';
-import { getBody, logger, pick, hashObject } from './utils';
+import { getBody, hashObject, logger, pick } from './utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -24,11 +24,12 @@ export function rangeParser(
 export class Uploadx extends BaseHandler {
   idKey = 'upload_id';
   storage: BaseStorage;
-  constructor(public config: BaseConfig) {
-    super(config);
-    this.storage = config.storage || new DiskStorage(config as DiskStorageOptions);
+  constructor(config: { storage: BaseStorage } | DiskStorageOptions) {
+    super();
+    this.storage =
+      'storage' in config ? config.storage : new DiskStorage(config as DiskStorageOptions);
     this.responseType = 'json';
-    log('options: %o', this.config);
+    log('options: %o', config);
   }
 
   /**
@@ -129,7 +130,7 @@ export class Uploadx extends BaseHandler {
         [this.idKey]: id
       }
     })}`;
-    const isFullUrl = req.headers.host && !this.config.useRelativeLocation;
+    const isFullUrl = req.headers.host && !this.storage.config.useRelativeLocation;
     return isFullUrl ? `//${req.headers.host}${uri}` : `${uri}`;
   }
 }
@@ -138,7 +139,7 @@ export class Uploadx extends BaseHandler {
  * Basic express wrapper
  */
 export function uploadx(
-  options: BaseConfig & DiskStorageOptions
+  options: DiskStorageOptions
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   const upl = new Uploadx(options);
   return upl.handle;

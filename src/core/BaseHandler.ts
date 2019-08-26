@@ -2,7 +2,6 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import { ErrorStatus } from '.';
 import { logger, pick } from '../utils';
-import { BaseStorage } from './BaseStorage';
 import { Cors } from './Cors';
 import { File } from './File';
 
@@ -10,10 +9,6 @@ const log = logger.extend('core');
 
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
 
-export interface BaseConfig {
-  storage?: BaseStorage;
-  useRelativeLocation?: boolean;
-}
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 type Handlers = typeof handlers[number];
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
@@ -33,7 +28,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   options?: AsyncHandler;
   responseType: 'text' | 'json' = 'text';
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
-  constructor(public config: BaseConfig) {
+  constructor() {
     super();
     this.registerHandlers();
   }
