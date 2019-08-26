@@ -10,6 +10,8 @@ const FILE = ({
   id: 'fileId',
   userId: 'userId',
   filename: 'file.mp4',
+  size: 2469036,
+  mimeType: 'video/mp4',
   metadata: {
     name: 'file.mp4',
     mimeType: 'video/mp4',

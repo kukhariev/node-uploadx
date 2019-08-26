@@ -1,8 +1,7 @@
-import * as bytes from 'bytes';
 import { EventEmitter } from 'events';
 import * as http from 'http';
-import { ERRORS, ErrorStatus, fail } from '.';
-import { logger, typeis, pick } from '../utils';
+import { ErrorStatus } from '.';
+import { logger, pick } from '../utils';
 import { BaseStorage } from './BaseStorage';
 import { Cors } from './Cors';
 import { File } from './File';
@@ -13,8 +12,6 @@ export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse)
 
 export interface BaseConfig {
   storage?: BaseStorage;
-  allowMIME?: string[];
-  maxUploadSize?: number | string;
   useRelativeLocation?: boolean;
 }
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -53,7 +50,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   /**
    * Uploads handler
    */
-  public handle = (req: http.IncomingMessage, res: http.ServerResponse, next: Function): void => {
+  handle = (req: http.IncomingMessage, res: http.ServerResponse, next: Function): void => {
     log(`[request]: %s`, req.method, req.url);
     if (Cors.preflight(req, res)) {
       return;
@@ -123,12 +120,5 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   }
   protected getUserId(req: any): string | null {
     return 'user' in req ? req.user.id || req.user._id : null;
-  }
-
-  protected checkLimits(file: File): Promise<File> {
-    if (!typeis.is(file.mimeType, this.config.allowMIME)) return fail(ERRORS.FILE_TYPE_NOT_ALLOWED);
-    if (file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER))
-      return fail(ERRORS.FILE_TOO_LARGE, `File size limit: ${this.config.maxUploadSize}`);
-    return Promise.resolve(file);
   }
 }
