@@ -2,9 +2,8 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { BaseStorage, ERRORS, fail, File, FilePart } from './core';
-import { cp, ensureFile, fsUnlink, typeis } from './utils';
-import bytes = require('bytes');
+import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from './core';
+import { cp, ensureFile, fsUnlink } from './utils';
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
 export interface MetaStore extends Configstore {
@@ -14,25 +13,12 @@ export interface MetaStore extends Configstore {
   clear: () => void;
   all: Record<string, File>;
 }
-export interface DiskStorageOptions {
+export interface DiskStorageOptions extends StorageOptions {
   dest?: Destination;
   destination?: Destination;
-  allowMIME?: string[];
-  maxUploadSize?: number | string;
 }
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
-
-type ValidatorFn = (file: File) => string | false;
-function fileTypeLimit(this: DiskStorage, file: File): string | false {
-  return !typeis.is(file.mimeType, this.config.allowMIME) && `The filetype is not allowed`;
-}
-function fileSizeLimit(this: DiskStorage, file: File): string | false {
-  return (
-    file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER) &&
-    `File size limit: ${this.config.maxUploadSize}`
-  );
-}
 
 /**
  * Local Disk Storage
@@ -43,7 +29,7 @@ export class DiskStorage extends BaseStorage {
    */
   metaStore: MetaStore;
   accessCheck = true;
-  validators: Set<ValidatorFn> = new Set();
+
   /**
    * Where store files
    */
@@ -56,24 +42,13 @@ export class DiskStorage extends BaseStorage {
   private readonly metaVersion = `${pkg.name}@${pkg.version}`;
 
   constructor(public config: DiskStorageOptions) {
-    super();
+    super(config);
     this.destination = config.dest || config.destination || './upload';
     if (typeof this.destination !== 'string' && typeof this.destination !== 'function')
       throw new TypeError('Invalid Destination Parameter');
     this.metaStore = new Configstore(this.metaVersion);
-
-    this.config.allowMIME && this.validators.add(fileTypeLimit);
-    this.config.maxUploadSize && this.validators.add(fileSizeLimit);
   }
 
-  validate(file: File): string[] {
-    const errors: string[] = [];
-    for (const validator of this.validators) {
-      const error = validator.call(this, file);
-      if (error) errors.push(error);
-    }
-    return errors;
-  }
   /**
    * Add file to storage
    */
