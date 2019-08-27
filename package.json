@@ -27,7 +27,7 @@
   },
   "scripts": {
     "start": "tsnd test/server.ts",
-    "dev": "DEBUG=uploadx:* tsnd --respawn --transpileOnly test/server.ts",
+    "dev": "tsnd --respawn --transpileOnly test/server.ts",
     "prettier": "prettier --write \"**/*.{json,md,ts}\"",
     "reset": "tsnd scripts/storage-reset.ts",
     "build": "rimraf dist && tsc",

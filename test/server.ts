@@ -18,11 +18,12 @@ const errorHandler: express.ErrorRequestHandler = (err, req, res, next): void =>
     error: {
       code: err.code,
       message: err.message,
-      details: err.details
+      detail: err.detail
     }
   });
 };
-export class ExtendedUploadx extends Uploadx {
+
+export class ExtendedUploadx extends Uploadx<DiskStorage> {
   async get(req: express.Request, res: express.Response): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);

@@ -1,6 +1,8 @@
 import { expect } from 'chai';
-import { BaseHandler } from '../src/core';
-class TestUploader extends BaseHandler {}
+import { BaseHandler, BaseStorage } from '../src/core';
+class TestUploader extends BaseHandler {
+  storage = (null as unknown) as BaseStorage;
+}
 describe('BaseHandler', function() {
   let uploader: TestUploader;
   it('should create instance BaseHandler', function() {

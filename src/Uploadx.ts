@@ -21,13 +21,12 @@ export function rangeParser(
 /**
  * X-headers  protocol implementation
  */
-export class Uploadx extends BaseHandler {
+export class Uploadx<T extends BaseStorage> extends BaseHandler {
   idKey = 'upload_id';
-  storage: BaseStorage;
-  constructor(config: { storage: BaseStorage } | DiskStorageOptions) {
+  storage: T | DiskStorage;
+  constructor(config: { storage: T } | DiskStorageOptions) {
     super();
-    this.storage =
-      'storage' in config ? config.storage : new DiskStorage(config as DiskStorageOptions);
+    this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
     this.responseType = 'json';
     log('options: %o', config);
   }

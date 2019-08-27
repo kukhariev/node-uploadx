@@ -31,14 +31,6 @@ export const ERRORS = {
     statusCode: 403,
     message: 'file not allowed'
   },
-  FILE_TOO_LARGE: {
-    statusCode: 403,
-    message: 'file is too large'
-  },
-  FILE_TYPE_NOT_ALLOWED: {
-    statusCode: 403,
-    message: 'file type not allowed'
-  },
   FILE_CONFLICT: {
     statusCode: 409,
     message: 'file conflict'
@@ -72,10 +64,8 @@ export const ERRORS = {
 export interface ErrorStatus {
   statusCode: number;
   message: string;
-  code?: any;
-  details?: any;
 }
 
-export function fail(error: ErrorStatus, details?: any): Promise<never> {
-  return Promise.reject({ ...error, details });
+export function fail(error: ErrorStatus, detail?: any): Promise<never> {
+  return Promise.reject({ ...error, detail });
 }

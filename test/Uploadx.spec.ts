@@ -13,7 +13,7 @@ const testFile = {
   size: fs.statSync(TEST_FILE_PATH).size,
   mimeType: 'video/mp4'
 };
-const TOKEN = 'userToken';
+const TOKEN = 'user_id';
 describe('::Uploadx', function() {
   let res: ChaiHttp.Response;
   let start: number;
