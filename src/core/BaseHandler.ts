@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
-import { ErrorStatus } from '.';
+import { ErrorStatus, BaseStorage } from '.';
 import { logger, pick } from '../utils';
 import { Cors } from './Cors';
 import { File } from './File';
@@ -24,7 +24,7 @@ export interface BaseHandler extends EventEmitter {
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
-export class BaseHandler extends EventEmitter implements MethodHandler {
+export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   options?: AsyncHandler;
   responseType: 'text' | 'json' = 'text';
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
@@ -108,6 +108,7 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
    * Send Error to client
    */
   sendError(req: http.IncomingMessage, res: http.ServerResponse, error: any): void {
+    // TODO: https://jsonapi.org/examples/#error-objects-basics
     const statusCode = error.statusCode || 500;
     error.message = error.message || 'unknown error';
     const body = this.responseType === 'json' ? error : error.message;
@@ -116,4 +117,5 @@ export class BaseHandler extends EventEmitter implements MethodHandler {
   protected getUserId(req: any): string | null {
     return 'user' in req ? req.user.id || req.user._id : null;
   }
+  abstract storage: BaseStorage;
 }
