@@ -8,15 +8,17 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
-    project: './tsconfig.json'
+    project: './tsconfig.eslint.json'
   },
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
     'plugin:promise/recommended',
+    'plugin:prettier/recommended',
     'prettier',
-    'prettier/@typescript-eslint',
-    'plugin:prettier/recommended'
+    'prettier/@typescript-eslint'
   ],
   plugins: ['@typescript-eslint', 'prettier', 'promise'],
   rules: {

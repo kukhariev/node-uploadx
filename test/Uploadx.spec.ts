@@ -96,6 +96,7 @@ describe('::Uploadx', function() {
     it('should 200 (chunks)', function(done) {
       start = 0;
       const readable = fs.createReadStream(testFile.src);
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       readable.on('data', async chunk => {
         readable.pause();
         res = await chai

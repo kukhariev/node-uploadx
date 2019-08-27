@@ -99,7 +99,7 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<
   let limit = 10240;
   return new Promise((resolve, reject) => {
     if (!typeis(req, ['json'])) {
-      return reject(new Error('ContentTypeError'));
+      return reject('ContentType Error');
     }
     if ('body' in req) {
       resolve((req as any).body);
@@ -108,7 +108,7 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<
       req.on('data', chunk => {
         limit -= chunk.length;
         if (0 > limit) {
-          return reject(new Error('BufferError'));
+          return reject('Buffer Error');
         }
         buffer.push(chunk);
       });
@@ -117,7 +117,7 @@ export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<
           const json = JSON.parse(Buffer.concat(buffer).toString());
           resolve(json);
         } catch (error) {
-          reject(new Error('ParsingError'));
+          reject('Parsing Error');
         }
       });
     }

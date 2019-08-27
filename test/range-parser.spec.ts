@@ -5,7 +5,7 @@ describe('Content-Range parser', function() {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
     samples.forEach(sample => {
       const res = rangeParser(sample);
-      expect(res.start).to.satisfy(Number.isNaN);
+      expect(res.start).to.satisfy((v: number) => Number.isNaN(v));
     });
   });
   it('should parse `write` ranges', function() {
@@ -18,7 +18,7 @@ describe('Content-Range parser', function() {
     ];
     samples.forEach(sample => {
       const res = rangeParser(sample);
-      expect(res.start).to.satisfy(Number.isInteger);
+      expect(res.start).to.satisfy((v: number) => Number.isInteger(v));
     });
   });
 });
