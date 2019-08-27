@@ -62,7 +62,7 @@ export class DiskStorage extends BaseStorage {
     if (errors.length) {
       return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
     }
-    await ensureFile(file.path).catch(error => fail(ERRORS.FILE_ERROR, error));
+    await ensureFile(file.path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
     this.metaStore.set(file.id, file);
     return file;
   }
@@ -83,8 +83,8 @@ export class DiskStorage extends BaseStorage {
       }
       file.bytesWritten = await this._write(req, file.path, start);
       return file;
-    } catch (error) {
-      return fail(ERRORS.FILE_ERROR, error);
+    } catch (ex) {
+      return fail(ERRORS.FILE_ERROR, ex);
     }
   }
   async get(query: Partial<File>): Promise<File[]> {
