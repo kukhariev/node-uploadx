@@ -2,7 +2,7 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from './core';
+import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
 import { cp, ensureFile, fsUnlink } from './utils';
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
@@ -18,7 +18,7 @@ export interface DiskStorageOptions extends StorageOptions {
   destination?: Destination;
 }
 
-const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'));
 
 /**
  * Local Disk Storage

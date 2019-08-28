@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { BaseHandler, BaseStorage } from '../src/core';
+import { BaseHandler, BaseStorage } from '../src';
 class TestUploader extends BaseHandler {
   storage = (null as unknown) as BaseStorage;
 }

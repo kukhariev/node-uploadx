@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import { ErrorStatus, BaseStorage } from '.';
-import { logger, pick } from '../utils';
+import { logger, pick } from './utils';
 import { Cors } from './Cors';
 import { File } from './File';
 

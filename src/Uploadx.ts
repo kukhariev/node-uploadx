@@ -2,8 +2,8 @@ import * as http from 'http';
 import * as querystring from 'querystring';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
-import { DiskStorage, DiskStorageOptions } from './DiskStorage';
-import { getBody, hashObject, logger, pick } from './utils';
+import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
+import { getBody, hashObject, logger, pick } from './core/utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -37,8 +37,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const meta = await this.buildFileFromRequest(req);
     const file = await this.storage.create(req, meta);
+    const location = this.buildFileUrl(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const location = this.buildFileUrl(req, file.id);
     const headers = { 'Access-Control-Expose-Headers': 'Location', Location: location };
     this.send({ res, statusCode, headers });
     return file;
@@ -120,13 +120,13 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   /**
    * Build file url from request
    */
-  protected buildFileUrl(req: http.IncomingMessage, id: string): string {
-    const s = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { query, pathname } = url.parse(s, true);
+  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
+    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
+    const { query, pathname } = url.parse(originalUrl, true);
     const uri = `${pathname}?${querystring.stringify({
       ...query,
       ...{
-        [this.idKey]: id
+        [this.idKey]: file.id
       }
     })}`;
     const isFullUrl = req.headers.host && !this.storage.config.useRelativeLocation;
