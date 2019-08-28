@@ -4,6 +4,9 @@ import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
 import { cp, ensureFile, fsUnlink } from './utils';
+
+const pkg = { name: 'node-uploadx', version: '2.0' };
+
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
 export interface MetaStore extends Configstore {
@@ -17,8 +20,6 @@ export interface DiskStorageOptions extends StorageOptions {
   dest?: Destination;
   destination?: Destination;
 }
-
-const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'));
 
 /**
  * Local Disk Storage
