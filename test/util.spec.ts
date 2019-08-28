@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import { tmpdir } from 'os';
 import * as rimraf from 'rimraf';
-import * as utils from '../src/utils';
+import * as utils from '../src/core/utils';
 const ROOT = `${tmpdir()}/fs-test`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;

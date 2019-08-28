@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Cors } from '../src/core';
+import { Cors } from '../src';
 import { Request, Response } from 'express';
 import * as httpMocks from 'node-mocks-http';
 

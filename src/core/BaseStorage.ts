@@ -1,6 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { typeis } from '../utils';
+import { typeis } from './utils';
 import { File, FilePart } from './';
 
 export interface StorageOptions {

@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as http from 'http';
 import { Socket } from 'net';
-import { File } from '../src/core';
-import { DiskStorage, DiskStorageOptions } from '../src/DiskStorage';
+import { File } from '../src';
+import { DiskStorage, DiskStorageOptions } from '../src/core/DiskStorage';
 import { UPLOADS_DIR } from './server';
 
 const FILE = ({
