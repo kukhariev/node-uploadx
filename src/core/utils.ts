@@ -17,18 +17,6 @@ export function isObject(value: any): boolean {
   return !!value && value.constructor === Object;
 }
 
-export function toHeaderString(x: any): string | undefined {
-  if (!x) {
-    return;
-  }
-  if (typeof x === 'string') {
-    return x;
-  }
-  if (typeof x === 'number' || typeof x === 'boolean' || Array.isArray(x)) {
-    return x.toString();
-  }
-  return;
-}
 export async function ensureDir(dir: string): Promise<void> {
   dir = path.normalize(dir);
   const paths = dir.split(path.sep);

@@ -1,5 +1,5 @@
 // @ts-check
-/* eslint-disable no-console */
+
 const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');

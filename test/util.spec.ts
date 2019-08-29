@@ -61,22 +61,4 @@ describe('Utils', function() {
       });
     });
   });
-
-  describe('toHeaderString', function() {
-    it('string', function() {
-      expect(utils.toHeaderString('string')).to.be.equal('string');
-    });
-    it('number', function() {
-      expect(utils.toHeaderString(10)).to.be.equal('10');
-    });
-    it('boolean', function() {
-      expect(utils.toHeaderString(true)).to.be.equal('true');
-    });
-    it('undefined', function() {
-      expect(utils.toHeaderString(undefined)).to.be.undefined;
-    });
-    it('string[]', function() {
-      expect(utils.toHeaderString(['post', 'patch'])).to.be.equal('post,patch');
-    });
-  });
 });

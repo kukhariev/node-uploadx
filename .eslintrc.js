@@ -13,8 +13,8 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:promise/recommended',
     'plugin:prettier/recommended',
     'prettier',
@@ -49,7 +49,6 @@ module.exports = {
     'no-return-await': 'error',
     'no-shadow': 'error',
     'no-throw-literal': 'error',
-    'no-console': 'warn',
     'no-undef': 'off',
     'no-useless-call': 'error',
     'no-useless-concat': 'error',
@@ -61,9 +60,10 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.js'],
+      files: ['examples/**/*.*'],
       rules: {
-        '@typescript-eslint/no-var-requires': 'off'
+        '@typescript-eslint/no-var-requires': 'off',
+        'no-console': 'off'
       }
     }
   ]
