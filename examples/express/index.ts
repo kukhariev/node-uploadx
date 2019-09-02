@@ -2,7 +2,6 @@ import * as express from 'express';
 import { uploadx, File } from '../../dist';
 import { auth } from './auth';
 import { errorHandler } from './error-handler';
-import { tmpdir } from 'os';
 
 const app = express();
 app.use(express.json());
@@ -11,12 +10,11 @@ app.use(auth);
 const mime = (file: File): string => file.mimeType.split('/')[0];
 
 app.use(
-  '/upload/',
+  '/upload',
   uploadx({
     maxUploadSize: '5GB',
     allowMIME: ['video/*', 'image/*'],
-    destination: (req, file) =>
-      `${tmpdir()}/node-uploadx/${file.userId}/${mime(file)}/${file.filename}`
+    destination: (req, file) => `./upload/${file.userId}/${mime(file)}/${file.filename}`
   }),
   (req, res) => {
     console.log(`file upload completed:\n`, req.body);

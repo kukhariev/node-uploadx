@@ -3,10 +3,9 @@
 const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');
-const { tmpdir } = require('os');
 
 const storage = new DiskStorage({
-  dest: (req, file) => `${tmpdir()}/node-uploadx/${file.filename}`,
+  dest: './upload',
   maxUploadSize: '5GB',
   allowMIME: ['video/*']
 });
