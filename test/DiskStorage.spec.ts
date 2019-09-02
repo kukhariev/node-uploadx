@@ -5,6 +5,7 @@ import { Socket } from 'net';
 import { File } from '../src';
 import { DiskStorage, DiskStorageOptions } from '../src/core/DiskStorage';
 import { UPLOADS_DIR } from './server';
+import { normalize } from 'path';
 
 const FILE = ({
   id: 'fileId',
@@ -23,7 +24,7 @@ const FILE = ({
 const OPTIONS: DiskStorageOptions = {
   dest: (req, file) => `${UPLOADS_DIR}/${file.userId}/${file.filename}`
 };
-const FILEPATH = `${UPLOADS_DIR}/userId/file.mp4`;
+const FILEPATH = normalize(`${UPLOADS_DIR}/userId/file.mp4`);
 describe('DiskStorage', function() {
   it('should create file', async function() {
     const req = new http.IncomingMessage(new Socket());
