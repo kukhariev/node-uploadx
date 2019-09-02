@@ -116,9 +116,9 @@ export class DiskStorage extends BaseStorage {
   protected setFilePath(req: http.IncomingMessage, file: File): string {
     if (typeof this.destination === 'function') {
       const filePath = this.destination(req, file);
-      return filePath.endsWith('/') ? path.join(filePath, file.id) : filePath;
+      return path.normalize(filePath.endsWith('/') ? path.join(filePath, file.id) : filePath);
     } else {
-      return path.join(this.destination, file.id);
+      return path.normalize(path.join(this.destination, file.id));
     }
   }
   /**
