@@ -12,7 +12,7 @@ const mime = (file: File): string => file.mimeType.split('/')[0];
 app.use(
   '/upload',
   uploadx({
-    maxUploadSize: '5GB',
+    maxUploadSize: '15GB',
     allowMIME: ['video/*', 'image/*'],
     destination: (req, file) => `./upload/${file.userId}/${mime(file)}/${file.filename}`
   }),

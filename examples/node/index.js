@@ -6,8 +6,8 @@ const url = require('url');
 
 const storage = new DiskStorage({
   dest: './upload',
-  maxUploadSize: '5GB',
-  allowMIME: ['video/*']
+  maxUploadSize: '15GB',
+  allowMIME: ['video/*', 'image/*']
 });
 const uploads = new Uploadx({ storage });
 uploads.on('error', error => console.error('error: ', error));
