@@ -32,21 +32,22 @@ export class DiskStorage extends BaseStorage {
   accessCheck = true;
 
   /**
-   * Where store files
-   */
-  private destination: Destination;
-
-  /**
    * Meta Format version
    * @beta
    */
   private readonly metaVersion = `${pkg.name}@${pkg.version}`;
+  private destFn: (req: any, file: File) => string;
 
   constructor(public config: DiskStorageOptions) {
     super(config);
-    this.destination = config.dest || config.destination || './upload';
-    if (typeof this.destination !== 'string' && typeof this.destination !== 'function')
+    const dest = config.dest || config.destination || './upload';
+    if (typeof dest === 'string') {
+      this.destFn = (req: any, file: File) => path.join(dest, file.id);
+    } else if (typeof dest === 'function') {
+      this.destFn = dest;
+    } else {
       throw new TypeError('Invalid Destination Parameter');
+    }
     this.metaStore = new Configstore(this.metaVersion);
   }
 
@@ -55,9 +56,9 @@ export class DiskStorage extends BaseStorage {
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
     try {
-      file.path = this.setFilePath(req, file);
+      file.path = path.normalize(this.destFn(req, file));
     } catch (error) {
-      return fail(ERRORS.FILE_NOT_ALLOWED);
+      return fail(ERRORS.BAD_REQUEST);
     }
     const errors = this.validate(file);
     if (errors.length) {
@@ -65,6 +66,7 @@ export class DiskStorage extends BaseStorage {
     }
     await ensureFile(file.path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
     this.metaStore.set(file.id, file);
+    file.status = 'created';
     return file;
   }
 
@@ -92,7 +94,6 @@ export class DiskStorage extends BaseStorage {
     if (query.id) {
       const file = this.metaStore.get(query.id);
       if (file && cp(file, query)) return [file];
-      if (query.userId) return fail(ERRORS.FORBIDDEN);
       return fail(ERRORS.FILE_NOT_FOUND);
     } else {
       return Object.values(this.metaStore.all).filter(file => cp(file, query));
@@ -104,22 +105,12 @@ export class DiskStorage extends BaseStorage {
     const deleted = [];
     for (const file of files) {
       try {
-        await fsUnlink(file.path);
         this.metaStore.delete(file.id);
+        await fsUnlink(file.path);
         deleted.push(file);
       } catch {}
     }
     return deleted;
-  }
-
-  // TODO: move to constructor
-  protected setFilePath(req: http.IncomingMessage, file: File): string {
-    if (typeof this.destination === 'function') {
-      const filePath = this.destination(req, file);
-      return path.normalize(filePath.endsWith('/') ? path.join(filePath, file.id) : filePath);
-    } else {
-      return path.normalize(path.join(this.destination, file.id));
-    }
   }
   /**
    * Append chunk to file
