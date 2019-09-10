@@ -36,7 +36,7 @@ app.use(
   }),
   (req, res) => {
       console.log(req.body);
-      res.json(req.body.metadata);
+      res.json(req.body);
     }
   }
 );
@@ -67,7 +67,7 @@ app.use(
   }),
   (req, res) => {
       console.log(req.body);
-      res.json(req.body.metadata);
+      res.json(req.body);
     }
   }
 );
