@@ -3,7 +3,7 @@ import * as querystring from 'querystring';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { getBody, hashObject, logger, pick } from './core/utils';
+import { getBody, logger } from './core/utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -22,8 +22,10 @@ export function rangeParser(
  * X-headers  protocol implementation
  */
 export class Uploadx<T extends BaseStorage> extends BaseHandler {
+  static RESUME_STATUS_CODE = 308;
   idKey = 'upload_id';
   storage: T | DiskStorage;
+
   constructor(config: { storage: T } | DiskStorageOptions) {
     super();
     this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
@@ -35,11 +37,15 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Create File from request and send file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const meta = await this.buildFileFromRequest(req);
-    const file = await this.storage.create(req, meta);
-    const location = this.buildFileUrl(req, file);
+    const metadata = await getBody(req).catch(() => fail(ERRORS.BAD_REQUEST));
+    const file = new File(metadata);
+    file.userId = this.getUserId(req);
+    file.size = Number(req.headers['x-upload-content-length'] || file.size);
+    file.mimeType = (req.headers['x-upload-content-type'] as string) || file.mimeType;
+    file.generateId();
+    await this.storage.create(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const headers = { 'Access-Control-Expose-Headers': 'Location', Location: location };
+    const headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
     return file;
   }
@@ -59,14 +65,13 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const chunk = { start, total, id, userId };
     const file = await this.storage.write(req, chunk);
     if (file.bytesWritten < file.size) {
-      const headers = {
-        'Access-Control-Expose-Headers': 'Range',
-        Range: `bytes=0-${file.bytesWritten - 1}`
-      };
+      const headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
-      this.send({ res, statusCode: 308, headers });
+      this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
+      file.status = 'partial';
     } else {
       file.status = 'completed';
+      this.send({ res, body: file.metadata });
     }
     return file;
   }
@@ -88,31 +93,13 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
     const files = await this.storage.get({ id, userId });
-    const body = files.map(file => pick(file, ['metadata', 'id']));
-    this.send({ res, body });
     return files;
-  }
-
-  /**
-   * Build File from `create` request
-   */
-  protected async buildFileFromRequest(req: http.IncomingMessage): Promise<File> {
-    const file = ({} as unknown) as File;
-    file.userId = this.getUserId(req);
-    const metadata = await getBody(req).catch(() => fail(ERRORS.BAD_REQUEST));
-    file.metadata = metadata;
-    file.filename = metadata.name || metadata.title;
-    file.size = Number(req.headers['x-upload-content-length'] || metadata.size);
-    file.mimeType =
-      req.headers['x-upload-content-type'] || metadata.mimeType || 'application/octet-stream';
-    file.id = this.getFileId(req) || hashObject(file);
-    return file;
   }
 
   /**
    * Get id from request
    */
-  protected getFileId(req: http.IncomingMessage): string | undefined {
+  protected getFileId(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
     return query[this.idKey] as string;
   }
@@ -138,7 +125,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
  * Basic express wrapper
  */
 export function uploadx(
-  options: DiskStorageOptions
+  options: DiskStorageOptions = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   const upl = new Uploadx(options);
   return upl.handle;

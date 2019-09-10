@@ -25,17 +25,6 @@ describe('Utils', function() {
     });
   });
 
-  describe('isObject', function() {
-    it('should return true isObject({})', function() {
-      expect(utils.isObject({})).to.be.true;
-    });
-    it('should return true isObject(null)', function() {
-      expect(utils.isObject(null)).to.be.false;
-    });
-    it('should return true isObject(v: Buffer)', function() {
-      expect(utils.isObject(Buffer.from('buffer'))).to.be.false;
-    });
-  });
   describe('typeis', function() {
     it('no content-type', function() {
       expect(utils.typeis({ headers: {} } as any, ['json'])).to.be.false;

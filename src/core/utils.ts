@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { randomBytes } from 'crypto';
 import * as debug from 'debug';
 import * as fs from 'fs';
 import * as http from 'http';
@@ -12,10 +12,6 @@ export const fsClose = promisify(fs.close);
 export const fsOpen = promisify(fs.open);
 export const fsStat = promisify(fs.stat);
 export const fsUnlink = promisify(fs.unlink);
-
-export function isObject(value: any): boolean {
-  return !!value && value.constructor === Object;
-}
 
 export async function ensureDir(dir: string): Promise<void> {
   dir = path.normalize(dir);
@@ -32,24 +28,6 @@ export async function ensureDir(dir: string): Promise<void> {
       }
     }
   }
-}
-/**
- * Return md5 checksum
- */
-export function hashObject(data: any): string {
-  let ordered = {} as any;
-  if (isObject(data)) {
-    Object.keys(data)
-      .sort()
-      .forEach(key => {
-        ordered[key] = data[key];
-      });
-  } else {
-    ordered = data;
-  }
-  return createHash('md5')
-    .update(JSON.stringify(ordered))
-    .digest('hex');
 }
 
 /**
@@ -137,3 +115,5 @@ export function getHeader(req: http.IncomingMessage, name: string): string {
   const raw = req.headers[name];
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
+
+export const uid = (): string => randomBytes(16).toString('hex');

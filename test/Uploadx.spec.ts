@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import * as chai from 'chai';
 import * as fs from 'fs';
-import { app, storage } from './server';
+import { app, storage, UPLOADS_DIR } from './server';
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -13,13 +13,15 @@ const testFile = {
   size: fs.statSync(TEST_FILE_PATH).size,
   mimeType: 'video/mp4'
 };
-const TOKEN = 'user_id';
+const TOKEN = 'userId';
+
 describe('::Uploadx', function() {
   let res: ChaiHttp.Response;
   let start: number;
   const files: string[] = [];
   before(function() {
     storage.delete({ userId: TOKEN });
+    storage.delete({ userId: null });
   });
 
   beforeEach(function() {
@@ -81,16 +83,6 @@ describe('::Uploadx', function() {
       expect(res).to.have.header('location');
       files.push(res.header.location);
     });
-    // it('should return 200 if file exist', async function() {
-    //   res = await chai
-    //     .request(app)
-    //     .post('/upload')
-    //     .set('authorization', TOKEN)
-    //     .send({ ...testFile, name: 'testfileSingle.mp4' });
-    //   expect(res).to.have.status(200);
-    //   expect(res).to.have.header('location');
-    //   files.push(res.header.location);
-    // });
   });
   describe('PUT', function() {
     it('should 200 (chunks)', function(done) {
@@ -110,12 +102,13 @@ describe('::Uploadx', function() {
         start += chunk.length;
         if (res.status === 200) {
           expect(res).to.be.json;
-          expect(fs.statSync(res.body.path).size).to.be.eql(testFile.size);
+          expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfile.mp4`).size).to.be.eql(testFile.size);
           done();
         }
         readable.resume();
       });
     });
+
     it('should 200 (single request)', async function() {
       res = await chai
         .request(app)
@@ -125,16 +118,18 @@ describe('::Uploadx', function() {
         .send(fs.readFileSync(testFile.src));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
-      expect(fs.statSync(res.body.path).size).to.be.eql(testFile.size);
+      expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfileSingle.mp4`).size).to.be.eql(
+        testFile.size
+      );
     });
-    it('should 403 (userId check)', async function() {
+    it('should 404 (userId check)', async function() {
       res = await chai
         .request(app)
         .put(files[1])
         .set('authorization', 'otherUser')
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(testFile.src));
-      expect(res).to.have.status(403);
+      expect(res).to.have.status(404);
     });
     it('should 404 (no id)', async function() {
       res = await chai
@@ -162,23 +157,14 @@ describe('::Uploadx', function() {
       expect(res.body).to.have.lengthOf(2);
       expect(res).to.have.status(200);
     });
-    it('should download file', async function() {
-      res = await chai
-        .request(app)
-        .get(files[0])
-        .set('authorization', TOKEN);
-      expect(res).to.have.header('content-type', 'video/mp4');
-      expect(res.body).to.have.lengthOf(testFile.size);
-      expect(res).to.have.status(200);
-    });
   });
   describe('DELETE', function() {
-    it('should 403 (userId check)', async function() {
+    it('should 404 (userId check)', async function() {
       res = await chai
         .request(app)
         .delete(files[1])
         .set('authorization', 'otherUser');
-      expect(res).to.have.status(403);
+      expect(res).to.have.status(404);
     });
     it('should 204', async function() {
       res = await chai
@@ -190,9 +176,9 @@ describe('::Uploadx', function() {
   });
 
   describe('OPTIONS', function() {
-    it('should 404', async function() {
+    it('should 204', async function() {
       res = await chai.request(app).options('/upload');
-      expect(res).to.have.status(404);
+      expect(res).to.have.status(204);
     });
   });
   after(function() {
