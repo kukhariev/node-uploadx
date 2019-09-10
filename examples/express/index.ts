@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { uploadx, File, Uploadx } from '../../dist';
+import { uploadx, File } from '../../dist';
 import { auth } from './auth';
 import { errorHandler } from './error-handler';
 

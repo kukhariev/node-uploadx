@@ -26,7 +26,6 @@ export interface BaseHandler extends EventEmitter {
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
-  getUserId = (req: any): string | null => ('user' in req ? req.user.id || req.user._id : null);
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor() {
     super();
@@ -72,6 +71,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
       this.send({ res, statusCode: 404 });
     }
   };
+
+  getUserId = (req: any): string | null => ('user' in req ? req.user.id || req.user._id : null);
+
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     res.setHeader('Content-Length', 0);
     res.writeHead(204);

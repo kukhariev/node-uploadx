@@ -90,6 +90,8 @@ export class DiskStorage extends BaseStorage {
       return fail(ERRORS.FILE_ERROR, ex);
     }
   }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
   async get(query: Partial<File>): Promise<File[]> {
     if (query.id) {
       const file = this.metaStore.get(query.id);
