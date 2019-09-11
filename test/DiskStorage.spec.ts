@@ -21,11 +21,11 @@ const FILE = ({
   }
 } as unknown) as File;
 
-const OPTIONS: DiskStorageOptions = {
-  dest: (req, file) => `${UPLOADS_DIR}/${file.userId}/${file.filename}`
-};
-const FILEPATH = normalize(`${UPLOADS_DIR}/userId/file.mp4`);
 describe('DiskStorage', function() {
+  const OPTIONS: DiskStorageOptions = {
+    dest: (req, file) => `${UPLOADS_DIR}/${file.userId}/${file.filename}`
+  };
+  const FILEPATH = normalize(`${UPLOADS_DIR}/userId/file.mp4`);
   it('should create file', async function() {
     const req = new http.IncomingMessage(new Socket());
     req.method = 'POST';

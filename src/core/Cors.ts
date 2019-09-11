@@ -14,9 +14,6 @@ export class Cors {
     const allowedHeaders = req.headers['access-control-request-headers'] as string;
     allowedHeaders && res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
     res.setHeader('Access-Control-Max-Age', Cors.maxAge);
-    res.setHeader('Content-Length', 0);
-    res.writeHead(204);
-    res.end();
     return true;
   }
 }

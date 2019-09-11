@@ -36,7 +36,38 @@ app.use(
   }),
   (req, res) => {
       console.log(req.body);
-      res.json(req.body.metadata);
+      res.json(req.body);
+    }
+  }
+);
+
+app.use(errorHandler);
+app.listen(3003);
+```
+
+### Express (tus)
+
+```js
+const express = require('express');;
+const { tus } = require('node-uploadx');
+const { auth } = require('./auth');
+const { errorHandler } = require('./error-handler');
+
+const app = express();
+app.use(express.json());
+
+app.use(auth);
+
+app.use(
+  '/upload/',
+  tus({
+    maxUploadSize: '180MB',
+    allowMIME: ['video/*'],
+    destination: req => `/tmp/${req.user.id}/${req.body.name}`
+  }),
+  (req, res) => {
+      console.log(req.body);
+      res.json(req.body);
     }
   }
 );
@@ -94,6 +125,7 @@ server.listen(3003, error => {
 ## References
 
 - [https://developers.google.com/drive/v3/web/resumable-upload](https://developers.google.com/drive/v3/web/resumable-upload)
+- [https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md)
 
 ## Contributing
 
