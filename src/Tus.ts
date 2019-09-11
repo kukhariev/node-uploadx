@@ -84,7 +84,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
       'Tus-Resumable': '1.0.0'
     };
     this.send({ res, statusCode: 204, headers });
-    file.status = file.bytesWritten === file.size ? 'completed' : 'partial';
+    file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     return file;
   }
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {

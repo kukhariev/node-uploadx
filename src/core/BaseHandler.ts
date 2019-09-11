@@ -17,10 +17,10 @@ export type MethodHandler = {
 };
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
-  on(event: 'created' | 'completed' | 'deleted' | 'partial', listener: (file: File) => void): this;
-  off(event: 'created' | 'completed' | 'deleted' | 'partial', listener: (file: File) => void): this;
+  on(event: 'created' | 'completed' | 'deleted' | 'part', listener: (file: File) => void): this;
+  off(event: 'created' | 'completed' | 'deleted' | 'part', listener: (file: File) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit(event: 'created' | 'completed' | 'deleted' | 'partial', evt: File): boolean;
+  emit(event: 'created' | 'completed' | 'deleted' | 'part', evt: File): boolean;
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
