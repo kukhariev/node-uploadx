@@ -3,7 +3,7 @@ import * as querystring from 'querystring';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { getBody, logger } from './core/utils';
+import { getBody, logger, getHeader } from './core/utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -40,8 +40,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const metadata = await getBody(req).catch(() => fail(ERRORS.BAD_REQUEST));
     const file = new File(metadata);
     file.userId = this.getUserId(req);
-    file.size = Number(req.headers['x-upload-content-length'] || file.size);
-    file.mimeType = (req.headers['x-upload-content-type'] as string) || file.mimeType;
+    file.size = Number(getHeader(req, 'x-upload-content-length') || file.size);
+    file.mimeType = getHeader(req, 'x-upload-content-type') || file.mimeType;
     file.generateId();
     await this.storage.create(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;

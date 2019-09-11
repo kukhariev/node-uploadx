@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File, Metadata } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { logger } from './core/utils';
+import { logger, getHeader } from './core/utils';
 
 const log = logger.extend('Tus');
 
@@ -17,7 +17,8 @@ export function parseMetadata(encoded: string): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
   const metadata = Object.create(null);
   for (const [key, value] of kvPairs) {
-    key && (metadata[key] = Buffer.from(value || '', 'base64').toString());
+    if (!value || !key) return metadata;
+    metadata[key] = Buffer.from(value, 'base64').toString();
   }
   return metadata;
 }
@@ -49,14 +50,14 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    * Create File from request and send file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const metadataHeader = req.headers['upload-metadata'] as string;
-    const file = new File(parseMetadata(metadataHeader || ''));
+    const metadataHeader = getHeader(req, 'upload-metadata');
+    const file = new File(parseMetadata(metadataHeader));
     file.userId = this.getUserId(req);
-    const length = req.headers['upload-length'];
-    if (typeof length !== 'string') {
+    const length = getHeader(req, 'upload-length');
+    file.size = Number.parseInt(length);
+    if (Number.isNaN(file.size)) {
       return fail(ERRORS.INVALID_FILE_SIZE);
     }
-    file.size = Number.parseInt(length);
     file.generateId();
     await this.storage.create(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
@@ -75,7 +76,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
     const userId = this.getUserId(req);
-    const start = Number(req.headers['upload-offset']);
+    const start = Number(getHeader(req, 'upload-offset'));
     const chunk = { start, id, userId };
     const file = await this.storage.write(req, chunk);
     const headers = {
