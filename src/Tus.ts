@@ -17,7 +17,7 @@ export function parseMetadata(encoded: string): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
   const metadata = Object.create(null);
   for (const [key, value] of kvPairs) {
-    metadata[key] = Buffer.from(value, 'base64').toString();
+    key && (metadata[key] = Buffer.from(value || '', 'base64').toString());
   }
   return metadata;
 }
@@ -50,7 +50,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const metadataHeader = req.headers['upload-metadata'] as string;
-    const file = new File(parseMetadata(metadataHeader));
+    const file = new File(parseMetadata(metadataHeader || ''));
     file.userId = this.getUserId(req);
     const length = req.headers['upload-length'];
     if (typeof length !== 'string') {
