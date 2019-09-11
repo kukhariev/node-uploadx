@@ -68,7 +68,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
       const headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-      file.status = 'partial';
+      file.status = 'part';
     } else {
       file.status = 'completed';
       this.send({ res, body: file.metadata });

@@ -12,7 +12,7 @@ uploads.on('error', (error: any) => console.error('error: ', error));
 uploads.on('completed', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));
 uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
-uploads.on('partial', ({ path }) => console.log('partial: ', path));
+uploads.on('part', ({ path }) => console.log('part: ', path));
 
 const server = http.createServer((req, res) => {
   const { pathname = '' } = url.parse(req.url || '');
