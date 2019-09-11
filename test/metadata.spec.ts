@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { parseMetadata } from '../src/Tus';
-describe.only('metadata parser', function() {
+describe('metadata parser', function() {
   it('should return empty object', function() {
     const sample = '';
     const res = parseMetadata(sample);
