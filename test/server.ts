@@ -26,6 +26,7 @@ export const uploads = new Uploadx({ storage });
 app.use(auth);
 
 app.use('/upload', uploads.handle);
+
 app.get('/upload', (req, res) => {
   res.json(req.body);
 });

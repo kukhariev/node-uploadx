@@ -15,7 +15,7 @@ uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
 uploads.on('partial', ({ path }) => console.log('partial: ', path));
 
 const server = http.createServer((req, res) => {
-  const { pathname } = url.parse(req.url || '');
+  const { pathname = '' } = url.parse(req.url || '');
 
   if (/^\/tus(\/.*|$)/.test(pathname)) {
     uploads.handle(req, res);
