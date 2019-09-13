@@ -34,6 +34,7 @@ app.use(
     allowMIME: ['video/*'],
     destination: req => `/tmp/${req.user.id}/${req.body.name}`
   }),
+  // optional `GET` handler
   (req, res) => {
       console.log(req.body);
       res.json(req.body);
@@ -63,8 +64,9 @@ app.use(
   tus({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
-    destination: req => `/tmp/${req.user.id}/${req.body.name}`
+    destination: (req, file) => `/tmp/${file.userId || '__anonymous'}/${file.id}`
   }),
+  // optional `GET` handler
   (req, res) => {
       console.log(req.body);
       res.json(req.body);
@@ -84,12 +86,13 @@ const http = require('http');
 const url = require('url');
 const { tmpdir } = require('os');
 
-const storage = new DiskStorage({ dest: (req, file) => `${tmpdir()}/ngx/${file.filename}` });
+const storage = new DiskStorage({ dest: './files' });
 const uploads = new Uploadx({ storage });
 uploads.on('error', console.error);
 uploads.on('created', console.log);
 uploads.on('completed', console.log);
 uploads.on('deleted', console.log);
+uploads.on('part', console.log);
 
 const server = http.createServer((req, res) => {
   const pathname = url.parse(req.url).pathname.toLowerCase();
