@@ -54,11 +54,31 @@ export class DiskStorage extends BaseStorage {
     }
     this.metaStore = new Configstore(this.metaVersion);
     if (typeof this.config.expire === 'number') {
-      const lifespan = Math.floor(this.config.expire * MILLIS_PER_DAY);
-      setInterval(() => this.expiry(lifespan), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
+      const maxAge = Math.floor(this.config.expire * MILLIS_PER_DAY);
+      setInterval(() => this.expiry(maxAge), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
     }
   }
-
+  /**
+   * Remove uploads once they expire
+   * @param maxAge The max age in days
+   * @param completed If `true` remove completed files too
+   */
+  expiry(maxAge: number, completed = false): void {
+    (async () => {
+      const now = new Date().getTime();
+      for (const file of Object.values(this.metaStore.all)) {
+        const outdated = now - file.timestamp > maxAge;
+        if (outdated) {
+          const isExpired = completed || file.size !== (await getFileSize(file.path));
+          if (isExpired) {
+            log('[expired]: ', file.path);
+            this.metaStore.delete(file.id);
+            await fsUnlink(file.path).catch(ex => {});
+          }
+        }
+      }
+    })();
+  }
   /**
    * Add file to storage
    */
@@ -136,22 +156,5 @@ export class DiskStorage extends BaseStorage {
       req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
     });
-  }
-
-  protected expiry(lifespan: number): void {
-    (async () => {
-      const now = new Date().getTime();
-      for (const file of Object.values(this.metaStore.all)) {
-        const expired = now - file.timestamp > lifespan;
-        if (expired) {
-          const incomplete = file.size !== (await getFileSize(file.path));
-          if (incomplete) {
-            log('[expired]: ', file.path);
-            this.metaStore.delete(file.id);
-            await fsUnlink(file.path).catch(ex => {});
-          }
-        }
-      }
-    })();
   }
 }

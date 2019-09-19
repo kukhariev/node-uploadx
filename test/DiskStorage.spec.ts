@@ -1,11 +1,11 @@
 import { expect } from 'chai';
-import * as fs from 'fs';
 import { Request } from 'express';
+import * as fs from 'fs';
 import * as httpMocks from 'node-mocks-http';
+import { normalize } from 'path';
 import { File } from '../src';
 import { DiskStorage, DiskStorageOptions } from '../src/core/DiskStorage';
 import { UPLOADS_DIR } from './server';
-import { normalize } from 'path';
 
 const FILE = ({
   id: 'fileId',
@@ -22,19 +22,19 @@ const FILE = ({
 } as unknown) as File;
 
 describe('DiskStorage', function() {
-  let req: Request;
+  let mockReq: Request;
   const OPTIONS: DiskStorageOptions = {
     dest: (req, file) => `${UPLOADS_DIR}/${file.userId}/${file.filename}`
   };
   const FILEPATH = normalize(`${UPLOADS_DIR}/userId/file.mp4`);
   it('should create file', async function() {
-    req = httpMocks.createRequest({
+    mockReq = httpMocks.createRequest({
       url: 'http://example.com/upload',
       method: 'POST',
       body: FILE.metadata
     });
     const storage = new DiskStorage(OPTIONS);
-    const { path } = await storage.create(req, FILE);
+    const { path } = await storage.create(mockReq, FILE);
     expect(path).to.be.eq(FILEPATH);
     expect(fs.statSync(FILEPATH).size).to.be.eql(0);
   });
