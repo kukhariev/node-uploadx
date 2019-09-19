@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
-import { cp, ensureFile, fsUnlink } from './utils';
+import { cp, ensureFile, fsUnlink, getFileSize, logger } from './utils';
 
-const pkg = { name: 'node-uploadx', version: '2.0' };
+const log = logger.extend('DiskStorage');
+const pkg = { name: 'node-uploadx', version: '3.0' };
 
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
@@ -20,11 +21,14 @@ export interface DiskStorageOptions extends StorageOptions {
   dest?: Destination;
   destination?: Destination;
 }
-
+const MILLIS_PER_HOUR = 60 * 60 * 1000;
+const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
 /**
  * Local Disk Storage
  */
 export class DiskStorage extends BaseStorage {
+  /** how often (in ms) to scan for expired uploads */
+  static EXPIRY_SCAN_PERIOD = 1 * MILLIS_PER_HOUR;
   /**
    * Where store uploads info
    */
@@ -49,8 +53,32 @@ export class DiskStorage extends BaseStorage {
       throw new TypeError('Invalid Destination Parameter');
     }
     this.metaStore = new Configstore(this.metaVersion);
+    if (typeof this.config.expire === 'number') {
+      const maxAge = Math.floor(this.config.expire * MILLIS_PER_DAY);
+      setInterval(() => this.expiry(maxAge), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
+    }
   }
-
+  /**
+   * Remove uploads once they expire
+   * @param maxAge The max age in days
+   * @param completed If `true` remove completed files too
+   */
+  expiry(maxAge: number, completed = false): void {
+    (async () => {
+      const now = new Date().getTime();
+      for (const file of Object.values(this.metaStore.all)) {
+        const outdated = now - file.timestamp > maxAge;
+        if (outdated) {
+          const isExpired = completed || file.size !== (await getFileSize(file.path));
+          if (isExpired) {
+            log('[expired]: ', file.path);
+            this.metaStore.delete(file.id);
+            await fsUnlink(file.path).catch(ex => {});
+          }
+        }
+      }
+    })();
+  }
   /**
    * Add file to storage
    */

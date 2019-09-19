@@ -16,6 +16,7 @@ app.use(
   uploadx({
     maxUploadSize: '15GB',
     allowMIME: ['video/*', 'image/*'],
+    expire: 7,
     destination: (req, file) => `./upload/${file.userId}/${mime(file)}/${file.filename}`
   })
 );
