@@ -28,7 +28,7 @@
   "scripts": {
     "start": "tsnd test/server.ts",
     "dev": "tsnd --respawn --transpileOnly test/server.ts --log",
-    "prettier": "prettier --write \"**/*.{json,md,ts}\"",
+    "prettier": "prettier --write \"**/*.{json,md}\"",
     "build": "rimraf dist && tsc",
     "postbuild": "tsnd scripts/post-build.ts",
     "test": "mocha",
@@ -74,7 +74,11 @@
     }
   },
   "lint-staged": {
-    "*.{json,md,ts}": [
+    "{src,test,examples}/**/*.{ts,js}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{md,json}": [
       "prettier --write",
       "git add"
     ]
