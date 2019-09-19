@@ -41,8 +41,11 @@ export async function ensureFile(filePath: string, overwrite = false): Promise<n
 }
 
 export async function getFileSize(filePath: string): Promise<number> {
-  const { size } = await fsStat(filePath);
-  return size;
+  try {
+    return (await fsStat(filePath)).size;
+  } catch {
+    return -1;
+  }
 }
 
 /**

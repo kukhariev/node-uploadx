@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
-import { cp, ensureFile, fsUnlink } from './utils';
+import { cp, ensureFile, fsUnlink, getFileSize, logger } from './utils';
 
-const pkg = { name: 'node-uploadx', version: '2.0' };
+const log = logger.extend('DiskStorage');
+const pkg = { name: 'node-uploadx', version: '3.0' };
 
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
@@ -20,11 +21,14 @@ export interface DiskStorageOptions extends StorageOptions {
   dest?: Destination;
   destination?: Destination;
 }
-
+const MILLIS_PER_HOUR = 60 * 60 * 1000;
+const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
 /**
  * Local Disk Storage
  */
 export class DiskStorage extends BaseStorage {
+  /** how often (in ms) to scan for expired uploads */
+  static EXPIRY_SCAN_PERIOD = 1 * MILLIS_PER_HOUR;
   /**
    * Where store uploads info
    */
@@ -49,6 +53,10 @@ export class DiskStorage extends BaseStorage {
       throw new TypeError('Invalid Destination Parameter');
     }
     this.metaStore = new Configstore(this.metaVersion);
+    if (typeof this.config.expire === 'number') {
+      const lifespan = Math.floor(this.config.expire * MILLIS_PER_DAY);
+      setInterval(() => this.expiry(lifespan), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
+    }
   }
 
   /**
@@ -128,5 +136,22 @@ export class DiskStorage extends BaseStorage {
       req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
     });
+  }
+
+  protected expiry(lifespan: number): void {
+    (async () => {
+      const now = new Date().getTime();
+      for (const file of Object.values(this.metaStore.all)) {
+        const expired = now - file.timestamp > lifespan;
+        if (expired) {
+          const incomplete = file.size !== (await getFileSize(file.path));
+          if (incomplete) {
+            log('[expired]: ', file.path);
+            this.metaStore.delete(file.id);
+            await fsUnlink(file.path).catch(ex => {});
+          }
+        }
+      }
+    })();
   }
 }

@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
 import { DiskStorage, Uploadx } from '../src';
@@ -14,12 +15,16 @@ const maxUploadSize = '6GB';
 const allowMIME = ['video/*'];
 export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
 
+DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
+const EXPIRE = 25 / 84_000;
+
 export const app = express();
 export const storage = new DiskStorage({
   dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`,
   maxUploadSize,
   allowMIME,
-  useRelativeLocation: true
+  useRelativeLocation: true,
+  expire: EXPIRE
 });
 export const uploads = new Uploadx({ storage });
 

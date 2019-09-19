@@ -4,9 +4,13 @@ import { typeis } from './utils';
 import { File, FilePart } from './';
 
 export interface StorageOptions {
+  /** Allowed file types */
   allowMIME?: string[];
+  /** File size limit */
   maxUploadSize?: number | string;
   useRelativeLocation?: boolean;
+  /** Unfinished uploads expire in days*/
+  expire?: number;
   // path?: string;
 }
 

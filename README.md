@@ -32,6 +32,7 @@ app.use(
   uploadx({
     maxUploadSize: '180MB',
     allowMIME: ['video/*'],
+    expire: 7,
     destination: req => `/tmp/${req.user.id}/${req.body.name}`
   }),
   // optional `GET` handler
@@ -120,6 +121,7 @@ server.listen(3003, error => {
 | **[allowMIME]**                 | _Array of allowed MIME types_                   |
 | **[maxUploadSize]**             | _Limit allowed file size_                       |
 | **[useRelativeURL]**            | _Generate relative upload link_                 |
+| **[expire]**                    | _Expiry incomplete in days_                     |
 
 ## HTTP API
 

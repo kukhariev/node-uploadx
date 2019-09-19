@@ -27,7 +27,7 @@
   },
   "scripts": {
     "start": "tsnd test/server.ts",
-    "dev": "tsnd --respawn --transpileOnly test/server.ts",
+    "dev": "tsnd --respawn --transpileOnly test/server.ts --log",
     "prettier": "prettier --write \"**/*.{json,md,ts}\"",
     "build": "rimraf dist && tsc",
     "postbuild": "tsnd scripts/post-build.ts",
