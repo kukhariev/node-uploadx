@@ -7,7 +7,12 @@ const storage = new DiskStorage({
   maxUploadSize: '15GB',
   allowMIME: ['video/*', 'image/*']
 });
+
+// remove old uploads
+setInterval(() => storage.expiry(60, true), 3_600_000);
+
 const uploads = new Tus({ storage });
+
 uploads.on('error', (error: any) => console.error('error: ', error));
 uploads.on('completed', ({ path }) => console.log('completed: ', path));
 uploads.on('created', ({ path }) => console.log('created: ', path));
