@@ -54,8 +54,7 @@ export class DiskStorage extends BaseStorage {
     }
     this.metaStore = new Configstore(this.metaVersion);
     if (typeof this.config.expire === 'number') {
-      const maxAge = Math.floor(this.config.expire * MILLIS_PER_DAY);
-      setInterval(() => this.expiry(maxAge), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
+      setInterval(() => this.expiry(this.config.expire!), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
     }
   }
   /**
@@ -64,10 +63,11 @@ export class DiskStorage extends BaseStorage {
    * @param completed If `true` remove completed files too
    */
   expiry(maxAge: number, completed = false): void {
+    const expire = Math.floor(maxAge * MILLIS_PER_DAY);
     (async () => {
       const now = new Date().getTime();
       for (const file of Object.values(this.metaStore.all)) {
-        const outdated = now - file.timestamp > maxAge;
+        const outdated = now - file.timestamp > expire;
         if (outdated) {
           const isExpired = completed || file.size !== (await getFileSize(file.path));
           if (isExpired) {
