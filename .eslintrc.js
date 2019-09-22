@@ -56,7 +56,8 @@ module.exports = {
     'prefer-const': 'error',
     'prefer-object-spread': 'error',
     'require-atomic-updates': 'off',
-    'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }]
+    'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }],
+    'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }]
   },
   overrides: [
     {

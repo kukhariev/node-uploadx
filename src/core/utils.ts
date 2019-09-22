@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import * as debug from 'debug';
 import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
+import { normalize, sep, isAbsolute, parse, join, dirname } from 'path';
 import { promisify } from 'util';
 
 export const logger = debug('uploadx');
@@ -14,12 +14,12 @@ export const fsStat = promisify(fs.stat);
 export const fsUnlink = promisify(fs.unlink);
 
 export async function ensureDir(dir: string): Promise<void> {
-  dir = path.normalize(dir);
-  const paths = dir.split(path.sep);
-  path.isAbsolute(dir) && paths.shift();
-  let parent = path.parse(dir).root;
+  dir = normalize(dir);
+  const paths = dir.split(sep);
+  isAbsolute(dir) && paths.shift();
+  let parent = parse(dir).root;
   for (const p of paths) {
-    parent = path.join(parent, p);
+    parent = join(parent, p);
     try {
       await fsMkdir(parent);
     } catch (error) {
@@ -31,26 +31,31 @@ export async function ensureDir(dir: string): Promise<void> {
 }
 
 /**
- * Ensures that the file exists.
+ * Create file if not exists.
+ * Resolve the Promise with file size
+ *
+ * @param path
+ * @param overwrite
  */
-export async function ensureFile(filePath: string, overwrite = false): Promise<number> {
-  await ensureDir(path.dirname(filePath));
-  await fsClose(await fsOpen(filePath, overwrite ? 'w' : 'a'));
-  const { size } = await fsStat(filePath);
+export async function ensureFile(path: string, overwrite = false): Promise<number> {
+  await ensureDir(dirname(path));
+  await fsClose(await fsOpen(path, overwrite ? 'w' : 'a'));
+  const { size } = await fsStat(path);
   return size;
 }
 
-export async function getFileSize(filePath: string): Promise<number> {
+/**
+ * Resolve the Promise with file size or `-1` on error
+ *
+ * @param path
+ */
+export async function getFileSize(path: string): Promise<number> {
   try {
-    return (await fsStat(filePath)).size;
+    return (await fsStat(path)).size;
   } catch {
     return -1;
   }
 }
-
-/**
- * Parse the JSON body of an request
- */
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -64,6 +69,7 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   const bodySize = Number(req.headers['content-length']);
   return !isNaN(bodySize) && bodySize;
 };
+
 export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<string, any>> {
   let limit = 10240;
   return new Promise((resolve, reject) => {
@@ -114,6 +120,7 @@ export const cp = (obj: any, query: any): boolean => {
 };
 
 export const find = <T>(list: T[], query: Partial<T>): T[] => list.filter(obj => cp(obj, query));
+
 export function getHeader(req: http.IncomingMessage, name: string): string {
   const raw = req.headers[name];
   return Array.isArray(raw) ? raw[0] : raw || '';

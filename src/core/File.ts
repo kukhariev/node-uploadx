@@ -20,6 +20,7 @@ export class File {
     this.lastModified = lastModified;
     this.timestamp = new Date().getTime();
   }
+
   generateId(): void {
     const { filename, size, lastModified, userId } = this;
     const ordered = [filename, size, lastModified, userId].join('-');

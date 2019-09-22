@@ -29,6 +29,7 @@ export abstract class BaseStorage {
     this.config.allowMIME && this.validators.add(fileTypeLimit);
     this.config.maxUploadSize && this.validators.add(fileSizeLimit);
   }
+
   validate(file: File): string[] {
     const errors: string[] = [];
     for (const validator of this.validators) {
@@ -37,6 +38,7 @@ export abstract class BaseStorage {
     }
     return errors;
   }
+
   abstract create(req: http.IncomingMessage, file: File): Promise<File>;
   abstract write(req: http.IncomingMessage, range: FilePart): Promise<File>;
   abstract delete(file: Partial<File>): Promise<File[]>;

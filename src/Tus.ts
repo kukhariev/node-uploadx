@@ -34,6 +34,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
     log('options: %o', config);
   }
+
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const headers = {
       'Tus-Extension': 'creation, termination',
@@ -46,6 +47,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     res.end();
     return Promise.resolve({} as File);
   }
+
   /**
    * Create File from request and send file url to client
    */
@@ -87,6 +89,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     return file;
   }
+
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
@@ -101,6 +104,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     this.send({ res, headers });
     return file;
   }
+
   /**
    * Delete upload by id
    */
@@ -114,6 +118,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     file.status = 'deleted';
     return file;
   }
+
   async get(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
@@ -129,6 +134,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const { pathname = '' } = url.parse(originalUrl, true);
     return pathname.split('/').pop();
   }
+
   /**
    * Build file url from request
    */

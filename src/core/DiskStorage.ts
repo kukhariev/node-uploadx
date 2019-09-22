@@ -54,9 +54,13 @@ export class DiskStorage extends BaseStorage {
     }
     this.metaStore = new Configstore(this.metaVersion);
     if (typeof this.config.expire === 'number') {
-      setInterval(() => this.expiry(this.config.expire!), DiskStorage.EXPIRY_SCAN_PERIOD).unref();
+      setInterval(
+        () => this.expiry(this.config.expire as number),
+        DiskStorage.EXPIRY_SCAN_PERIOD
+      ).unref();
     }
   }
+
   /**
    * Remove uploads once they expire
    * @param maxAge The max age in days
@@ -79,6 +83,7 @@ export class DiskStorage extends BaseStorage {
       }
     })();
   }
+
   /**
    * Add file to storage
    */
@@ -142,6 +147,7 @@ export class DiskStorage extends BaseStorage {
     }
     return deleted;
   }
+
   /**
    * Append chunk to file
    *

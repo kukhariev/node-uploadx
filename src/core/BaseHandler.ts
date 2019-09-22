@@ -31,6 +31,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     super();
     this.compose();
   }
+
   compose(): void {
     handlers.forEach(method => {
       const enabled = (this as MethodHandler)[method];
@@ -80,6 +81,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     res.end();
     return Promise.resolve({} as File);
   }
+
   /**
    * Make response
    */
@@ -114,5 +116,6 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     const body = this.responseType === 'json' ? error : error.message;
     this.send({ res, statusCode, body });
   }
+
   abstract storage: BaseStorage;
 }
