@@ -140,8 +140,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname } = url.parse(originalUrl, true);
-    const path = `${pathname}/${file.id}`;
+    const { pathname, query } = url.parse(originalUrl, true);
+    const path = url.format({ pathname: `${pathname}/${file.id}`, query });
     const absoluteUrl = req.headers.host && !this.storage.config.useRelativeLocation;
     return absoluteUrl ? `//${req.headers.host}${path}` : `${path}`;
   }
