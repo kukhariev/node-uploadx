@@ -1,5 +1,4 @@
 import * as http from 'http';
-import * as querystring from 'querystring';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
@@ -89,7 +88,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     return file;
   }
 
-  async get(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[]> {
+  async get(req: http.IncomingMessage): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
     const files = await this.storage.get({ id, userId });
@@ -110,14 +109,10 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
-    const uri = `${pathname}?${querystring.stringify({
-      ...query,
-      ...{
-        [this.idKey]: file.id
-      }
-    })}`;
-    const isFullUrl = req.headers.host && !this.storage.config.useRelativeLocation;
-    return isFullUrl ? `//${req.headers.host}${uri}` : `${uri}`;
+    query[this.idKey] = file.id;
+    const path = url.format({ pathname, query });
+    const absoluteUrl = req.headers.host && !this.storage.config.useRelativeLocation;
+    return absoluteUrl ? `//${req.headers.host}${path}` : `${path}`;
   }
 }
 
@@ -127,6 +122,5 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 export function uploadx(
   options: DiskStorageOptions = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
-  const upl = new Uploadx(options);
-  return upl.handle;
+  return new Uploadx(options).handle;
 }

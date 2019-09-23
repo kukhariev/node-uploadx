@@ -141,9 +141,9 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname } = url.parse(originalUrl, true);
-    const uri = `${pathname}/${file.id}`;
-    const isFullUrl = req.headers.host && !this.storage.config.useRelativeLocation;
-    return isFullUrl ? `//${req.headers.host}${uri}` : `${uri}`;
+    const path = `${pathname}/${file.id}`;
+    const absoluteUrl = req.headers.host && !this.storage.config.useRelativeLocation;
+    return absoluteUrl ? `//${req.headers.host}${path}` : `${path}`;
   }
 }
 
@@ -153,6 +153,5 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
 export function tus(
   options: DiskStorageOptions = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
-  const upl = new Tus(options);
-  return upl.handle;
+  return new Tus(options).handle;
 }
