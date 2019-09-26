@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { getBody, logger, getHeader } from './core/utils';
+import { getBody, logger, getHeader, getProtoAndHost } from './core/utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -111,8 +111,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const { query, pathname } = url.parse(originalUrl, true);
     query[this.idKey] = file.id;
     const path = url.format({ pathname, query });
-    const absoluteUrl = req.headers.host && !this.storage.config.useRelativeLocation;
-    return absoluteUrl ? `//${req.headers.host}${path}` : `${path}`;
+    const protoAndHost = this.storage.config.useRelativeLocation ? '' : getProtoAndHost(req);
+    return protoAndHost ? `${protoAndHost}${path}` : `${path}`;
   }
 }
 

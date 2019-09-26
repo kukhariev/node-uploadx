@@ -126,4 +126,11 @@ export function getHeader(req: http.IncomingMessage, name: string): string {
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
+export function getProtoAndHost(req: http.IncomingMessage): string {
+  const proto = getHeader(req, 'x-forwarded-proto');
+  const host = getHeader(req, 'x-forwarded-host') || getHeader(req, 'host');
+  if (!host) return '';
+  if (!proto) return '//' + host;
+  return proto + '://' + host;
+}
 export const uid = (): string => randomBytes(16).toString('hex');
