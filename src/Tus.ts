@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File, Metadata } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { logger, getHeader, getProtoAndHost } from './core/utils';
+import { logger, getHeader, getBaseUrl } from './core/utils';
 
 const log = logger.extend('Tus');
 
@@ -142,8 +142,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname, query } = url.parse(originalUrl, true);
     const path = url.format({ pathname: `${pathname}/${file.id}`, query });
-    const protoAndHost = this.storage.config.useRelativeLocation ? '' : getProtoAndHost(req);
-    return protoAndHost ? `${protoAndHost}${path}` : `${path}`;
+    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
+    return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
 }
 

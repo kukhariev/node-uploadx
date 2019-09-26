@@ -122,13 +122,13 @@ export const cp = (obj: any, query: any): boolean => {
 export const find = <T>(list: T[], query: Partial<T>): T[] => list.filter(obj => cp(obj, query));
 
 export function getHeader(req: http.IncomingMessage, name: string): string {
-  const raw = req.headers[name];
+  const raw = req.headers[name.toLowerCase()];
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
-export function getProtoAndHost(req: http.IncomingMessage): string {
+export function getBaseUrl(req: http.IncomingMessage): string {
   const proto = getHeader(req, 'x-forwarded-proto');
-  const host = getHeader(req, 'x-forwarded-host') || getHeader(req, 'host');
+  const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
   if (!host) return '';
   if (!proto) return '//' + host;
   return proto + '://' + host;
