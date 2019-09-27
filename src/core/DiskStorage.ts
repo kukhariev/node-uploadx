@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
-import { cp, fnv, ensureFile, fsUnlink, getFileSize, logger } from './utils';
+import { cp, ensureFile, fnv, fsUnlink, getFileSize, logger } from './utils';
 
 const log = logger.extend('DiskStorage');
 
