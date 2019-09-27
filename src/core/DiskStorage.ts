@@ -3,10 +3,9 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
-import { cp, ensureFile, fsUnlink, getFileSize, logger } from './utils';
+import { cp, fnv, ensureFile, fsUnlink, getFileSize, logger } from './utils';
 
 const log = logger.extend('DiskStorage');
-const pkg = { name: 'node-uploadx', version: '3.0' };
 
 export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
 
@@ -35,11 +34,6 @@ export class DiskStorage extends BaseStorage {
   metaStore: MetaStore;
   accessCheck = true;
 
-  /**
-   * Meta Format version
-   * @beta
-   */
-  private readonly metaVersion = `${pkg.name}@${pkg.version}`;
   private destFn: (req: any, file: File) => string;
 
   constructor(public config: DiskStorageOptions) {
@@ -52,7 +46,8 @@ export class DiskStorage extends BaseStorage {
     } else {
       throw new TypeError('Invalid Destination Parameter');
     }
-    this.metaStore = new Configstore(this.metaVersion);
+    const metaJsonName = 'node-uploadx-' + fnv(this.destFn.toString()).toString(36);
+    this.metaStore = new Configstore(metaJsonName);
     if (typeof this.config.expire === 'number') {
       setInterval(
         () => this.expiry(this.config.expire as number),
