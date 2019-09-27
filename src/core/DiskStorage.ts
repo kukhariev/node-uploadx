@@ -22,6 +22,7 @@ export interface DiskStorageOptions extends StorageOptions {
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
 const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
+const PACKAGE_NAME = 'node-uploadx';
 /**
  * Local Disk Storage
  */
@@ -46,8 +47,8 @@ export class DiskStorage extends BaseStorage {
     } else {
       throw new TypeError('Invalid Destination Parameter');
     }
-    const metaJsonName = 'node-uploadx-' + fnv(this.destFn.toString()).toString(36);
-    this.metaStore = new Configstore(metaJsonName);
+    const destinationHash = fnv(process.cwd() + this.destFn.toString()).toString(36);
+    this.metaStore = new Configstore(`${PACKAGE_NAME}-${destinationHash}`);
     if (typeof this.config.expire === 'number') {
       setInterval(
         () => this.expiry(this.config.expire as number),
@@ -145,14 +146,10 @@ export class DiskStorage extends BaseStorage {
 
   /**
    * Append chunk to file
-   *
    */
   protected _write(req: http.IncomingMessage, filePath: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      const file = fs.createWriteStream(filePath, {
-        flags: 'r+',
-        start
-      });
+      const file = fs.createWriteStream(filePath, { flags: 'r+', start });
       file.once('error', error => reject(error));
       req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
