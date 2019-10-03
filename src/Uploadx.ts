@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File } from './core';
+import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
 import { getBody, logger, getHeader, getBaseUrl } from './core/utils';
 const log = logger.extend('Uploadx');
@@ -44,7 +44,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     file.generateId();
     await this.storage.create(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const headers = { Location: this.buildFileUrl(req, file) };
+    const headers: Headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
     return file;
   }
@@ -56,15 +56,11 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
     const userId = this.getUserId(req);
-    const contentLength = Number(req.headers['content-length']);
-    const contentRange = req.headers['content-range'];
-    const { start, total } = contentRange
-      ? rangeParser(contentRange)
-      : { start: 0, total: contentLength };
-    const chunk = { start, total, id, userId };
-    const file = await this.storage.write(req, chunk);
+    const contentRange = getHeader(req, 'content-range');
+    const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
+    const file = await this.storage.write(req, { start, id, userId });
     if (file.bytesWritten < file.size) {
-      const headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
+      const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
       file.status = 'part';

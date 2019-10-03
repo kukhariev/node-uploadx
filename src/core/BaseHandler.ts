@@ -6,12 +6,11 @@ import { Cors } from './Cors';
 import { File } from './File';
 
 const log = logger.extend('core');
-
-export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
-
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
-type Handlers = typeof handlers[number];
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
+export type Headers = Record<string, string | number>;
+export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
+type Handlers = typeof handlers[number];
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
@@ -93,15 +92,15 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   }: {
     res: http.ServerResponse;
     statusCode?: number;
-    headers?: Record<string, any>;
+    headers?: Headers;
     body?: Record<string, any> | string;
   }): void {
     const json = typeof body !== 'string';
     const data = json ? JSON.stringify(body) : (body as string);
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
-    const expose = Object.keys(headers).toString();
-    expose && res.setHeader('Access-Control-Expose-Headers', expose);
+    const exposeHeaders = Object.keys(headers).toString();
+    exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
     json && data && res.setHeader('Content-Type', 'application/json');
     res.writeHead(statusCode, headers);
     res.end(data);

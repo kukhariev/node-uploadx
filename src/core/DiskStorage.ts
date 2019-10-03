@@ -103,9 +103,8 @@ export class DiskStorage extends BaseStorage {
    * Write chunks
    */
   async write(req: http.IncomingMessage, filePart: FilePart): Promise<File> {
-    const { start, total, id, userId } = filePart;
+    const { start, id, userId } = filePart;
     const [file] = await this.get({ id, userId });
-    if (total && total !== file.size) return fail(ERRORS.INVALID_RANGE);
     try {
       if (!start) {
         file.bytesWritten = await ensureFile(file.path);
