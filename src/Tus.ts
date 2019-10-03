@@ -1,12 +1,11 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File, Metadata } from './core';
+import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File, Metadata } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { logger, getHeader, getBaseUrl } from './core/utils';
+import { logger, getHeader, getBaseUrl, typeis } from './core/utils';
 
 const log = logger.extend('Tus');
-
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
     .map(([key, value]) => `${key} ${Buffer.from(value).toString('base64')}`)
@@ -36,8 +35,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   }
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const headers = {
-      'Tus-Extension': 'creation, termination',
+    const headers: Headers = {
+      'Tus-Extension': 'creation,creation-with-upload,termination',
       'Tus-Version': '1.0.0',
       'Tus-Resumable': '1.0.0',
       'Tus-Max-Size': bytes.parse(this.storage.config.maxUploadSize || 0)
@@ -53,20 +52,22 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const metadataHeader = getHeader(req, 'upload-metadata');
-    const file = new File(parseMetadata(metadataHeader));
+    let file = new File(parseMetadata(metadataHeader));
     file.userId = this.getUserId(req);
-    const length = getHeader(req, 'upload-length');
-    file.size = Number.parseInt(length);
-    if (Number.isNaN(file.size)) {
-      return fail(ERRORS.INVALID_FILE_SIZE);
-    }
+    file.size = Number.parseInt(getHeader(req, 'upload-length'));
+    if (Number.isNaN(file.size)) return fail(ERRORS.INVALID_FILE_SIZE);
     file.generateId();
     await this.storage.create(req, file);
-    const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const headers = {
+    const headers: Headers = {
       Location: this.buildFileUrl(req, file),
       'Tus-Resumable': '1.0.0'
     };
+    if (typeis(req, ['application/offset+octet-stream'])) {
+      const start = 0;
+      file = await this.storage.write(req, { ...file, start });
+      headers['Upload-Offset'] = file.bytesWritten;
+    }
+    const statusCode = file.bytesWritten > 0 ? 200 : 201;
     this.send({ res, statusCode, headers });
     return file;
   }
@@ -79,9 +80,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
     const userId = this.getUserId(req);
     const start = Number(getHeader(req, 'upload-offset'));
-    const chunk = { start, id, userId };
-    const file = await this.storage.write(req, chunk);
-    const headers = {
+    const file = await this.storage.write(req, { start, id, userId });
+    const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Tus-Resumable': '1.0.0'
     };
@@ -94,9 +94,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const id = this.getFileId(req);
     if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
     const userId = this.getUserId(req);
-    const chunk = { start: 0, id, userId };
-    const file = await this.storage.write(req, chunk);
-    const headers = {
+    const file = await this.storage.write(req, { start: 0, id, userId });
+    const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata),
       'Tus-Resumable': '1.0.0'
@@ -113,7 +112,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     if (!id) return fail(ERRORS.FILE_NOT_FOUND);
     const userId = this.getUserId(req);
     const [file] = await this.storage.delete({ id, userId });
-    const headers = { 'Tus-Resumable': '1.0.0' };
+    const headers: Headers = { 'Tus-Resumable': '1.0.0' };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';
     return file;
