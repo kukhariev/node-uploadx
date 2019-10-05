@@ -26,27 +26,19 @@ describe('Utils', function() {
   });
 
   describe('typeis', function() {
-    it('no content-type', function() {
+    const mime = 'application/vnd+json';
+    const headers = { headers: { 'content-type': mime } } as any;
+    it('typeis()', function() {
       expect(utils.typeis({ headers: {} } as any, ['json'])).to.be.false;
+      expect(utils.typeis(headers, ['html'])).to.be.false;
+      expect(utils.typeis(headers, ['json'])).to.be.equal(mime);
     });
-
-    it('json', function() {
-      expect(
-        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['json'])
-      ).to.be.equal('application/json');
-    });
-    it('multi', function() {
-      expect(
-        utils.typeis({ headers: { 'content-type': 'application/json' } } as any, ['xml', 'json'])
-      ).to.be.equal('application/json');
-    });
-    describe('typeis.is', function() {
-      it('video/mp4', function() {
-        expect(utils.typeis.is('video/mp4', ['video'])).to.be.equal('video/mp4');
-      });
-      it('*/*', function() {
-        expect(utils.typeis.is('video/mp4', ['*/*'])).to.be.equal('video/mp4');
-      });
+    it('typeis.is()', function() {
+      expect(utils.typeis.is(mime, ['application/vnd+json'])).to.be.equal(mime);
+      expect(utils.typeis.is(mime, ['vnd+json'])).to.be.equal(mime);
+      expect(utils.typeis.is(mime, ['application/*'])).to.be.equal(mime);
+      expect(utils.typeis.is(mime, ['json', 'xml'])).to.be.equal(mime);
+      expect(utils.typeis.is(mime, ['*/*'])).to.be.equal(mime);
     });
   });
 });
