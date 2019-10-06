@@ -7,6 +7,8 @@ import { promisify } from 'util';
 
 export const logger = debug('uploadx');
 
+export const RE_MATCH_MD5 = /^[a-f0-9]{32}$/i;
+
 export const fsMkdir = promisify(fs.mkdir);
 export const fsClose = promisify(fs.close);
 export const fsOpen = promisify(fs.open);
@@ -112,7 +114,7 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
 export const cp = (obj: any, query: any): boolean => {
   for (const key in query) {
     const value = query[key];
-    if ((typeof value !== 'object' && value === null) || value !== undefined) {
+    if (value === null || value) {
       if (value !== obj[key]) return false;
     }
   }
