@@ -66,6 +66,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
       const start = 0;
       file = await this.storage.write(req, { ...file, start });
       headers['Upload-Offset'] = file.bytesWritten;
+      file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     }
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     this.send({ res, statusCode, headers });
