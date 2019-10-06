@@ -119,22 +119,6 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     return file;
   }
 
-  async get(req: http.IncomingMessage, res: http.ServerResponse): Promise<File[]> {
-    const userId = this.getUserId(req);
-    const id = this.getFileId(req);
-    const files = await this.storage.get({ id, userId });
-    return files;
-  }
-
-  /**
-   * Get id from request
-   */
-  protected getFileId(req: http.IncomingMessage): string | undefined {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname = '' } = url.parse(originalUrl, true);
-    return pathname.split('/').pop();
-  }
-
   /**
    * Build file url from request
    */

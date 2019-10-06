@@ -22,7 +22,7 @@ export function rangeParser(
  */
 export class Uploadx<T extends BaseStorage> extends BaseHandler {
   static RESUME_STATUS_CODE = 308;
-  idKey = 'upload_id';
+
   storage: T | DiskStorage;
 
   constructor(config: { storage: T } | DiskStorageOptions) {
@@ -82,21 +82,6 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
-  }
-
-  async get(req: http.IncomingMessage): Promise<File[]> {
-    const userId = this.getUserId(req);
-    const id = this.getFileId(req);
-    const files = await this.storage.get({ id, userId });
-    return files;
-  }
-
-  /**
-   * Get id from request
-   */
-  protected getFileId(req: http.IncomingMessage): string {
-    const { query } = url.parse(req.url || '', true);
-    return query[this.idKey] as string;
   }
 
   /**

@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
+import * as url from 'url';
 import { ErrorStatus, BaseStorage } from '.';
 import { logger } from './utils';
 import { Cors } from './Cors';
@@ -25,6 +26,7 @@ export interface BaseHandler extends EventEmitter {
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
+  idKey = 'upload_id';
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor() {
     super();
@@ -44,14 +46,13 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
     log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
-
     const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
       handler
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            log('[%s]: %s', file.status, file.path);
+            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
@@ -63,7 +64,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         })
         .catch((error: any) => {
           this.listenerCount('error') && this.emit('error', error);
-          log('[error]: %j', error);
+          log('[%s] [error]: %j', this.constructor.name, error);
           this.sendError(res, error);
           return;
         });
@@ -114,6 +115,22 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     error.message = error.message || 'unknown error';
     const body = this.responseType === 'json' ? error : error.message;
     this.send({ res, statusCode, body });
+  }
+
+  /**
+   * Get id from request
+   */
+  getFileId(req: http.IncomingMessage): string | undefined {
+    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
+    const { query, pathname = '' } = url.parse(originalUrl, true);
+    return (query[this.idKey] as string) || (/[^/]+\/([^/]+)$/.exec(pathname) || [])[1];
+  }
+
+  async get(req: http.IncomingMessage): Promise<File[]> {
+    const userId = this.getUserId(req);
+    const id = this.getFileId(req);
+    const files = await this.storage.get({ id, userId });
+    return files;
   }
 
   abstract storage: BaseStorage;
