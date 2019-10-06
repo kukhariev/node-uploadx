@@ -2,11 +2,17 @@
 process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
-import { DiskStorage, Uploadx } from '../src';
+import { createHash } from 'crypto';
+import { DiskStorage, Tus, Uploadx } from '../src';
 
 const auth: express.RequestHandler = (req, res, next): void => {
   if (req.headers.authorization) {
-    (req as any).user = { id: req.headers.authorization };
+    (req as any).user = {
+      id: createHash('md5')
+        .update(req.headers.authorization)
+        .digest('hex')
+        .substr(5)
+    };
   }
   next();
 };
@@ -20,19 +26,26 @@ const EXPIRE = 25 / 84_000;
 
 export const app = express();
 export const storage = new DiskStorage({
-  dest: (req, file) => `${UPLOADS_DIR}${file.userId}/${file.filename}`,
+  dest: (req, file) => `${UPLOADS_DIR}${file.userId || 'anonymous'}/${file.filename}`,
   maxUploadSize,
   allowMIME,
   useRelativeLocation: true,
   expire: EXPIRE
 });
-export const uploads = new Uploadx({ storage });
+export const uploadx = new Uploadx({ storage });
+export const tus = new Tus({ storage });
 
 app.use(auth);
+app.use((req, res, next) => {
+  req.url = req.headers['tus-resumable'] ? '/tus' + req.url : '/uploadx' + req.url;
+  next();
+});
+app.use('/tus/upload', tus.handle);
+app.use('/uploadx/upload', uploadx.handle);
 
-app.use('/upload', uploads.handle);
+app.get('/*/upload', (req, res) => {
+  console.log(req.body);
 
-app.get('/upload', (req, res) => {
   res.json(req.body);
 });
 
