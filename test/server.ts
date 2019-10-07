@@ -2,16 +2,12 @@
 process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
-import { createHash } from 'crypto';
 import { DiskStorage, Tus, Uploadx } from '../src';
 
 const auth: express.RequestHandler = (req, res, next): void => {
   if (req.headers.authorization) {
     (req as any).user = {
-      id: createHash('md5')
-        .update(req.headers.authorization)
-        .digest('hex')
-        .substr(5)
+      id: req.headers.authorization
     };
   }
   next();
@@ -44,8 +40,6 @@ app.use('/tus/upload', tus.handle);
 app.use('/uploadx/upload', uploadx.handle);
 
 app.get('/*/upload', (req, res) => {
-  console.log(req.body);
-
   res.json(req.body);
 });
 

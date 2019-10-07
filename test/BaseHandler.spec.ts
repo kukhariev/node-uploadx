@@ -8,7 +8,7 @@ describe('BaseHandler', function() {
   it('should create instance BaseHandler', function() {
     expect(new TestUploader()).to.be.instanceOf(BaseHandler);
   });
-  describe.only('getFileId', function() {
+  describe('getFileId', function() {
     const valid = [
       '/981e0d3bb9f93bfa62ef7938ff001308/981e0d3bb9f93bfa62ef7938ff001308',
       '/981e0d3bb9f93bfa62ef7938ff001308?upload_id=981e0d3bb9f93bfa62ef7938ff001308'

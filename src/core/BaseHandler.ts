@@ -7,6 +7,7 @@ import { Cors } from './Cors';
 import { File } from './File';
 
 const log = logger.extend('core');
+const RE_PATH_ID = /[^/]+\/([^/]+)$/;
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type Headers = Record<string, string | number>;
@@ -123,9 +124,12 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   getFileId(req: http.IncomingMessage): string | undefined {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname = '' } = url.parse(originalUrl, true);
-    return (query[this.idKey] as string) || (/[^/]+\/([^/]+)$/.exec(pathname) || [])[1];
+    return (query[this.idKey] as string) || (RE_PATH_ID.exec(pathname) || [])[1];
   }
 
+  /**
+   * `GET` request handler
+   */
   async get(req: http.IncomingMessage): Promise<File[]> {
     const userId = this.getUserId(req);
     const id = this.getFileId(req);
