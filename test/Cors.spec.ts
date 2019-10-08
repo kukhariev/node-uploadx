@@ -39,5 +39,15 @@ describe('CORS', function() {
       Cors.preflight(req, res);
       expect(res.header('Access-Control-Allow-Headers')).to.be.undefined;
     });
+    it('should set `Access-Control-Allow-Credentials` header', function() {
+      Cors.credentials = true;
+      Cors.preflight(req, res);
+      expect(res.header('Access-Control-Allow-Credentials')).to.be.equal('true');
+    });
+    it('should set custom origin', function() {
+      Cors.origin = '*';
+      Cors.preflight(req, res);
+      expect(res.header('Access-Control-Allow-Origin')).to.be.equal('*');
+    });
   });
 });
