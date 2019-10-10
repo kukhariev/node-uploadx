@@ -23,7 +23,7 @@ export class File {
 
   generateId(): void {
     const { filename, size, lastModified, userId } = this;
-    const ordered = [filename, size, lastModified, userId].join('-');
+    const ordered = [filename, size, lastModified || this.timestamp, userId].join('-');
     this.id = createHash('md5')
       .update(JSON.stringify(ordered))
       .digest('hex');
