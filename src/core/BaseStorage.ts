@@ -2,6 +2,7 @@ import * as bytes from 'bytes';
 import * as http from 'http';
 import { typeis } from './utils';
 import { File, FilePart } from './';
+import { Readable } from 'stream';
 
 export interface StorageOptions {
   /** Allowed file types */
@@ -40,7 +41,7 @@ export abstract class BaseStorage {
   }
 
   abstract create(req: http.IncomingMessage, file: File): Promise<File>;
-  abstract write(req: http.IncomingMessage, range: FilePart): Promise<File>;
+  abstract write(stream: Readable, range: FilePart): Promise<File>;
   abstract delete(file: Partial<File>): Promise<File[]>;
   abstract get(file: Partial<File>): Promise<File[]>;
 }

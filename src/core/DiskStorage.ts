@@ -4,6 +4,7 @@ import * as http from 'http';
 import * as path from 'path';
 import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
 import { cp, ensureFile, fnv, fsUnlink, getFileSize, logger } from './utils';
+import { Readable } from 'stream';
 
 const log = logger.extend('DiskStorage');
 
@@ -102,7 +103,7 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async write(req: http.IncomingMessage, filePart: FilePart): Promise<File> {
+  async write(req: Readable, filePart: FilePart): Promise<File> {
     const { start, id, userId } = filePart;
     const [file] = await this.get({ id, userId });
     try {
@@ -146,7 +147,7 @@ export class DiskStorage extends BaseStorage {
   /**
    * Append chunk to file
    */
-  protected _write(req: http.IncomingMessage, filePath: string, start: number): Promise<number> {
+  protected _write(req: Readable, filePath: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(filePath, { flags: 'r+', start });
       file.once('error', error => reject(error));
