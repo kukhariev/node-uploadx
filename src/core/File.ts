@@ -13,10 +13,20 @@ export class File {
   status?: 'created' | 'completed' | 'deleted' | 'part';
   timestamp: number;
   constructor(public metadata: Metadata = {}) {
-    const { name, type, mimeType, title, filename, filetype, size, lastModified } = metadata;
+    const {
+      name,
+      type,
+      mimeType,
+      title,
+      filename,
+      filetype,
+      size,
+      byteCount,
+      lastModified
+    } = metadata;
     this.filename = name || title || filename || uid();
     this.mimeType = mimeType || type || filetype || 'application/octet-stream';
-    this.size = Number(size) || 0;
+    this.size = Number(size || byteCount) || 0;
     this.lastModified = lastModified;
     this.timestamp = new Date().getTime();
   }
@@ -47,4 +57,5 @@ export interface Metadata {
   filename?: string;
   lastModified?: string | number;
   userId?: string | null;
+  [key: string]: any;
 }

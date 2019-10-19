@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
-import { getBody, logger, getHeader, getBaseUrl } from './core/utils';
+import { getJsonBody, logger, getHeader, getBaseUrl } from './core/utils';
 const log = logger.extend('Uploadx');
 
 export function rangeParser(
@@ -36,7 +36,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Create File from request and send file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const metadata = await getBody(req).catch(() => fail(ERRORS.BAD_REQUEST));
+    const metadata = await getJsonBody(req).catch(() => fail(ERRORS.BAD_REQUEST));
     const file = new File(metadata);
     file.userId = this.getUserId(req);
     file.size = Number(getHeader(req, 'x-upload-content-length') || file.size);
