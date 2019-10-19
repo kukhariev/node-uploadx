@@ -32,13 +32,6 @@ export async function ensureDir(dir: string): Promise<void> {
   }
 }
 
-/**
- * Create file if not exists.
- * Resolve the Promise with file size
- *
- * @param path
- * @param overwrite
- */
 export async function ensureFile(path: string, overwrite = false): Promise<number> {
   await ensureDir(dirname(path));
   await fsClose(await fsOpen(path, overwrite ? 'w' : 'a'));
@@ -72,7 +65,7 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export function getBody<T extends http.IncomingMessage>(req: T): Promise<Record<string, any>> {
+export function getJsonBody<T extends http.IncomingMessage>(req: T): Promise<Record<string, any>> {
   let limit = 10240;
   return new Promise((resolve, reject) => {
     if (!typeis(req, ['json'])) {

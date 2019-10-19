@@ -2,7 +2,7 @@
 process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
-import { DiskStorage, Tus, Uploadx } from '../src';
+import { DiskStorage, Multipart, Tus, Uploadx } from '../src';
 
 const auth: express.RequestHandler = (req, res, next): void => {
   if (req.headers.authorization) {
@@ -14,7 +14,7 @@ const auth: express.RequestHandler = (req, res, next): void => {
 };
 
 const maxUploadSize = '6GB';
-const allowMIME = ['video/*'];
+const allowMIME = ['video/*', 'image/*'];
 export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
 
 DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
@@ -28,16 +28,21 @@ export const storage = new DiskStorage({
   useRelativeLocation: true,
   expire: EXPIRE
 });
-export const uploadx = new Uploadx({ storage });
+export const upx = new Uploadx({ storage });
 export const tus = new Tus({ storage });
+export const mpt = new Multipart({ storage });
 
 app.use(auth);
 app.use((req, res, next) => {
-  req.url = req.headers['tus-resumable'] ? '/tus' + req.url : '/uploadx' + req.url;
+  const isMultipart = (req.headers['content-type'] || '').startsWith('multipart/');
+  const isTus = req.headers['tus-resumable'];
+  const prefix = isTus ? '/tus' : isMultipart ? '/mpt' : '/upx';
+  req.url = prefix + req.url;
   next();
 });
 app.use('/tus/upload', tus.handle);
-app.use('/uploadx/upload', uploadx.handle);
+app.use('/upx/upload', upx.handle);
+app.use('/mpt/upload', mpt.handle);
 
 app.get('/*/upload', (req, res) => {
   res.json(req.body);

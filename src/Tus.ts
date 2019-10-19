@@ -26,7 +26,6 @@ export function parseMetadata(encoded: string): Metadata {
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
 export class Tus<T extends BaseStorage> extends BaseHandler {
-  idKey = 'upload_id';
   storage: T | DiskStorage;
   constructor(config: { storage: T } | DiskStorageOptions) {
     super();
