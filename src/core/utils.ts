@@ -2,7 +2,8 @@ import { randomBytes } from 'crypto';
 import * as debug from 'debug';
 import * as fs from 'fs';
 import * as http from 'http';
-import { normalize, sep, isAbsolute, parse, join, dirname } from 'path';
+import { dirname, isAbsolute, join, normalize, parse, sep } from 'path';
+import { Readable } from 'stream';
 import { promisify } from 'util';
 
 export const logger = debug('uploadx');
@@ -65,38 +66,27 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export function getJsonBody<T extends http.IncomingMessage>(req: T): Promise<Record<string, any>> {
-  let limit = 10240;
+export function readBody(message: Readable, encoding = 'utf8', limit = 16777216): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (!typeis(req, ['json'])) {
-      return reject('ContentType Error');
-    }
-    if ('body' in req) {
-      resolve((req as any).body);
-    } else {
-      const buffer: Buffer[] = [];
-      req.on('data', chunk => {
-        limit -= chunk.length;
-        if (0 > limit) {
-          return reject('Buffer Error');
-        }
-        buffer.push(chunk);
-      });
-      req.once('end', () => {
-        try {
-          const json = JSON.parse(Buffer.concat(buffer).toString());
-          resolve(json);
-        } catch (error) {
-          reject('Parsing Error');
-        }
-      });
-    }
+    let body = '';
+    message.setEncoding(encoding);
+    message.on('data', chunk => {
+      if (body.length > limit) return reject('body length limit');
+      body += chunk;
+    });
+    message.once('end', () => resolve(body));
   });
 }
 
-export function memUsage(): string {
-  const { heapUsed } = process.memoryUsage();
-  return (heapUsed / 1024 / 1024).toFixed(2);
+export async function getJsonBody(req: http.IncomingMessage): Promise<Record<string, any>> {
+  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
+  if ('body' in req) return (req as any).body;
+  try {
+    const raw = await readBody(req);
+    return JSON.parse(raw);
+  } catch (error) {
+    return Promise.reject(error);
+  }
 }
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
@@ -104,6 +94,7 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
   whitelist.forEach(key => (result[key] = obj[key]));
   return result;
 };
+
 export const cp = (obj: any, query: any): boolean => {
   for (const key in query) {
     const value = query[key];
@@ -128,6 +119,7 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   if (!proto) return '//' + host;
   return proto + '://' + host;
 }
+
 export const uid = (): string => randomBytes(16).toString('hex');
 
 /**
