@@ -1,6 +1,6 @@
 // @ts-check
 
-const { Uploadx, DiskStorage } = require('../../dist');
+const { Uploadx, DiskStorage } = require('../../dist/types');
 const http = require('http');
 const url = require('url');
 

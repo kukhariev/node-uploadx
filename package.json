@@ -1,11 +1,13 @@
 {
   "name": "node-uploadx",
   "version": "3.2.1",
-  "description": "Node.js middleware for handling resumable uploads",
+  "description": "Node.js resumable upload middleware",
   "keywords": [
     "upload",
     "chunk",
+    "resumable",
     "express",
+    "fastify",
     "middleware"
   ],
   "author": {
@@ -35,9 +37,9 @@
     "test": "mocha",
     "test:watch": "mocha --watch",
     "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
-    "demo:node": "npm run build && node examples/node",
+    "demo:node": "npm run build && node examples/node/uploadx",
     "demo:express": "tsnd examples/express",
-    "demo:tus": "tsnd examples/tus",
+    "demo:tus": "tsnd examples/node/tus",
     "demo:fastify": "tsnd examples/fastify"
   },
   "devDependencies": {
