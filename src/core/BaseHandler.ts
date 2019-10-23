@@ -37,9 +37,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   compose(): void {
     handlers.forEach(method => {
       const enabled = (this as MethodHandler)[method];
-      if (enabled) {
-        this._registeredHandlers.set(method.toUpperCase(), enabled);
-      }
+      enabled && this._registeredHandlers.set(method.toUpperCase(), enabled);
     });
     log('Handlers', this._registeredHandlers);
   }
@@ -137,5 +135,6 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     return files;
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   abstract storage: BaseStorage;
 }
