@@ -1,4 +1,4 @@
-import { Tus, DiskStorage } from '../../src/index';
+import { Tus, DiskStorage } from '../../src';
 import * as http from 'http';
 import * as url from 'url';
 
