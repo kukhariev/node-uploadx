@@ -7,11 +7,11 @@ chai.use(chaiHttp);
 const expect = chai.expect;
 const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
 
-const testFile = {
+const metadata = {
   name: 'testfile.mp4',
-  src: TEST_FILE_PATH,
   size: fs.statSync(TEST_FILE_PATH).size,
-  mimeType: 'video/mp4'
+  mimeType: 'video/mp4',
+  lastModified: 1546300800
 };
 const TOKEN = 'userId';
 
@@ -67,7 +67,7 @@ describe('::Uploadx', function() {
         .post('/upload')
         .set('authorization', TOKEN)
         .set('x-upload-content-type', 'video/mp4')
-        .set('x-upload-content-length', testFile.size.toString())
+        .set('x-upload-content-length', metadata.size.toString())
         .send({ name: 'testfile.mp4' });
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
@@ -78,7 +78,7 @@ describe('::Uploadx', function() {
         .request(app)
         .post('/upload')
         .set('authorization', TOKEN)
-        .send({ ...testFile, name: 'testfileSingle.mp4' });
+        .send({ ...metadata, name: 'testfileSingle.mp4' });
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
       files.push(res.header.location);
@@ -87,7 +87,7 @@ describe('::Uploadx', function() {
   describe('PUT', function() {
     it('should 200 (chunks)', function(done) {
       start = 0;
-      const readable = fs.createReadStream(testFile.src);
+      const readable = fs.createReadStream(TEST_FILE_PATH);
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       readable.on('data', async chunk => {
         readable.pause();
@@ -97,12 +97,12 @@ describe('::Uploadx', function() {
           .redirects(0)
           .set('authorization', TOKEN)
           .set('content-type', 'application/octet-stream')
-          .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${testFile.size}`)
+          .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${metadata.size}`)
           .send(chunk);
         start += chunk.length;
         if (res.status === 200) {
           expect(res).to.be.json;
-          expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfile.mp4`).size).to.be.eql(testFile.size);
+          expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfile.mp4`).size).to.be.eql(metadata.size);
           done();
         }
         readable.resume();
@@ -115,11 +115,11 @@ describe('::Uploadx', function() {
         .put(files[1])
         .set('authorization', TOKEN)
         .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(testFile.src));
+        .send(fs.readFileSync(TEST_FILE_PATH));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
       expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfileSingle.mp4`).size).to.be.eql(
-        testFile.size
+        metadata.size
       );
     });
     it('should 404 (userId check)', async function() {
@@ -128,7 +128,7 @@ describe('::Uploadx', function() {
         .put(files[1])
         .set('authorization', 'otherUser')
         .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(testFile.src));
+        .send(fs.readFileSync(TEST_FILE_PATH));
       expect(res).to.have.status(404);
     });
     it('should 404 (no id)', async function() {
@@ -136,7 +136,7 @@ describe('::Uploadx', function() {
         .request(app)
         .put('/upload')
         .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(testFile.src));
+        .send(fs.readFileSync(TEST_FILE_PATH));
       expect(res).to.be.json;
       expect(res).to.have.status(404);
     });
