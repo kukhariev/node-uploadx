@@ -57,5 +57,5 @@ export interface Metadata {
   filename?: string;
   lastModified?: string | number;
   userId?: string | null;
-  [key: string]: any;
+  [key: string]: string | number | undefined | null;
 }

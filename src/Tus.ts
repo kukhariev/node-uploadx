@@ -8,7 +8,7 @@ import { logger, getHeader, getBaseUrl, typeis } from './core/utils';
 const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
-    .map(([key, value]) => `${key} ${Buffer.from(value).toString('base64')}`)
+    .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString('base64')}`)
     .toString();
 }
 
@@ -100,7 +100,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
       'Upload-Metadata': serializeMetadata(file.metadata),
       'Tus-Resumable': '1.0.0'
     };
-    this.send({ res, headers });
+    this.send({ res, statusCode: 204, headers });
     return file;
   }
 
