@@ -8,8 +8,6 @@ import { Readable } from 'stream';
 
 const log = logger.extend('DiskStorage');
 
-export type Destination = string | (<T extends http.IncomingMessage>(req: T, file: File) => string);
-
 export interface MetaStore extends Configstore {
   get: (id: string) => File | undefined;
   set: (id: any, file?: File) => void;
@@ -18,8 +16,8 @@ export interface MetaStore extends Configstore {
   all: Record<string, File>;
 }
 export interface DiskStorageOptions extends StorageOptions {
-  dest?: Destination;
-  destination?: Destination;
+  dest?: string | ((req: http.IncomingMessage, file: File) => string);
+  destination?: string | ((req: http.IncomingMessage, file: File) => string);
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
 const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
