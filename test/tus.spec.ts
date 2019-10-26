@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { app, storage } from './server';
 import chaiHttp = require('chai-http');
-import { serializeMetadata } from '../src/Tus';
+import { serializeMetadata } from '../src';
 chai.use(chaiHttp);
 const expect = chai.expect;
 const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
@@ -16,7 +16,7 @@ const metadata = {
 };
 const TOKEN = 'userId';
 
-describe.only('::Tus', function() {
+describe('::Tus', function() {
   const files: string[] = [];
   let res: ChaiHttp.Response;
   before(function() {

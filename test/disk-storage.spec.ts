@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as httpMocks from 'node-mocks-http';
 import { normalize } from 'path';
 import { File } from '../src';
-import { DiskStorage, DiskStorageOptions } from '../src/core/DiskStorage';
+import { DiskStorage, DiskStorageOptions } from '../src';
 import { UPLOADS_DIR } from './server';
 
 const FILE = ({

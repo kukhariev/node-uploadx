@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { rangeParser } from '../src/Uploadx';
+import { rangeParser } from '../src';
 describe('Content-Range parser', function() {
   it('should parse `resume` ranges', function() {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];

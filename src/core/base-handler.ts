@@ -3,8 +3,8 @@ import * as http from 'http';
 import * as url from 'url';
 import { ErrorStatus, BaseStorage } from '.';
 import { logger } from './utils';
-import { Cors } from './Cors';
-import { File } from './File';
+import { Cors } from './cors';
+import { File } from './file';
 
 const log = logger.extend('core');
 const RE_PATH_ID = /[^/]+\/([^/]+)$/;

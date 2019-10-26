@@ -2,7 +2,7 @@ import * as bytes from 'bytes';
 import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File, Metadata } from './core';
-import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
+import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
 import { logger, getHeader, getBaseUrl, typeis } from './core/utils';
 
 const log = logger.extend('Tus');

@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File } from './core';
-import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
+import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
 import { getJsonBody, logger, getHeader, getBaseUrl } from './core/utils';
 
 const log = logger.extend('Uploadx');

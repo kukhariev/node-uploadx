@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as multiparty from 'multiparty';
 import * as url from 'url';
 import { BaseHandler, BaseStorage, ERRORS, fail, File, Metadata } from './core';
-import { DiskStorage, DiskStorageOptions } from './core/DiskStorage';
+import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
 import { getBaseUrl, getHeader, logger } from './core/utils';
 
 const log = logger.extend('Multipart');

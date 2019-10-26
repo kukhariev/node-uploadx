@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseMetadata } from '../src/Tus';
+import { parseMetadata } from '../src';
 describe('metadata parser', function() {
   it('should return empty object', function() {
     const sample = '';
