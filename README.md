@@ -1,10 +1,9 @@
 # node-uploadx
 
-> Middleware for handling resumable uploads.
-> Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
+[![npm version][npm-image]][npm-url] [![Build status][travis-image]][travis-url]
 
-[![npm version][npm-image]][npm-url]
-[![Build status][travis-image]][travis-url]
+> Node.js resumable upload middleware.
+> Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 ## Install
 
@@ -12,120 +11,59 @@
 npm install node-uploadx
 ```
 
-## Examples
+## Usage
 
-### Express
+Express example:
 
 ```js
-const express = require('express');;
+const express = require('express');
 const { uploadx } = require('node-uploadx');
-const { auth } = require('./auth');
-const { errorHandler } = require('./error-handler');
 
 const app = express();
+
 app.use(express.json());
 
-app.use(auth);
+app.use('/upload/', uploadx({ dest: './files' }));
 
-app.use(
-  '/upload/',
-  uploadx({
-    maxUploadSize: '180MB',
-    allowMIME: ['video/*'],
-    expire: 7,
-    destination: req => `/tmp/${req.user.id}/${req.body.name}`
-  }),
-  // optional `GET` handler
-  (req, res) => {
-      console.log(req.body);
-      res.json(req.body);
-    }
-  }
-);
-
-app.use(errorHandler);
 app.listen(3003);
 ```
 
-### Express (tus)
+Node http.Server example:
 
 ```js
-const express = require('express');;
-const { tus } = require('node-uploadx');
-const { auth } = require('./auth');
-const { errorHandler } = require('./error-handler');
-
-const app = express();
-app.use(express.json());
-
-app.use(auth);
-
-app.use(
-  '/upload/',
-  tus({
-    maxUploadSize: '180MB',
-    allowMIME: ['video/*'],
-    destination: (req, file) => `/tmp/${file.userId || '__anonymous'}/${file.id}`
-  }),
-  // optional `GET` handler
-  (req, res) => {
-      console.log(req.body);
-      res.json(req.body);
-    }
-  }
-);
-
-app.use(errorHandler);
-app.listen(3003);
-```
-
-### Node http.Server
-
-```js
-const { Uploadx, DiskStorage } = require('../../dist');
+const { Uploadx, DiskStorage } = require('node-uploadx');
 const http = require('http');
 const url = require('url');
-const { tmpdir } = require('os');
 
 const storage = new DiskStorage({ dest: './files' });
 const uploads = new Uploadx({ storage });
-uploads.on('error', console.error);
-uploads.on('created', console.log);
-uploads.on('completed', console.log);
-uploads.on('deleted', console.log);
-uploads.on('part', console.log);
 
-const server = http.createServer((req, res) => {
-  const pathname = url.parse(req.url).pathname.toLowerCase();
-  if (pathname === '/upload') {
-    uploads.handle(req, res);
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plan' });
-    res.end('Not Found');
-  }
-});
-
-server.listen(3003, error => {
-  if (error) {
-    return console.error('something bad happened', error);
-  }
-  console.log('listening on port:', server.address()['port']);
-});
+const server = http
+  .createServer((req, res) => {
+    const pathname = url.parse(req.url).pathname.toLowerCase();
+    if (pathname === '/upload') {
+      uploads.handle(req, res);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plan' });
+      res.end('Not Found');
+    }
+  })
+  .listen(3003);
 ```
 
-## Options
+Please navigate to the [examples](examples) for more advanced examples
 
-| Name                            | Description                                     |
-| ------------------------------- | ----------------------------------------------- |
-| **[destination]** \| **[dest]** | _Upload directory or function to set file path_ |
-| **[allowMIME]**                 | _Array of allowed MIME types_                   |
-| **[maxUploadSize]**             | _Limit allowed file size_                       |
-| **[useRelativeURL]**            | _Generate relative upload link_                 |
-| **[expire]**                    | _Expiry incomplete in days_                     |
+### Options
 
-## HTTP API
+Available options are:
 
-- [overview](proto.md)
+| option                  |        type        | default value | description                                     |
+| :---------------------- | :----------------: | :-----------: | ----------------------------------------------- |
+| `destination` \| `dest` | `string\|Function` |  `"upload"`   | _Upload directory or function to set file path_ |
+| `allowMIME`             |     `string[]`     |   `["*\*"]`   | _Array of allowed MIME types_                   |
+| `maxUploadSize`         |  `string\|number`  |       -       | _Limit allowed file size_                       |
+| `expire`                |      `number`      |       -       | _Days to discard incomplete uploads_            |
+| `useRelativeURL`        |     `boolean`      |    `false`    | _Generate relative upload link_                 |
 
 ## References
 
