@@ -57,7 +57,8 @@ module.exports = {
     'prefer-object-spread': 'error',
     'require-atomic-updates': 'off',
     'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }],
-    'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }]
+    'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
+    '@typescript-eslint/require-await': 'off'
   },
   overrides: [
     {
