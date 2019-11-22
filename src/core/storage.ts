@@ -1,10 +1,10 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import { typeis } from './utils';
-import { File, FilePart } from '.';
+import { File, FilePart } from './file';
 import { Readable } from 'stream';
 
-export interface StorageOptions {
+export interface BaseStorageOptions {
   /** Allowed file types */
   allowMIME?: string[];
   /** File size limit */
@@ -20,7 +20,7 @@ export type ValidatorFn = (file: File) => string | false;
 export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
 
-  constructor(public config: StorageOptions) {
+  constructor(public config: BaseStorageOptions) {
     const fileTypeLimit: ValidatorFn = file =>
       !typeis.is(file.mimeType, this.config.allowMIME) &&
       `Acceptable file types: ${this.config.allowMIME}`;

@@ -2,10 +2,10 @@ import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { BaseStorage, ERRORS, fail, File, FilePart, StorageOptions } from '.';
-import { cp, ensureFile, fnv, fsUnlink, getFileSize, logger } from './utils';
 import { Readable } from 'stream';
-
+import { ERRORS, fail, File, FilePart, BaseStorageOptions } from '.';
+import { BaseStorage } from './storage';
+import { cp, ensureFile, fnv, fsUnlink, getFileSize, logger } from './utils';
 const log = logger.extend('DiskStorage');
 
 export interface MetaStore extends Configstore {
@@ -15,7 +15,7 @@ export interface MetaStore extends Configstore {
   clear: () => void;
   all: Record<string, File>;
 }
-export interface DiskStorageOptions extends StorageOptions {
+export interface DiskStorageOptions extends BaseStorageOptions {
   dest?: string | ((req: http.IncomingMessage, file: File) => string);
   destination?: string | ((req: http.IncomingMessage, file: File) => string);
 }
@@ -34,19 +34,19 @@ export class DiskStorage extends BaseStorage {
   metaStore: MetaStore;
   accessCheck = true;
 
-  private destFn: (req: any, file: File) => string;
+  private _getFileName: (req: any, file: File) => string;
 
   constructor(public config: DiskStorageOptions) {
     super(config);
     const dest = config.dest || config.destination || './upload';
     if (typeof dest === 'string') {
-      this.destFn = (req: any, file: File) => path.join(dest, file.id);
+      this._getFileName = (req: any, file: File) => path.join(dest, file.id);
     } else if (typeof dest === 'function') {
-      this.destFn = dest;
+      this._getFileName = dest;
     } else {
       throw new TypeError('Invalid Destination Parameter');
     }
-    const destinationHash = fnv(process.cwd() + this.destFn.toString()).toString(36);
+    const destinationHash = fnv(process.cwd() + this._getFileName.toString()).toString(36);
     this.metaStore = new Configstore(`${PACKAGE_NAME}-${destinationHash}`);
     if (typeof this.config.expire === 'number') {
       setInterval(
@@ -84,7 +84,7 @@ export class DiskStorage extends BaseStorage {
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
     try {
-      file.path = path.normalize(this.destFn(req, file));
+      file.path = path.normalize(this._getFileName(req, file));
     } catch (error) {
       return fail(ERRORS.BAD_REQUEST);
     }
@@ -92,7 +92,7 @@ export class DiskStorage extends BaseStorage {
     if (errors.length) {
       return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
     }
-    await ensureFile(file.path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
+    file.bytesWritten = await ensureFile(file.path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
     this.metaStore.set(file.id, file);
     file.status = 'created';
     return file;
