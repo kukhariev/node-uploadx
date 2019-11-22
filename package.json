@@ -23,6 +23,7 @@
     "node": ">=8.0.0"
   },
   "dependencies": {
+    "aws-sdk": "^2.577.0",
     "bytes": "^3.1.0",
     "configstore": "^5.0.0",
     "debug": "^4.1.1",
@@ -42,6 +43,7 @@
     "demo:node": "npm run build && node examples/node/uploadx",
     "demo:express": "tsnd examples/express",
     "demo:gcs": "tsnd --respawn --transpileOnly examples/gcs",
+    "demo:s3": "tsnd --respawn --transpileOnly examples/s3",
     "demo:tus": "tsnd examples/node/tus",
     "demo:fastify": "tsnd examples/fastify"
   },
