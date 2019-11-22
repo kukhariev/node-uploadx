@@ -26,6 +26,8 @@
     "bytes": "^3.1.0",
     "configstore": "^5.0.0",
     "debug": "^4.1.1",
+    "gaxios": "^2.1.0",
+    "google-auth-library": "^5.5.1",
     "multiparty": "^4.2.1"
   },
   "scripts": {
@@ -39,6 +41,7 @@
     "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
     "demo:node": "npm run build && node examples/node/uploadx",
     "demo:express": "tsnd examples/express",
+    "demo:gcs": "tsnd --respawn --transpileOnly examples/gcs",
     "demo:tus": "tsnd examples/node/tus",
     "demo:fastify": "tsnd examples/fastify"
   },
