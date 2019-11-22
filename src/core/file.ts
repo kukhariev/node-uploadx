@@ -30,17 +30,17 @@ export class File {
     this.lastModified = lastModified;
     this.timestamp = new Date().getTime();
   }
-
-  generateId(): void {
-    const { filename, size, lastModified, userId } = this;
-    const ordered = [filename, size, lastModified || this.timestamp, userId].join('-');
-    this.id = createHash('md5')
-      .update(JSON.stringify(ordered))
-      .digest('hex');
-  }
 }
-export interface FilePart {
-  userId: string | null;
+
+export const generateId = (file: File): string => {
+  const { filename, size, lastModified, userId, timestamp = new Date().getTime() } = file;
+  const ordered = [filename, size, lastModified || timestamp, userId].join('-');
+  return createHash('md5')
+    .update(JSON.stringify(ordered))
+    .digest('hex');
+};
+
+export interface FilePart extends Partial<File> {
   total?: number;
   end?: number;
   start: number;

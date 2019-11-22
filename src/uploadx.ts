@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File } from './core';
+import { BaseHandler, BaseStorage, ERRORS, fail, File, generateId, Headers } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getJsonBody, logger, getHeader, getBaseUrl } from './core/utils';
+import { getBaseUrl, getHeader, getJsonBody, logger } from './core/utils';
 
 const log = logger.extend('Uploadx');
 
@@ -37,7 +37,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     file.userId = this.getUserId(req);
     file.size = Number(getHeader(req, 'x-upload-content-length') || file.size);
     file.mimeType = getHeader(req, 'x-upload-content-type') || file.mimeType;
-    file.generateId();
+    file.id = generateId(file);
     await this.storage.create(req, file);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
@@ -62,7 +62,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
       file.status = 'part';
     } else {
       file.status = 'completed';
-      this.send({ res, body: file.metadata });
+      this.send({ res, body: file });
     }
     return file;
   }

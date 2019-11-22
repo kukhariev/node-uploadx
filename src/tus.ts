@@ -1,9 +1,18 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, Headers, fail, File, Metadata } from './core';
+import {
+  BaseHandler,
+  BaseStorage,
+  ERRORS,
+  fail,
+  File,
+  generateId,
+  Headers,
+  Metadata
+} from './core';
 import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { logger, getHeader, getBaseUrl, typeis } from './core/utils';
+import { getBaseUrl, getHeader, logger, typeis } from './core/utils';
 
 const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {
@@ -55,7 +64,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     file.userId = this.getUserId(req);
     file.size = Number.parseInt(getHeader(req, 'upload-length'));
     if (Number.isNaN(file.size)) return fail(ERRORS.INVALID_FILE_SIZE);
-    file.generateId();
+    file.id = generateId(file);
     await this.storage.create(req, file);
     const headers: Headers = {
       Location: this.buildFileUrl(req, file),

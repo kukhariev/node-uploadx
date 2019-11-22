@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File, Metadata } from './core';
+import { BaseHandler, BaseStorage, ERRORS, fail, File, generateId, Metadata } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
 import { getBaseUrl, getHeader, logger } from './core/utils';
 
@@ -31,7 +31,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
         metadata.type = getHeader(part as any, 'Content-Type');
         const file = new File(metadata);
         file.userId = this.getUserId(req);
-        file.generateId();
+        file.id = generateId(file);
         this.storage
           .create(req, file)
           .then(() => this.storage.write(part, { ...file, start: 0 }))
