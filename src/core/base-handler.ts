@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { ErrorStatus, BaseStorage } from '.';
-import { logger } from './utils';
+import { BaseStorage, ErrorStatus } from '.';
 import { Cors } from './cors';
 import { File } from './file';
+import { logger } from './utils';
 
 const log = logger.extend('core');
 const RE_PATH_ID = /[^/]+\/([^/]+)$/;
@@ -51,7 +51,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path);
+            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path || file.id);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
@@ -63,7 +63,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         })
         .catch((error: any) => {
           this.listenerCount('error') && this.emit('error', error);
-          log('[%s] [error]: %j', this.constructor.name, error);
+          log('[%s] [error]: %o', this.constructor.name, error);
           this.sendError(res, error);
           return;
         });
@@ -96,7 +96,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     body?: Record<string, any> | string;
   }): void {
     const json = typeof body !== 'string';
-    const data = json ? JSON.stringify(body) : (body as string);
+    const data = json ? JSON.stringify(body) : `${body}`;
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
     const exposeHeaders = Object.keys(headers).toString();
@@ -110,9 +110,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: any): void {
-    const statusCode = error.statusCode || 500;
+    const statusCode = +error.statusCode || +error.code || +error.status || 500;
     error.message = error.message || 'unknown error';
-    const body = this.responseType === 'json' ? error : error.message;
+    const { message, code, detail } = error;
+    const body = this.responseType === 'json' ? { message, code, detail } : error.message;
     this.send({ res, statusCode, body });
   }
 
@@ -121,8 +122,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   getFileId(req: http.IncomingMessage): string | undefined {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { query, pathname = '' } = url.parse(originalUrl, true);
-    return (query[this.idKey] as string) || (RE_PATH_ID.exec(pathname) || [])[1];
+    const { query, pathname } = url.parse(originalUrl, true);
+    return (query[this.idKey] as string) || (RE_PATH_ID.exec(pathname || '') || [])[1];
   }
 
   /**
