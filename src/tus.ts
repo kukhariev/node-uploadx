@@ -1,6 +1,5 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import * as url from 'url';
 import {
   BaseHandler,
   BaseStorage,
@@ -12,7 +11,7 @@ import {
   Metadata
 } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getBaseUrl, getHeader, logger, typeis } from './core/utils';
+import { getHeader, logger, typeis } from './core/utils';
 
 const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {
@@ -88,7 +87,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
     const start = Number(getHeader(req, 'upload-offset'));
-    const file = await this.storage.write({ start, path, body: req });
+    const contentLength = +getHeader(req, 'content-length');
+    const file = await this.storage.write({ start, path, body: req, contentLength });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Tus-Resumable': '1.0.0'
@@ -117,22 +117,11 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete({ path: path });
+    const [file] = await this.storage.delete(path);
     const headers: Headers = { 'Tus-Resumable': '1.0.0' };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';
     return file;
-  }
-
-  /**
-   * Build file url from request
-   */
-  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
-    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
 }
 

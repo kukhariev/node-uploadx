@@ -17,10 +17,6 @@ const TOKEN = 'userId';
 
 describe('::Multipart', function() {
   let res: ChaiHttp.Response;
-  before(function() {
-    storage.delete({ userId: TOKEN });
-    storage.delete({ userId: null });
-  });
 
   beforeEach(function() {
     res = undefined as any;
@@ -58,7 +54,7 @@ describe('::Multipart', function() {
       expect(res).to.have.status(403);
     });
     after(function() {
-      storage.delete({ userId: TOKEN });
+      storage.delete(TOKEN);
     });
   });
 });

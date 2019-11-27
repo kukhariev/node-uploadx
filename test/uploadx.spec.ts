@@ -3,6 +3,7 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { app, storage, UPLOADS_DIR } from './server';
 import chaiHttp = require('chai-http');
+import rimraf = require('rimraf');
 chai.use(chaiHttp);
 const expect = chai.expect;
 const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
@@ -20,10 +21,8 @@ describe('::Uploadx', function() {
   let start: number;
   const files: string[] = [];
   before(function() {
-    storage.delete({ userId: TOKEN });
-    storage.delete({ userId: null });
+    rimraf.sync(UPLOADS_DIR);
   });
-
   beforeEach(function() {
     res = undefined as any;
   });
@@ -86,6 +85,8 @@ describe('::Uploadx', function() {
   });
   describe('PUT', function() {
     it('should 200 (chunks)', function(done) {
+      console.log(files);
+
       start = 0;
       const readable = fs.createReadStream(TEST_FILE_PATH);
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -122,15 +123,6 @@ describe('::Uploadx', function() {
         metadata.size
       );
     });
-    it('should 404 (userId check)', async function() {
-      res = await chai
-        .request(app)
-        .put(files[1])
-        .set('authorization', 'otherUser')
-        .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(TEST_FILE_PATH));
-      expect(res).to.have.status(404);
-    });
     it('should 404 (no id)', async function() {
       res = await chai
         .request(app)
@@ -142,12 +134,6 @@ describe('::Uploadx', function() {
     });
   });
   describe('GET', function() {
-    it('should return empty array (no userId)', async function() {
-      res = await chai.request(app).get(`/upload`);
-      expect(res).to.be.json;
-      expect(res.body).to.be.empty;
-      expect(res).to.have.status(200);
-    });
     it('should return files array', async function() {
       res = await chai
         .request(app)
@@ -159,13 +145,6 @@ describe('::Uploadx', function() {
     });
   });
   describe('DELETE', function() {
-    it('should 404 (userId check)', async function() {
-      res = await chai
-        .request(app)
-        .delete(files[1])
-        .set('authorization', 'otherUser');
-      expect(res).to.have.status(404);
-    });
     it('should 204', async function() {
       res = await chai
         .request(app)
@@ -182,6 +161,6 @@ describe('::Uploadx', function() {
     });
   });
   after(function() {
-    storage.delete({ userId: TOKEN });
+    storage.delete(TOKEN);
   });
 });

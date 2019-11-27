@@ -87,28 +87,22 @@ export class GCStorage extends BaseStorage {
     return file;
   }
 
-  async delete(query: File): Promise<File[]> {
-    const file = await this._getMeta(query.path).catch(err => {});
+  async delete(path: string): Promise<File[]> {
+    const file = await this._getMeta(path).catch(err => {});
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uploadURI, validateStatus });
       await this._deleteMeta(file.path);
       return [file];
     }
-    return [query];
+    return [{ path } as File];
   }
 
-  async get(query: Partial<File>): Promise<File[]> {
+  async get(prefix: string): Promise<File[]> {
     const baseURL = this.storageBaseUri;
-    let url = '/';
-    if (query.path) {
-      url = url + this._getFileName(query);
-      const { data } = await this.authClient.request({ baseURL, url });
-      return [data] as any;
-    } else if (query.userId) {
-      const options = { baseURL, url, params: { prefix: query.userId } };
-      const { data } = await this.authClient.request(options);
-      return [data] as any;
-    }
+    const url = '/';
+    const options = { baseURL, url, params: { prefix } };
+    const { data } = await this.authClient.request(options);
+    return [data] as any;
     return [] as any;
   }
 

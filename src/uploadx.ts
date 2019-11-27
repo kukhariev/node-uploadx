@@ -73,7 +73,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete({ path });
+    const [file] = await this.storage.delete(path);
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
@@ -95,8 +95,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
     // eslint-disable-next-line @typescript-eslint/camelcase
-    query.upload_id = encodeURIComponent(file.path);
-    query.name = encodeURIComponent(file.path);
+    query.upload_id = file.path;
+    query.name = file.path;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return baseUrl ? `${baseUrl}${path}` : `${path}`;

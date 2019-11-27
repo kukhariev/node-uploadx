@@ -19,11 +19,6 @@ const TOKEN = 'userId';
 describe('::Tus', function() {
   const files: string[] = [];
   let res: ChaiHttp.Response;
-  before(function() {
-    storage.delete({ userId: TOKEN });
-    storage.delete({ userId: null });
-  });
-
   beforeEach(function() {
     res = undefined as any;
   });
@@ -60,6 +55,6 @@ describe('::Tus', function() {
   });
 
   after(function() {
-    storage.delete({ userId: TOKEN });
+    storage.delete(TOKEN);
   });
 });

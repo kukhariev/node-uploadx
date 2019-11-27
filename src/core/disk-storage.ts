@@ -111,18 +111,19 @@ export class DiskStorage extends BaseStorage {
     }
   }
 
-  async get(query: Partial<File>): Promise<File[]> {
-    if (query.path) {
-      const file = await this._getMeta(query.path);
-      if (file) return [file];
-      return fail(ERRORS.FILE_NOT_FOUND);
-    } else {
-      return Object.values(this.metaStore.all).filter(file => file.userId === query.userId);
+  async get(prefix: string): Promise<File[]> {
+    const find: File[] = [];
+    for (const path in this.metaStore.all) {
+      if (path.startsWith(prefix)) {
+        const file = this.metaStore.get(path.replace('.', '\\.'));
+        file && find.push(file);
+      }
     }
+    return find;
   }
 
-  async delete(query: Partial<File>): Promise<File[]> {
-    const files = await this.get(query);
+  async delete(path: string): Promise<File[]> {
+    const files = await this.get(path);
     const deleted = [];
     for (const file of files) {
       try {
@@ -131,7 +132,7 @@ export class DiskStorage extends BaseStorage {
         deleted.push(file);
       } catch {}
     }
-    return deleted;
+    return files.length ? deleted : [{ path: path } as File];
   }
 
   /**
@@ -152,13 +153,13 @@ export class DiskStorage extends BaseStorage {
   }
 
   private _deleteMeta(path: string): Promise<any> {
-    this.metaStore.delete(path);
+    this.metaStore.delete(path.replace('.', '\\.'));
     return Promise.resolve();
   }
 
   private _getMeta(path: string): Promise<File> {
     return new Promise((resolve, reject) => {
-      const file = this.metaStore.get(path);
+      const file = this.metaStore.get(path.replace('.', '\\.'));
       if (file) return resolve(file);
       return reject(ERRORS.FILE_NOT_FOUND);
     });

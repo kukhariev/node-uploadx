@@ -59,7 +59,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete({ path });
+    const [file] = await this.storage.delete(path);
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;

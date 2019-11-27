@@ -43,6 +43,6 @@ export abstract class BaseStorage {
 
   abstract create(req: http.IncomingMessage, file: File): Promise<File>;
   abstract write(part: FilePart): Promise<File>;
-  abstract delete(file: Partial<File>): Promise<File[]>;
-  abstract get(file: Partial<File>): Promise<File[]>;
+  abstract delete(path: string): Promise<File[]>;
+  abstract get(path?: string): Promise<File[]>;
 }

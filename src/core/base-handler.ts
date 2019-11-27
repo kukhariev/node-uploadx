@@ -4,10 +4,9 @@ import * as url from 'url';
 import { BaseStorage, ErrorStatus } from '.';
 import { Cors } from './cors';
 import { File } from './file';
-import { logger } from './utils';
+import { logger, getBaseUrl } from './utils';
 
 const log = logger.extend('core');
-const RE_PATH_ID = /[^/]+\/([^/]+)$/;
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type Headers = Record<string, string | number>;
@@ -27,7 +26,6 @@ export interface BaseHandler extends EventEmitter {
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
-  idKey = 'upload_id';
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor() {
     super();
@@ -82,6 +80,15 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   }
 
   /**
+   * `GET` request handler
+   */
+  async get(req: http.IncomingMessage): Promise<File[]> {
+    const path = this.getPath(req);
+    const files = await this.storage.get(path);
+    return files;
+  }
+
+  /**
    * Make response
    */
   send({
@@ -123,17 +130,19 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   getPath(req: http.IncomingMessage): string | undefined {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname } = url.parse(originalUrl, true);
-    return (RE_PATH_ID.exec(pathname || '') || [])[1];
+    const [, , ...path] = pathname?.split('/') || [];
+    return decodeURIComponent(path.pop() || '');
   }
 
   /**
-   * `GET` request handler
+   * Build file url from request
    */
-  async get(req: http.IncomingMessage): Promise<File[]> {
-    const userId = this.getUserId(req);
-    const id = this.getPath(req);
-    const files = await this.storage.get({ path: id, userId });
-    return files;
+  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
+    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
+    const { pathname, query } = url.parse(originalUrl, true);
+    const path = url.format({ pathname: `${pathname}/${encodeURIComponent(file.path)}`, query });
+    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
+    return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering

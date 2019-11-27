@@ -111,8 +111,8 @@ export class S3Storage extends BaseStorage {
     return file;
   }
 
-  async delete(query: File): Promise<File[]> {
-    const file = await this._getMeta(query.path);
+  async delete(path: string): Promise<File[]> {
+    const file = await this._getMeta(path);
 
     if (file) {
       file.status = 'deleted';
@@ -127,13 +127,12 @@ export class S3Storage extends BaseStorage {
         .catch(err => log('abort error:', err.code));
     }
     delete this.metaStore[file.path];
-    return [query] as File[];
+    return [{ path } as File];
   }
 
-  async get(file: Partial<File>): Promise<File[]> {
-    const key = this._getFileName(file);
+  async get(prefix: string): Promise<File[]> {
     const { Contents } = await this.client
-      .listObjectsV2({ Bucket: this.bucketName, Prefix: key })
+      .listObjectsV2({ Bucket: this.bucketName, Prefix: prefix })
       .promise();
     return Contents as any;
   }
