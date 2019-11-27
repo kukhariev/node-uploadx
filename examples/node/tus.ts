@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as url from 'url';
 
 const storage = new DiskStorage({
-  dest: './upload',
+  directory: 'upload',
   maxUploadSize: '15GB',
   allowMIME: ['video/*', 'image/*']
 });
@@ -20,9 +20,8 @@ uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
 uploads.on('part', ({ path }) => console.log('part: ', path));
 
 const server = http.createServer((req, res) => {
-  const { pathname = '' } = url.parse(req.url || '');
-
-  if (/^\/upload(\/.*|$)/.test(pathname)) {
+  const { pathname } = url.parse(req.url || '');
+  if (/^\/upload(\/.*|$)/.test(pathname || '')) {
     uploads.handle(req, res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plan' });

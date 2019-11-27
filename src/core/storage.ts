@@ -4,6 +4,8 @@ import { typeis } from './utils';
 import { File, FilePart } from './file';
 import { Readable } from 'stream';
 
+export const defaultPath = ({ userId, id }: Partial<File>): string =>
+  userId ? `${userId}/${id || ''}` : `${id}`;
 export interface BaseStorageOptions {
   /** Allowed file types */
   allowMIME?: string[];

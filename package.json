@@ -36,6 +36,7 @@
     "dev": "tsnd --respawn --transpileOnly test/server.ts --log",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "build": "rimraf dist && tsc",
+    "uploads:cleanup": "rimraf upload",
     "postbuild": "tsnd scripts/post-build.ts",
     "test": "mocha",
     "test:watch": "mocha --watch",

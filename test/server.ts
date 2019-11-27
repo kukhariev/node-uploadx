@@ -6,9 +6,7 @@ import { DiskStorage, Multipart, Tus, Uploadx } from '../src';
 
 const auth: express.RequestHandler = (req, res, next): void => {
   if (req.headers.authorization) {
-    (req as any).user = {
-      id: req.headers.authorization
-    };
+    (req as any).user = { id: 'be46676f-80e4-5449-8ac0-9b3eee2babd9' };
   }
   next();
 };
@@ -17,16 +15,16 @@ const maxUploadSize = '6GB';
 const allowMIME = ['video/*', 'image/*'];
 export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
 
-DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
-const EXPIRE = 25 / 84_000;
+// DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
+// const EXPIRE = 25 / 84_000;
 
 export const app = express();
 export const storage = new DiskStorage({
-  dest: (req, file) => `${UPLOADS_DIR}${file.userId || 'anonymous'}/${file.filename}`,
+  directory: `${UPLOADS_DIR}`,
   maxUploadSize,
   allowMIME,
-  useRelativeLocation: true,
-  expire: EXPIRE
+  // expire: EXPIRE,
+  useRelativeLocation: true
 });
 export const upx = new Uploadx({ storage });
 export const tus = new Tus({ storage });

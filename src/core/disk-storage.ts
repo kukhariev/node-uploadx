@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { Readable } from 'stream';
-import { ERRORS, fail, File, FilePart, BaseStorageOptions } from '.';
-import { BaseStorage } from './storage';
-import { cp, ensureFile, fnv, fsUnlink, getFileSize, logger } from './utils';
+import { BaseStorageOptions, ERRORS, fail, File, FilePart } from '.';
+import { BaseStorage, defaultPath } from './storage';
+import { ensureFile, fsUnlink, getFileSize, logger } from './utils';
+
 const log = logger.extend('DiskStorage');
 
 export interface MetaStore extends Configstore {
@@ -16,12 +17,13 @@ export interface MetaStore extends Configstore {
   all: Record<string, File>;
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
-  dest?: string | ((req: http.IncomingMessage, file: File) => string);
-  destination?: string | ((req: http.IncomingMessage, file: File) => string);
+  directory?: string;
+  namingFunction?: (file: Partial<File>) => string;
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
 const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
 const PACKAGE_NAME = 'node-uploadx';
+
 /**
  * Local Disk Storage
  */
@@ -33,21 +35,17 @@ export class DiskStorage extends BaseStorage {
    */
   metaStore: MetaStore;
   accessCheck = true;
+  directory: string;
 
-  private _getFileName: (req: any, file: File) => string;
+  private _getFileName: (file: Partial<File>) => string;
 
   constructor(public config: DiskStorageOptions) {
     super(config);
-    const dest = config.dest || config.destination || './upload';
-    if (typeof dest === 'string') {
-      this._getFileName = (req: any, file: File) => path.join(dest, file.id);
-    } else if (typeof dest === 'function') {
-      this._getFileName = dest;
-    } else {
-      throw new TypeError('Invalid Destination Parameter');
-    }
-    const destinationHash = fnv(process.cwd() + this._getFileName.toString()).toString(36);
-    this.metaStore = new Configstore(`${PACKAGE_NAME}-${destinationHash}`);
+    this.directory = config.directory || 'upload';
+    this._getFileName = config.namingFunction || defaultPath;
+    const configPath = { configPath: normalize(`${this.directory}/${PACKAGE_NAME}.json`) };
+    this.metaStore = new Configstore('', {}, configPath);
+
     if (typeof this.config.expire === 'number') {
       setInterval(
         () => this.expiry(this.config.expire as number),

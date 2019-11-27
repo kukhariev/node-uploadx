@@ -5,7 +5,7 @@ const http = require('http');
 const url = require('url');
 
 const storage = new DiskStorage({
-  dest: './upload',
+  directory: 'upload',
   maxUploadSize: '15GB',
   allowMIME: ['video/*', 'image/*']
 });
