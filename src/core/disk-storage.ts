@@ -1,7 +1,7 @@
 import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
+import { join, normalize } from 'path';
 import { Readable } from 'stream';
 import { BaseStorageOptions, ERRORS, fail, File, FilePart } from '.';
 import { BaseStorage, defaultPath } from './storage';
@@ -66,11 +66,12 @@ export class DiskStorage extends BaseStorage {
       for (const file of Object.values(this.metaStore.all)) {
         const outdated = now - file.timestamp > expire;
         if (outdated) {
-          const isExpired = completed || file.size !== (await getFileSize(file.path));
+          const isExpired =
+            completed || file.size !== (await getFileSize(this.fullPath(file.path)));
           if (isExpired) {
             log('[expired]: ', file.path);
-            this.metaStore.delete(file.id);
-            await fsUnlink(file.path).catch(ex => {});
+            await this._deleteMeta(file.path);
+            await fsUnlink(this.fullPath(file.path)).catch(() => {});
           }
         }
       }
@@ -81,17 +82,12 @@ export class DiskStorage extends BaseStorage {
    * Add file to storage
    */
   async create(req: http.IncomingMessage, file: File): Promise<File> {
-    try {
-      file.path = path.normalize(this._getFileName(req, file));
-    } catch (error) {
-      return fail(ERRORS.BAD_REQUEST);
-    }
     const errors = this.validate(file);
-    if (errors.length) {
-      return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
-    }
-    file.bytesWritten = await ensureFile(file.path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
-    this.metaStore.set(file.id, file);
+    if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
+    file.path = this._getFileName(file);
+    const path = this.fullPath(file.path);
+    file.bytesWritten = await ensureFile(path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
+    await this._saveMeta(file.path, file);
     file.status = 'created';
     return file;
   }
@@ -99,31 +95,29 @@ export class DiskStorage extends BaseStorage {
   /**
    * Write chunks
    */
-  async write(req: Readable, filePart: FilePart): Promise<File> {
-    const { start, id, userId } = filePart;
-    const [file] = await this.get({ id, userId });
+  async write(chunk: FilePart): Promise<File> {
+    const { start, path, body } = chunk;
+    const file = await this._getMeta(path || '');
+    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     try {
-      if (!start) {
-        file.bytesWritten = await ensureFile(file.path);
-        if (start !== 0 || file.bytesWritten > 0) {
-          return file;
-        }
+      if (!start || !body) {
+        file.bytesWritten = await ensureFile(this.fullPath(file.path));
+        if (start !== 0 || file.bytesWritten > 0 || !body) return file;
       }
-      file.bytesWritten = await this._write(req, file.path, start);
+      file.bytesWritten = await this._write(body, this.fullPath(file.path), start);
       return file;
     } catch (ex) {
       return fail(ERRORS.FILE_ERROR, ex);
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async get(query: Partial<File>): Promise<File[]> {
-    if (query.id) {
-      const file = this.metaStore.get(query.id);
-      if (file && cp(file, query)) return [file];
+    if (query.path) {
+      const file = await this._getMeta(query.path);
+      if (file) return [file];
       return fail(ERRORS.FILE_NOT_FOUND);
     } else {
-      return Object.values(this.metaStore.all).filter(file => cp(file, query));
+      return Object.values(this.metaStore.all).filter(file => file.userId === query.userId);
     }
   }
 
@@ -132,8 +126,8 @@ export class DiskStorage extends BaseStorage {
     const deleted = [];
     for (const file of files) {
       try {
-        this.metaStore.delete(file.id);
-        await fsUnlink(file.path);
+        await this._deleteMeta(file.path);
+        await fsUnlink(this.fullPath(file.path));
         deleted.push(file);
       } catch {}
     }
@@ -143,12 +137,34 @@ export class DiskStorage extends BaseStorage {
   /**
    * Append chunk to file
    */
-  protected _write(req: Readable, filePath: string, start: number): Promise<number> {
+  protected _write(req: Readable, path: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      const file = fs.createWriteStream(filePath, { flags: 'r+', start });
+      const file = fs.createWriteStream(path, { flags: 'r+', start });
       file.once('error', error => reject(error));
       req.once('aborted', () => file.close());
       req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
     });
+  }
+
+  private _saveMeta(path: string, file: File): Promise<any> {
+    this.metaStore.set(path.replace('.', '\\.'), file);
+    return Promise.resolve();
+  }
+
+  private _deleteMeta(path: string): Promise<any> {
+    this.metaStore.delete(path);
+    return Promise.resolve();
+  }
+
+  private _getMeta(path: string): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const file = this.metaStore.get(path);
+      if (file) return resolve(file);
+      return reject(ERRORS.FILE_NOT_FOUND);
+    });
+  }
+
+  private fullPath(path: string): string {
+    return normalize(join(this.directory, path));
   }
 }

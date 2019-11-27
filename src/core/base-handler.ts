@@ -51,7 +51,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path || file.id);
+            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
@@ -120,10 +120,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Get id from request
    */
-  getFileId(req: http.IncomingMessage): string | undefined {
+  getPath(req: http.IncomingMessage): string | undefined {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { query, pathname } = url.parse(originalUrl, true);
-    return (query[this.idKey] as string) || (RE_PATH_ID.exec(pathname || '') || [])[1];
+    const { pathname } = url.parse(originalUrl, true);
+    return (RE_PATH_ID.exec(pathname || '') || [])[1];
   }
 
   /**
@@ -131,8 +131,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   async get(req: http.IncomingMessage): Promise<File[]> {
     const userId = this.getUserId(req);
-    const id = this.getFileId(req);
-    const files = await this.storage.get({ id, userId });
+    const id = this.getPath(req);
+    const files = await this.storage.get({ path: id, userId });
     return files;
   }
 

@@ -20,6 +20,7 @@ tus.on('error', error => console.error('error: ', error));
 const server = http.createServer((req, res) => {
   const { pathname, query = {} } = url.parse(req.url || '', true);
   if (pathname.startsWith('/upload')) {
+    (req as any).user = { id: 'c73da16e-96d8-5733-9e23-347b4bf87d12' };
     if (query.uploadType === 'multipart') {
       mpt.handle(req, res);
     } else if (query.uploadType === 'tus') {

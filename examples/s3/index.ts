@@ -17,6 +17,7 @@ mpt.on('error', error => console.error('error: ', error));
 tus.on('error', error => console.error('error: ', error));
 
 const server = http.createServer((req, res) => {
+  (req as any).user = { id: 'c73da16e-96d8-5733-9e23-347b4bf87d12' };
   const { pathname, query = {} } = url.parse(req.url || '', true);
   if (pathname.startsWith('/upload')) {
     if (query.uploadType === 'multipart') {

@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File, generateId, Metadata } from './core';
+import { BaseHandler, BaseStorage, ERRORS, fail, File, generateFileId, Metadata } from './core';
 import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
 import { getBaseUrl, getHeader, logger } from './core/utils';
 
@@ -31,10 +31,12 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
         metadata.type = getHeader(part as any, 'Content-Type');
         const file = new File(metadata);
         file.userId = this.getUserId(req);
-        file.id = generateId(file);
+        file.id = generateFileId(file);
         this.storage
           .create(req, file)
-          .then(() => this.storage.write(part, { ...file, start: 0 }))
+          .then(({ path }) =>
+            this.storage.write({ start: 0, contentLength: part.byteCount, body: part, path })
+          )
           .then(file_ => {
             file_.status = 'completed';
             const headers = { Location: this.buildFileUrl(req, file_) };
@@ -55,10 +57,9 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
    * Delete upload by id
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const id = this.getFileId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
-    const userId = this.getUserId(req);
-    const [file] = await this.storage.delete({ id, userId });
+    const path = this.getPath(req);
+    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete({ path });
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
@@ -70,7 +71,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${file.id}`, query });
+    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
