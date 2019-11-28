@@ -20,7 +20,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.10.0"
   },
   "dependencies": {
     "aws-sdk": "^2.580.0",
