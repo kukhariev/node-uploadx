@@ -21,7 +21,7 @@ export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
 export const app = express();
 export const storage = new DiskStorage({
   directory: `${UPLOADS_DIR}`,
-  namingFunction: file => `${file.userId}/${file.filename}`,
+  filename: file => `${file.userId}/${file.filename}`,
   maxUploadSize,
   allowMIME,
   // expire: EXPIRE,

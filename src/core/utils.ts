@@ -95,18 +95,6 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
   return result;
 };
 
-export const cp = (obj: any, query: any): boolean => {
-  for (const key in query) {
-    const value = query[key];
-    if (value === null || value) {
-      if (value !== obj[key]) return false;
-    }
-  }
-  return true;
-};
-
-export const find = <T>(list: T[], query: Partial<T>): T[] => list.filter(obj => cp(obj, query));
-
 export function getHeader(req: http.IncomingMessage, name: string): string {
   const raw = req.headers[name.toLowerCase()];
   return Array.isArray(raw) ? raw[0] : raw || '';

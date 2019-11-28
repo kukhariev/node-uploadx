@@ -41,22 +41,3 @@ describe('typeis', function() {
     expect(utils.typeis.is(mime, ['*/*'])).to.be.equal(mime);
   });
 });
-describe('cp', function() {
-  const personal = { id: '6cc438637901', timestamp: 1546300800, userId: 'c6e26eec' } as any;
-  const shared = { id: 'e405e6d94f59', timestamp: 1514764800, userId: null } as any;
-  // const compare = (v: number): boolean => v > 1527811200;
-  it('should return `true`', function() {
-    expect(utils.cp(personal, { id: '6cc438637901' })).to.be.true;
-    expect(utils.cp(personal, { id: '' })).to.be.true;
-    expect(utils.cp(personal, { id: '6cc438637901', userId: 'c6e26eec' })).to.be.true;
-    expect(utils.cp(personal, { userId: 'c6e26eec' })).to.be.true;
-    expect(utils.cp(shared, { userId: null })).to.be.true;
-    expect(utils.cp(shared, {})).to.be.true;
-    // expect(utils.cp(personal, { timestamp: compare })).to.be.true;
-  });
-  it('should return `false`', function() {
-    expect(utils.cp(personal, { id: '1234' })).to.be.false;
-    expect(utils.cp(personal, { id: '6cc438637901', userId: null })).to.be.false;
-    // expect(utils.cp(shared, { timestamp: compare })).to.be.false;
-  });
-});

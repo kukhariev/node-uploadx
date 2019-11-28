@@ -2,7 +2,7 @@ import { GaxiosOptions, request } from 'gaxios';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import { ERRORS, fail, File, FilePart } from '.';
-import { BaseStorage, BaseStorageOptions, defaultPath } from './storage';
+import { BaseStorage, BaseStorageOptions, filename } from './storage';
 import { getHeader } from './utils';
 
 const PACKAGE_NAME = 'node-uploadx';
@@ -22,8 +22,7 @@ const validateStatus: (code: number) => boolean = (code: number) =>
 
 export type GCStorageOptions = BaseStorageOptions &
   GoogleAuthOptions & {
-    bucketName?: string;
-    namingFunction?: (file: Partial<File>) => string;
+    bucket?: string;
   };
 export interface GCSFile extends File {
   uploadURI: string;
@@ -34,18 +33,18 @@ export interface GCSFile extends File {
 export class GCStorage extends BaseStorage {
   authClient: GoogleAuth;
   metaStore: Record<string, GCSFile> = {};
-  storageBaseUri: string;
-  uploadBaseUri: string;
+  storageBaseURI: string;
+  uploadBaseURI: string;
   private _getFileName: (file: Partial<File>) => string;
 
   constructor(public config: GCStorageOptions = {}) {
     super(config);
     config.scopes = config.scopes || authScopes;
     this.authClient = new GoogleAuth(config);
-    const bucketName = config.bucketName || PACKAGE_NAME;
-    this._getFileName = config.namingFunction || defaultPath;
-    this.storageBaseUri = [storageAPI, bucketName, 'o'].join('/');
-    this.uploadBaseUri = [uploadAPI, bucketName, 'o'].join('/');
+    const bucketName = config.bucket || PACKAGE_NAME;
+    this._getFileName = config.filename || filename;
+    this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
+    this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
   }
 
   async create(req: http.IncomingMessage, file: GCSFile): Promise<File> {
@@ -66,7 +65,7 @@ export class GCStorage extends BaseStorage {
       headers,
       method: 'POST',
       params: { name: path, size: file.size.toString(), uploadType: 'resumable' },
-      url: this.uploadBaseUri
+      url: this.uploadBaseURI
     });
 
     file.path = path;
@@ -98,7 +97,7 @@ export class GCStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const baseURL = this.storageBaseUri;
+    const baseURL = this.storageBaseURI;
     const url = '/';
     const options = { baseURL, url, params: { prefix } };
     const { data } = await this.authClient.request(options);
@@ -136,7 +135,7 @@ export class GCStorage extends BaseStorage {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       method: 'POST',
       params: { name: `${file.path}${META}`, uploadType: 'media' },
-      url: this.uploadBaseUri
+      url: this.uploadBaseURI
     });
   }
 
@@ -144,7 +143,7 @@ export class GCStorage extends BaseStorage {
     const name = encodeURIComponent(path);
     const file = this.metaStore[name];
     if (file) return file;
-    const url = `${this.storageBaseUri}/${name}${META}`;
+    const url = `${this.storageBaseURI}/${name}${META}`;
     const { data } = await this.authClient.request({ params: { alt: 'media' }, url });
     this.metaStore[name] = data;
     return data;
@@ -152,7 +151,7 @@ export class GCStorage extends BaseStorage {
 
   private _deleteMeta(path: string): Promise<any> {
     const name = encodeURIComponent(path);
-    const url = `${this.storageBaseUri}/${name}${META}`;
+    const url = `${this.storageBaseURI}/${name}${META}`;
     delete this.metaStore[name];
     return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
   }

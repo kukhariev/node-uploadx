@@ -25,7 +25,7 @@ describe('DiskStorage', function() {
   let mockReq: Request;
   const OPTIONS: DiskStorageOptions = {
     directory: UPLOADS_DIR,
-    namingFunction: file => `${file.userId}/${file.filename}`
+    filename: file => `${file.userId}/${file.filename}`
   };
   const FILEPATH = normalize(`${UPLOADS_DIR}/userId/file.mp4`);
   const FILENAME = `userId/file.mp4`;

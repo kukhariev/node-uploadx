@@ -4,7 +4,7 @@ import * as http from 'http';
 import { join, normalize } from 'path';
 import { Readable } from 'stream';
 import { BaseStorageOptions, ERRORS, fail, File, FilePart } from '.';
-import { BaseStorage, defaultPath } from './storage';
+import { BaseStorage, filename } from './storage';
 import { ensureFile, fsUnlink, getFileSize, logger } from './utils';
 
 const log = logger.extend('DiskStorage');
@@ -18,7 +18,6 @@ export interface MetaStore extends Configstore {
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
   directory?: string;
-  namingFunction?: (file: Partial<File>) => string;
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
 const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
@@ -34,7 +33,6 @@ export class DiskStorage extends BaseStorage {
    * Where store uploads info
    */
   metaStore: MetaStore;
-  accessCheck = true;
   directory: string;
 
   private _getFileName: (file: Partial<File>) => string;
@@ -42,7 +40,7 @@ export class DiskStorage extends BaseStorage {
   constructor(public config: DiskStorageOptions) {
     super(config);
     this.directory = config.directory || 'upload';
-    this._getFileName = config.namingFunction || defaultPath;
+    this._getFileName = config.filename || filename;
     const configPath = { configPath: normalize(`${this.directory}/${PACKAGE_NAME}.json`) };
     this.metaStore = new Configstore('', {}, configPath);
 

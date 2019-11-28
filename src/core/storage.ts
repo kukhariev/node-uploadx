@@ -3,16 +3,19 @@ import * as http from 'http';
 import { typeis } from './utils';
 import { File, FilePart } from './file';
 
-export const defaultPath = ({ userId, id }: Partial<File>): string =>
+export const filename = ({ userId, id }: Partial<File>): string =>
   userId ? `${userId}/${id || ''}` : `${id}`;
+
 export interface BaseStorageOptions {
   /** Allowed file types */
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
+  filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
   /** Unfinished uploads expire in days*/
   expire?: number;
+
   // path?: string;
 }
 
