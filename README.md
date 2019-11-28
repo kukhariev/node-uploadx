@@ -23,7 +23,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/upload/', uploadx({ dest: './files' }));
+app.use('/upload/', uploadx({ directory: './files' }));
 
 app.listen(3003);
 ```
@@ -35,7 +35,7 @@ const { Uploadx, DiskStorage } = require('node-uploadx');
 const http = require('http');
 const url = require('url');
 
-const storage = new DiskStorage({ dest: './files' });
+const storage = new DiskStorage({ directory: './files' });
 const uploads = new Uploadx({ storage });
 
 const server = http
@@ -57,13 +57,13 @@ Please navigate to the [examples](examples) for more advanced examples
 
 Available options are:
 
-| option                  |        type        | default value | description                                     |
-| :---------------------- | :----------------: | :-----------: | ----------------------------------------------- |
-| `destination` \| `dest` | `string\|Function` |  `"upload"`   | _Upload directory or function to set file path_ |
-| `allowMIME`             |     `string[]`     |   `["*\*"]`   | _Array of allowed MIME types_                   |
-| `maxUploadSize`         |  `string\|number`  |       -       | _Limit allowed file size_                       |
-| `expire`                |      `number`      |       -       | _Days to discard incomplete uploads_            |
-| `useRelativeURL`        |     `boolean`      |    `false`    | _Generate relative upload link_                 |
+| option           |       type       | default value | description                          |
+| :--------------- | :--------------: | :-----------: | ------------------------------------ |
+| `directory`      |     `string`     |  `"upload"`   | _Upload directory_                   |
+| `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
+| `maxUploadSize`  | `string\|number` |       -       | _Limit allowed file size_            |
+| `expire`         |     `number`     |       -       | _Days to discard incomplete uploads_ |
+| `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_      |
 
 ## References
 

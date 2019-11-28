@@ -16,6 +16,10 @@ export interface S3File extends File {
 
 export type S3StorageOptions = BaseStorageOptions &
   S3.ClientConfiguration & {
+    /**
+     * AWS S3 bucket
+     * @defaultValue 'node-uploadx'
+     */
     bucket?: string;
   };
 

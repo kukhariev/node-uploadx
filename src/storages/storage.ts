@@ -11,6 +11,7 @@ export interface BaseStorageOptions {
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
+  /** Storage filename function */
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
   /** Unfinished uploads expire in days*/

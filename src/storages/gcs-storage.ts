@@ -23,6 +23,10 @@ const validateStatus: (code: number) => boolean = (code: number) =>
 
 export type GCStorageOptions = BaseStorageOptions &
   GoogleAuthOptions & {
+    /**
+     * Google Cloud Storage bucket
+     * @defaultValue 'node-uploadx'
+     */
     bucket?: string;
   };
 export interface GCSFile extends File {

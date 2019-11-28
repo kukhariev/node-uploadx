@@ -18,6 +18,10 @@ export interface MetaStore extends Configstore {
   all: Record<string, File>;
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
+  /**
+   * Uploads directory
+   * @defaultValue './upload'
+   */
   directory?: string;
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
