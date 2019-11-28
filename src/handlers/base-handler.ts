@@ -1,10 +1,11 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage, ErrorStatus } from '.';
+import { BaseStorage } from '../storages';
+import { File } from '../storages/file';
+import { ErrorStatus } from '../util/errors';
+import { getBaseUrl, logger } from '../util/utils';
 import { Cors } from './cors';
-import { File } from './file';
-import { logger, getBaseUrl } from './utils';
 
 const log = logger.extend('core');
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;

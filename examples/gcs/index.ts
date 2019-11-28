@@ -4,7 +4,7 @@ import * as url from 'url';
 import { GCStorage, Uploadx, Multipart, Tus } from '../../src';
 
 const storage = new GCStorage({
-  bucketName: process.env.GCS_BUCKET,
+  bucket: process.env.GCS_BUCKET,
   keyFilename: process.env.GCS_KEYFILE,
   maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*']

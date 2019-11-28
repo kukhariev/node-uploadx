@@ -1,17 +1,11 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import {
-  BaseHandler,
-  BaseStorage,
-  ERRORS,
-  fail,
-  File,
-  generateFileId,
-  Headers,
-  Metadata
-} from './core';
-import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getHeader, logger, typeis } from './core/utils';
+import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
+import { File, generateFileId, Metadata } from '../storages/file';
+import { BaseStorage } from '../storages/storage';
+import { ERRORS, fail } from '../util/errors';
+import { getHeader, logger, typeis } from '../util/utils';
+import { BaseHandler, Headers } from './base-handler';
 
 const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {

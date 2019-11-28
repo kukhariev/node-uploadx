@@ -1,9 +1,10 @@
 import { GaxiosOptions, request } from 'gaxios';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
-import { ERRORS, fail, File, FilePart } from '.';
+import { ERRORS, fail } from '../util/errors';
+import { getHeader } from '../util/utils';
+import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
-import { getHeader } from './utils';
 
 const PACKAGE_NAME = 'node-uploadx';
 const META = '.META';

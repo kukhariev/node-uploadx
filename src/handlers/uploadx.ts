@@ -1,8 +1,11 @@
 import * as http from 'http';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File, generateFileId, Headers } from './core';
-import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getBaseUrl, getHeader, getJsonBody, logger } from './core/utils';
+import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
+import { File, generateFileId } from '../storages/file';
+import { BaseStorage } from '../storages/storage';
+import { ERRORS, fail } from '../util/errors';
+import { getBaseUrl, getHeader, getJsonBody, logger } from '../util/utils';
+import { BaseHandler, Headers } from './base-handler';
 
 const log = logger.extend('Uploadx');
 

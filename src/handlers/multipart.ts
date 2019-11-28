@@ -1,9 +1,11 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import * as url from 'url';
-import { BaseHandler, BaseStorage, ERRORS, fail, File, generateFileId, Metadata } from './core';
-import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getBaseUrl, getHeader, logger } from './core/utils';
+import { BaseStorage, File, generateFileId, Metadata } from '../storages';
+import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
+import { ERRORS, fail } from '../util/errors';
+import { getBaseUrl, getHeader, logger } from '../util/utils';
+import { BaseHandler } from './base-handler';
 
 const log = logger.extend('Multipart');
 

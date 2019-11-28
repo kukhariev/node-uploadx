@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
-import * as utils from '../src/core/utils';
+import * as utils from '../src';
 const ROOT = `./upload/fs-test`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;

@@ -1,6 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { typeis } from './utils';
+import { typeis } from '../util/utils';
 import { File, FilePart } from './file';
 
 export const filename = ({ userId, id }: Partial<File>): string =>

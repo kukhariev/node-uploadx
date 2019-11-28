@@ -1,8 +1,9 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
-import { ERRORS, fail, File, FilePart } from '.';
+import { ERRORS, fail } from '../util/errors';
+import { logger } from '../util/utils';
+import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
-import { logger } from './utils';
 
 const log = logger.extend('S3');
 const META = '.META';

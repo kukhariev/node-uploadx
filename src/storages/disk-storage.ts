@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { join, normalize } from 'path';
 import { Readable } from 'stream';
-import { BaseStorageOptions, ERRORS, fail, File, FilePart } from '.';
-import { BaseStorage, filename } from './storage';
-import { ensureFile, fsUnlink, getFileSize, logger } from './utils';
+import { BaseStorage, filename, BaseStorageOptions } from './storage';
+import { ensureFile, fsUnlink, getFileSize, logger } from '../util/utils';
+import { fail, ERRORS } from '../util/errors';
+import { File, FilePart } from './file';
 
 const log = logger.extend('DiskStorage');
 
