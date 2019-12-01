@@ -6,7 +6,7 @@ import { getHeader } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
-const PACKAGE_NAME = 'node-uploadx';
+const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
 
 const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
@@ -46,7 +46,7 @@ export class GCStorage extends BaseStorage {
     super(config);
     config.scopes = config.scopes || authScopes;
     this.authClient = new GoogleAuth(config);
-    const bucketName = config.bucket || PACKAGE_NAME;
+    const bucketName = config.bucket || BUCKET_NAME;
     this._getFileName = config.filename || filename;
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
@@ -107,17 +107,16 @@ export class GCStorage extends BaseStorage {
     const options = { baseURL, url, params: { prefix } };
     const { data } = await this.authClient.request(options);
     return [data] as any;
-    return [] as any;
   }
 
   async _write(file: GCSFile & FilePart): Promise<number> {
     const { start, size, contentLength, uploadURI: url, body } = file;
     let range;
     if (typeof start === 'number') {
-      const end = contentLength ? start + contentLength : '*';
+      const end = contentLength ? start + contentLength - 1 : '*';
       range = `bytes ${start}-${end}/${size ?? '*'}`;
     } else {
-      `bytes */${size ?? '*'}`;
+      range = `bytes */${size ?? '*'}`;
     }
     const options: GaxiosOptions = { body, method: 'PUT', retry: false, url, validateStatus };
     options.headers = {
