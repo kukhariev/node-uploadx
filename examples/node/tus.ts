@@ -1,11 +1,15 @@
-import { Tus, DiskStorage } from '../../src';
 import * as http from 'http';
 import * as url from 'url';
+import { DiskStorage, Tus } from '../../src';
 
+function auth(req: http.IncomingMessage): void {
+  (req as any).user = { id: 'c73da16e-96d8-5733-9e23-347b4bf87d12' };
+}
 const storage = new DiskStorage({
   directory: 'upload',
   maxUploadSize: '15GB',
-  allowMIME: ['video/*', 'image/*']
+  allowMIME: ['video/*', 'image/*'],
+  path: '/upload'
 });
 
 // remove old uploads
@@ -21,6 +25,7 @@ uploads.on('part', ({ path }) => console.log('part: ', path));
 
 const server = http.createServer((req, res) => {
   const { pathname } = url.parse(req.url || '');
+  auth(req);
   if (/^\/upload(\/.*|$)/.test(pathname || '')) {
     uploads.handle(req, res);
   } else {
@@ -29,9 +34,4 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(3003, (error?: any) => {
-  if (error) {
-    return console.error('something bad happened', error);
-  }
-  console.log('listening on port:', 3003);
-});
+server.listen(3003, () => console.log('listening on port:', 3003));

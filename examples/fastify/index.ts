@@ -1,13 +1,9 @@
 import * as Fastify from 'fastify';
-import { uploadx } from '../../dist';
+import { tus } from '../../src';
 
 const fastify = Fastify({ logger: true });
 
-fastify.use('/upload', uploadx());
-
-fastify.get('/upload', ({ req }, reply) => {
-  reply.send((req as any)['body']);
-});
+fastify.use('/upload', tus());
 
 fastify.listen(3003, (err, address) => {
   if (err) throw err;

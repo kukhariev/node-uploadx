@@ -1,8 +1,7 @@
 // @ts-check
-
-const { Uploadx, DiskStorage } = require('../../dist');
 const http = require('http');
 const url = require('url');
+const { Uploadx, DiskStorage } = require('../../dist');
 
 const storage = new DiskStorage({
   directory: 'upload',
@@ -16,8 +15,8 @@ uploads.on('created', ({ path }) => console.log('created: ', path));
 uploads.on('deleted', ({ path }) => console.log('canceled: ', path));
 
 const server = http.createServer((req, res) => {
-  const { pathname } = url.parse(req.url);
-  if (pathname === '/upload') {
+  const { pathname } = url.parse(req.url || '');
+  if (/^\/upload(\/.*|$)/.test(pathname)) {
     uploads.handle(req, res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plan' });
@@ -25,9 +24,4 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(3003, error => {
-  if (error) {
-    return console.error('something bad happened', error);
-  }
-  console.log('listening on port:', server.address()['port']);
-});
+server.listen(3003, () => console.log('listening on port:', 3003));
