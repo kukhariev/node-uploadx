@@ -1,7 +1,7 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail } from '../util/errors';
-import { logger } from '../util/utils';
+import { logger, noop } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
@@ -123,7 +123,7 @@ export class S3Storage extends BaseStorage {
       await this.client
         .deleteObject({ Bucket: this.bucket, Key: file.path + META })
         .promise()
-        .catch(err => {});
+        .catch(noop);
       const params = { Bucket: this.bucket, Key: file.path, UploadId: file.UploadId };
       await this.client
         .abortMultipartUpload(params)

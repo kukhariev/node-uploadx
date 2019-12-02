@@ -2,7 +2,7 @@ import { GaxiosOptions, request } from 'gaxios';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import { ERRORS, fail } from '../util/errors';
-import { getHeader } from '../util/utils';
+import { getHeader, noop } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
@@ -57,7 +57,7 @@ export class GCStorage extends BaseStorage {
     if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
 
     const path = this._getFileName(file);
-    const existing = this.metaStore[path] || (await this._getMeta(path).catch(err => {}));
+    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
     if (existing) return existing;
 
     const origin = getHeader(req, 'origin');
@@ -92,7 +92,7 @@ export class GCStorage extends BaseStorage {
   }
 
   async delete(path: string): Promise<File[]> {
-    const file = await this._getMeta(path).catch(err => {});
+    const file = await this._getMeta(path).catch(noop);
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uploadURI, validateStatus });
       await this._deleteMeta(file.path);

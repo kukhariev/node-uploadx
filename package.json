@@ -23,7 +23,7 @@
     "node": ">=10.10.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.580.0",
+    "aws-sdk": "^2.581.0",
     "bytes": "^3.1.0",
     "configstore": "^5.0.0",
     "debug": "^4.1.1",
@@ -58,11 +58,11 @@
     "@types/multiparty": "0.0.32",
     "@types/node": "^12.12.14",
     "@types/rimraf": "^2.0.3",
-    "@typescript-eslint/eslint-plugin": "^2.9.0",
-    "@typescript-eslint/parser": "^2.9.0",
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
-    "eslint": "^6.7.1",
+    "eslint": "^6.7.2",
     "eslint-config-prettier": "^6.7.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",

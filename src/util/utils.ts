@@ -122,3 +122,6 @@ export function fnv(str: string): number {
   }
   return hash >>> 0;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const noop = (): any => {};

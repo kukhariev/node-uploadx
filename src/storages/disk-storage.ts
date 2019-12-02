@@ -4,7 +4,7 @@ import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
 import { ERRORS, fail } from '../util/errors';
-import { ensureFile, fsUnlink, getFileSize, logger } from '../util/utils';
+import { ensureFile, fsUnlink, getFileSize, logger, noop } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
@@ -74,7 +74,7 @@ export class DiskStorage extends BaseStorage {
           if (isExpired) {
             log('[expired]: ', file.path);
             await this._deleteMeta(file.path);
-            await fsUnlink(this.fullPath(file.path)).catch(() => {});
+            await fsUnlink(this.fullPath(file.path)).catch(noop);
           }
         }
       }
