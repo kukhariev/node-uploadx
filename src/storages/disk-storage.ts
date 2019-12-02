@@ -26,7 +26,7 @@ export interface DiskStorageOptions extends BaseStorageOptions {
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
 const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
-const PACKAGE_NAME = 'node-uploadx';
+const METADATAS_FILE = 'UPLOADS_METADATA';
 
 /**
  * Local Disk Storage
@@ -46,7 +46,7 @@ export class DiskStorage extends BaseStorage {
     super(config);
     this.directory = config.directory || 'upload';
     this._getFileName = config.filename || filename;
-    const configPath = { configPath: normalize(`${this.directory}/${PACKAGE_NAME}.json`) };
+    const configPath = { configPath: join(this.directory, METADATAS_FILE) };
     this.metaStore = new Configstore('', {}, configPath);
 
     if (typeof this.config.expire === 'number') {
