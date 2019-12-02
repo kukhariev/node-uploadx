@@ -37,9 +37,9 @@ export class File {
 
 export const generateFileId = (file: File): string => {
   const { filename, size, lastModified, userId, timestamp = new Date().getTime() } = file;
-  const ordered = [filename, size, lastModified || timestamp, userId].join('-');
+  const print = [filename, size, lastModified || timestamp, userId || ''].join('-');
   return createHash('md5')
-    .update(JSON.stringify(ordered))
+    .update(print)
     .digest('hex');
 };
 
@@ -60,7 +60,7 @@ export interface Metadata {
   title?: string;
   filename?: string;
   lastModified?: string | number;
-  userId?: string | null;
+  userId?: string;
 
   [key: string]: string | number | undefined | null;
 }

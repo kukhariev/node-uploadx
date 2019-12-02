@@ -42,6 +42,7 @@ Thumbs.db
 
 /upload
 /uploads
+/files
 
 package-lock.json
 

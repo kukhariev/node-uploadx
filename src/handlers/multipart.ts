@@ -1,10 +1,9 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
-import * as url from 'url';
 import { BaseStorage, File, generateFileId, Metadata } from '../storages';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../util/errors';
-import { getBaseUrl, getHeader, logger } from '../util/utils';
+import { getHeader, logger } from '../util/utils';
 import { BaseHandler } from './base-handler';
 
 const log = logger.extend('Multipart');
@@ -65,17 +64,6 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
-  }
-
-  /**
-   * Build file url from request
-   */
-  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
-    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
 }
 

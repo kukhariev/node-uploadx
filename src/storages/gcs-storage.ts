@@ -6,7 +6,7 @@ import { getHeader } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
-const BUCKET_NAME = 'node-uploadx';
+const BUCKET_NAME = 'uploadx';
 const META = '.META';
 
 const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
@@ -25,7 +25,7 @@ export type GCStorageOptions = BaseStorageOptions &
   GoogleAuthOptions & {
     /**
      * Google Cloud Storage bucket
-     * @defaultValue 'node-uploadx'
+     * @defaultValue 'uploadx'
      */
     bucket?: string;
   };

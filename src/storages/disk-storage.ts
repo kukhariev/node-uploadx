@@ -1,12 +1,12 @@
 import * as Configstore from 'configstore';
 import * as fs from 'fs';
 import * as http from 'http';
-import { join, normalize } from 'path';
+import { join } from 'path';
 import { Readable } from 'stream';
-import { BaseStorage, filename, BaseStorageOptions } from './storage';
+import { ERRORS, fail } from '../util/errors';
 import { ensureFile, fsUnlink, getFileSize, logger } from '../util/utils';
-import { fail, ERRORS } from '../util/errors';
 import { File, FilePart } from './file';
+import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
 const log = logger.extend('DiskStorage');
 
@@ -44,7 +44,7 @@ export class DiskStorage extends BaseStorage {
 
   constructor(public config: DiskStorageOptions) {
     super(config);
-    this.directory = config.directory || 'upload';
+    this.directory = config.directory || this.path.replace(/^\//, '');
     this._getFileName = config.filename || filename;
     const configPath = { configPath: join(this.directory, METADATAS_FILE) };
     this.metaStore = new Configstore('', {}, configPath);
@@ -115,13 +115,9 @@ export class DiskStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const find: File[] = [];
-    for (const path in this.metaStore.all) {
-      if (path.startsWith(prefix)) {
-        const file = this.metaStore.get(path.replace('.', '\\.'));
-        file && find.push(file);
-      }
-    }
+    const find: File[] = Object.entries(this.metaStore.all)
+      .filter(([key]) => key.startsWith(prefix))
+      .map(([, val]) => val);
     return find;
   }
 
@@ -135,7 +131,7 @@ export class DiskStorage extends BaseStorage {
         deleted.push(file);
       } catch {}
     }
-    return files.length ? deleted : [{ path: path } as File];
+    return files.length ? deleted : [{ path } as File];
   }
 
   /**
@@ -169,6 +165,6 @@ export class DiskStorage extends BaseStorage {
   }
 
   private fullPath(path: string): string {
-    return normalize(join(this.directory, path));
+    return join(this.directory, path);
   }
 }

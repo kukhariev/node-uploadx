@@ -13,7 +13,7 @@ const auth: express.RequestHandler = (req, res, next): void => {
 
 const maxUploadSize = '6GB';
 const allowMIME = ['video/*', 'image/*'];
-export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
+export const UPLOADS_DIR = `files`;
 
 // DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
 // const EXPIRE = 25 / 84_000;
@@ -21,7 +21,7 @@ export const UPLOADS_DIR = `./upload/node-uploadx-test/`;
 export const app = express();
 export const storage = new DiskStorage({
   directory: `${UPLOADS_DIR}`,
-  filename: file => `${file.userId}/${file.filename}`,
+  filename: file => `${file.userId || ''}/${file.filename}`,
   maxUploadSize,
   allowMIME,
   // expire: EXPIRE,

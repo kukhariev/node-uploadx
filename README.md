@@ -40,7 +40,7 @@ const uploads = new Uploadx({ storage });
 
 const server = http
   .createServer((req, res) => {
-    const pathname = url.parse(req.url).pathname.toLowerCase();
+    const pathname = url.parse(req.url).pathname;
     if (pathname === '/upload') {
       uploads.handle(req, res);
     } else {
@@ -60,6 +60,9 @@ Available options are:
 | option           |       type       | default value | description                          |
 | :--------------- | :--------------: | :-----------: | ------------------------------------ |
 | `directory`      |     `string`     |  `"upload"`   | _Upload directory_                   |
+| `bucket`         |     `string`     |  `"uploadx"`  | _S3 or GCS bucket_                   |
+| `path`           |     `string`     |  `"/upload"`  | _Node http path_                     |
+| `filename`       |    `Function`    |       -       | _Filename function_                  |
 | `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
 | `maxUploadSize`  | `string\|number` |       -       | _Limit allowed file size_            |
 | `expire`         |     `number`     |       -       | _Days to discard incomplete uploads_ |

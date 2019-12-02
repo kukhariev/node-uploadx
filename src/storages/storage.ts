@@ -16,16 +16,17 @@ export interface BaseStorageOptions {
   useRelativeLocation?: boolean;
   /** Unfinished uploads expire in days*/
   expire?: number;
-
-  // path?: string;
+  path?: string;
 }
 
 export type ValidatorFn = (file: File) => string | false;
 
 export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
+  path: string;
 
   constructor(public config: BaseStorageOptions) {
+    this.path = config.path ?? '/upload';
     const fileTypeLimit: ValidatorFn = file =>
       !typeis.is(file.mimeType, this.config.allowMIME) &&
       `Acceptable file types: ${this.config.allowMIME}`;

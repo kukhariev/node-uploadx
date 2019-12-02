@@ -128,11 +128,13 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Get id from request
    */
-  getPath(req: http.IncomingMessage): string | undefined {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname } = url.parse(originalUrl, true);
-    const [, , ...path] = pathname?.split('/') || [];
-    return decodeURIComponent(path.pop() || '');
+  getPath(req: http.IncomingMessage): string {
+    const _url = (req as any)['originalUrl']
+      ? req.url?.replace(/^\//, '')
+      : req.url?.replace(this.storage.path + '/', '');
+    if (_url === req.url) return '';
+    const { pathname } = url.parse(_url as string);
+    return pathname || '';
   }
 
   /**
@@ -140,10 +142,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${encodeURIComponent(file.path)}`, query });
+    const { pathname, query } = url.parse(originalUrl);
+    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return baseUrl ? `${baseUrl}${path}` : `${path}`;
+    return `${baseUrl}${path}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering

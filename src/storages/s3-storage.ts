@@ -7,7 +7,7 @@ import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
 const log = logger.extend('S3');
 const META = '.META';
-const PACKAGE_NAME = 'node-uploadx';
+const BUCKET_NAME = 'uploadx';
 
 export interface S3File extends File {
   Parts: S3.Parts;
@@ -18,7 +18,7 @@ export type S3StorageOptions = BaseStorageOptions &
   S3.ClientConfiguration & {
     /**
      * AWS S3 bucket
-     * @defaultValue 'node-uploadx'
+     * @defaultValue 'uploadx'
      */
     bucket?: string;
   };
@@ -44,7 +44,7 @@ export class S3Storage extends BaseStorage {
   constructor(public config: S3StorageOptions) {
     super(config);
     this._getFileName = config.filename || filename;
-    this.bucket = config.bucket || PACKAGE_NAME;
+    this.bucket = config.bucket || BUCKET_NAME;
     this.client = new S3(config);
     this._checkIfBucketExist()
       .catch(err => {

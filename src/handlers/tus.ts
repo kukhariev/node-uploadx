@@ -95,7 +95,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const file = await this.storage.write({ start: 0, path });
+    const file = await this.storage.write({ path });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata),
