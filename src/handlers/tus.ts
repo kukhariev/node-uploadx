@@ -1,18 +1,12 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import * as url from 'url';
-import {
-  BaseHandler,
-  BaseStorage,
-  ERRORS,
-  fail,
-  File,
-  generateId,
-  Headers,
-  Metadata
-} from './core';
-import { DiskStorage, DiskStorageOptions } from './core/disk-storage';
-import { getBaseUrl, getHeader, logger, typeis } from './core/utils';
+import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
+import { File, generateFileId, Metadata } from '../storages/file';
+import { BaseStorage } from '../storages/storage';
+import { ERRORS, fail } from '../util/errors';
+import { getHeader, typeis } from '../util/http';
+import { logger } from '../util/logger';
+import { BaseHandler, Headers } from './base-handler';
 
 const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {
@@ -64,7 +58,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     file.userId = this.getUserId(req);
     file.size = Number.parseInt(getHeader(req, 'upload-length'));
     if (Number.isNaN(file.size)) return fail(ERRORS.INVALID_FILE_SIZE);
-    file.id = generateId(file);
+    file.id = generateFileId(file);
     await this.storage.create(req, file);
     const headers: Headers = {
       Location: this.buildFileUrl(req, file),
@@ -72,7 +66,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
       const start = 0;
-      file = await this.storage.write(req, { ...file, start });
+      file = await this.storage.write({ ...file, start, body: req });
       headers['Upload-Offset'] = file.bytesWritten;
       file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     }
@@ -85,11 +79,11 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const id = this.getFileId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
-    const userId = this.getUserId(req);
+    const path = this.getPath(req);
+    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
     const start = Number(getHeader(req, 'upload-offset'));
-    const file = await this.storage.write(req, { start, id, userId });
+    const contentLength = +getHeader(req, 'content-length');
+    const file = await this.storage.write({ start, path, body: req, contentLength });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Tus-Resumable': '1.0.0'
@@ -100,10 +94,9 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   }
 
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const id = this.getFileId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND, 'File id cannot be retrieved');
-    const userId = this.getUserId(req);
-    const file = await this.storage.write(req, { start: 0, id, userId });
+    const path = this.getPath(req);
+    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const file = await this.storage.write({ path });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata),
@@ -117,25 +110,13 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    * Delete upload by id
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const id = this.getFileId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
-    const userId = this.getUserId(req);
-    const [file] = await this.storage.delete({ id, userId });
+    const path = this.getPath(req);
+    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(path);
     const headers: Headers = { 'Tus-Resumable': '1.0.0' };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';
     return file;
-  }
-
-  /**
-   * Build file url from request
-   */
-  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${file.id}`, query });
-    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return baseUrl ? `${baseUrl}${path}` : `${path}`;
   }
 }
 

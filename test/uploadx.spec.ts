@@ -3,6 +3,7 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { app, storage, UPLOADS_DIR } from './server';
 import chaiHttp = require('chai-http');
+import rimraf = require('rimraf');
 chai.use(chaiHttp);
 const expect = chai.expect;
 const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
@@ -13,17 +14,15 @@ const metadata = {
   mimeType: 'video/mp4',
   lastModified: 1546300800
 };
-const TOKEN = 'userId';
+const UID = 'userId';
 
 describe('::Uploadx', function() {
   let res: ChaiHttp.Response;
   let start: number;
   const files: string[] = [];
   before(function() {
-    storage.delete({ userId: TOKEN });
-    storage.delete({ userId: null });
+    rimraf.sync(UPLOADS_DIR);
   });
-
   beforeEach(function() {
     res = undefined as any;
   });
@@ -32,7 +31,7 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', (10e10).toString())
         .send({ name: 'file.mp4' });
@@ -45,7 +44,7 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .set('x-upload-content-type', 'text/json')
         .set('x-upload-content-length', '3000')
         .send({ name: 'file.json' });
@@ -57,7 +56,7 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .send('');
       expect(res).to.have.status(400);
     });
@@ -65,7 +64,7 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', metadata.size.toString())
         .send({ name: 'testfile.mp4' });
@@ -77,7 +76,7 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .send({ ...metadata, name: 'testfileSingle.mp4' });
       expect(res).to.have.status(201);
       expect(res).to.have.header('location');
@@ -95,14 +94,14 @@ describe('::Uploadx', function() {
           .request(app)
           .put(files[0])
           .redirects(0)
-          .set('authorization', TOKEN)
+          .set('authorization', UID)
           .set('content-type', 'application/octet-stream')
           .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${metadata.size}`)
           .send(chunk);
         start += chunk.length;
         if (res.status === 200) {
           expect(res).to.be.json;
-          expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfile.mp4`).size).to.be.eql(metadata.size);
+          expect(fs.statSync(`${UPLOADS_DIR}/${UID}/testfile.mp4`).size).to.be.eql(metadata.size);
           done();
         }
         readable.resume();
@@ -113,23 +112,12 @@ describe('::Uploadx', function() {
       res = await chai
         .request(app)
         .put(files[1])
-        .set('authorization', TOKEN)
+        .set('authorization', UID)
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(TEST_FILE_PATH));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
-      expect(fs.statSync(`${UPLOADS_DIR}${TOKEN}/testfileSingle.mp4`).size).to.be.eql(
-        metadata.size
-      );
-    });
-    it('should 404 (userId check)', async function() {
-      res = await chai
-        .request(app)
-        .put(files[1])
-        .set('authorization', 'otherUser')
-        .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(TEST_FILE_PATH));
-      expect(res).to.have.status(404);
+      expect(fs.statSync(`${UPLOADS_DIR}/${UID}/testfileSingle.mp4`).size).to.be.eql(metadata.size);
     });
     it('should 404 (no id)', async function() {
       res = await chai
@@ -141,36 +129,12 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(404);
     });
   });
-  describe('GET', function() {
-    it('should return empty array (no userId)', async function() {
-      res = await chai.request(app).get(`/upload`);
-      expect(res).to.be.json;
-      expect(res.body).to.be.empty;
-      expect(res).to.have.status(200);
-    });
-    it('should return files array', async function() {
-      res = await chai
-        .request(app)
-        .get(`/upload`)
-        .set('authorization', TOKEN);
-      expect(res).to.be.json;
-      expect(res.body).to.have.lengthOf(2);
-      expect(res).to.have.status(200);
-    });
-  });
   describe('DELETE', function() {
-    it('should 404 (userId check)', async function() {
-      res = await chai
-        .request(app)
-        .delete(files[1])
-        .set('authorization', 'otherUser');
-      expect(res).to.have.status(404);
-    });
     it('should 204', async function() {
       res = await chai
         .request(app)
         .delete(files[1])
-        .set('authorization', TOKEN);
+        .set('authorization', UID);
       expect(res).to.have.status(204);
     });
   });
@@ -182,6 +146,6 @@ describe('::Uploadx', function() {
     });
   });
   after(function() {
-    storage.delete({ userId: TOKEN });
+    storage.delete(UID);
   });
 });

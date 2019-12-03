@@ -1,13 +1,14 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage, ErrorStatus } from '.';
+import { BaseStorage } from '../storages';
+import { File } from '../storages/file';
+import { ErrorStatus } from '../util/errors';
+import { getBaseUrl } from '../util/http';
+import { logger } from '../util/logger';
 import { Cors } from './cors';
-import { File } from './file';
-import { logger } from './utils';
 
 const log = logger.extend('core');
-const RE_PATH_ID = /[^/]+\/([^/]+)$/;
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type Headers = Record<string, string | number>;
@@ -27,7 +28,6 @@ export interface BaseHandler extends EventEmitter {
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
-  idKey = 'upload_id';
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor() {
     super();
@@ -51,7 +51,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path || file.id);
+            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
@@ -79,6 +79,15 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     res.writeHead(204);
     res.end();
     return Promise.resolve({} as File);
+  }
+
+  /**
+   * `GET` request handler
+   */
+  async get(req: http.IncomingMessage): Promise<File[]> {
+    const path = this.getPath(req);
+    const files = await this.storage.get(path);
+    return files;
   }
 
   /**
@@ -120,20 +129,24 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Get id from request
    */
-  getFileId(req: http.IncomingMessage): string | undefined {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { query, pathname } = url.parse(originalUrl, true);
-    return (query[this.idKey] as string) || (RE_PATH_ID.exec(pathname || '') || [])[1];
+  getPath(req: http.IncomingMessage): string {
+    const _url = (req as any)['originalUrl']
+      ? req.url?.replace(/^\//, '')
+      : req.url?.replace(this.storage.path + '/', '');
+    if (_url === req.url) return '';
+    const { pathname } = url.parse(_url as string);
+    return pathname || '';
   }
 
   /**
-   * `GET` request handler
+   * Build file url from request
    */
-  async get(req: http.IncomingMessage): Promise<File[]> {
-    const userId = this.getUserId(req);
-    const id = this.getFileId(req);
-    const files = await this.storage.get({ id, userId });
-    return files;
+  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
+    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
+    const { pathname, query } = url.parse(originalUrl);
+    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
+    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
+    return `${baseUrl}${path}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering

@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
-import { uid } from './utils';
+import { Readable } from 'stream';
+import { uid } from '../util';
 
 export class File {
   bytesWritten = 0;
@@ -12,6 +13,8 @@ export class File {
   userId: string | null = null;
   status?: 'created' | 'completed' | 'deleted' | 'part';
   timestamp: number;
+  link?: string;
+
   constructor(public metadata: Metadata = {}) {
     const {
       name,
@@ -32,19 +35,20 @@ export class File {
   }
 }
 
-export const generateId = (file: File): string => {
+export const generateFileId = (file: File): string => {
   const { filename, size, lastModified, userId, timestamp = new Date().getTime() } = file;
-  const ordered = [filename, size, lastModified || timestamp, userId].join('-');
+  const print = [filename, size, lastModified || timestamp, userId || ''].join('-');
   return createHash('md5')
-    .update(JSON.stringify(ordered))
+    .update(print)
     .digest('hex');
 };
 
-export interface FilePart extends Partial<File> {
-  total?: number;
-  end?: number;
-  start: number;
-  id: string;
+export interface FilePart {
+  body?: Readable;
+  start?: number;
+  contentLength?: number;
+  path: string;
+  size?: number;
 }
 
 export interface Metadata {
@@ -56,6 +60,7 @@ export interface Metadata {
   title?: string;
   filename?: string;
   lastModified?: string | number;
-  userId?: string | null;
+  userId?: string;
+
   [key: string]: string | number | undefined | null;
 }

@@ -1,26 +1,32 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { typeis } from './utils';
+import { typeis } from '../util/http';
 import { File, FilePart } from './file';
-import { Readable } from 'stream';
+
+export const filename = ({ userId, id }: Partial<File>): string =>
+  userId ? `${userId}/${id || ''}` : `${id}`;
 
 export interface BaseStorageOptions {
   /** Allowed file types */
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
+  /** Storage filename function */
+  filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
   /** Unfinished uploads expire in days*/
   expire?: number;
-  // path?: string;
+  path?: string;
 }
 
 export type ValidatorFn = (file: File) => string | false;
 
 export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
+  path: string;
 
   constructor(public config: BaseStorageOptions) {
+    this.path = config.path ?? '/upload';
     const fileTypeLimit: ValidatorFn = file =>
       !typeis.is(file.mimeType, this.config.allowMIME) &&
       `Acceptable file types: ${this.config.allowMIME}`;
@@ -41,7 +47,7 @@ export abstract class BaseStorage {
   }
 
   abstract create(req: http.IncomingMessage, file: File): Promise<File>;
-  abstract write(stream: Readable, range: FilePart): Promise<File>;
-  abstract delete(file: Partial<File>): Promise<File[]>;
-  abstract get(file: Partial<File>): Promise<File[]>;
+  abstract write(part: FilePart): Promise<File>;
+  abstract delete(path: string): Promise<File[]>;
+  abstract get(path?: string): Promise<File[]>;
 }
