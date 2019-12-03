@@ -7,7 +7,7 @@ import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
 const log = logger.extend('S3');
 const META = '.META';
-const BUCKET_NAME = 'uploadx';
+const BUCKET_NAME = 'node-uploadx';
 
 export interface S3File extends File {
   Parts: S3.Parts;
@@ -18,7 +18,7 @@ export type S3StorageOptions = BaseStorageOptions &
   S3.ClientConfiguration & {
     /**
      * AWS S3 bucket
-     * @defaultValue 'uploadx'
+     * @defaultValue 'node-uploadx'
      */
     bucket?: string;
   };
@@ -46,13 +46,7 @@ export class S3Storage extends BaseStorage {
     this._getFileName = config.filename || filename;
     this.bucket = config.bucket || BUCKET_NAME;
     this.client = new S3(config);
-    this._checkIfBucketExist()
-      .catch(err => {
-        throw err;
-      })
-      .then(() => this._listMultipartUploads())
-      .then(data => log('Incomplete Uploads: ', data.Uploads?.length))
-      .catch(err => log('Incomplete Uploads fetch error:', err));
+    this._checkBucket();
 
     // if (config.expire) {
     //   const expireRules: S3.LifecycleRule = {
@@ -163,13 +157,9 @@ export class S3Storage extends BaseStorage {
     return data;
   }
 
-  _listParts(key: string, uploadId: string): Promise<S3.ListPartsOutput> {
+  private _listParts(key: string, uploadId: string): Promise<S3.ListPartsOutput> {
     const opts = { Bucket: this.bucket, Key: key, UploadId: uploadId };
     return this.client.listParts(opts).promise();
-  }
-
-  private _listMultipartUploads(): Promise<S3.ListMultipartUploadsOutput> {
-    return this.client.listMultipartUploads({ Bucket: this.bucket }).promise();
   }
 
   private _complete(meta: S3File): Promise<any> {
@@ -183,10 +173,6 @@ export class S3Storage extends BaseStorage {
         }
       })
       .promise();
-  }
-
-  private _checkIfBucketExist(): Promise<any> {
-    return this.client.headBucket({ Bucket: this.bucket }).promise();
   }
 
   private async _saveMeta(path: string, file: S3File): Promise<any> {
@@ -219,5 +205,21 @@ export class S3Storage extends BaseStorage {
       return file;
     }
     return fail(ERRORS.FILE_NOT_FOUND);
+  }
+
+  private _checkBucket(): void {
+    this.client.headBucket({ Bucket: this.bucket }, err => {
+      if (err) {
+        throw new Error(`Bucket code: ${err.code}`);
+      }
+      log.enabled && this._listMultipartUploads();
+    });
+  }
+
+  private _listMultipartUploads(): void {
+    this.client.listMultipartUploads({ Bucket: this.bucket }, (err, data) => {
+      err && log('Incomplete Uploads fetch error:', err);
+      data && log('Incomplete Uploads: ', data.Uploads?.length);
+    });
   }
 }

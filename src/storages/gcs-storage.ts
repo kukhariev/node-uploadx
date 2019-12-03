@@ -1,12 +1,13 @@
 import { GaxiosOptions, request } from 'gaxios';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
+import { callbackify } from 'util';
 import { ERRORS, fail } from '../util/errors';
 import { getHeader, noop } from '../util/utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
-const BUCKET_NAME = 'uploadx';
+const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
 
 const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
@@ -25,7 +26,7 @@ export type GCStorageOptions = BaseStorageOptions &
   GoogleAuthOptions & {
     /**
      * Google Cloud Storage bucket
-     * @defaultValue 'uploadx'
+     * @defaultValue 'node-uploadx'
      */
     bucket?: string;
   };
@@ -50,6 +51,12 @@ export class GCStorage extends BaseStorage {
     this._getFileName = config.filename || filename;
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
+    const checkBucket = callbackify(this._checkBucket.bind(this));
+    checkBucket(bucketName, err => {
+      if (err) {
+        throw new Error(`Bucket code: ${err.code}`);
+      }
+    });
   }
 
   async create(req: http.IncomingMessage, file: GCSFile): Promise<File> {
@@ -158,5 +165,9 @@ export class GCStorage extends BaseStorage {
     const url = `${this.storageBaseURI}/${name}${META}`;
     delete this.metaStore[name];
     return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
+  }
+
+  private _checkBucket(bucketName: string): Promise<any> {
+    return this.authClient.request({ url: `${storageAPI}/${bucketName}` });
   }
 }

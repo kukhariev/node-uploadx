@@ -60,7 +60,7 @@ Available options are:
 | option           |       type       | default value | description                          |
 | :--------------- | :--------------: | :-----------: | ------------------------------------ |
 | `directory`      |     `string`     |  `"upload"`   | _Upload directory_                   |
-| `bucket`         |     `string`     |  `"uploadx"`  | _S3 or GCS bucket_                   |
+| `bucket`         |     `string`     |       -       | _S3 or GCS bucket_                   |
 | `path`           |     `string`     |  `"/upload"`  | _Node http path_                     |
 | `filename`       |    `Function`    |       -       | _Filename function_                  |
 | `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
