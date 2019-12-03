@@ -3,7 +3,8 @@ import * as multiparty from 'multiparty';
 import { BaseStorage, File, generateFileId, Metadata } from '../storages';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../util/errors';
-import { getHeader, logger } from '../util/utils';
+import { getHeader } from '../util/http';
+import { logger } from '../util/logger';
 import { BaseHandler } from './base-handler';
 
 const log = logger.extend('Multipart');

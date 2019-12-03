@@ -1,7 +1,8 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail } from '../util/errors';
-import { logger, noop } from '../util/utils';
+import { noop } from '../util/primitives';
+import { logger } from '../util/logger';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 

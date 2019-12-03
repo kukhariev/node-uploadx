@@ -3,7 +3,7 @@ import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import { callbackify } from 'util';
 import { ERRORS, fail } from '../util/errors';
-import { getHeader, noop } from '../util/utils';
+import { getHeader, noop } from '../util';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 

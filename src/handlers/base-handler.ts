@@ -4,7 +4,8 @@ import * as url from 'url';
 import { BaseStorage } from '../storages';
 import { File } from '../storages/file';
 import { ErrorStatus } from '../util/errors';
-import { getBaseUrl, logger } from '../util/utils';
+import { getBaseUrl } from '../util/http';
+import { logger } from '../util/logger';
 import { Cors } from './cors';
 
 const log = logger.extend('core');

@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
-import { ERRORS, fail } from '../util/errors';
-import { ensureFile, fsUnlink, getFileSize, logger, noop } from '../util/utils';
+import { ensureFile, ERRORS, fail, fsUnlink, getFileSize, noop } from '../util';
+import { logger } from '../util/logger';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 

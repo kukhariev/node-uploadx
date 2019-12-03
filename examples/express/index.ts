@@ -2,17 +2,18 @@ process.env.DEBUG = 'uploadx:*';
 import * as express from 'express';
 import { multipart, uploadx } from '../../src';
 
-const authMiddleware: express.Handler = (req, res, next) => {
+const auth: express.Handler = (req, res, next) => {
   (req as any).user = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
   next();
 };
 const app = express();
-app.use(authMiddleware);
+app.use(auth);
 app.use(express.json());
 
 // Uploadx.RESUME_STATUS_CODE = 208;
 
 app.use('/upload', express.static('upload'));
+
 app.use(
   '/upload/videos',
   uploadx({
