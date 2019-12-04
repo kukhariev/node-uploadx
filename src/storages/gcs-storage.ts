@@ -2,8 +2,8 @@ import { GaxiosOptions, request } from 'gaxios';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import { callbackify } from 'util';
-import { ERRORS, fail } from '../util/errors';
-import { getHeader, noop } from '../util';
+import { ERRORS, fail } from '../utils/errors';
+import { getHeader, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 

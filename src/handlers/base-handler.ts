@@ -3,9 +3,9 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage } from '../storages';
 import { File } from '../storages/file';
-import { ErrorStatus } from '../util/errors';
-import { getBaseUrl } from '../util/http';
-import { logger } from '../util/logger';
+import { ErrorStatus } from '../utils/errors';
+import { getBaseUrl } from '../utils/http';
+import { logger } from '../utils/logger';
 import { Cors } from './cors';
 
 const log = logger.extend('core');

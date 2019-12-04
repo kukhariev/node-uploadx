@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
-import { ensureFile, ERRORS, fail, fsUnlink, getFileSize, noop } from '../util';
-import { logger } from '../util/logger';
+import { ensureFile, ERRORS, fail, fsp, getFileSize, noop } from '../utils';
+import { logger } from '../utils/logger';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, filename } from './storage';
 
@@ -74,7 +74,7 @@ export class DiskStorage extends BaseStorage {
           if (isExpired) {
             log('[expired]: ', file.path);
             await this._deleteMeta(file.path);
-            await fsUnlink(this.fullPath(file.path)).catch(noop);
+            await fsp.unlink(this.fullPath(file.path)).catch(noop);
           }
         }
       }
@@ -127,7 +127,7 @@ export class DiskStorage extends BaseStorage {
     for (const file of files) {
       try {
         await this._deleteMeta(file.path);
-        await fsUnlink(this.fullPath(file.path));
+        await fsp.unlink(this.fullPath(file.path));
         deleted.push(file);
       } catch {}
     }

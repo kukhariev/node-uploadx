@@ -3,9 +3,9 @@ import * as http from 'http';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { File, generateFileId, Metadata } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
-import { ERRORS, fail } from '../util/errors';
-import { getHeader, typeis } from '../util/http';
-import { logger } from '../util/logger';
+import { ERRORS, fail } from '../utils/errors';
+import { getHeader, typeis } from '../utils/http';
+import { logger } from '../utils/logger';
 import { BaseHandler, Headers } from './base-handler';
 
 const log = logger.extend('Tus');
