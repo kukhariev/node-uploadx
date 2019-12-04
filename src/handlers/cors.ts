@@ -1,5 +1,5 @@
 import * as http from 'http';
-import { getHeader } from '../utils/http';
+import { getHeader } from '../utils';
 
 export class Cors {
   static allowedMethods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT'];
