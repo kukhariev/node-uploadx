@@ -59,14 +59,18 @@ Available options are:
 
 | option           |       type       | default value | description                          |
 | :--------------- | :--------------: | :-----------: | ------------------------------------ |
-| `directory`      |     `string`     |  `"upload"`   | _Upload directory_                   |
-| `bucket`         |     `string`     |       -       | _S3 or GCS bucket_                   |
-| `path`           |     `string`     |  `"/upload"`  | _Node http path_                     |
-| `filename`       |    `Function`    |       -       | _Filename function_                  |
+| `directory`      |     `string`     |  `"upload"`   | _DiskStorage uplofd directory_       |
+| `bucket`         |     `string`     |               | _S3 or GCS bucket_                   |
+| `path`           |     `string`     |  `"/upload"`  | _Node http route path_               |
+| `filename`       |    `Function`    |               | _Filename function_                  |
 | `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
-| `maxUploadSize`  | `string\|number` |       -       | _Limit allowed file size_            |
-| `expire`         |     `number`     |       -       | _Days to discard incomplete uploads_ |
+| `maxUploadSize`  | `string\|number` |               | _Limit allowed file size_            |
+| `expire`         |     `number`     |               | _Days to discard incomplete uploads_ |
 | `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_      |
+
+For GCS authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
+
+For S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)
 
 ## References
 
