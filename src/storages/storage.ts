@@ -2,8 +2,7 @@ import * as bytes from 'bytes';
 import * as http from 'http';
 import { typeis } from '../utils';
 import { File, FilePart } from './file';
-
-export const filename = ({ userId, id }: Partial<File>): string =>
+export const DEFAULT_FILENAME = ({ userId, id }: Partial<File>): string =>
   userId ? `${userId}/${id || ''}` : `${id}`;
 
 export interface BaseStorageOptions {

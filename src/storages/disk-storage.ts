@@ -5,7 +5,7 @@ import { join } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFileSize, logger, noop } from '../utils';
 import { File, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, filename } from './storage';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 const log = logger.extend('DiskStorage');
 
@@ -44,7 +44,7 @@ export class DiskStorage extends BaseStorage {
   constructor(public config: DiskStorageOptions) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
-    this._getFileName = config.filename || filename;
+    this._getFileName = config.filename || DEFAULT_FILENAME;
     const configPath = { configPath: join(this.directory, METADATAS_FILE) };
     this.metaStore = new Configstore('', {}, configPath);
 

@@ -2,7 +2,7 @@ import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, logger, noop } from '../utils';
 import { File, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, filename } from './storage';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 const log = logger.extend('S3');
 const META = '.META';
@@ -42,7 +42,7 @@ export class S3Storage extends BaseStorage {
 
   constructor(public config: S3StorageOptions) {
     super(config);
-    this._getFileName = config.filename || filename;
+    this._getFileName = config.filename || DEFAULT_FILENAME;
     this.bucket = config.bucket || BUCKET_NAME;
     this.client = new S3(config);
     this._checkBucket();

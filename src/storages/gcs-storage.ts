@@ -4,7 +4,7 @@ import * as http from 'http';
 import { callbackify } from 'util';
 import { ERRORS, fail, getHeader, noop } from '../utils';
 import { File, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, filename } from './storage';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
@@ -45,11 +45,12 @@ export class GCStorage extends BaseStorage {
   constructor(public config: GCStorageOptions = {}) {
     super(config);
     config.scopes = config.scopes || authScopes;
-    this.authClient = new GoogleAuth(config);
-    const bucketName = config.bucket || BUCKET_NAME;
-    this._getFileName = config.filename || filename;
+    config.keyFile = config.keyFile || process.env.GCS_KEYFILE;
+    const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
+    this._getFileName = config.filename || DEFAULT_FILENAME;
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
+    this.authClient = new GoogleAuth(config);
     const checkBucket = callbackify(this._checkBucket.bind(this));
     checkBucket(bucketName, err => {
       if (err) {

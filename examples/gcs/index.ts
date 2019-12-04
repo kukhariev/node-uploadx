@@ -8,7 +8,7 @@ function auth(req: http.IncomingMessage): void {
 }
 const storage = new GCStorage({
   bucket: process.env.GCS_BUCKET,
-  keyFilename: process.env.GCS_KEYFILE,
+  keyFile: process.env.GCS_KEYFILE,
   maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*'],
   path: '/upload'
