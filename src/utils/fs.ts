@@ -1,12 +1,6 @@
-import * as fs from 'fs';
+import { promises as fsp } from 'fs';
 import { dirname, isAbsolute, join, normalize, parse, sep } from 'path';
-import { promisify } from 'util';
 
-export const fsMkdir = promisify(fs.mkdir);
-export const fsClose = promisify(fs.close);
-export const fsOpen = promisify(fs.open);
-export const fsStat = promisify(fs.stat);
-export const fsUnlink = promisify(fs.unlink);
 export async function ensureDir(dir: string): Promise<void> {
   dir = normalize(dir);
   const paths = dir.split(sep);
@@ -15,7 +9,7 @@ export async function ensureDir(dir: string): Promise<void> {
   for (const p of paths) {
     parent = join(parent, p);
     try {
-      await fsMkdir(parent);
+      await fsp.mkdir(parent);
     } catch (error) {
       if (error.code !== 'EEXIST') {
         throw error;
@@ -26,8 +20,8 @@ export async function ensureDir(dir: string): Promise<void> {
 
 export async function ensureFile(path: string, overwrite = false): Promise<number> {
   await ensureDir(dirname(path));
-  await fsClose(await fsOpen(path, overwrite ? 'w' : 'a'));
-  const { size } = await fsStat(path);
+  await (await fsp.open(path, overwrite ? 'w' : 'a')).close();
+  const { size } = await fsp.stat(path);
   return size;
 }
 
@@ -38,8 +32,10 @@ export async function ensureFile(path: string, overwrite = false): Promise<numbe
  */
 export async function getFileSize(path: string): Promise<number> {
   try {
-    return (await fsStat(path)).size;
+    return (await fsp.stat(path)).size;
   } catch {
     return -1;
   }
 }
+
+export { fsp };

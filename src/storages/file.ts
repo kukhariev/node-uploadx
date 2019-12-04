@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { uid } from '../util';
+import { uid } from '../utils';
 
 export class File {
   bytesWritten = 0;
