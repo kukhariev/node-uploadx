@@ -58,6 +58,10 @@ export const ERRORS = {
   FILE_ERROR: {
     statusCode: 500,
     message: 'something went wrong writing the file'
+  },
+  STORAGE_ERROR: {
+    statusCode: 503,
+    message: 'storage error'
   }
 } as const;
 

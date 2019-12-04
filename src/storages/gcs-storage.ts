@@ -56,6 +56,7 @@ export class GCStorage extends BaseStorage {
       if (err) {
         throw new Error(`Bucket code: ${err.code}`);
       }
+      this.isReady = true;
     });
   }
 

@@ -23,6 +23,7 @@ export type ValidatorFn = (file: File) => string | false;
 export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
   path: string;
+  isReady = false;
 
   constructor(public config: BaseStorageOptions) {
     this.path = config.path ?? '/upload';

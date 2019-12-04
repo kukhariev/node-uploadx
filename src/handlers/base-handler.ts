@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage } from '../storages';
 import { File } from '../storages/file';
-import { ErrorStatus, getBaseUrl, logger } from '../utils';
+import { ErrorStatus, getBaseUrl, logger, ERRORS } from '../utils';
 import { Cors } from './cors';
 
 const log = logger.extend('core');
@@ -43,6 +43,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
     log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
+    if (!this.storage.isReady) {
+      this.sendError(res, ERRORS.STORAGE_ERROR);
+    }
     const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
       handler

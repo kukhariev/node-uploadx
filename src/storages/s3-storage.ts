@@ -211,6 +211,7 @@ export class S3Storage extends BaseStorage {
       if (err) {
         throw new Error(`Bucket code: ${err.code}`);
       }
+      this.isReady = true;
       log.enabled && this._listMultipartUploads();
     });
   }

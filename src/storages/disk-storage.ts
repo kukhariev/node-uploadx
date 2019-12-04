@@ -54,6 +54,7 @@ export class DiskStorage extends BaseStorage {
         DiskStorage.EXPIRY_SCAN_PERIOD
       ).unref();
     }
+    this.isReady = true;
   }
 
   /**
