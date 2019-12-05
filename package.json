@@ -23,13 +23,14 @@
     "node": ">=10.10.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.584.0",
+    "abort-controller": "^3.0.0",
+    "aws-sdk": "^2.585.0",
     "bytes": "^3.1.0",
     "configstore": "^5.0.0",
     "debug": "^4.1.1",
-    "gaxios": "^2.1.0",
-    "google-auth-library": "^5.5.1",
-    "multiparty": "^4.2.1"
+    "google-auth-library": "^5.6.0",
+    "multiparty": "^4.2.1",
+    "node-fetch": "^2.6.0"
   },
   "scripts": {
     "start": "tsnd test/server.ts",
@@ -57,6 +58,7 @@
     "@types/mocha": "^5.2.7",
     "@types/multiparty": "0.0.32",
     "@types/node": "^12.12.14",
+    "@types/node-fetch": "^2.5.4",
     "@types/rimraf": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^2.10.0",
     "@typescript-eslint/parser": "^2.10.0",

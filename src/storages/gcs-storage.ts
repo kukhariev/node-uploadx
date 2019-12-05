@@ -1,10 +1,13 @@
-import { GaxiosOptions, request } from 'gaxios';
+import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
+import request from 'node-fetch';
 import { callbackify } from 'util';
-import { ERRORS, fail, getHeader, noop } from '../utils';
+import { ERRORS, fail, getHeader, logger, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
+
+const log = logger.extend('GCStorage');
 
 const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
@@ -13,7 +16,7 @@ const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
 const storageAPI = `https://storage.googleapis.com/storage/v1/b`;
 const authScopes = ['https://www.googleapis.com/auth/devstorage.full_control'];
 
-function getRangeEnd(range = ''): number {
+function getRangeEnd(range: any = ''): number {
   const end = +range.split(/0-/)[1];
   return end >= 0 ? end : -1;
 }
@@ -94,7 +97,6 @@ export class GCStorage extends BaseStorage {
     file.bytesWritten = await this._write({ ...file, ...part });
     if (file.status === 'deleted' || file.bytesWritten === file.size) {
       await this._deleteMeta(file.path);
-      return file;
     }
     return file;
   }
@@ -119,23 +121,32 @@ export class GCStorage extends BaseStorage {
 
   async _write(file: GCSFile & FilePart): Promise<number> {
     const { start, size, contentLength, uploadURI: url, body } = file;
+    const abortCtrl = new AbortController();
+    const signal = abortCtrl.signal;
+    body?.on('aborted', _ => abortCtrl.abort());
     let range;
-    if (typeof start === 'number') {
+    if (typeof start === 'number' && start >= 0) {
       const end = contentLength ? start + contentLength - 1 : '*';
       range = `bytes ${start}-${end}/${size ?? '*'}`;
     } else {
       range = `bytes */${size ?? '*'}`;
     }
-    const options: GaxiosOptions = { body, method: 'PUT', retry: false, url, validateStatus };
-    options.headers = {
-      'Content-Range': range,
-      'Content-Type': 'application/octet-stream'
-    };
-    const res = await request(options);
-    if (res.status === 308) {
-      return getRangeEnd(res.headers.range) + 1;
-    } else {
-      return size || 0;
+    const options: any = { body, method: 'PUT', signal };
+    options.headers = { 'Content-Range': range, Accept: 'application/json' };
+    try {
+      const res = await request(url, options);
+      if (res.status === 308) {
+        return getRangeEnd(res.headers.get('range')) + 1;
+      } else if (res.ok) {
+        const message = await res.json();
+        log('%o', message);
+        return size || 0;
+      }
+      const message = await res.text();
+      return Promise.reject({ message, code: res.status });
+    } catch (error) {
+      log(error.message);
+      return null as any;
     }
   }
 
