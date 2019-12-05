@@ -68,8 +68,8 @@ export class GCStorage extends BaseStorage {
     if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
 
     const path = this._getFileName(file);
-    // const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
-    // if (existing) return existing;
+    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
+    if (existing) return existing;
 
     const origin = getHeader(req, 'origin');
     const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
@@ -97,7 +97,6 @@ export class GCStorage extends BaseStorage {
     file.bytesWritten = await this._write({ ...file, ...part });
     if (file.status === 'deleted' || file.bytesWritten === file.size) {
       await this._deleteMeta(file.path);
-      return file;
     }
     return file;
   }
@@ -122,23 +121,18 @@ export class GCStorage extends BaseStorage {
 
   async _write(file: GCSFile & FilePart): Promise<number> {
     const { start, size, contentLength, uploadURI: url, body } = file;
+    const abortCtrl = new AbortController();
+    const signal = abortCtrl.signal;
+    body?.on('aborted', _ => abortCtrl.abort());
     let range;
-    if (typeof start === 'number') {
-      // if (typeof start === 'number' && start >= 0) {
+    if (typeof start === 'number' && start >= 0) {
       const end = contentLength ? start + contentLength - 1 : '*';
       range = `bytes ${start}-${end}/${size ?? '*'}`;
     } else {
       range = `bytes */${size ?? '*'}`;
     }
-    const abortCtrl = new AbortController();
-    const signal = abortCtrl.signal;
-    body?.on('aborted', _ => abortCtrl.abort());
     const options: any = { body, method: 'PUT', signal };
-    options.headers = {
-      'Content-Range': range,
-      'Content-Type': 'application/octet-stream',
-      Accept: 'application/json'
-    };
+    options.headers = { 'Content-Range': range, Accept: 'application/json' };
     try {
       const res = await request(url, options);
       if (res.status === 308) {
@@ -148,8 +142,8 @@ export class GCStorage extends BaseStorage {
         log('%o', message);
         return size || 0;
       }
-      const message = await res.json();
-      return Promise.reject(message);
+      const message = await res.text();
+      return Promise.reject({ message, code: res.status });
     } catch (error) {
       log(error.message);
       return null as any;
