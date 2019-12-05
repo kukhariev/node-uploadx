@@ -144,7 +144,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl);
+    const { pathname, query } = url.parse(originalUrl, true);
     const path = url.format({ pathname: `${pathname}/${file.path}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
