@@ -62,7 +62,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
       file.status = 'part';
-    } else {
+    } else if (file.bytesWritten === file.size) {
       file.status = 'completed';
       this.send({ res, body: file });
     }
@@ -92,7 +92,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Build file url from request
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    // if (file.path.startsWith('https://')) return file.path;
+    // if ('uploadURI' in file) return file['uploadURI'];
 
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);

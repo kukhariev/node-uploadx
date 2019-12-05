@@ -57,6 +57,7 @@
     "@types/mocha": "^5.2.7",
     "@types/multiparty": "0.0.32",
     "@types/node": "^12.12.14",
+    "@types/node-fetch": "^2.5.4",
     "@types/rimraf": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^2.10.0",
     "@typescript-eslint/parser": "^2.10.0",

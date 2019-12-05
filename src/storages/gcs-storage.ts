@@ -1,10 +1,13 @@
-import { GaxiosOptions, request } from 'gaxios';
+import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
+import request from 'node-fetch';
 import { callbackify } from 'util';
-import { ERRORS, fail, getHeader, noop } from '../utils';
+import { ERRORS, fail, getHeader, logger, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
+
+const log = logger.extend('GCStorage');
 
 const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
@@ -13,7 +16,7 @@ const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
 const storageAPI = `https://storage.googleapis.com/storage/v1/b`;
 const authScopes = ['https://www.googleapis.com/auth/devstorage.full_control'];
 
-function getRangeEnd(range = ''): number {
+function getRangeEnd(range: any = ''): number {
   const end = +range.split(/0-/)[1];
   return end >= 0 ? end : -1;
 }
@@ -65,8 +68,8 @@ export class GCStorage extends BaseStorage {
     if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
 
     const path = this._getFileName(file);
-    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
-    if (existing) return existing;
+    // const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
+    // if (existing) return existing;
 
     const origin = getHeader(req, 'origin');
     const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
@@ -121,21 +124,35 @@ export class GCStorage extends BaseStorage {
     const { start, size, contentLength, uploadURI: url, body } = file;
     let range;
     if (typeof start === 'number') {
+      // if (typeof start === 'number' && start >= 0) {
       const end = contentLength ? start + contentLength - 1 : '*';
       range = `bytes ${start}-${end}/${size ?? '*'}`;
     } else {
       range = `bytes */${size ?? '*'}`;
     }
-    const options: GaxiosOptions = { body, method: 'PUT', retry: false, url, validateStatus };
+    const abortCtrl = new AbortController();
+    const signal = abortCtrl.signal;
+    body?.on('aborted', _ => abortCtrl.abort());
+    const options: any = { body, method: 'PUT', signal };
     options.headers = {
       'Content-Range': range,
-      'Content-Type': 'application/octet-stream'
+      'Content-Type': 'application/octet-stream',
+      Accept: 'application/json'
     };
-    const res = await request(options);
-    if (res.status === 308) {
-      return getRangeEnd(res.headers.range) + 1;
-    } else {
-      return size || 0;
+    try {
+      const res = await request(url, options);
+      if (res.status === 308) {
+        return getRangeEnd(res.headers.get('range')) + 1;
+      } else if (res.ok) {
+        const message = await res.json();
+        log('%o', message);
+        return size || 0;
+      }
+      const message = await res.json();
+      return Promise.reject(message);
+    } catch (error) {
+      log(error.message);
+      return null as any;
     }
   }
 
