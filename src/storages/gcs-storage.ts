@@ -37,7 +37,8 @@ export type GCStorageOptions = BaseStorageOptions &
     clientDirectUpload?: boolean;
   };
 export interface GCSFile extends File {
-  uploadURI: string;
+  location: string;
+  GCSUploadURI?: string;
 }
 /**
  * Google cloud storage based backend.
@@ -89,13 +90,14 @@ export class GCStorage extends BaseStorage {
     });
 
     file.path = path;
-    file.uploadURI = res.headers.location;
+    file.location = res.headers.location;
     if (this.config.clientDirectUpload) {
+      log('send upload url to client: %s', file.GCSUploadURI);
+      file.GCSUploadURI = res.headers.location;
       return file;
     }
     await this._saveMeta(path, file);
     file.status = 'created';
-    delete file.uploadURI;
     return file;
   }
 
@@ -128,7 +130,7 @@ export class GCStorage extends BaseStorage {
   }
 
   async _write(file: GCSFile & FilePart): Promise<number> {
-    const { start, size, contentLength, uploadURI: url, body } = file;
+    const { start, size, contentLength, location: url, body } = file;
     const abortCtrl = new AbortController();
     const signal = abortCtrl.signal;
     body?.on('aborted', _ => abortCtrl.abort());
@@ -159,9 +161,6 @@ export class GCStorage extends BaseStorage {
   }
 
   private _saveMeta(path: string, file: GCSFile): Promise<any> {
-    if (this.config.clientDirectUpload) {
-      return Promise.resolve();
-    }
     const name = encodeURIComponent(path);
     this.metaStore[name] = file;
     return this.authClient.request({

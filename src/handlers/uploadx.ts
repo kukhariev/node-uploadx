@@ -92,7 +92,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Build file url from request
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    if ('uploadURI' in file) return file['uploadURI'];
+    if ('GCSUploadURI' in file && file['GCSUploadURI']) return file['GCSUploadURI'];
 
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
