@@ -31,6 +31,10 @@ export type GCStorageOptions = BaseStorageOptions &
      * @defaultValue 'node-uploadx'
      */
     bucket?: string;
+    /**
+     * Force compatible client upload directly to GCS
+     */
+    clientDirectUpload?: boolean;
   };
 export interface GCSFile extends File {
   uploadURI: string;
@@ -86,8 +90,12 @@ export class GCStorage extends BaseStorage {
 
     file.path = path;
     file.uploadURI = res.headers.location;
+    if (this.config.clientDirectUpload) {
+      return file;
+    }
     await this._saveMeta(path, file);
     file.status = 'created';
+    delete file.uploadURI;
     return file;
   }
 
@@ -151,6 +159,9 @@ export class GCStorage extends BaseStorage {
   }
 
   private _saveMeta(path: string, file: GCSFile): Promise<any> {
+    if (this.config.clientDirectUpload) {
+      return Promise.resolve();
+    }
     const name = encodeURIComponent(path);
     this.metaStore[name] = file;
     return this.authClient.request({

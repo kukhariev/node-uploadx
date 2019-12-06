@@ -12,6 +12,7 @@ const storage = new GCStorage({
   maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*'],
   path: '/upload'
+  // clientDirectUpload: true
 });
 
 const upx = new Uploadx({ storage });
