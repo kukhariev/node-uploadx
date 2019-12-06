@@ -109,7 +109,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
  * Basic express wrapper
  */
 export function uploadx(
-  options: DiskStorageOptions = {}
+  options: DiskStorageOptions | { storage: BaseStorage } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Uploadx(options).handle;
 }

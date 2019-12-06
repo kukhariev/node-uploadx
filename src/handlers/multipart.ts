@@ -74,7 +74,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
  * Basic express wrapper
  */
 export function multipart(
-  options: DiskStorageOptions = {}
+  options: DiskStorageOptions | { storage: BaseStorage } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Multipart(options).handle;
 }

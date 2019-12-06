@@ -122,7 +122,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
  * Basic express wrapper
  */
 export function tus(
-  options: DiskStorageOptions = {}
+  options: DiskStorageOptions | { storage: BaseStorage } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Tus(options).handle;
 }

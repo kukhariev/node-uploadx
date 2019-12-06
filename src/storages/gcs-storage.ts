@@ -92,8 +92,8 @@ export class GCStorage extends BaseStorage {
     file.path = path;
     file.location = res.headers.location;
     if (this.config.clientDirectUpload) {
-      log('send upload url to client: %s', file.GCSUploadURI);
       file.GCSUploadURI = res.headers.location;
+      log('send upload url to client: %s', file.GCSUploadURI);
       return file;
     }
     await this._saveMeta(path, file);

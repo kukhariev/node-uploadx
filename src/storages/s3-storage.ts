@@ -75,7 +75,7 @@ export class S3Storage extends BaseStorage {
     if (existing) return existing as File;
     const metadata = processMetadata(file.metadata, encodeURI);
 
-    const multiPartOptions = {
+    const multiPartOptions: S3.CreateMultipartUploadRequest = {
       Bucket: this.bucket,
       Key: path,
       ContentType: file.mimeType,
@@ -136,16 +136,15 @@ export class S3Storage extends BaseStorage {
 
   async _write(file: S3File & FilePart): Promise<S3.UploadPartOutput> {
     const partNumber = (file.Parts || []).length + 1;
-    const data: S3.UploadPartOutput = await this.client
-      .uploadPart({
-        Bucket: this.bucket,
-        Key: file.path,
-        UploadId: file.UploadId,
-        PartNumber: partNumber,
-        Body: file.body,
-        ContentLength: file.contentLength
-      })
-      .promise();
+    const partOpts: S3.UploadPartRequest = {
+      Bucket: this.bucket,
+      Key: file.path,
+      UploadId: file.UploadId,
+      PartNumber: partNumber,
+      Body: file.body,
+      ContentLength: file.contentLength
+    };
+    const data: S3.UploadPartOutput = await this.client.uploadPart(partOpts).promise();
     if (file.status === 'deleted') {
       delete this.metaStore[file.path];
       return data;
@@ -175,12 +174,12 @@ export class S3Storage extends BaseStorage {
   }
 
   private async _saveMeta(path: string, file: S3File): Promise<any> {
-    const encodedFile = encodeURIComponent(JSON.stringify(file));
+    const metadata = encodeURIComponent(JSON.stringify(file));
     await this.client
       .putObject({
         Bucket: this.bucket,
         Key: path + META,
-        Metadata: { metadata: encodedFile }
+        Metadata: { metadata }
       })
       .promise();
     this.metaStore[path] = { ...file, ...{ Parts: [] } };
