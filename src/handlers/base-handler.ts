@@ -131,12 +131,11 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    * Get id from request
    */
   getPath(req: http.IncomingMessage): string {
-    const _url = (req as any)['originalUrl']
-      ? req.url?.replace(/^\//, '')
-      : req.url?.replace(this.storage.path + '/', '');
-    if (_url === req.url) return '';
-    const { pathname } = url.parse(_url as string);
-    return pathname || '';
+    const { pathname } = url.parse(req.url as string);
+    const path = (req as any)['originalUrl']
+      ? `/${pathname}`.replace('//', '')
+      : `/${pathname}`.replace(`/${this.storage.path}/`, '');
+    return path.startsWith('/') ? '' : path;
   }
 
   /**
