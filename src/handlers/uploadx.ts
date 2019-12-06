@@ -3,10 +3,8 @@ import * as url from 'url';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { File, generateFileId } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
-import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, logger } from '../utils';
+import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
-
-const log = logger.extend('Uploadx');
 
 export function rangeParser(rangeHeader = ''): { start: number; total: number } {
   const parts = rangeHeader.split(/\s+|\//);
@@ -27,7 +25,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     super();
     this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
     this.responseType = 'json';
-    log('options: %o', config);
+    this.log('options: %o', config);
   }
 
   /**

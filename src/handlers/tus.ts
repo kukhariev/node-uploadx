@@ -3,10 +3,8 @@ import * as http from 'http';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { File, generateFileId, Metadata } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
-import { ERRORS, fail, getHeader, logger, typeis } from '../utils';
+import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
-
-const log = logger.extend('Tus');
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
     .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString('base64')}`)
@@ -31,7 +29,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   constructor(config: { storage: T } | DiskStorageOptions) {
     super();
     this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
-    log('options: %o', config);
+    this.log('options: %o', config);
   }
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {

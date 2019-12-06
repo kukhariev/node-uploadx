@@ -3,10 +3,9 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage } from '../storages';
 import { File } from '../storages/file';
-import { ErrorStatus, getBaseUrl, logger, ERRORS } from '../utils';
+import { ERRORS, ErrorStatus, getBaseUrl, Logger } from '../utils';
 import { Cors } from './cors';
 
-const log = logger.extend('core');
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type Headers = Record<string, string | number>;
@@ -26,9 +25,11 @@ export interface BaseHandler extends EventEmitter {
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
+  protected log = Logger.get(this.constructor.name);
   private _registeredHandlers: Map<string, AsyncHandler> = new Map();
   constructor() {
     super();
+
     this.compose();
   }
 
@@ -37,11 +38,11 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
       const enabled = (this as MethodHandler)[method];
       enabled && this._registeredHandlers.set(method.toUpperCase(), enabled);
     });
-    log('Handlers', this._registeredHandlers);
+    this.log('Handlers', this._registeredHandlers);
   }
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
-    log(`[request]: %s`, req.method, req.url);
+    this.log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
     if (!this.storage.isReady) {
       this.sendError(res, ERRORS.STORAGE_ERROR);
@@ -52,7 +53,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            log('[%s] [%s]: %s', this.constructor.name, file.status, file.path);
+            this.log('[%s]: %s', file.status, file.path);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
@@ -64,7 +65,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         })
         .catch((error: any) => {
           this.listenerCount('error') && this.emit('error', error);
-          log('[%s] [error]: %o', this.constructor.name, error);
+          this.log('[error]: %o', error);
           this.sendError(res, error);
           return;
         });

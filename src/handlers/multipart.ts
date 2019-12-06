@@ -2,17 +2,15 @@ import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, File, generateFileId, Metadata } from '../storages';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { ERRORS, fail, getHeader, logger } from '../utils';
+import { ERRORS, fail, getHeader } from '../utils';
 import { BaseHandler } from './base-handler';
-
-const log = logger.extend('Multipart');
 
 export class Multipart<T extends BaseStorage> extends BaseHandler {
   storage: T | DiskStorage;
   constructor(config: { storage: T } | DiskStorageOptions) {
     super();
     this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
-    log('options: %o', config);
+    this.log('options: %o', config);
   }
 
   /**
@@ -24,10 +22,6 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
       const metadata = {} as Metadata;
       form.on('field', (name, value) => {
         Object.assign(metadata, name === 'metadata' ? JSON.parse(value) : { [name]: value });
-      });
-
-      form.on('error', err => {
-        console.log(err);
       });
       form.on('part', part => {
         metadata.size = part.byteCount;

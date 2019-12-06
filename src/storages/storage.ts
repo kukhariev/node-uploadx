@@ -1,6 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { typeis } from '../utils';
+import { Logger, typeis } from '../utils';
 import { File, FilePart } from './file';
 export const DEFAULT_FILENAME = ({ userId, id }: Partial<File>): string =>
   userId ? `${userId}/${id || ''}` : `${id}`;
@@ -24,6 +24,7 @@ export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
   path: string;
   isReady = false;
+  protected log = Logger.get('store:' + this.constructor.name);
 
   constructor(public config: BaseStorageOptions) {
     this.path = config.path ?? '/upload';

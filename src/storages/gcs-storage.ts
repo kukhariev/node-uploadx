@@ -3,11 +3,9 @@ import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
 import { callbackify } from 'util';
-import { ERRORS, fail, getHeader, logger, noop } from '../utils';
+import { ERRORS, fail, getHeader, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
-
-const log = logger.extend('GCStorage');
 
 const BUCKET_NAME = 'node-uploadx';
 const META = '.META';
@@ -93,7 +91,7 @@ export class GCStorage extends BaseStorage {
     file.location = res.headers.location;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = res.headers.location;
-      log('send upload url to client: %s', file.GCSUploadURI);
+      this.log('send upload url to client: %s', file.GCSUploadURI);
       return file;
     }
     await this._saveMeta(path, file);
@@ -149,13 +147,13 @@ export class GCStorage extends BaseStorage {
         return getRangeEnd(res.headers.get('range')) + 1;
       } else if (res.ok) {
         const message = await res.json();
-        log('%o', message);
+        this.log('%o', message);
         return size || 0;
       }
       const message = await res.text();
       return Promise.reject({ message, code: res.status });
     } catch (error) {
-      log(error.message);
+      this.log(error.message);
       return null as any;
     }
   }

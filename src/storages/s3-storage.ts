@@ -1,10 +1,9 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
-import { ERRORS, fail, logger, noop } from '../utils';
+import { ERRORS, fail, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
-const log = logger.extend('S3');
 const META = '.META';
 const BUCKET_NAME = 'node-uploadx';
 
@@ -43,7 +42,7 @@ export class S3Storage extends BaseStorage {
   constructor(public config: S3StorageOptions) {
     super(config);
     this._getFileName = config.filename || DEFAULT_FILENAME;
-    this.bucket = config.bucket || BUCKET_NAME;
+    this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     this.client = new S3(config);
     this._checkBucket();
 
@@ -121,7 +120,7 @@ export class S3Storage extends BaseStorage {
       await this.client
         .abortMultipartUpload(params)
         .promise()
-        .catch(err => log('abort error:', err.code));
+        .catch(err => this.log('abort error:', err.code));
     }
     delete this.metaStore[file.path];
     return [{ path } as File];
@@ -211,14 +210,14 @@ export class S3Storage extends BaseStorage {
         throw new Error(`Bucket code: ${err.code}`);
       }
       this.isReady = true;
-      log.enabled && this._listMultipartUploads();
+      this.log.enabled && this._listMultipartUploads();
     });
   }
 
   private _listMultipartUploads(): void {
     this.client.listMultipartUploads({ Bucket: this.bucket }, (err, data) => {
-      err && log('Incomplete Uploads fetch error:', err);
-      data && log('Incomplete Uploads: ', data.Uploads?.length);
+      err && this.log('Incomplete Uploads fetch error:', err);
+      data && this.log('Incomplete Uploads: ', data.Uploads?.length);
     });
   }
 }

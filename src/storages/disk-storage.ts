@@ -3,11 +3,9 @@ import { createWriteStream } from 'fs';
 import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
-import { ensureFile, ERRORS, fail, fsp, getFileSize, logger, noop } from '../utils';
+import { ensureFile, ERRORS, fail, fsp, getFileSize, noop } from '../utils';
 import { File, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
-
-const log = logger.extend('DiskStorage');
 
 export interface MetaStore extends Configstore {
   get: (id: string) => File | undefined;
@@ -72,7 +70,7 @@ export class DiskStorage extends BaseStorage {
           const isExpired =
             completed || file.size !== (await getFileSize(this.fullPath(file.path)));
           if (isExpired) {
-            log('[expired]: ', file.path);
+            this.log('[expired]: ', file.path);
             await this._deleteMeta(file.path);
             await fsp.unlink(this.fullPath(file.path)).catch(noop);
           }
