@@ -1,9 +1,9 @@
 import * as Fastify from 'fastify';
-import { tus } from '../../src';
+import { uploadx } from '../../src';
 
 const fastify = Fastify({ logger: true });
 
-fastify.use('/upload', tus());
+fastify.use('/upload', uploadx());
 
 fastify.listen(3003, (err, address) => {
   if (err) throw err;

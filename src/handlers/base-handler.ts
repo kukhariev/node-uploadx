@@ -74,7 +74,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     }
   };
 
-  getUserId = (req: any): string | null => ('user' in req ? req.user.id || req.user._id : null);
+  getUserId = (req: any): string | undefined => req.user?.id || req.user?._id;
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     res.setHeader('Content-Length', 0);

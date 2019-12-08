@@ -3,7 +3,7 @@ import { S3Storage } from '../src';
 
 describe('S3Storage', function() {
   before(function() {
-    process.env.CI && this.skip();
+    (process.env.CI || !process.env.S3_BUCKET) && this.skip();
   });
   describe('constructor', () => {
     it('should create s3-storage', function() {

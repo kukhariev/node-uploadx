@@ -1,15 +1,15 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
-import { File, FilePart } from './file';
+import { File, FilePart, FileInit } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 const META = '.META';
 const BUCKET_NAME = 'node-uploadx';
 
-export interface S3File extends File {
-  Parts: S3.Parts;
-  UploadId: string;
+export class S3File extends File {
+  Parts: S3.Parts = [];
+  UploadId = '';
 }
 
 export type S3StorageOptions = BaseStorageOptions &
@@ -65,19 +65,18 @@ export class S3Storage extends BaseStorage {
     // }
   }
 
-  async create(req: http.IncomingMessage, file: S3File): Promise<File> {
-    const errors = this.validate(file);
-    if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
-
+  async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
+    const file = new S3File(config);
+    await this.validate(file);
     const path = this._getFileName(file);
-    const existing = this.metaStore[path];
+    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
     if (existing) return existing as File;
     const metadata = processMetadata(file.metadata, encodeURI);
 
     const multiPartOptions: S3.CreateMultipartUploadRequest = {
       Bucket: this.bucket,
       Key: path,
-      ContentType: file.mimeType,
+      ContentType: file.contentType,
       Metadata: metadata
     };
 
@@ -92,17 +91,16 @@ export class S3Storage extends BaseStorage {
     return file;
   }
 
-  async write(chunk: FilePart): Promise<File> {
-    const file = await this._getMeta(chunk.path);
+  async write(part: FilePart): Promise<File> {
+    const file = await this._getMeta(part.path);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
-    if (Number(chunk.start) >= 0) {
-      await this._write({ ...file, ...chunk });
+    if (Number(part.start) >= 0) {
+      await this._write({ ...file, ...part });
     }
     if (file.bytesWritten === file.size) {
-      const completed = await this._complete(file);
-      await this.client.deleteObject({ Bucket: this.bucket, Key: file.path + META }).promise();
+      const [completed] = await Promise.all([this._complete(file), this._deleteMetaFile(file)]);
       delete this.metaStore[file.path];
-      file.path = completed.Location;
+      file.uri = completed.Location;
     }
     return file;
   }
@@ -112,17 +110,9 @@ export class S3Storage extends BaseStorage {
 
     if (file) {
       file.status = 'deleted';
-      await this.client
-        .deleteObject({ Bucket: this.bucket, Key: file.path + META })
-        .promise()
-        .catch(noop);
-      const params = { Bucket: this.bucket, Key: file.path, UploadId: file.UploadId };
-      await this.client
-        .abortMultipartUpload(params)
-        .promise()
-        .catch(err => this.log('abort error:', err.code));
+      await Promise.all([this._deleteMetaFile(file), this._abortMultipartUpload(file)]);
+      delete this.metaStore[file.path];
     }
-    delete this.metaStore[file.path];
     return [{ path } as File];
   }
 
@@ -159,7 +149,7 @@ export class S3Storage extends BaseStorage {
     return this.client.listParts(opts).promise();
   }
 
-  private _complete(meta: S3File): Promise<any> {
+  private _complete(meta: S3File): Promise<S3.CompleteMultipartUploadOutput> {
     return this.client
       .completeMultipartUpload({
         Bucket: this.bucket,
@@ -202,6 +192,21 @@ export class S3Storage extends BaseStorage {
       return file;
     }
     return fail(ERRORS.FILE_NOT_FOUND);
+  }
+
+  private async _deleteMetaFile(file: S3File): Promise<any> {
+    await this.client
+      .deleteObject({ Bucket: this.bucket, Key: file.path + META })
+      .promise()
+      .catch(noop);
+  }
+
+  private async _abortMultipartUpload(file: S3File): Promise<any> {
+    const params = { Bucket: this.bucket, Key: file.path, UploadId: file.UploadId };
+    await this.client
+      .abortMultipartUpload(params)
+      .promise()
+      .catch(err => this.log('abort error:', err.code));
   }
 
   private _checkBucket(): void {

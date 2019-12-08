@@ -1,7 +1,7 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { File, generateFileId, Metadata } from '../storages/file';
+import { File, FileInit, Metadata } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
 import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
@@ -50,12 +50,11 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const metadataHeader = getHeader(req, 'upload-metadata');
-    let file = new File(parseMetadata(metadataHeader));
-    file.userId = this.getUserId(req);
-    file.size = Number.parseInt(getHeader(req, 'upload-length'));
-    if (Number.isNaN(file.size)) return fail(ERRORS.INVALID_FILE_SIZE);
-    file.id = generateFileId(file);
-    await this.storage.create(req, file);
+    const metadata = parseMetadata(metadataHeader);
+    const config: FileInit = { metadata };
+    config.userId = this.getUserId(req);
+    config.size = getHeader(req, 'upload-length');
+    let file = await this.storage.create(req, config);
     const headers: Headers = {
       Location: this.buildFileUrl(req, file),
       'Tus-Resumable': '1.0.0'

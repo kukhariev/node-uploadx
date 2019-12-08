@@ -1,54 +1,49 @@
-import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import { uid } from '../utils';
+import { uid, md5 } from '../utils';
 
-export class File {
+const generateFileId = (file: File): string => {
+  const { filename, size, userId, metadata } = file;
+  return metadata.lastModified
+    ? md5([filename, size, metadata.lastModified, userId || ''].join('-'))
+    : uid();
+};
+export interface FileInit {
+  contentType?: string;
+  filename?: string;
+  metadata?: Metadata;
+  size?: number | string;
+  userId?: string;
+}
+export class File implements FileInit {
   bytesWritten = 0;
+  contentType: string;
   filename: string;
   id = '';
-  mimeType: string;
+  metadata: Metadata;
   path = '';
   size: number;
-  lastModified?: string | number;
-  userId: string | null = null;
   status?: 'created' | 'completed' | 'deleted' | 'part';
-  timestamp: number;
-  link?: string;
+  uri = '';
+  userId?: any;
 
-  constructor(public metadata: Metadata = {}) {
-    const {
-      name,
-      type,
-      mimeType,
-      title,
-      filename,
-      filetype,
-      size,
-      byteCount,
-      lastModified
-    } = metadata;
-    this.filename = name || title || filename || uid();
-    this.mimeType = mimeType || type || filetype || 'application/octet-stream';
-    this.size = Number(size || byteCount) || 0;
-    this.lastModified = lastModified;
-    this.timestamp = new Date().getTime();
+  constructor(opts: FileInit) {
+    this.metadata = opts.metadata || {};
+    const { title, filename, name, type, mimeType, contentType, filetype, size } = this.metadata;
+    this.contentType =
+      opts.contentType || contentType || mimeType || type || filetype || 'application/octet-stream';
+    this.size = Number(opts.size || size) || 0;
+    this.userId = opts.userId || null;
+    this.filename = opts.filename || name || title || filename || (this.id = uid());
+    this.id = this.id || generateFileId(this);
   }
 }
 
-export const generateFileId = (file: File): string => {
-  const { filename, size, lastModified, userId, timestamp = new Date().getTime() } = file;
-  const print = [filename, size, lastModified || timestamp, userId || ''].join('-');
-  return createHash('md5')
-    .update(print)
-    .digest('hex');
-};
-
 export interface FilePart {
   body?: Readable;
-  start?: number;
   contentLength?: number;
   path: string;
   size?: number;
+  start?: number;
 }
 
 export interface Metadata {
@@ -57,10 +52,9 @@ export interface Metadata {
   type?: string;
   filetype?: string;
   mimeType?: string;
+  contentType?: string;
   title?: string;
   filename?: string;
   lastModified?: string | number;
-  userId?: string;
-
-  [key: string]: string | number | undefined | null;
+  [key: string]: any;
 }

@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { File, generateFileId } from '../storages/file';
+import { File, FileInit } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
 import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
@@ -33,12 +33,12 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
-    const file = new File(metadata);
-    file.userId = this.getUserId(req);
-    file.size = Number(getHeader(req, 'x-upload-content-length') || file.size);
-    file.mimeType = getHeader(req, 'x-upload-content-type') || file.mimeType;
-    file.id = generateFileId(file);
-    await this.storage.create(req, file);
+    const config: FileInit = { metadata };
+    config.userId = this.getUserId(req);
+    config.size = getHeader(req, 'x-upload-content-length');
+    config.contentType = getHeader(req, 'x-upload-content-type');
+    const file = await this.storage.create(req, config);
+
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
