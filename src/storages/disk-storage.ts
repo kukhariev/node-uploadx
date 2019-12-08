@@ -4,15 +4,18 @@ import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFileSize, noop } from '../utils';
-import { File, FilePart } from './file';
+import { File, FilePart, FileInit } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
+export class DiskFile extends File {
+  timestamp?: number;
+}
 export interface MetaStore extends Configstore {
-  get: (id: string) => File | undefined;
-  set: (id: any, file?: File) => void;
+  get: (id: string) => DiskFile | undefined;
+  set: (id: any, file?: DiskFile) => void;
   delete: (id: string) => void;
   clear: () => void;
-  all: Record<string, File>;
+  all: Record<string, DiskFile>;
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
   /**
@@ -65,7 +68,7 @@ export class DiskStorage extends BaseStorage {
     (async () => {
       const now = new Date().getTime();
       for (const file of Object.values(this.metaStore.all)) {
-        const outdated = now - file.timestamp > expire;
+        const outdated = now - (file.timestamp || 0) > expire;
         if (outdated) {
           const isExpired =
             completed || file.size !== (await getFileSize(this.fullPath(file.path)));
@@ -82,10 +85,11 @@ export class DiskStorage extends BaseStorage {
   /**
    * Add file to storage
    */
-  async create(req: http.IncomingMessage, file: File): Promise<File> {
-    const errors = this.validate(file);
-    if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
+  async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
+    const file = new DiskFile(config);
+    await this.validate(file);
     file.path = this._getFileName(file);
+    file.timestamp = new Date().getTime();
     const path = this.fullPath(file.path);
     file.bytesWritten = await ensureFile(path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
     await this._saveMeta(file.path, file);
@@ -144,7 +148,7 @@ export class DiskStorage extends BaseStorage {
     });
   }
 
-  private _saveMeta(path: string, file: File): Promise<any> {
+  private _saveMeta(path: string, file: DiskFile): Promise<any> {
     this.metaStore.set(path.replace('.', '\\.'), file);
     return Promise.resolve();
   }

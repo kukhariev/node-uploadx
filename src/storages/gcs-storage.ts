@@ -4,7 +4,7 @@ import * as http from 'http';
 import request from 'node-fetch';
 import { callbackify } from 'util';
 import { ERRORS, fail, getHeader, noop } from '../utils';
-import { File, FilePart } from './file';
+import { File, FilePart, FileInit } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -34,8 +34,7 @@ export type GCStorageOptions = BaseStorageOptions &
      */
     clientDirectUpload?: boolean;
   };
-export interface GCSFile extends File {
-  location: string;
+export class GCSFile extends File {
   GCSUploadURI?: string;
 }
 /**
@@ -66,10 +65,9 @@ export class GCStorage extends BaseStorage {
     });
   }
 
-  async create(req: http.IncomingMessage, file: GCSFile): Promise<File> {
-    const errors = this.validate(file);
-    if (errors.length) return fail(ERRORS.FILE_NOT_ALLOWED, errors.toString());
-
+  async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
+    const file = new GCSFile(config);
+    await this.validate(file);
     const path = this._getFileName(file);
     const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
     if (existing) return existing;
@@ -77,18 +75,18 @@ export class GCStorage extends BaseStorage {
     const origin = getHeader(req, 'origin');
     const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
     headers['X-Upload-Content-Length'] = file.size.toString();
-    headers['X-Upload-Content-Type'] = file.mimeType || 'application/octet-stream';
+    headers['X-Upload-Content-Type'] = file.contentType || 'application/octet-stream';
     origin && (headers['Origin'] = origin);
     const res = await this.authClient.request({
       body: JSON.stringify({ metadata: file.metadata }),
       headers,
       method: 'POST',
-      params: { name: path, size: file.size.toString(), uploadType: 'resumable' },
+      params: { name: path, size: file.size, uploadType: 'resumable' },
       url: this.uploadBaseURI
     });
 
     file.path = path;
-    file.location = res.headers.location;
+    file.uri = res.headers.location;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = res.headers.location;
       this.log('send upload url to client: %s', file.GCSUploadURI);
@@ -105,6 +103,7 @@ export class GCStorage extends BaseStorage {
     file.bytesWritten = await this._write({ ...file, ...part });
     if (file.status === 'deleted' || file.bytesWritten === file.size) {
       await this._deleteMeta(file.path);
+      file.uri = `${this.storageBaseURI}/${file.path}`;
     }
     return file;
   }
@@ -128,7 +127,7 @@ export class GCStorage extends BaseStorage {
   }
 
   async _write(file: GCSFile & FilePart): Promise<number> {
-    const { start, size, contentLength, location: url, body } = file;
+    const { start, size, contentLength, uri: url, body } = file;
     const abortCtrl = new AbortController();
     const signal = abortCtrl.signal;
     body?.on('aborted', _ => abortCtrl.abort());
@@ -146,9 +145,9 @@ export class GCStorage extends BaseStorage {
       if (res.status === 308) {
         return getRangeEnd(res.headers.get('range')) + 1;
       } else if (res.ok) {
-        const message = await res.json();
-        this.log('%o', message);
-        return size || 0;
+        const data = await res.json();
+        this.log('uploaded %o', data);
+        return data?.mediaLink ? size : NaN;
       }
       const message = await res.text();
       return Promise.reject({ message, code: res.status });

@@ -46,6 +46,6 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   const proto = getHeader(req, 'x-forwarded-proto');
   const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
   if (!host) return '';
-  if (!proto) return '//' + host;
-  return proto + '://' + host;
+  if (!proto) return `//${host}`;
+  return `${proto}://${host}`;
 }
