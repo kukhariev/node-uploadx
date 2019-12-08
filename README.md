@@ -1,6 +1,6 @@
 # node-uploadx
 
-[![npm version][npm-image]][npm-url] [![Build status][travis-image]][travis-url]
+[![npm version][npm-image]][npm-url] [![Travis status][travis-image]][travis-url] [![Build status][gha-image]][gha-url]
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
@@ -90,3 +90,5 @@ Pull requests are welcome!
 [npm-url]: https://www.npmjs.com/package/node-uploadx
 [travis-image]: https://img.shields.io/travis/kukhariev/node-uploadx/master.svg
 [travis-url]: https://travis-ci.org/kukhariev/node-uploadx
+[gha-image]: https://github.com/kukhariev/node-uploadx/workflows/CI/badge.svg
+[gha-url]: https://github.com/kukhariev/node-uploadx
