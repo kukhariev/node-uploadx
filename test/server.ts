@@ -47,10 +47,7 @@ app.get('/*/upload', (req, res) => {
   res.json(req.body);
 });
 app.on('error', err => console.log(err));
-process.on('uncaughtException', function(err) {
-  console.log('process.on handler');
-  console.log(err);
-});
+process.on('uncaughtException', err => console.log(err));
 
 if (!module.parent) {
   app.listen(3003, error => {

@@ -3,7 +3,7 @@ import { GCStorage } from '../src';
 
 describe('GCStorage', function() {
   before(function() {
-    process.env.CI && this.skip();
+    (process.env.CI || !process.env.GCS_BUCKET) && this.skip();
   });
 
   describe('constructor', () => {
