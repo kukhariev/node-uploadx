@@ -15,11 +15,13 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
 
   post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     return new Promise((resolve, reject) => {
+      req.on('error', error => reject(error));
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
       form.on('field', (key, value) => {
         Object.assign(config.metadata, key === 'metadata' ? JSON.parse(value) : { [key]: value });
       });
+      form.on('error', error => reject(error));
       form.on('part', (part: multiparty.Part) => {
         config.size = part.byteCount;
         config.filename = part.filename;
