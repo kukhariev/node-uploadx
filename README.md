@@ -28,14 +28,14 @@ app.use('/upload/', uploadx({ directory: './files' }));
 app.listen(3003);
 ```
 
-Node http.Server example:
+Node http.Server GCS example:
 
 ```js
-const { Uploadx, DiskStorage } = require('node-uploadx');
+const { Uploadx, GCStorage } = require('node-uploadx');
 const http = require('http');
 const url = require('url');
 
-const storage = new DiskStorage({ directory: './files' });
+const storage = new GCStorage({ bucket: 'uploads' });
 const uploads = new Uploadx({ storage });
 
 const server = http
@@ -51,7 +51,7 @@ const server = http
   .listen(3003);
 ```
 
-Please navigate to the [examples](examples) for more advanced examples
+Please navigate to the [examples](examples) for more.
 
 ### Options
 
@@ -68,9 +68,9 @@ Available options are:
 | `expire`         |     `number`     |               | _Days to discard incomplete uploads_ |
 | `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_      |
 
-For GCS authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
+For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 
-For S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)
+For AWS S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET` environment variable.
 
 ## References
 
