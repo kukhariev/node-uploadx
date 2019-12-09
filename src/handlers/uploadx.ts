@@ -86,6 +86,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const { query } = url.parse(req.url || '', true);
     const name = query.name as string;
     const upload_id = query.upload_id as string;
+    if (this.SECRET && (!upload_id || !name)) return '';
     if (this.SECRET && hmacSHA256(name, this.SECRET) !== upload_id) return '';
     if (name) return name;
     if (upload_id) return upload_id;
