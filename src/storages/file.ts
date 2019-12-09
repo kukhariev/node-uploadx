@@ -47,6 +47,7 @@ export interface FilePart {
 }
 
 export interface Metadata {
+  [key: string]: any;
   size?: string | number;
   name?: string;
   type?: string;
@@ -56,5 +57,4 @@ export interface Metadata {
   title?: string;
   filename?: string;
   lastModified?: string | number;
-  [key: string]: any;
 }
