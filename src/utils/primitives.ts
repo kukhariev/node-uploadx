@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, createHmac, HexBase64Latin1Encoding } from 'crypto';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
   const result: any = {};
@@ -27,6 +27,15 @@ export function fnv(str: string): number {
   return hash >>> 0;
 }
 
+export function hmacSHA256(
+  data: string,
+  key: string,
+  encoding: HexBase64Latin1Encoding = 'hex'
+): string {
+  return createHmac('sha256', key)
+    .update(data)
+    .digest(encoding);
+}
 // eslint-disable-next-line
 export const noop = (): any => {};
 
