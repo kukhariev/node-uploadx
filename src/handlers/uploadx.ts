@@ -81,8 +81,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 
   getPath(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
-    if (query.name) return decodeURIComponent(query.name as string);
-    if (query.upload_id) return decodeURIComponent(query.upload_id as string);
+    if (query.name) return query.name as string;
+    if (query.upload_id) return query.upload_id as string;
     return super.getPath(req);
   }
 
