@@ -27,7 +27,7 @@ export abstract class BaseStorage {
   protected log = Logger.get(`store:${this.constructor.name}`);
 
   constructor(public config: BaseStorageOptions) {
-    this.path = config.path ?? '/upload';
+    this.path = config.path ?? '/files';
     const fileTypeLimit: ValidatorFn = file =>
       !typeis.is(file.contentType, this.config.allowMIME) &&
       `Acceptable file types: ${this.config.allowMIME}`;
