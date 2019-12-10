@@ -43,10 +43,10 @@
     "test:watch": "mocha --watch",
     "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
     "demo:node": "npm run build && node examples/node/uploadx",
-    "demo:express": "tsnd examples/express",
+    "demo:express": "tsnd examples/express-basic",
     "demo:gcs": "tsnd --respawn --transpileOnly examples/gcs",
     "demo:s3": "tsnd --respawn --transpileOnly examples/s3",
-    "demo:tus": "tsnd examples/node/tus",
+    "demo:tus": "tsnd examples/express-tus",
     "demo:fastify": "tsnd examples/fastify"
   },
   "devDependencies": {
