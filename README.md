@@ -23,7 +23,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/upload/', uploadx({ directory: './files' }));
+app.use('/upload/files', uploadx({ directory: './files' }));
 
 app.listen(3003);
 ```
@@ -37,11 +37,12 @@ const url = require('url');
 
 const storage = new GCStorage({ bucket: 'uploads' });
 const uploads = new Uploadx({ storage });
+uploads.on('completed', console.log);
 
 const server = http
   .createServer((req, res) => {
     const pathname = url.parse(req.url).pathname;
-    if (pathname === '/upload') {
+    if (pathname === '/upload/files') {
       uploads.handle(req, res);
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plan' });
@@ -59,9 +60,9 @@ Available options are:
 
 | option           |       type       | default value | description                          |
 | :--------------- | :--------------: | :-----------: | ------------------------------------ |
-| `directory`      |     `string`     |  `"upload"`   | _DiskStorage uplofd directory_       |
+| `directory`      |     `string`     |   `"files"`   | _DiskStorage upload directory_       |
 | `bucket`         |     `string`     |               | _S3 or GCS bucket_                   |
-| `path`           |     `string`     |  `"/upload"`  | _Node http route path_               |
+| `path`           |     `string`     |  `"/files"`   | _Node http route path_               |
 | `filename`       |    `Function`    |               | _Filename function_                  |
 | `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
 | `maxUploadSize`  | `string\|number` |               | _Limit allowed file size_            |

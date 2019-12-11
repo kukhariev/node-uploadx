@@ -20,7 +20,7 @@ export interface MetaStore extends Configstore {
 export interface DiskStorageOptions extends BaseStorageOptions {
   /**
    * Uploads directory
-   * @defaultValue './upload'
+   * @defaultValue './files'
    */
   directory?: string;
 }
