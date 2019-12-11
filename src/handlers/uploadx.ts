@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import * as http from 'http';
 import * as url from 'url';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { File, FileInit } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
-import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
+import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, hmacSHA256, CRYPTO_KEY } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; total: number } {
@@ -81,8 +82,11 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 
   getPath(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
-    if (query.name) return query.name as string;
-    if (query.upload_id) return query.upload_id as string;
+    const name = query.name as string;
+    const upload_id = query.upload_id as string;
+    if (CRYPTO_KEY && name && hmacSHA256(name, CRYPTO_KEY) !== upload_id) return '';
+    if (name) return name;
+    if (upload_id) return upload_id;
     return super.getPath(req);
   }
 
@@ -94,8 +98,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    query.upload_id = file.path;
+    query.upload_id = CRYPTO_KEY ? hmacSHA256(file.path, CRYPTO_KEY) : file.path;
     query.name = file.path;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
