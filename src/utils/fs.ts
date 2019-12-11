@@ -1,25 +1,12 @@
 import { promises as fsp } from 'fs';
-import { dirname, isAbsolute, join, normalize, parse, sep } from 'path';
+import { dirname } from 'path';
 
 export async function ensureDir(dir: string): Promise<void> {
-  dir = normalize(dir);
-  const paths = dir.split(sep);
-  isAbsolute(dir) && paths.shift();
-  let parent = parse(dir).root;
-  for (const p of paths) {
-    parent = join(parent, p);
-    try {
-      await fsp.mkdir(parent);
-    } catch (error) {
-      if (error.code !== 'EEXIST') {
-        throw error;
-      }
-    }
-  }
+  await fsp.mkdir(dir, { recursive: true });
 }
 
 export async function ensureFile(path: string, overwrite = false): Promise<number> {
-  await ensureDir(dirname(path));
+  await fsp.mkdir(dirname(path), { recursive: true });
   await (await fsp.open(path, overwrite ? 'w' : 'a')).close();
   const { size } = await fsp.stat(path);
   return size;
