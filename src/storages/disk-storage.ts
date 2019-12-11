@@ -1,21 +1,13 @@
-import * as Configstore from 'configstore';
 import { createWriteStream } from 'fs';
 import * as http from 'http';
 import { join } from 'path';
 import { Readable } from 'stream';
-import { ensureFile, ERRORS, fail, fsp, getFileSize, noop } from '../utils';
+import { ensureFile, ERRORS, fail, fsp } from '../utils';
 import { File, FilePart, FileInit } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 export class DiskFile extends File {
   timestamp?: number;
-}
-export interface MetaStore extends Configstore {
-  get: (id: string) => DiskFile | undefined;
-  set: (id: any, file?: DiskFile) => void;
-  delete: (id: string) => void;
-  clear: () => void;
-  all: Record<string, DiskFile>;
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
   /**
@@ -25,8 +17,8 @@ export interface DiskStorageOptions extends BaseStorageOptions {
   directory?: string;
 }
 const MILLIS_PER_HOUR = 60 * 60 * 1000;
-const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
-const METADATAS_FILE = 'UPLOADS_METADATA';
+// const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
+const META = '.META';
 
 /**
  * Local Disk Storage
@@ -34,10 +26,7 @@ const METADATAS_FILE = 'UPLOADS_METADATA';
 export class DiskStorage extends BaseStorage {
   /** how often (in ms) to scan for expired uploads */
   static EXPIRY_SCAN_PERIOD = 1 * MILLIS_PER_HOUR;
-  /**
-   * Where store uploads info
-   */
-  metaStore: MetaStore;
+
   directory: string;
 
   private _getFileName: (file: Partial<File>) => string;
@@ -46,8 +35,6 @@ export class DiskStorage extends BaseStorage {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this._getFileName = config.filename || DEFAULT_FILENAME;
-    const configPath = { configPath: join(this.directory, METADATAS_FILE) };
-    this.metaStore = new Configstore('', {}, configPath);
 
     if (typeof this.config.expire === 'number') {
       setInterval(
@@ -64,22 +51,22 @@ export class DiskStorage extends BaseStorage {
    * @param completed If `true` remove completed files too
    */
   expiry(maxAge: number, completed = false): void {
-    const expire = Math.floor(maxAge * MILLIS_PER_DAY);
-    (async () => {
-      const now = new Date().getTime();
-      for (const file of Object.values(this.metaStore.all)) {
-        const outdated = now - (file.timestamp || 0) > expire;
-        if (outdated) {
-          const isExpired =
-            completed || file.size !== (await getFileSize(this.fullPath(file.path)));
-          if (isExpired) {
-            this.log('[expired]: ', file.path);
-            await this._deleteMeta(file.path);
-            await fsp.unlink(this.fullPath(file.path)).catch(noop);
-          }
-        }
-      }
-    })();
+    // const expire = Math.floor(maxAge * MILLIS_PER_DAY);
+    // (async () => {
+    //   const now = new Date().getTime();
+    //   for (const file of Object.values(this.metaStore.all)) {
+    //     const outdated = now - (file.timestamp || 0) > expire;
+    //     if (outdated) {
+    //       const isExpired =
+    //         completed || file.size !== (await getFileSize(this.fullPath(file.path)));
+    //       if (isExpired) {
+    //         this.log('[expired]: ', file.path);
+    //         await this._deleteMeta(file.path);
+    //         await fsp.unlink(this.fullPath(file.path)).catch(noop);
+    //       }
+    //     }
+    //   }
+    // })();
   }
 
   /**
@@ -117,10 +104,8 @@ export class DiskStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const find: File[] = Object.entries(this.metaStore.all)
-      .filter(([key]) => key.startsWith(prefix))
-      .map(([, val]) => val);
-    return find;
+    const file = await this._getMeta(prefix);
+    return [file];
   }
 
   async delete(path: string): Promise<File[]> {
@@ -148,22 +133,24 @@ export class DiskStorage extends BaseStorage {
     });
   }
 
-  private _saveMeta(path: string, file: DiskFile): Promise<any> {
-    this.metaStore.set(path.replace('.', '\\.'), file);
-    return Promise.resolve();
+  private async _saveMeta(path: string, file: DiskFile): Promise<any> {
+    await fsp.writeFile(this.fullPath(path) + META, JSON.stringify(file, null, 2));
+    return;
   }
 
-  private _deleteMeta(path: string): Promise<any> {
-    this.metaStore.delete(path.replace('.', '\\.'));
-    return Promise.resolve();
+  private async _deleteMeta(path: string): Promise<any> {
+    await fsp.unlink(this.fullPath(path) + META);
+    return;
   }
 
-  private _getMeta(path: string): Promise<File> {
-    return new Promise((resolve, reject) => {
-      const file = this.metaStore.get(path.replace('.', '\\.'));
-      if (file) return resolve(file);
-      return reject(ERRORS.FILE_NOT_FOUND);
-    });
+  private async _getMeta(path: string): Promise<File> {
+    try {
+      const data = await fsp.readFile(this.fullPath(path) + META);
+      const file = JSON.parse(data.toString());
+      return file;
+    } catch (error) {
+      return Promise.reject(ERRORS.FILE_NOT_FOUND);
+    }
   }
 
   private fullPath(path: string): string {

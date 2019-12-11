@@ -81,7 +81,6 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 
   getPath(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
-    if (query.name) return query.name as string;
     if (query.upload_id) return query.upload_id as string;
     return super.getPath(req);
   }
@@ -96,7 +95,6 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const { query, pathname } = url.parse(originalUrl, true);
     // eslint-disable-next-line @typescript-eslint/camelcase
     query.upload_id = file.path;
-    query.name = file.path;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return baseUrl ? `${baseUrl}${path}` : `${path}`;

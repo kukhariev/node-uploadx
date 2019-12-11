@@ -29,5 +29,3 @@ export function fnv(str: string): number {
 
 // eslint-disable-next-line
 export const noop = (): any => {};
-
-export const RE_MATCH_MD5 = /^[a-f0-9]{32}$/i;
