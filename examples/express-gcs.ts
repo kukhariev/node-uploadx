@@ -1,9 +1,11 @@
 import * as express from 'express';
-import { tus } from '../src';
+import { uploadx, GCStorage } from '../src';
 
 const app = express();
 
-app.use('/files', [express.static('files'), tus()]);
+const storage = new GCStorage();
+
+app.use('/upload/files', uploadx({ storage }));
 
 app.listen(3003, error => {
   if (error) throw error;

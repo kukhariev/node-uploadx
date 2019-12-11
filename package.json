@@ -3,12 +3,13 @@
   "version": "3.3.0",
   "description": "Node.js resumable upload middleware",
   "keywords": [
-    "upload",
-    "chunk",
     "resumable",
+    "upload",
     "express",
     "fastify",
-    "middleware"
+    "middleware",
+    "s3",
+    "gcloud"
   ],
   "author": {
     "name": "kukhariev",
@@ -42,11 +43,12 @@
     "test": "mocha",
     "test:watch": "mocha --watch",
     "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
-    "demo:node": "npm run build && node examples/node/uploadx",
     "demo:basic": "tsnd examples/express-basic",
     "demo:express": "tsnd examples/express",
-    "demo:gcs": "tsnd --respawn --transpileOnly examples/gcs",
-    "demo:s3": "tsnd --respawn --transpileOnly examples/s3",
+    "demo:gcs": "tsnd  examples/express-gcs",
+    "demo:gcs:direct": "tsnd examples/gcs-direct",
+    "demo:node": "tsc && node examples/node-http-server",
+    "demo:s3": "tsc && node examples/express-s3",
     "demo:tus": "tsnd examples/express-tus",
     "demo:fastify": "tsnd examples/fastify"
   },
