@@ -4,7 +4,7 @@ import { extname, join, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
 import { File, FileInit, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {
   timestamp?: number;
@@ -16,7 +16,6 @@ export interface DiskStorageOptions extends BaseStorageOptions {
    */
   directory?: string;
 }
-const META = '.META';
 
 /**
  * Local Disk Storage
@@ -69,7 +68,9 @@ export class DiskStorage extends BaseStorage {
 
   async get(prefix: string): Promise<File[]> {
     const find: File[] = [];
-    const list = (await getFiles(join(this.directory, prefix))).filter(f => extname(f) !== META);
+    const list = (await getFiles(join(this.directory, prefix))).filter(
+      f => extname(f) !== METAFILE_EXTNAME
+    );
     for (const path of list) {
       const file = await this._getMeta(path);
       file && find.push(file);
@@ -103,18 +104,18 @@ export class DiskStorage extends BaseStorage {
   }
 
   private async _saveMeta(path: string, file: DiskFile): Promise<any> {
-    await fsp.writeFile(this.fullPath(path) + META, JSON.stringify(file, null, 2));
+    await fsp.writeFile(this.fullPath(path) + METAFILE_EXTNAME, JSON.stringify(file, null, 2));
     return;
   }
 
   private async _deleteMeta(path: string): Promise<any> {
-    await fsp.unlink(this.fullPath(path) + META);
+    await fsp.unlink(this.fullPath(path) + METAFILE_EXTNAME);
     return;
   }
 
   private async _getMeta(path: string): Promise<File | undefined> {
     try {
-      const data = await fsp.readFile(this.fullPath(path) + META);
+      const data = await fsp.readFile(this.fullPath(path) + METAFILE_EXTNAME);
       const file = JSON.parse(data.toString());
       return file;
     } catch {

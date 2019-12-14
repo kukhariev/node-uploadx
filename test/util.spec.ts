@@ -53,7 +53,7 @@ describe('getFiles', function() {
     expect(files.length).to.be.gt(1);
   });
   it('empty', async function() {
-    const files = await getFiles('test/nnnnnn');
+    const files = await getFiles('test/notfinded');
     expect(files.length).to.be.eq(0);
   });
 });

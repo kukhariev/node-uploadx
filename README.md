@@ -58,16 +58,15 @@ Please navigate to the [examples](examples) for more.
 
 Available options are:
 
-| option           |       type       | default value | description                          |
-| :--------------- | :--------------: | :-----------: | ------------------------------------ |
-| `directory`      |     `string`     |   `"files"`   | _DiskStorage upload directory_       |
-| `bucket`         |     `string`     |               | _S3 or GCS bucket_                   |
-| `path`           |     `string`     |  `"/files"`   | _Node http route path_               |
-| `filename`       |    `Function`    |               | _Filename function_                  |
-| `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_        |
-| `maxUploadSize`  | `string\|number` |               | _Limit allowed file size_            |
-| `expire`         |     `number`     |               | _Days to discard incomplete uploads_ |
-| `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_      |
+| option           |       type       | default value | description                     |
+| :--------------- | :--------------: | :-----------: | ------------------------------- |
+| `directory`      |     `string`     |   `"files"`   | _DiskStorage upload directory_  |
+| `bucket`         |     `string`     |               | _S3 or GCS bucket_              |
+| `path`           |     `string`     |  `"/files"`   | _Node http route path_          |
+| `filename`       |    `Function`    |               | _Filename function_             |
+| `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_   |
+| `maxUploadSize`  | `string\|number` |               | _Limit allowed file size_       |
+| `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_ |
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 

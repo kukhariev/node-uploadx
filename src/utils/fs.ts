@@ -26,22 +26,18 @@ export async function getFileSize(path: string): Promise<number> {
 }
 export async function getFiles(prefix: string): Promise<string[]> {
   try {
-    const stat = await fsp.lstat(prefix);
-    if (stat.isFile()) {
-      return [prefix];
-    }
-  } catch (error) {
+    if ((await fsp.stat(prefix)).isFile()) return [prefix];
+  } catch {
     return [];
   }
   const dirents = await fsp.readdir(prefix, { withFileTypes: true });
 
   const files = await Promise.all(
     dirents.map(async dirent => {
-      const res = resolve(prefix, dirent.name);
-      return dirent.isDirectory() ? getFiles(res) : res;
+      const path = resolve(prefix, dirent.name);
+      return dirent.isDirectory() ? getFiles(path) : path;
     })
   );
-  const flat = Array.prototype.concat(...files);
-  return flat;
+  return Array.prototype.concat(...files);
 }
 export { fsp };
