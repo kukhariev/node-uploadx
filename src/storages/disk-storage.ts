@@ -1,8 +1,8 @@
 import { createWriteStream } from 'fs';
 import * as http from 'http';
-import { join } from 'path';
+import { join, extname, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
-import { ensureFile, ERRORS, fail, fsp } from '../utils';
+import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
 import { File, FilePart, FileInit } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
@@ -104,8 +104,15 @@ export class DiskStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const file = await this._getMeta(prefix);
-    return [file];
+    const files = (await getFiles(join(this.directory, prefix))).filter(f => extname(f) !== META);
+
+    const find: File[] = [];
+
+    for (const p of files) {
+      const file = await this._getMeta(p);
+      file && find.push(file);
+    }
+    return find;
   }
 
   async delete(path: string): Promise<File[]> {
@@ -116,7 +123,9 @@ export class DiskStorage extends BaseStorage {
         await this._deleteMeta(file.path);
         await fsp.unlink(this.fullPath(file.path));
         deleted.push(file);
-      } catch {}
+      } catch (error) {
+        this.log(error);
+      }
     }
     return files.length ? deleted : [{ path } as File];
   }
@@ -143,17 +152,17 @@ export class DiskStorage extends BaseStorage {
     return;
   }
 
-  private async _getMeta(path: string): Promise<File> {
+  private async _getMeta(path: string): Promise<File | undefined> {
     try {
       const data = await fsp.readFile(this.fullPath(path) + META);
       const file = JSON.parse(data.toString());
       return file;
     } catch (error) {
-      return Promise.reject(ERRORS.FILE_NOT_FOUND);
+      return;
     }
   }
 
   private fullPath(path: string): string {
-    return join(this.directory, path);
+    return pathResolve(this.directory, path);
   }
 }

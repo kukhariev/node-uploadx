@@ -1,5 +1,5 @@
 import { promises as fsp } from 'fs';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 
 export async function ensureDir(dir: string): Promise<void> {
   await fsp.mkdir(dir, { recursive: true });
@@ -24,5 +24,24 @@ export async function getFileSize(path: string): Promise<number> {
     return -1;
   }
 }
+export async function getFiles(prefix: string): Promise<string[]> {
+  try {
+    const stat = await fsp.lstat(prefix);
+    if (stat.isFile()) {
+      return [prefix];
+    }
+  } catch (error) {
+    return [];
+  }
+  const dirents = await fsp.readdir(prefix, { withFileTypes: true });
 
+  const files = await Promise.all(
+    dirents.map(async dirent => {
+      const res = resolve(prefix, dirent.name);
+      return dirent.isDirectory() ? getFiles(res) : res;
+    })
+  );
+  const flat = Array.prototype.concat(...files);
+  return flat;
+}
 export { fsp };

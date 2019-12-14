@@ -58,7 +58,7 @@ describe('DiskStorage', function() {
   });
   it('should reset user storage', async function() {
     const storage = new DiskStorage(OPTIONS);
-    storage.delete('userId');
+    await storage.delete('userId');
     const files = await storage.get('userId');
     expect(files).to.be.empty;
   });
