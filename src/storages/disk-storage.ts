@@ -1,9 +1,9 @@
 import { createWriteStream } from 'fs';
 import * as http from 'http';
-import { join, extname, resolve as pathResolve } from 'path';
+import { extname, join, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
-import { File, FilePart, FileInit } from './file';
+import { File, FileInit, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
 
 export class DiskFile extends File {
@@ -16,17 +16,12 @@ export interface DiskStorageOptions extends BaseStorageOptions {
    */
   directory?: string;
 }
-const MILLIS_PER_HOUR = 60 * 60 * 1000;
-// const MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
 const META = '.META';
 
 /**
  * Local Disk Storage
  */
 export class DiskStorage extends BaseStorage {
-  /** how often (in ms) to scan for expired uploads */
-  static EXPIRY_SCAN_PERIOD = 1 * MILLIS_PER_HOUR;
-
   directory: string;
 
   private _getFileName: (file: Partial<File>) => string;
@@ -35,38 +30,7 @@ export class DiskStorage extends BaseStorage {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this._getFileName = config.filename || DEFAULT_FILENAME;
-
-    if (typeof this.config.expire === 'number') {
-      setInterval(
-        () => this.expiry(this.config.expire as number),
-        DiskStorage.EXPIRY_SCAN_PERIOD
-      ).unref();
-    }
     this.isReady = true;
-  }
-
-  /**
-   * Remove uploads once they expire
-   * @param maxAge The max age in days
-   * @param completed If `true` remove completed files too
-   */
-  expiry(maxAge: number, completed = false): void {
-    // const expire = Math.floor(maxAge * MILLIS_PER_DAY);
-    // (async () => {
-    //   const now = new Date().getTime();
-    //   for (const file of Object.values(this.metaStore.all)) {
-    //     const outdated = now - (file.timestamp || 0) > expire;
-    //     if (outdated) {
-    //       const isExpired =
-    //         completed || file.size !== (await getFileSize(this.fullPath(file.path)));
-    //       if (isExpired) {
-    //         this.log('[expired]: ', file.path);
-    //         await this._deleteMeta(file.path);
-    //         await fsp.unlink(this.fullPath(file.path)).catch(noop);
-    //       }
-    //     }
-    //   }
-    // })();
   }
 
   /**
@@ -104,12 +68,10 @@ export class DiskStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const files = (await getFiles(join(this.directory, prefix))).filter(f => extname(f) !== META);
-
     const find: File[] = [];
-
-    for (const p of files) {
-      const file = await this._getMeta(p);
+    const list = (await getFiles(join(this.directory, prefix))).filter(f => extname(f) !== META);
+    for (const path of list) {
+      const file = await this._getMeta(path);
       file && find.push(file);
     }
     return find;
@@ -123,9 +85,7 @@ export class DiskStorage extends BaseStorage {
         await this._deleteMeta(file.path);
         await fsp.unlink(this.fullPath(file.path));
         deleted.push(file);
-      } catch (error) {
-        this.log(error);
-      }
+      } catch {}
     }
     return files.length ? deleted : [{ path } as File];
   }
@@ -157,7 +117,7 @@ export class DiskStorage extends BaseStorage {
       const data = await fsp.readFile(this.fullPath(path) + META);
       const file = JSON.parse(data.toString());
       return file;
-    } catch (error) {
+    } catch {
       return;
     }
   }
