@@ -4,11 +4,10 @@ import * as http from 'http';
 import request from 'node-fetch';
 import { callbackify } from 'util';
 import { ERRORS, fail, getHeader, noop } from '../utils';
-import { File, FilePart, FileInit } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
+import { File, FileInit, FilePart } from './file';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
-const META = '.META';
 
 const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
 const storageAPI = `https://storage.googleapis.com/storage/v1/b`;
@@ -165,7 +164,7 @@ export class GCStorage extends BaseStorage {
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       method: 'POST',
-      params: { name: `${file.path}${META}`, uploadType: 'media' },
+      params: { name: `${file.path}${METAFILE_EXTNAME}`, uploadType: 'media' },
       url: this.uploadBaseURI
     });
   }
@@ -174,7 +173,7 @@ export class GCStorage extends BaseStorage {
     const name = encodeURIComponent(path);
     const file = this.metaStore[name];
     if (file) return file;
-    const url = `${this.storageBaseURI}/${name}${META}`;
+    const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
     const { data } = await this.authClient.request({ params: { alt: 'media' }, url });
     this.metaStore[name] = data;
     return data;
@@ -182,7 +181,7 @@ export class GCStorage extends BaseStorage {
 
   private _deleteMeta(path: string): Promise<any> {
     const name = encodeURIComponent(path);
-    const url = `${this.storageBaseURI}/${name}${META}`;
+    const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
     delete this.metaStore[name];
     return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
   }

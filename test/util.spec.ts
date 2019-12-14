@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as utils from '../src';
+import { getFiles } from '../src';
 const ROOT = `./upload/fs-test`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;
@@ -39,5 +40,20 @@ describe('typeis', function() {
     expect(utils.typeis.is(mime, ['application/*'])).to.be.equal(mime);
     expect(utils.typeis.is(mime, ['json', 'xml'])).to.be.equal(mime);
     expect(utils.typeis.is(mime, ['*/*'])).to.be.equal(mime);
+  });
+});
+
+describe('getFiles', function() {
+  it('file', async function() {
+    const files = await getFiles('test/testfile.mp4');
+    expect(files.length).to.be.eq(1);
+  });
+  it('directory', async function() {
+    const files = await getFiles('test');
+    expect(files.length).to.be.gt(1);
+  });
+  it('empty', async function() {
+    const files = await getFiles('test/notfinded');
+    expect(files.length).to.be.eq(0);
   });
 });

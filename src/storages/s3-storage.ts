@@ -1,10 +1,9 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
-import { File, FilePart, FileInit } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME } from './storage';
+import { File, FileInit, FilePart } from './file';
+import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
-const META = '.META';
 const BUCKET_NAME = 'node-uploadx';
 
 export class S3File extends File {
@@ -45,24 +44,6 @@ export class S3Storage extends BaseStorage {
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     this.client = new S3(config);
     this._checkBucket();
-
-    // if (config.expire) {
-    //   const expireRules: S3.LifecycleRule = {
-    //     ID: 'DeleteIncompleteMultipartUploads',
-    //     Filter: { Prefix: '' },
-    //     AbortIncompleteMultipartUpload: { DaysAfterInitiation: config.expire },
-    //     Status: 'Disabled'
-    //   };
-    //   this.client
-    //     .putBucketLifecycleConfiguration({
-    //       Bucket: this.bucketName,
-    //       LifecycleConfiguration: {
-    //         Rules: [expireRules]
-    //       }
-    //     })
-    //     .promise()
-    //     .catch(err => log(err));
-    // }
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
@@ -167,7 +148,7 @@ export class S3Storage extends BaseStorage {
     await this.client
       .putObject({
         Bucket: this.bucket,
-        Key: path + META,
+        Key: path + METAFILE_EXTNAME,
         Metadata: { metadata }
       })
       .promise();
@@ -178,7 +159,7 @@ export class S3Storage extends BaseStorage {
     let file: S3File = this.metaStore[path];
     if (file) return file;
     const { Metadata } = await this.client
-      .headObject({ Bucket: this.bucket, Key: path + META })
+      .headObject({ Bucket: this.bucket, Key: path + METAFILE_EXTNAME })
       .promise();
     if (Metadata) {
       file = JSON.parse(decodeURIComponent(Metadata.metadata));
@@ -196,7 +177,7 @@ export class S3Storage extends BaseStorage {
 
   private async _deleteMetaFile(file: S3File): Promise<any> {
     await this.client
-      .deleteObject({ Bucket: this.bucket, Key: file.path + META })
+      .deleteObject({ Bucket: this.bucket, Key: file.path + METAFILE_EXTNAME })
       .promise()
       .catch(noop);
   }

@@ -5,6 +5,8 @@ import { File, FilePart, FileInit } from './file';
 export const DEFAULT_FILENAME = ({ userId, id }: Partial<File>): string =>
   userId ? `${userId}/${id || ''}` : `${id}`;
 
+export const METAFILE_EXTNAME = '.META';
+
 export interface BaseStorageOptions {
   /** Allowed file types */
   allowMIME?: string[];
@@ -13,8 +15,6 @@ export interface BaseStorageOptions {
   /** Storage filename function */
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
-  /** Unfinished uploads expire in days*/
-  expire?: number;
   path?: string;
 }
 
