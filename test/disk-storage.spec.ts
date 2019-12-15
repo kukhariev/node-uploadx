@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as fs from 'fs';
-import { join } from 'path';
+import { join, normalize } from 'path';
 import * as rimraf from 'rimraf';
 import { DiskStorage, DiskStorageOptions, File } from '../src';
 import { uploadDir, userId } from './server';
@@ -25,7 +25,7 @@ describe('DiskStorage', function() {
 
   it('should create file', async function() {
     const { path } = await storage.create({} as any, testfile);
-    expect(path).to.be.eq(name);
+    expect(normalize(path)).to.be.eq(name);
     expect(fs.statSync(dstpath).size).to.be.eql(0);
   });
 
