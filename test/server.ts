@@ -3,35 +3,26 @@ process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
 import { DiskStorage, Multipart, Tus, Uploadx } from '../src';
-
+export const userId = 'userId';
+export const uploadDir = `files`;
 const auth: express.RequestHandler = (req, res, next): void => {
-  if (req.headers.authorization) {
-    (req as any).user = { id: req.headers.authorization };
-  }
+  (req as any).user = { id: userId };
   next();
 };
 
-const maxUploadSize = '6GB';
-const allowMIME = ['video/*', 'image/*'];
-export const UPLOADS_DIR = `files`;
-
-// DiskStorage.EXPIRY_SCAN_PERIOD = 10_000;
-// const EXPIRE = 25 / 84_000;
-
-export const app = express();
+const app = express();
+app.use(auth);
 export const storage = new DiskStorage({
-  directory: `${UPLOADS_DIR}`,
-  filename: file => `${file.userId || ''}/${file.filename}`,
-  maxUploadSize,
-  allowMIME,
-  // expire: EXPIRE,
+  directory: `${uploadDir}`,
+  filename: file => `${file.userId}/${file.filename}`,
+  maxUploadSize: '6GB',
+  allowMIME: ['video/*', 'image/*'],
   useRelativeLocation: true
 });
 export const upx = new Uploadx({ storage });
 export const tus = new Tus({ storage });
 export const mpt = new Multipart({ storage });
 
-app.use(auth);
 app.use((req, res, next) => {
   const isMultipart = (req.headers['content-type'] || '').startsWith('multipart/');
   const isTus = req.headers['tus-resumable'];
@@ -48,7 +39,7 @@ app.get('/*/upload', (req, res) => {
 });
 app.on('error', err => console.log(err));
 process.on('uncaughtException', err => console.log(err));
-
+export { app };
 if (!module.parent) {
   app.listen(3003, error => {
     if (error) {

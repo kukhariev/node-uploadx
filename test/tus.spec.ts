@@ -1,24 +1,17 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import * as chai from 'chai';
 import * as fs from 'fs';
-import { app, storage } from './server';
-import chaiHttp = require('chai-http');
 import { serializeMetadata } from '../src/handlers/tus';
+import { app, storage, userId } from './server';
+import { metadata, srcpath } from './testfile';
+import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
-const TEST_FILE = `${__dirname}/testfile.mp4`;
-
-const metadata = {
-  name: 'testfile.mp4',
-  size: fs.statSync(TEST_FILE).size,
-  mimeType: 'video/mp4',
-  lastModified: fs.statSync(TEST_FILE).mtimeMs
-};
-const TOKEN = 'userId';
 
 describe('::Tus', function() {
   const files: string[] = [];
   let res: ChaiHttp.Response;
+
   beforeEach(function() {
     res = undefined as any;
   });
@@ -28,12 +21,11 @@ describe('::Tus', function() {
       res = await chai
         .request(app)
         .post('/upload')
-        .set('authorization', TOKEN)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
         .set('Tus-Resumable', '1.0.0')
-        .send(fs.readFileSync(TEST_FILE));
+        .send(fs.readFileSync(srcpath));
       expect(res).to.have.status(200);
       expect(res).to.have.header('location');
       files.push(res.header.location);
@@ -45,7 +37,6 @@ describe('::Tus', function() {
       res = await chai
         .request(app)
         .head(files[0])
-        .set('authorization', TOKEN)
         .set('Tus-Resumable', '1.0.0');
       expect(res).to.have.status(204);
       expect(res).to.have.header('upload-offset');
@@ -55,6 +46,6 @@ describe('::Tus', function() {
   });
 
   after(function() {
-    storage.delete(TOKEN);
+    storage.delete(userId);
   });
 });

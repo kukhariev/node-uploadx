@@ -8,6 +8,7 @@ describe('Content-Range parser', function() {
       expect(res.start).to.satisfy((v: number) => Number.isNaN(v));
     });
   });
+
   it('should parse `write` ranges', function() {
     const samples = [
       'bytes 0-*/7777777',
