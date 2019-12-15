@@ -6,6 +6,7 @@ describe('metadata parser', function() {
     const res = parseMetadata(sample);
     expect(res).to.eql({});
   });
+
   it('should parse single key', function() {
     const sample = 'name dGl0bGUubXA0';
     const res = parseMetadata(sample);
@@ -13,6 +14,7 @@ describe('metadata parser', function() {
       name: 'title.mp4'
     });
   });
+
   it('should parse multiple keys', function() {
     const sample =
       'name dGl0bGUubXA0,mimeType dmlkZW8vbXA0,size ODM4NjkyNTM=,lastModified MTQzNzM5MDEzODIzMQ==';
