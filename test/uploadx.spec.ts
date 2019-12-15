@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import * as chai from 'chai';
 import * as fs from 'fs';
+import { join } from 'path';
 import { app, storage, uploadDir, userId } from './server';
 import { metadata, srcpath } from './testfile';
 import chaiHttp = require('chai-http');
@@ -108,7 +109,9 @@ describe('::Uploadx', function() {
         start += chunk.length;
         if (res.status === 200) {
           expect(res).to.be.json;
-          expect(fs.statSync(`${uploadDir}/${userId}/testfile.mp4`).size).to.be.eql(metadata.size);
+          expect(fs.statSync(join(uploadDir, userId, 'testfile.mp4')).size).to.be.eql(
+            metadata.size
+          );
           done();
         }
         readable.resume();
@@ -123,7 +126,7 @@ describe('::Uploadx', function() {
         .send(fs.readFileSync(srcpath));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
-      expect(fs.statSync(`${uploadDir}/${userId}/testfileSingle.mp4`).size).to.be.eql(
+      expect(fs.statSync(join(uploadDir, userId, 'testfileSingle.mp4')).size).to.be.eql(
         metadata.size
       );
     });
