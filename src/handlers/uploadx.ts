@@ -1,8 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { File, FileInit } from '../storages/file';
-import { BaseStorage } from '../storages/storage';
+import { BaseStorage, DiskStorage, DiskStorageOptions, File, FileInit } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
@@ -42,6 +40,15 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
+    return file;
+  }
+
+  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+    const path = this.getPath(req);
+    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
+    const file = await this.storage.update(path, { metadata, path });
+    this.send({ res, body: file });
     return file;
   }
 

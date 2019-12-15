@@ -10,7 +10,7 @@ const onFileUploadComplete = ({ path, filename }: File): void => {
   try {
     mkdirSync('files', { recursive: true });
     linkSync(srcpath, dstpath);
-    console.log(`File upload is finished, path: ${srcpath}, public path: ${dstpath}`);
+    console.log(`File upload is finished, path: ${dstpath}`);
   } catch (error) {
     console.error(error);
   }

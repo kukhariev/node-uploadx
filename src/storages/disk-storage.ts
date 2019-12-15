@@ -69,7 +69,7 @@ export class DiskStorage extends BaseStorage {
   async get(prefix: string): Promise<File[]> {
     const find: File[] = [];
     const list = (await getFiles(join(this.directory, prefix))).filter(
-      f => extname(f) !== METAFILE_EXTNAME
+      filename => extname(filename) !== METAFILE_EXTNAME
     );
     for (const path of list) {
       const file = await this._getMeta(path);
@@ -89,6 +89,14 @@ export class DiskStorage extends BaseStorage {
       } catch {}
     }
     return files.length ? deleted : [{ path } as File];
+  }
+
+  async update(path: string, { metadata }: Partial<File>): Promise<File> {
+    const file = await this._getMeta(path);
+    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
+    Object.assign(file.metadata, metadata);
+    await this._saveMeta(file.path, file);
+    return file;
   }
 
   /**
@@ -116,11 +124,9 @@ export class DiskStorage extends BaseStorage {
   private async _getMeta(path: string): Promise<File | undefined> {
     try {
       const data = await fsp.readFile(this.fullPath(path) + METAFILE_EXTNAME);
-      const file = JSON.parse(data.toString());
-      return file;
-    } catch {
-      return;
-    }
+      return JSON.parse(data.toString());
+    } catch {}
+    return;
   }
 
   private fullPath(path: string): string {

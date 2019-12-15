@@ -34,7 +34,7 @@ export function processMetadata(
 export class S3Storage extends BaseStorage {
   bucket: string;
   client: S3;
-  metaStore: Record<string, S3File> = {};
+  private metaCache: Record<string, S3File> = {};
 
   private _getFileName: (file: Partial<File>) => string;
 
@@ -50,8 +50,8 @@ export class S3Storage extends BaseStorage {
     const file = new S3File(config);
     await this.validate(file);
     const path = this._getFileName(file);
-    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
-    if (existing) return existing as File;
+    const existing = this.metaCache[path] || (await this._getMeta(path).catch(noop));
+    if (existing) return existing;
     const metadata = processMetadata(file.metadata, encodeURI);
 
     const multiPartOptions: S3.CreateMultipartUploadRequest = {
@@ -80,7 +80,7 @@ export class S3Storage extends BaseStorage {
     }
     if (file.bytesWritten === file.size) {
       const [completed] = await Promise.all([this._complete(file), this._deleteMetaFile(file)]);
-      delete this.metaStore[file.path];
+      delete this.metaCache[file.path];
       file.uri = completed.Location;
     }
     return file;
@@ -92,7 +92,7 @@ export class S3Storage extends BaseStorage {
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMetaFile(file), this._abortMultipartUpload(file)]);
-      delete this.metaStore[file.path];
+      delete this.metaCache[file.path];
     }
     return [{ path } as File];
   }
@@ -102,6 +102,14 @@ export class S3Storage extends BaseStorage {
       .listObjectsV2({ Bucket: this.bucket, Prefix: prefix })
       .promise();
     return Contents as any;
+  }
+
+  async update(path: string, { metadata }: Partial<File>): Promise<File> {
+    const file = await this._getMeta(path);
+    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
+    Object.assign(file.metadata, metadata);
+    await this._saveMeta(file.path, file);
+    return file;
   }
 
   async _write(file: S3File & FilePart): Promise<S3.UploadPartOutput> {
@@ -116,12 +124,12 @@ export class S3Storage extends BaseStorage {
     };
     const data: S3.UploadPartOutput = await this.client.uploadPart(partOpts).promise();
     if (file.status === 'deleted') {
-      delete this.metaStore[file.path];
+      delete this.metaCache[file.path];
       return data;
     }
     const part: S3.Part = { ...data, ...{ PartNumber: partNumber, Size: file.contentLength } };
-    this.metaStore[file.path].bytesWritten = file.bytesWritten + (file.contentLength || 0);
-    this.metaStore[file.path].Parts = [...(file.Parts || []), part];
+    this.metaCache[file.path].bytesWritten = file.bytesWritten + (file.contentLength || 0);
+    this.metaCache[file.path].Parts = [...(file.Parts || []), part];
     return data;
   }
 
@@ -152,11 +160,11 @@ export class S3Storage extends BaseStorage {
         Metadata: { metadata }
       })
       .promise();
-    this.metaStore[path] = { ...file, ...{ Parts: [] } };
+    this.metaCache[path] = { ...file, ...{ Parts: [] } };
   }
 
-  private async _getMeta(path: string): Promise<S3File> {
-    let file: S3File = this.metaStore[path];
+  private async _getMeta(path: string): Promise<S3File | undefined> {
+    let file: S3File = this.metaCache[path];
     if (file) return file;
     const { Metadata } = await this.client
       .headObject({ Bucket: this.bucket, Key: path + METAFILE_EXTNAME })
@@ -169,10 +177,10 @@ export class S3Storage extends BaseStorage {
         (prev, next) => prev + next,
         0
       );
-      this.metaStore[path] = file;
+      this.metaCache[path] = file;
       return file;
     }
-    return fail(ERRORS.FILE_NOT_FOUND);
+    return;
   }
 
   private async _deleteMetaFile(file: S3File): Promise<any> {
