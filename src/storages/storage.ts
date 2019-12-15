@@ -51,4 +51,5 @@ export abstract class BaseStorage {
   abstract write(part: FilePart): Promise<File>;
   abstract delete(path: string): Promise<File[]>;
   abstract get(path?: string): Promise<File[]>;
+  abstract update(path: string, file: Partial<File>): Promise<File>;
 }

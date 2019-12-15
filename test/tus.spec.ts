@@ -3,16 +3,16 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { app, storage } from './server';
 import chaiHttp = require('chai-http');
-import { serializeMetadata } from '../src';
+import { serializeMetadata } from '../src/handlers/tus';
 chai.use(chaiHttp);
 const expect = chai.expect;
-const TEST_FILE_PATH = `${__dirname}/testfile.mp4`;
+const TEST_FILE = `${__dirname}/testfile.mp4`;
 
 const metadata = {
   name: 'testfile.mp4',
-  size: fs.statSync(TEST_FILE_PATH).size,
+  size: fs.statSync(TEST_FILE).size,
   mimeType: 'video/mp4',
-  lastModified: 1546300800
+  lastModified: fs.statSync(TEST_FILE).mtimeMs
 };
 const TOKEN = 'userId';
 
@@ -33,7 +33,7 @@ describe('::Tus', function() {
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
         .set('Tus-Resumable', '1.0.0')
-        .send(fs.readFileSync(TEST_FILE_PATH));
+        .send(fs.readFileSync(TEST_FILE));
       expect(res).to.have.status(200);
       expect(res).to.have.header('location');
       files.push(res.header.location);

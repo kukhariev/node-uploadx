@@ -41,10 +41,11 @@ export class GCSFile extends File {
  */
 export class GCStorage extends BaseStorage {
   authClient: GoogleAuth;
-  metaStore: Record<string, GCSFile> = {};
+
   storageBaseURI: string;
   uploadBaseURI: string;
   private _getFileName: (file: Partial<File>) => string;
+  private metaCache: Record<string, GCSFile> = {};
 
   constructor(public config: GCStorageOptions = {}) {
     super(config);
@@ -68,7 +69,7 @@ export class GCStorage extends BaseStorage {
     const file = new GCSFile(config);
     await this.validate(file);
     const path = this._getFileName(file);
-    const existing = this.metaStore[path] || (await this._getMeta(path).catch(noop));
+    const existing = await this._getMeta(path).catch(noop);
     if (existing) return existing;
 
     const origin = getHeader(req, 'origin');
@@ -126,6 +127,14 @@ export class GCStorage extends BaseStorage {
     return [data] as any;
   }
 
+  async update(path: string, { metadata }: Partial<File>): Promise<File> {
+    const file = await this._getMeta(path);
+    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
+    Object.assign(file.metadata, metadata);
+    await this._saveMeta(file.path, file);
+    return file;
+  }
+
   async _write(file: GCSFile & FilePart): Promise<number> {
     const { start, size, contentLength, uri: url, body } = file;
     const abortCtrl = new AbortController();
@@ -159,7 +168,7 @@ export class GCStorage extends BaseStorage {
 
   private _saveMeta(path: string, file: GCSFile): Promise<any> {
     const name = encodeURIComponent(path);
-    this.metaStore[name] = file;
+    this.metaCache[name] = file;
     return this.authClient.request({
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -169,20 +178,20 @@ export class GCStorage extends BaseStorage {
     });
   }
 
-  private async _getMeta(path: string): Promise<GCSFile> {
+  private async _getMeta(path: string): Promise<GCSFile | undefined> {
     const name = encodeURIComponent(path);
-    const file = this.metaStore[name];
+    const file = this.metaCache[name];
     if (file) return file;
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
     const { data } = await this.authClient.request({ params: { alt: 'media' }, url });
-    this.metaStore[name] = data;
+    this.metaCache[name] = data;
     return data;
   }
 
   private _deleteMeta(path: string): Promise<any> {
     const name = encodeURIComponent(path);
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
-    delete this.metaStore[name];
+    delete this.metaCache[name];
     return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
   }
 

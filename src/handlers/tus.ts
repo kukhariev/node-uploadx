@@ -11,7 +11,7 @@ export function serializeMetadata(obj: Metadata): string {
     .toString();
 }
 
-export function parseMetadata(encoded: string): Metadata {
+export function parseMetadata(encoded = ''): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
   const metadata = Object.create(null);
   for (const [key, value] of kvPairs) {
@@ -76,6 +76,9 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const path = this.getPath(req);
     if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const metadataHeader = getHeader(req, 'upload-metadata');
+    const metadata = metadataHeader && parseMetadata(metadataHeader);
+    metadata && (await this.storage.update(path, { metadata, path }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
     const file = await this.storage.write({ start, path, body: req, contentLength });
