@@ -1,6 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { Logger, typeis, fail, ERRORS } from '../utils';
+import { Logger, typeis, fail, ERRORS, noop } from '../utils';
 import { File, FilePart, FileInit } from './file';
 export const DEFAULT_FILENAME = ({ userId, id }: Partial<File>): string =>
   userId ? `${userId}/${id || ''}` : `${id}`;
@@ -15,6 +15,8 @@ export interface BaseStorageOptions {
   /** Storage filename function */
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
+
+  onComplete?: (file: File) => void;
   path?: string;
 }
 
@@ -22,12 +24,14 @@ export type ValidatorFn = (file: File) => string | false;
 
 export abstract class BaseStorage {
   validators: Set<ValidatorFn> = new Set();
+  onComplete: (file: File) => void;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
 
   constructor(public config: BaseStorageOptions) {
     this.path = config.path ?? '/files';
+    this.onComplete = config.onComplete ?? noop;
     const fileTypeLimit: ValidatorFn = file =>
       !typeis.is(file.contentType, this.config.allowMIME) &&
       `Acceptable file types: ${this.config.allowMIME}`;

@@ -20,10 +20,12 @@ const express = require('express');
 const { uploadx } = require('node-uploadx');
 
 const app = express();
+const opts = {
+  directory: './files',
+  onComplete: file => console.log('Upload complete: ', file)
+};
 
-app.use(express.json());
-
-app.use('/upload/files', uploadx({ directory: './files' }));
+app.use('/upload/files', uploadx(opts));
 
 app.listen(3003);
 ```
@@ -63,10 +65,11 @@ Available options are:
 | `directory`      |     `string`     |   `"files"`   | _DiskStorage upload directory_  |
 | `bucket`         |     `string`     |               | _S3 or GCS bucket_              |
 | `path`           |     `string`     |  `"/files"`   | _Node http route path_          |
-| `filename`       |    `Function`    |               | _Filename function_             |
 | `allowMIME`      |    `string[]`    |   `["*\*"]`   | _Array of allowed MIME types_   |
 | `maxUploadSize`  | `string\|number` |               | _Limit allowed file size_       |
 | `useRelativeURL` |    `boolean`     |    `false`    | _Generate relative upload link_ |
+| `filename`       |    `Function`    |               | _Filename function_             |
+| `onComplete`     |    `Function`    |               | _Upload complete callback_      |
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 

@@ -3,7 +3,11 @@ const { multipart, S3Storage } = require('../dist');
 
 const app = express();
 
-const storage = new S3Storage({ bucket: 'node-uploadx' });
+function onComplete(file) {
+  console.log('File upload complete: ', file);
+}
+
+const storage = new S3Storage({ bucket: 'node-uploadx', onComplete });
 
 app.use('/files', multipart({ storage }));
 

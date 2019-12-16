@@ -4,7 +4,7 @@ import { DiskStorage, File, Multipart, Uploadx } from '../src';
 
 const app = express();
 
-const onFileUploadComplete = ({ path, filename }: File): void => {
+const onComplete = ({ path, filename }: File): void => {
   const srcpath = `upload/${path}`;
   const dstpath = `files/${filename}`;
   try {
@@ -19,8 +19,8 @@ const onFileUploadComplete = ({ path, filename }: File): void => {
 const storage = new DiskStorage({ allowMIME: ['video/*', 'image/*'], directory: 'upload' });
 const uploadx = new Uploadx({ storage });
 const multipart = new Multipart({ storage });
-uploadx.on('completed', onFileUploadComplete);
-multipart.on('completed', onFileUploadComplete);
+uploadx.on('completed', onComplete);
+multipart.on('completed', onComplete);
 
 app.use('/files', express.static('files'));
 app.use('/upload/files', uploadx.handle);

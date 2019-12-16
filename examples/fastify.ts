@@ -8,7 +8,7 @@ uploadx.on('completed', ({ path, filename }) =>
   fastify.log.info(`upload complete, path: ${join('files', path)}, original filename: ${filename}`)
 );
 
-fastify.use('/upload', uploadx.handle);
+fastify.use('/upload/files', uploadx.handle);
 
 fastify.listen(3003, (err, address) => {
   if (err) throw err;
