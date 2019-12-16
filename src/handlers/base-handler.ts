@@ -54,9 +54,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.path);
-            file.status === 'completed' &&
-              this.storage.config.onComplete &&
-              this.storage.config.onComplete(file);
+            file.status === 'completed' && this.storage.onComplete(file);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
           }
