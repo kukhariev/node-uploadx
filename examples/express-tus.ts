@@ -1,12 +1,13 @@
 import * as express from 'express';
-import { tus, File } from '../src';
+import { DiskStorageOptions, tus } from '../src';
 
 const app = express();
 
-const onComplete = (file: File) => {
-  console.log('File upload complete: ', file);
+const opts: DiskStorageOptions = {
+  onComplete: file => {
+    console.log('File upload complete: ', file);
+  }
 };
-const opts = { onComplete };
 
 app.use('/files', [express.static('files'), tus(opts)]);
 

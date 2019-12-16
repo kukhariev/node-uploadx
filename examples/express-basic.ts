@@ -1,11 +1,13 @@
 import * as express from 'express';
-import { multipart, uploadx } from '../src';
+import { multipart, uploadx, DiskStorageOptions } from '../src';
 
 const app = express();
-const onComplete = file => {
-  console.log('File upload complete: ', file);
+
+const opts: DiskStorageOptions = {
+  onComplete: file => {
+    console.log('File upload complete: ', file);
+  }
 };
-const opts = { onComplete };
 
 app.use('/files', express.static('files'));
 
