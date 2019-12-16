@@ -3,7 +3,11 @@ import { uploadx, GCStorage } from '../src';
 
 const app = express();
 
-const storage = new GCStorage();
+const onComplete = file => {
+  console.log('File upload complete: ', file);
+};
+
+const storage = new GCStorage({ onComplete });
 
 app.use('/upload/files', uploadx({ storage }));
 

@@ -15,6 +15,8 @@ export interface BaseStorageOptions {
   /** Storage filename function */
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
+
+  onComplete?: (file: File) => any;
   path?: string;
 }
 
