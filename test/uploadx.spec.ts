@@ -22,8 +22,8 @@ describe('::Uploadx', function() {
     res = undefined as any;
   });
 
-  after(function() {
-    storage.delete(userId);
+  after(async function() {
+    await storage.delete(userId);
   });
 
   describe('POST', function() {

@@ -43,8 +43,8 @@ describe('::Multipart', function() {
       expect(res).to.have.status(403);
     });
 
-    after(function() {
-      storage.delete(userId);
+    after(async function() {
+      await storage.delete(userId);
     });
   });
 });

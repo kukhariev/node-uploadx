@@ -45,7 +45,7 @@ describe('::Tus', function() {
     });
   });
 
-  after(function() {
-    storage.delete(userId);
+  after(async function() {
+    await storage.delete(userId);
   });
 });
