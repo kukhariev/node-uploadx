@@ -81,7 +81,7 @@ export class GCStorage extends BaseStorage {
       body: JSON.stringify({ metadata: file.metadata }),
       headers,
       method: 'POST',
-      params: { name: name, size: file.size, uploadType: 'resumable' },
+      params: { name, size: file.size, uploadType: 'resumable' },
       url: this.uploadBaseURI
     });
 
@@ -110,10 +110,10 @@ export class GCStorage extends BaseStorage {
   }
 
   async delete(name: string): Promise<File[]> {
-    const file = await this._getMeta(name).catch(noop);
+    const file: GCSFile = await this._getMeta(name).catch(noop);
     if (file) {
-      await this.authClient.request({ method: 'DELETE', url: file.uploadURI, validateStatus });
-      await this._deleteMeta(file.path);
+      await this.authClient.request({ method: 'DELETE', url: file.GCSUploadURI, validateStatus });
+      await this._deleteMeta(file.name);
       return [file];
     }
     return [{ name } as File];
