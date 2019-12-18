@@ -74,14 +74,14 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
-    metadata && (await this.storage.update(path, { metadata, path }));
+    metadata && (await this.storage.update(name, { metadata, name }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
-    const file = await this.storage.write({ start, path, body: req, contentLength });
+    const file = await this.storage.write({ start, name, body: req, contentLength });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Tus-Resumable': '1.0.0'
@@ -92,9 +92,9 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   }
 
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const file = await this.storage.write({ path });
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const file = await this.storage.write({ name: name });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata),
@@ -108,9 +108,9 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
    * Delete upload by id
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(path);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': '1.0.0' };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';

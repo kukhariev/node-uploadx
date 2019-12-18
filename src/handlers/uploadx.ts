@@ -44,10 +44,10 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   }
 
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
-    const file = await this.storage.update(path, { metadata, path });
+    const file = await this.storage.update(name, { metadata, name });
     this.send({ res, body: file });
     return file;
   }
@@ -56,12 +56,12 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Write chunk to file or/and return chunk offset
    */
   async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
     const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
-    const file = await this.storage.write({ start, path, contentLength, body: req });
+    const file = await this.storage.write({ start, name, contentLength, body: req });
     if (file.bytesWritten < file.size) {
       const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
@@ -78,18 +78,19 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
    * Delete upload by id
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(path);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(name);
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;
   }
 
-  getPath(req: http.IncomingMessage): string {
+  getName(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
     if (query.upload_id) return query.upload_id as string;
-    return super.getPath(req);
+    if (query.name) return query.name as string;
+    return super.getName(req);
   }
 
   /**
@@ -101,7 +102,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
     // eslint-disable-next-line @typescript-eslint/camelcase
-    query.upload_id = file.path;
+    query.upload_id = file.name;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return baseUrl ? `${baseUrl}${path}` : `${path}`;

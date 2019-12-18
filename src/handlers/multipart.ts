@@ -24,14 +24,14 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
       form.on('error', error => reject(error));
       form.on('part', (part: multiparty.Part) => {
         config.size = part.byteCount;
-        config.filename = part.filename;
+        config.originalName = part.filename;
         config.contentType = part.headers['content-type'];
         config.userId = this.getUserId(req);
 
         this.storage
           .create(req, config)
-          .then(({ path }) =>
-            this.storage.write({ start: 0, contentLength: part.byteCount, body: part, path })
+          .then(({ name }) =>
+            this.storage.write({ start: 0, contentLength: part.byteCount, body: part, name })
           )
           .then(file => {
             file.status = 'completed';
@@ -53,9 +53,9 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
    * Delete upload by id
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    const path = this.getPath(req);
-    if (!path) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(path);
+    const name = this.getName(req);
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(name);
     this.send({ res, statusCode: 204 });
     file.status = 'deleted';
     return file;

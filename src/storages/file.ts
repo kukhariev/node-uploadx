@@ -2,14 +2,14 @@ import { Readable } from 'stream';
 import { uid, md5 } from '../utils';
 
 const generateFileId = (file: File): string => {
-  const { filename, size, userId, metadata } = file;
+  const { originalName, size, userId, metadata } = file;
   return metadata.lastModified
-    ? md5([filename, size, metadata.lastModified, userId || ''].join('-'))
+    ? md5([originalName, size, metadata.lastModified, userId || ''].join('-'))
     : uid();
 };
 export interface FileInit {
   contentType?: string;
-  filename?: string;
+  originalName?: string;
   metadata?: Metadata;
   size?: number | string;
   userId?: string;
@@ -17,10 +17,10 @@ export interface FileInit {
 export class File implements FileInit {
   bytesWritten = 0;
   contentType: string;
-  filename: string;
+  originalName: string;
   id = '';
   metadata: Metadata;
-  path = '';
+  name = '';
   size: number;
   status?: 'created' | 'completed' | 'deleted' | 'part';
   uri = '';
@@ -28,12 +28,23 @@ export class File implements FileInit {
 
   constructor(opts: FileInit) {
     this.metadata = opts.metadata || {};
-    const { title, filename, name, type, mimeType, contentType, filetype, size } = this.metadata;
+    const {
+      title,
+      originalName,
+      filename,
+      name,
+      type,
+      mimeType,
+      contentType,
+      filetype,
+      size
+    } = this.metadata;
+    this.originalName =
+      opts.originalName || name || title || originalName || filename || (this.id = uid());
     this.contentType =
       opts.contentType || contentType || mimeType || type || filetype || 'application/octet-stream';
     this.size = Number(opts.size || size) || 0;
     this.userId = opts.userId || null;
-    this.filename = opts.filename || name || title || filename || (this.id = uid());
     this.id = this.id || generateFileId(this);
   }
 }
@@ -41,7 +52,7 @@ export class File implements FileInit {
 export interface FilePart {
   body?: Readable;
   contentLength?: number;
-  path: string;
+  name: string;
   size?: number;
   start?: number;
 }

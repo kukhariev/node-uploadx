@@ -9,9 +9,9 @@ import { testfile } from './testfile';
 describe('DiskStorage', function() {
   const options: DiskStorageOptions = {
     directory: uploadDir,
-    filename: file => `${file.userId}/${file.filename}`
+    filename: file => `${file.userId}/${file.originalName}`
   };
-  const name = join(userId, testfile.filename);
+  const name = join(userId, testfile.originalName);
   const dstpath = join(uploadDir, name);
   const storage = new DiskStorage(options);
 
@@ -24,7 +24,7 @@ describe('DiskStorage', function() {
   });
 
   it('should create file', async function() {
-    const { path } = await storage.create({} as any, testfile);
+    const { name: path } = await storage.create({} as any, testfile);
     expect(normalize(path)).to.be.eq(name);
     expect(fs.statSync(dstpath).size).to.be.eql(0);
   });
@@ -42,7 +42,7 @@ describe('DiskStorage', function() {
 
   it('should delete file', async function() {
     const [file] = await storage.delete(name);
-    expect(file.path).to.be.eq(name);
+    expect(file.name).to.be.eq(name);
   });
 
   it('should reset user storage', async function() {

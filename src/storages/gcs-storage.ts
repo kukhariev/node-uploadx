@@ -68,8 +68,8 @@ export class GCStorage extends BaseStorage {
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
     const file = new GCSFile(config);
     await this.validate(file);
-    const path = this._getFileName(file);
-    const existing = await this._getMeta(path).catch(noop);
+    const name = this._getFileName(file);
+    const existing = await this._getMeta(name).catch(noop);
     if (existing) return existing;
 
     const origin = getHeader(req, 'origin');
@@ -81,11 +81,11 @@ export class GCStorage extends BaseStorage {
       body: JSON.stringify({ metadata: file.metadata }),
       headers,
       method: 'POST',
-      params: { name: path, size: file.size, uploadType: 'resumable' },
+      params: { name: name, size: file.size, uploadType: 'resumable' },
       url: this.uploadBaseURI
     });
 
-    file.path = path;
+    file.name = name;
     file.uri = res.headers.location;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = res.headers.location;
@@ -93,30 +93,30 @@ export class GCStorage extends BaseStorage {
       file.status = 'created';
       return file;
     }
-    await this._saveMeta(path, file);
+    await this._saveMeta(name, file);
     file.status = 'created';
     return file;
   }
 
   async write(part: FilePart): Promise<File> {
-    const file = await this._getMeta(part.path);
+    const file = await this._getMeta(part.name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.bytesWritten = await this._write({ ...file, ...part });
     if (file.status === 'deleted' || file.bytesWritten === file.size) {
-      await this._deleteMeta(file.path);
-      file.uri = `${this.storageBaseURI}/${file.path}`;
+      await this._deleteMeta(file.name);
+      file.uri = `${this.storageBaseURI}/${file.name}`;
     }
     return file;
   }
 
-  async delete(path: string): Promise<File[]> {
-    const file = await this._getMeta(path).catch(noop);
+  async delete(name: string): Promise<File[]> {
+    const file = await this._getMeta(name).catch(noop);
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uploadURI, validateStatus });
       await this._deleteMeta(file.path);
       return [file];
     }
-    return [{ path } as File];
+    return [{ name } as File];
   }
 
   async get(prefix: string): Promise<File[]> {
@@ -127,11 +127,11 @@ export class GCStorage extends BaseStorage {
     return [data] as any;
   }
 
-  async update(path: string, { metadata }: Partial<File>): Promise<File> {
-    const file = await this._getMeta(path);
+  async update(name: string, { metadata }: Partial<File>): Promise<File> {
+    const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     Object.assign(file.metadata, metadata);
-    await this._saveMeta(file.path, file);
+    await this._saveMeta(file.name, file);
     return file;
   }
 
@@ -166,14 +166,14 @@ export class GCStorage extends BaseStorage {
     }
   }
 
-  private _saveMeta(path: string, file: GCSFile): Promise<any> {
-    const name = encodeURIComponent(path);
-    this.metaCache[name] = file;
+  private _saveMeta(name: string, file: GCSFile): Promise<any> {
+    const id = encodeURIComponent(name);
+    this.metaCache[id] = file;
     return this.authClient.request({
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       method: 'POST',
-      params: { name: `${file.path}${METAFILE_EXTNAME}`, uploadType: 'media' },
+      params: { name: `${file.name}${METAFILE_EXTNAME}`, uploadType: 'media' },
       url: this.uploadBaseURI
     });
   }

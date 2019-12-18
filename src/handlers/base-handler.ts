@@ -53,7 +53,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .call(this, req, res)
         .then((file: File | File[]) => {
           if ('status' in file && file.status) {
-            this.log('[%s]: %s', file.status, file.path);
+            this.log('[%s]: %s', file.status, file.name);
             file.status === 'completed' && this.storage.onComplete(file);
             this.listenerCount(file.status) && this.emit(file.status, file);
             return;
@@ -88,8 +88,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    * `GET` request handler
    */
   async get(req: http.IncomingMessage): Promise<File[]> {
-    const path = this.getPath(req);
-    const files = await this.storage.get(path);
+    const name = this.getName(req);
+    const files = await this.storage.get(name);
     return files;
   }
 
@@ -132,7 +132,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Get id from request
    */
-  getPath(req: http.IncomingMessage): string {
+  getName(req: http.IncomingMessage): string {
     const { pathname } = url.parse(req.url as string);
     const path = (req as any)['originalUrl']
       ? `/${pathname}`.replace('//', '')
@@ -146,7 +146,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname, query } = url.parse(originalUrl, true);
-    const path = url.format({ pathname: `${pathname}/${file.path}`, query });
+    const path = url.format({ pathname: `${pathname}/${file.name}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
   }
