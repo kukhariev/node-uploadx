@@ -166,9 +166,9 @@ export class GCStorage extends BaseStorage {
     }
   }
 
-  private _saveMeta(name: string, file: GCSFile): Promise<any> {
-    const id = encodeURIComponent(name);
-    this.metaCache[id] = file;
+  private _saveMeta(path: string, file: GCSFile): Promise<any> {
+    const name = encodeURIComponent(path);
+    this.metaCache[name] = file;
     return this.authClient.request({
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
