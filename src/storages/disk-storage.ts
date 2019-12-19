@@ -38,11 +38,11 @@ export class DiskStorage extends BaseStorage {
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
     const file = new DiskFile(config);
     await this.validate(file);
-    file.path = this._getFileName(file);
+    file.name = this._getFileName(file);
     file.timestamp = new Date().getTime();
-    const path = this.fullPath(file.path);
+    const path = this.fullPath(file.name);
     file.bytesWritten = await ensureFile(path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
-    await this._saveMeta(file.path, file);
+    await this._saveMeta(file.name, file);
     file.status = 'created';
     return file;
   }
@@ -51,15 +51,15 @@ export class DiskStorage extends BaseStorage {
    * Write chunks
    */
   async write(chunk: FilePart): Promise<File> {
-    const { start, path, body } = chunk;
-    const file = await this._getMeta(path || '');
+    const { start, name, body } = chunk;
+    const file = await this._getMeta(name || '');
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     try {
       if (!start || !body) {
-        file.bytesWritten = await ensureFile(this.fullPath(file.path));
+        file.bytesWritten = await ensureFile(this.fullPath(file.name));
         if (start !== 0 || file.bytesWritten > 0 || !body) return file;
       }
-      file.bytesWritten = await this._write(body, this.fullPath(file.path), start);
+      file.bytesWritten = await this._write(body, this.fullPath(file.name), start);
       return file;
     } catch (ex) {
       return fail(ERRORS.FILE_ERROR, ex);
@@ -71,31 +71,31 @@ export class DiskStorage extends BaseStorage {
     const list = (await getFiles(join(this.directory, prefix))).filter(
       filename => extname(filename) !== METAFILE_EXTNAME
     );
-    for (const path of list) {
-      const file = await this._getMeta(path);
+    for (const name of list) {
+      const file = await this._getMeta(name);
       file && find.push(file);
     }
     return find;
   }
 
-  async delete(path: string): Promise<File[]> {
-    const files = await this.get(path);
+  async delete(name: string): Promise<File[]> {
+    const files = await this.get(name);
     const deleted = [];
     for (const file of files) {
       try {
-        await this._deleteMeta(file.path);
-        await fsp.unlink(this.fullPath(file.path));
+        await this._deleteMeta(file.name);
+        await fsp.unlink(this.fullPath(file.name));
         deleted.push(file);
       } catch {}
     }
-    return files.length ? deleted : [{ path } as File];
+    return files.length ? deleted : [{ name } as File];
   }
 
-  async update(path: string, { metadata }: Partial<File>): Promise<File> {
-    const file = await this._getMeta(path);
+  async update(name: string, { metadata }: Partial<File>): Promise<File> {
+    const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     Object.assign(file.metadata, metadata);
-    await this._saveMeta(file.path, file);
+    await this._saveMeta(file.name, file);
     return file;
   }
 
@@ -111,25 +111,25 @@ export class DiskStorage extends BaseStorage {
     });
   }
 
-  private async _saveMeta(path: string, file: DiskFile): Promise<any> {
-    await fsp.writeFile(this.fullPath(path) + METAFILE_EXTNAME, JSON.stringify(file, null, 2));
+  private async _saveMeta(name: string, file: DiskFile): Promise<any> {
+    await fsp.writeFile(this.fullPath(name) + METAFILE_EXTNAME, JSON.stringify(file, null, 2));
     return;
   }
 
-  private async _deleteMeta(path: string): Promise<any> {
-    await fsp.unlink(this.fullPath(path) + METAFILE_EXTNAME);
+  private async _deleteMeta(name: string): Promise<any> {
+    await fsp.unlink(this.fullPath(name) + METAFILE_EXTNAME);
     return;
   }
 
-  private async _getMeta(path: string): Promise<File | undefined> {
+  private async _getMeta(name: string): Promise<File | undefined> {
     try {
-      const data = await fsp.readFile(this.fullPath(path) + METAFILE_EXTNAME);
+      const data = await fsp.readFile(this.fullPath(name) + METAFILE_EXTNAME);
       return JSON.parse(data.toString());
     } catch {}
     return;
   }
 
-  private fullPath(path: string): string {
-    return pathResolve(this.directory, path);
+  private fullPath(name: string): string {
+    return pathResolve(this.directory, name);
   }
 }

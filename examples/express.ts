@@ -4,9 +4,9 @@ import { DiskStorage, File, Multipart, Uploadx } from '../src';
 
 const app = express();
 
-const onComplete = ({ path, filename }: File): void => {
-  const srcpath = `upload/${path}`;
-  const dstpath = `files/${filename}`;
+const onComplete = ({ name, originalName }: File): void => {
+  const srcpath = `upload/${name}`;
+  const dstpath = `files/${originalName}`;
   try {
     mkdirSync('files', { recursive: true });
     linkSync(srcpath, dstpath);

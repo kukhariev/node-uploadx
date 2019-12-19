@@ -4,8 +4,10 @@ import { join } from 'path';
 
 const fastify = Fastify({ logger: true });
 const uploadx = new Uploadx({ directory: 'files' });
-uploadx.on('completed', ({ path, filename }) =>
-  fastify.log.info(`upload complete, path: ${join('files', path)}, original filename: ${filename}`)
+uploadx.on('completed', ({ name, originalName }) =>
+  fastify.log.info(
+    `upload complete, path: ${join('files', name)}, original filename: ${originalName}`
+  )
 );
 
 fastify.use('/upload/files', uploadx.handle);

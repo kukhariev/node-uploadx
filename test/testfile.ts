@@ -14,7 +14,7 @@ export const metadata = {
 export const testfile = ({
   id: 'vakumemhicocizvuwakebalupupukcen',
   userId,
-  filename: 'testfile.mp4',
+  originalName: 'testfile.mp4',
   size: stat.size,
   mimeType: 'video/mp4',
   metadata

@@ -14,7 +14,7 @@ const app = express();
 app.use(auth);
 export const storage = new DiskStorage({
   directory: `${uploadDir}`,
-  filename: file => `${file.userId}/${file.filename}`,
+  filename: file => `${file.userId}/${file.originalName}`,
   maxUploadSize: '6GB',
   allowMIME: ['video/*', 'image/*'],
   useRelativeLocation: true
