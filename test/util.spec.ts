@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as utils from '../src';
-import { getFiles } from '../src';
 const ROOT = `./upload/fs-test`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;
@@ -47,19 +46,39 @@ describe('typeis', function() {
   });
 });
 
+describe('getHeader', function() {
+  let req: any;
+  it('empty', function() {
+    const res = utils.getHeader(req, 'origin');
+    expect(res).to.be.eq('');
+  });
+
+  it('string', function() {
+    req = { headers: { head: 'value' } };
+    const res = utils.getHeader(req, 'head');
+    expect(res).to.be.eq('value');
+  });
+
+  it('array', function() {
+    req = { headers: { head: ['value1', 'value2'] } };
+    const res = utils.getHeader(req, 'head');
+    expect(res).to.be.eq('value1');
+  });
+});
+
 describe('getFiles', function() {
   it('file', async function() {
-    const files = await getFiles('test/testfile.mp4');
+    const files = await utils.getFiles('test/testfile.mp4');
     expect(files.length).to.be.eq(1);
   });
 
   it('directory', async function() {
-    const files = await getFiles('test');
+    const files = await utils.getFiles('test');
     expect(files.length).to.be.gt(1);
   });
 
   it('empty', async function() {
-    const files = await getFiles('test/notfinded');
+    const files = await utils.getFiles('test/notfinded');
     expect(files.length).to.be.eq(0);
   });
 });

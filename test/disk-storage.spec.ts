@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as fs from 'fs';
-import { join, normalize } from 'path';
+import { join } from 'path';
 import * as rimraf from 'rimraf';
 import { DiskStorage, DiskStorageOptions, File } from '../src';
 import { uploadDir, userId } from './server';
@@ -11,8 +11,8 @@ describe('DiskStorage', function() {
     directory: uploadDir,
     filename: file => `${file.userId}/${file.originalName}`
   };
-  const name = join(userId, testfile.originalName);
-  const dstpath = join(uploadDir, name);
+  const filename = join(userId, testfile.originalName);
+  const dstpath = join(uploadDir, filename);
   const storage = new DiskStorage(options);
 
   before(function() {
@@ -24,13 +24,12 @@ describe('DiskStorage', function() {
   });
 
   it('should create file', async function() {
-    const { name: path } = await storage.create({} as any, testfile);
-    expect(normalize(path)).to.be.eq(name);
+    await storage.create({} as any, testfile);
     expect(fs.statSync(dstpath).size).to.be.eql(0);
   });
 
   it('should update metadata', async function() {
-    const file = await storage.update(name, { metadata: { name: 'newname.mp4' } } as File);
+    const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
     expect(file.metadata.name).to.be.eq('newname.mp4');
     expect(file.metadata.mimeType).to.be.eq('video/mp4');
   });
@@ -41,8 +40,8 @@ describe('DiskStorage', function() {
   });
 
   it('should delete file', async function() {
-    const [file] = await storage.delete(name);
-    expect(file.name).to.be.eq(name);
+    const [file] = await storage.delete(filename);
+    expect(file.name).to.be.eq(filename);
   });
 
   it('should reset user storage', async function() {

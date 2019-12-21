@@ -11,11 +11,10 @@ export const metadata = {
   mimeType: 'video/mp4',
   lastModified: Math.round(stat.mtimeMs)
 };
-export const testfile = ({
-  id: 'vakumemhicocizvuwakebalupupukcen',
+export const testfile = {
   userId,
   originalName: 'testfile.mp4',
   size: stat.size,
-  mimeType: 'video/mp4',
+  contentType: 'video/mp4',
   metadata
-} as unknown) as File;
+} as File;

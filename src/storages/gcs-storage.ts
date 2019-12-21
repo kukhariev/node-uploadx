@@ -2,9 +2,8 @@ import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
-import { callbackify } from 'util';
 import { ERRORS, fail, getHeader, noop } from '../utils';
-import { File, FileInit, FilePart } from './file';
+import { File, FileInit, FilePart, extractOriginalName } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -56,13 +55,11 @@ export class GCStorage extends BaseStorage {
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
     this.authClient = new GoogleAuth(config);
-    const checkBucket = callbackify(this._checkBucket.bind(this));
-    checkBucket(bucketName, err => {
-      if (err) {
-        throw new Error(`Bucket code: ${err.code}`);
-      }
-      this.isReady = true;
-    });
+    this._checkBucket(bucketName)
+      .then(() => (this.isReady = true))
+      .catch(error => {
+        throw new Error(`Bucket code: ${error.code}`);
+      });
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
@@ -112,7 +109,7 @@ export class GCStorage extends BaseStorage {
   async delete(name: string): Promise<File[]> {
     const file: GCSFile = await this._getMeta(name).catch(noop);
     if (file) {
-      await this.authClient.request({ method: 'DELETE', url: file.GCSUploadURI, validateStatus });
+      await this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus });
       await this._deleteMeta(file.name);
       return [file];
     }
@@ -130,7 +127,8 @@ export class GCStorage extends BaseStorage {
   async update(name: string, { metadata }: Partial<File>): Promise<File> {
     const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
-    Object.assign(file.metadata, metadata);
+    file.metadata = { ...file.metadata, ...metadata };
+    file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file.name, file);
     return file;
   }
