@@ -1,7 +1,7 @@
 import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
-import { File, FileInit, FilePart } from './file';
+import { extractOriginalName, File, FileInit, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -107,7 +107,8 @@ export class S3Storage extends BaseStorage {
   async update(name: string, { metadata }: Partial<File>): Promise<File> {
     const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
-    Object.assign(file.metadata, metadata);
+    file.metadata = { ...file.metadata, ...metadata };
+    file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file.name, file);
     return file;
   }

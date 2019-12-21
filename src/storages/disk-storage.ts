@@ -3,7 +3,7 @@ import * as http from 'http';
 import { extname, join, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
-import { File, FileInit, FilePart } from './file';
+import { extractOriginalName, File, FileInit, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {
@@ -94,7 +94,8 @@ export class DiskStorage extends BaseStorage {
   async update(name: string, { metadata }: Partial<File>): Promise<File> {
     const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
-    Object.assign(file.metadata, metadata);
+    file.metadata = { ...file.metadata, ...metadata };
+    file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file.name, file);
     return file;
   }

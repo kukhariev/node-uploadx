@@ -38,7 +38,7 @@ export async function getJsonBody(req: http.IncomingMessage): Promise<Record<str
 }
 
 export function getHeader(req: http.IncomingMessage, name: string): string {
-  const raw = req.headers[name.toLowerCase()];
+  const raw = req?.headers?.[name.toLowerCase()];
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
