@@ -4,7 +4,7 @@ import * as http from 'http';
 import request from 'node-fetch';
 import { ERRORS, fail, getHeader, noop } from '../utils';
 import { File, FileInit, FilePart, extractOriginalName } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
+import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -43,7 +43,6 @@ export class GCStorage extends BaseStorage {
 
   storageBaseURI: string;
   uploadBaseURI: string;
-  private _getFileName: (file: Partial<File>) => string;
   private metaCache: Record<string, GCSFile> = {};
 
   constructor(public config: GCStorageOptions = {}) {
@@ -51,7 +50,6 @@ export class GCStorage extends BaseStorage {
     config.scopes = config.scopes || authScopes;
     config.keyFile = config.keyFile || process.env.GCS_KEYFILE;
     const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
-    this._getFileName = config.filename || DEFAULT_FILENAME;
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
     this.authClient = new GoogleAuth(config);
@@ -65,7 +63,7 @@ export class GCStorage extends BaseStorage {
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
     const file = new GCSFile(config);
     await this.validate(file);
-    const name = this._getFileName(file);
+    const name = this.namingFunction(file);
     const existing = await this._getMeta(name).catch(noop);
     if (existing) return existing;
 

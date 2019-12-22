@@ -3,6 +3,12 @@ import { linkSync, mkdirSync } from 'fs';
 import { DiskStorage, File, Multipart, Uploadx } from '../src';
 
 const app = express();
+const auth: express.Handler = (req, res, next) => {
+  (req as any).user = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
+  next();
+};
+
+app.use(auth);
 
 const onComplete = ({ name, originalName }: File): void => {
   const srcpath = `upload/${name}`;

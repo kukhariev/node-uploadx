@@ -1,9 +1,7 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { Logger, typeis, fail, ERRORS, noop } from '../utils';
-import { File, FilePart, FileInit } from './file';
-export const DEFAULT_FILENAME = ({ userId, id }: Partial<File>): string =>
-  userId ? `${userId}/${id || ''}` : `${id}`;
+import { ERRORS, fail, Logger, typeis } from '../utils';
+import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
@@ -12,34 +10,44 @@ export interface BaseStorageOptions {
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
-  /** Storage filename function */
+  /** Filename generator function */
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
-
+  /** Completed callback */
   onComplete?: (file: File) => void;
+  /** Node http base path */
   path?: string;
 }
 
-export type ValidatorFn = (file: File) => string | false;
+const defaultOptions: Required<BaseStorageOptions> = {
+  allowMIME: ['*/*'],
+  maxUploadSize: '50GB',
+  filename: ({ userId, id }: Partial<File>): string => [userId, id].filter(Boolean).join('-'),
+  useRelativeLocation: false,
+  onComplete: () => undefined,
+  path: '/files'
+};
+
+export type Validator = (file: File) => string | false;
 
 export abstract class BaseStorage {
-  validators: Set<ValidatorFn> = new Set();
+  validators: Set<Validator> = new Set();
   onComplete: (file: File) => void;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
-
+  protected namingFunction: (file: Partial<File>) => string;
   constructor(public config: BaseStorageOptions) {
-    this.path = config.path ?? '/files';
-    this.onComplete = config.onComplete ?? noop;
-    const fileTypeLimit: ValidatorFn = file =>
-      !typeis.is(file.contentType, this.config.allowMIME) &&
-      `Acceptable file types: ${this.config.allowMIME}`;
-    const fileSizeLimit: ValidatorFn = file =>
-      file.size > bytes.parse(this.config.maxUploadSize || Number.MAX_SAFE_INTEGER) &&
-      `File size limit: ${this.config.maxUploadSize}`;
-    this.config.allowMIME && this.validators.add(fileTypeLimit);
-    this.config.maxUploadSize && this.validators.add(fileSizeLimit);
+    const opts: Required<BaseStorageOptions> = { ...defaultOptions, ...config };
+    this.path = opts.path;
+    this.onComplete = opts.onComplete;
+    this.namingFunction = opts.filename;
+    const fileTypeLimit: Validator = file =>
+      !typeis.is(file.contentType, opts.allowMIME) && `Acceptable file types: ${opts.allowMIME}`;
+    const fileSizeLimit: Validator = file =>
+      file.size > bytes.parse(opts.maxUploadSize) && `File size limit: ${opts.maxUploadSize}`;
+    this.validators.add(fileTypeLimit);
+    this.validators.add(fileSizeLimit);
   }
 
   async validate(file: File): Promise<any> {

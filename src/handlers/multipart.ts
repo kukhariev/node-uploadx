@@ -13,7 +13,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
     this.log('options: %o', config);
   }
 
-  post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     return new Promise((resolve, reject) => {
       req.on('error', error => reject(error));
       const form = new multiparty.Form();

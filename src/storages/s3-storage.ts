@@ -2,7 +2,7 @@ import { S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
+import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -36,11 +36,8 @@ export class S3Storage extends BaseStorage {
   client: S3;
   private metaCache: Record<string, S3File> = {};
 
-  private _getFileName: (file: Partial<File>) => string;
-
   constructor(public config: S3StorageOptions) {
     super(config);
-    this._getFileName = config.filename || DEFAULT_FILENAME;
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     this.client = new S3(config);
     this._checkBucket();
@@ -49,7 +46,7 @@ export class S3Storage extends BaseStorage {
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
     const file = new S3File(config);
     await this.validate(file);
-    const name = this._getFileName(file);
+    const name = this.namingFunction(file);
     const existing = this.metaCache[name] || (await this._getMeta(name).catch(noop));
     if (existing) return existing;
     const metadata = processMetadata(file.metadata, encodeURI);

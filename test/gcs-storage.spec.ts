@@ -1,3 +1,5 @@
+/* set GCS_BUCKET environment variable to enable this test */
+
 import { expect } from 'chai';
 import { File, GCStorage } from '../src';
 import { testfile } from './testfile';

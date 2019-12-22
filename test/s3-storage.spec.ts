@@ -1,3 +1,5 @@
+/* set S3_BUCKET environment variable to enable this test */
+
 import { expect } from 'chai';
 import { File, S3File, S3Storage } from '../src';
 import { testfile } from './testfile';
