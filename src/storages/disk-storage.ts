@@ -4,7 +4,7 @@ import { extname, join, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
-import { BaseStorage, BaseStorageOptions, DEFAULT_FILENAME, METAFILE_EXTNAME } from './storage';
+import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {
   timestamp?: number;
@@ -23,12 +23,9 @@ export interface DiskStorageOptions extends BaseStorageOptions {
 export class DiskStorage extends BaseStorage {
   directory: string;
 
-  private _getFileName: (file: Partial<File>) => string;
-
   constructor(public config: DiskStorageOptions) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
-    this._getFileName = config.filename || DEFAULT_FILENAME;
     this.isReady = true;
   }
 
@@ -38,7 +35,7 @@ export class DiskStorage extends BaseStorage {
   async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
     const file = new DiskFile(config);
     await this.validate(file);
-    file.name = this._getFileName(file);
+    file.name = this.namingFunction(file);
     file.timestamp = new Date().getTime();
     const path = this.fullPath(file.name);
     file.bytesWritten = await ensureFile(path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
