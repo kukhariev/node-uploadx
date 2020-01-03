@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "abort-controller": "3.0.0",
-    "aws-sdk": "2.596.0",
+    "aws-sdk": "2.597.0",
     "bytes": "3.1.0",
     "debug": "4.1.1",
     "google-auth-library": "5.7.0",
