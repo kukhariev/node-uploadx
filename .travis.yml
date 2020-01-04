@@ -1,12 +1,6 @@
-dist: trusty
 language: node_js
 node_js:
-- '10'
-before_script:
-- npm ci
-cache:
-  directories:
-  - "$HOME/.npm"
+  - '10'
 script:
-- npm test
-- npm run build
+  - npm test
+  - npm run build
