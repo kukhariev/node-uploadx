@@ -28,7 +28,7 @@
     "aws-sdk": "2.597.0",
     "bytes": "3.1.0",
     "debug": "4.1.1",
-    "google-auth-library": "5.7.0",
+    "google-auth-library": "5.8.0",
     "multiparty": "4.2.1",
     "node-fetch": "2.6.0"
   },
