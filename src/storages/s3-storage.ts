@@ -1,4 +1,4 @@
-import { S3 } from 'aws-sdk';
+import { S3, config as AWSConfig } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
@@ -18,6 +18,7 @@ export type S3StorageOptions = BaseStorageOptions &
      * @defaultValue 'node-uploadx'
      */
     bucket?: string;
+    keyFile?: string;
   };
 
 export function processMetadata(
@@ -39,6 +40,8 @@ export class S3Storage extends BaseStorage {
   constructor(public config: S3StorageOptions) {
     super(config);
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
+    const keyFile = config.keyFile || process.env.S3_KEYFILE;
+    keyFile && AWSConfig.loadFromPath(keyFile);
     this.client = new S3(config);
     this._checkBucket();
   }

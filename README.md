@@ -73,7 +73,7 @@ Available options are:
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 
-For AWS S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET` environment variable.
+For AWS S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET`, `S3_KEYFILE` environment variable.
 
 ## References
 
