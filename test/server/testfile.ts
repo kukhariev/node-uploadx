@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { File } from '../src/storages';
-import { userId } from './server';
+import { File } from '../../src/storages';
+import { userId } from '.';
 export const srcpath = join(__dirname, `testfile.mp4`);
 const stat = fs.statSync(srcpath);
 

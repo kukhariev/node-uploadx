@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { createRequest } from 'node-mocks-http';
 import { BaseHandler, BaseStorage } from '../src';
 
@@ -8,7 +7,7 @@ class TestUploader extends BaseHandler {
 
 describe('BaseHandler', function() {
   it('should create instance BaseHandler', function() {
-    expect(new TestUploader()).to.be.instanceOf(BaseHandler);
+    expect(new TestUploader()).toBeInstanceOf(BaseHandler);
   });
 
   describe('getPath(framework)', function() {
@@ -21,13 +20,11 @@ describe('BaseHandler', function() {
     });
 
     it('should return path', function() {
-      valid.forEach((url, i) =>
-        expect(uploader.getName(createRequest({ url }))).to.be.eq(paths[i])
-      );
+      valid.forEach((url, i) => expect(uploader.getName(createRequest({ url }))).toBe(paths[i]));
     });
 
     it('should return empty', function() {
-      invalid.forEach(url => expect(uploader.getName(createRequest({ url }))).to.be.empty);
+      invalid.forEach(url => expect(uploader.getName(createRequest({ url }))).toHaveLength(0));
     });
   });
 
@@ -42,11 +39,11 @@ describe('BaseHandler', function() {
     });
 
     it('should return path', function() {
-      valid.forEach((url, i) => expect(uploader.getName({ url } as any)).to.be.eq(paths[i]));
+      valid.forEach((url, i) => expect(uploader.getName({ url } as any)).toBe(paths[i]));
     });
 
     it('should return empty', function() {
-      invalid.forEach(url => expect(uploader.getName({ url } as any)).to.be.empty);
+      invalid.forEach(url => expect(uploader.getName({ url } as any)).toHaveLength(0));
     });
   });
 });

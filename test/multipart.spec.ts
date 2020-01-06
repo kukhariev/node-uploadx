@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import { app, storage, userId } from './server';
-import { metadata, srcpath } from './testfile';
+import { metadata, srcpath } from './server/testfile';
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -43,7 +43,7 @@ describe('::Multipart', function() {
       expect(res).to.have.status(403);
     });
 
-    after(async function() {
+    afterAll(async function() {
       await storage.delete(userId);
     });
   });

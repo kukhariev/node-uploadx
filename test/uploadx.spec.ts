@@ -2,8 +2,7 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { join } from 'path';
-import { app, storage, uploadDir, userId } from './server';
-import { metadata, srcpath } from './testfile';
+import { app, metadata, srcpath, storage, uploadDir, userId } from './server';
 import chaiHttp = require('chai-http');
 import rimraf = require('rimraf');
 chai.use(chaiHttp);
@@ -14,7 +13,7 @@ describe('::Uploadx', function() {
   let start: number;
   const files: string[] = [];
 
-  before(function() {
+  beforeAll(function() {
     rimraf.sync(uploadDir);
   });
 
@@ -22,7 +21,7 @@ describe('::Uploadx', function() {
     res = undefined as any;
   });
 
-  after(async function() {
+  afterAll(async function() {
     await storage.delete(userId);
   });
 
@@ -109,9 +108,7 @@ describe('::Uploadx', function() {
         start += chunk.length;
         if (res.status === 200) {
           expect(res).to.be.json;
-          expect(fs.statSync(join(uploadDir, userId, 'testfile.mp4')).size).to.be.eql(
-            metadata.size
-          );
+          expect(fs.statSync(join(uploadDir, userId, 'testfile.mp4')).size).equal(metadata.size);
           done();
         }
         readable.resume();
@@ -126,9 +123,7 @@ describe('::Uploadx', function() {
         .send(fs.readFileSync(srcpath));
       expect(res).to.be.json;
       expect(res).to.have.status(200);
-      expect(fs.statSync(join(uploadDir, userId, 'testfileSingle.mp4')).size).to.be.eql(
-        metadata.size
-      );
+      expect(fs.statSync(join(uploadDir, userId, 'testfileSingle.mp4')).size).equal(metadata.size);
     });
 
     it('should 404 (no id)', async function() {
