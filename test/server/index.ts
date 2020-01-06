@@ -2,7 +2,7 @@
 process.argv.includes('--log') && (process.env.DEBUG = 'uploadx:*');
 
 import * as express from 'express';
-import { DiskStorage, Multipart, Tus, Uploadx } from '../src';
+import { DiskStorage, Multipart, Tus, Uploadx } from '../../src';
 export const userId = 'userId';
 export const uploadDir = `files`;
 const auth: express.RequestHandler = (req, res, next): void => {
@@ -48,3 +48,5 @@ if (!module.parent) {
     console.log('listening on port:', 3003);
   });
 }
+
+export * from './testfile';

@@ -1,8 +1,0 @@
-{
-  "diff": true,
-  "extension": ["ts"],
-  "slow": 75,
-  "timeout": 5000,
-  "ui": "bdd",
-  "require": "ts-node/register"
-}

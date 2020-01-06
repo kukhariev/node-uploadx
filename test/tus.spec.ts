@@ -2,8 +2,7 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { serializeMetadata } from '../src/handlers/tus';
-import { app, storage, userId } from './server';
-import { metadata, srcpath } from './testfile';
+import { app, metadata, srcpath, storage, userId } from './server';
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -45,7 +44,7 @@ describe('::Tus', function() {
     });
   });
 
-  after(async function() {
+  afterAll(async function() {
     await storage.delete(userId);
   });
 });

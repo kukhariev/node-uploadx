@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as utils from '../src';
@@ -10,20 +9,18 @@ describe('fs ensure*', function() {
   beforeEach(function() {
     rimraf.sync(ROOT);
   });
-
+  afterAll(function() {
+    rimraf.sync(ROOT);
+  });
   it('should create directory `ensureDir()`', async function() {
     await utils.ensureDir(DIR);
-    expect(fs.existsSync(DIR)).to.be.true;
+    expect(fs.existsSync(DIR)).toBe(true);
   });
 
   it('should create file or/end return size `ensureFile()`', async function() {
     const size = await utils.ensureFile(FILE);
-    expect(fs.existsSync(FILE)).to.be.true;
-    expect(size).to.be.equal(0);
-  });
-
-  after(function() {
-    rimraf.sync(ROOT);
+    expect(fs.existsSync(FILE)).toBe(true);
+    expect(size).toBe(0);
   });
 });
 
@@ -32,17 +29,17 @@ describe('typeis', function() {
   const headers = { headers: { 'content-type': mime } } as any;
 
   it('typeis()', function() {
-    expect(utils.typeis({ headers: {} } as any, ['json'])).to.be.false;
-    expect(utils.typeis(headers, ['html'])).to.be.false;
-    expect(utils.typeis(headers, ['json'])).to.be.equal(mime);
+    expect(utils.typeis({ headers: {} } as any, ['json'])).toBe(false);
+    expect(utils.typeis(headers, ['html'])).toBe(false);
+    expect(utils.typeis(headers, ['json'])).toBe(mime);
   });
 
   it('typeis.is()', function() {
-    expect(utils.typeis.is(mime, ['application/vnd+json'])).to.be.equal(mime);
-    expect(utils.typeis.is(mime, ['vnd+json'])).to.be.equal(mime);
-    expect(utils.typeis.is(mime, ['application/*'])).to.be.equal(mime);
-    expect(utils.typeis.is(mime, ['json', 'xml'])).to.be.equal(mime);
-    expect(utils.typeis.is(mime, ['*/*'])).to.be.equal(mime);
+    expect(utils.typeis.is(mime, ['application/vnd+json'])).toBe(mime);
+    expect(utils.typeis.is(mime, ['vnd+json'])).toBe(mime);
+    expect(utils.typeis.is(mime, ['application/*'])).toBe(mime);
+    expect(utils.typeis.is(mime, ['json', 'xml'])).toBe(mime);
+    expect(utils.typeis.is(mime, ['*/*'])).toBe(mime);
   });
 });
 
@@ -50,35 +47,35 @@ describe('getHeader', function() {
   let req: any;
   it('empty', function() {
     const res = utils.getHeader(req, 'origin');
-    expect(res).to.be.eq('');
+    expect(res).toBe('');
   });
 
   it('string', function() {
     req = { headers: { head: 'value' } };
     const res = utils.getHeader(req, 'head');
-    expect(res).to.be.eq('value');
+    expect(res).toBe('value');
   });
 
   it('array', function() {
     req = { headers: { head: ['value1', 'value2'] } };
     const res = utils.getHeader(req, 'head');
-    expect(res).to.be.eq('value1');
+    expect(res).toBe('value1');
   });
 });
 
 describe('getFiles', function() {
   it('file', async function() {
-    const files = await utils.getFiles('test/testfile.mp4');
-    expect(files.length).to.be.eq(1);
+    const files = await utils.getFiles('test/server/testfile.mp4');
+    expect(files.length).toBe(1);
   });
 
   it('directory', async function() {
-    const files = await utils.getFiles('test');
-    expect(files.length).to.be.gt(1);
+    const files = await utils.getFiles('test/server');
+    expect(files.length).toBeGreaterThan(1);
   });
 
   it('empty', async function() {
-    const files = await utils.getFiles('test/notfinded');
-    expect(files.length).to.be.eq(0);
+    const files = await utils.getFiles('test/notfound');
+    expect(files.length).toBe(0);
   });
 });
