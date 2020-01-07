@@ -5,15 +5,15 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe('::Multipart', function() {
+describe('::Multipart', () => {
   let res: ChaiHttp.Response;
 
-  beforeEach(function() {
+  beforeEach(() => {
     res = undefined as any;
   });
 
-  describe('POST', function() {
-    it('should 201 (no metadata)', async function() {
+  describe('POST', () => {
+    it('should 201 (no metadata)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -23,7 +23,7 @@ describe('::Multipart', function() {
       expect(res).to.have.header('location');
     });
 
-    it('should 201 (metadata)', async function() {
+    it('should 201 (metadata)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -34,7 +34,7 @@ describe('::Multipart', function() {
       expect(res).to.have.header('location');
     });
 
-    it('should 403 (unsupported filetype)', async function() {
+    it('should 403 (unsupported filetype)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -43,7 +43,7 @@ describe('::Multipart', function() {
       expect(res).to.have.status(403);
     });
 
-    afterAll(async function() {
+    afterAll(async () => {
       await storage.delete(userId);
     });
   });

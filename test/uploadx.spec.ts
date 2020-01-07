@@ -8,25 +8,25 @@ import rimraf = require('rimraf');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe('::Uploadx', function() {
+describe('::Uploadx', () => {
   let res: ChaiHttp.Response;
   let start: number;
   const files: string[] = [];
 
-  beforeAll(function() {
+  beforeAll(() => {
     rimraf.sync(uploadDir);
   });
 
-  beforeEach(function() {
+  beforeEach(() => {
     res = undefined as any;
   });
 
-  afterAll(async function() {
+  afterAll(async () => {
     await storage.delete(userId);
   });
 
-  describe('POST', function() {
-    it('should 403 (size limit)', async function() {
+  describe('POST', () => {
+    it('should 403 (size limit)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -38,7 +38,7 @@ describe('::Uploadx', function() {
       expect(res).to.not.have.header('location');
     });
 
-    it('should 403 (unsupported filetype)', async function() {
+    it('should 403 (unsupported filetype)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -50,7 +50,7 @@ describe('::Uploadx', function() {
       expect(res).to.not.have.header('location');
     });
 
-    it('should 400 (bad request)', async function() {
+    it('should 400 (bad request)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -58,7 +58,7 @@ describe('::Uploadx', function() {
       expect(res).to.have.status(400);
     });
 
-    it('should 201 (x-upload-content)', async function() {
+    it('should 201 (x-upload-content)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -70,7 +70,7 @@ describe('::Uploadx', function() {
       files.push(res.header.location);
     });
 
-    it('should 201 (metadata)', async function() {
+    it('should 201 (metadata)', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -81,8 +81,8 @@ describe('::Uploadx', function() {
     });
   });
 
-  describe('PATCH', function() {
-    it('update metadata', async function() {
+  describe('PATCH', () => {
+    it('update metadata', async () => {
       res = await chai
         .request(app)
         .patch(files[1])
@@ -91,8 +91,8 @@ describe('::Uploadx', function() {
     });
   });
 
-  describe('PUT', function() {
-    it('should 200 (chunks)', function(done) {
+  describe('PUT', () => {
+    it('should 200 (chunks)', done => {
       start = 0;
       const readable = fs.createReadStream(srcpath);
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -115,7 +115,7 @@ describe('::Uploadx', function() {
       });
     });
 
-    it('should 200 (single request)', async function() {
+    it('should 200 (single request)', async () => {
       res = await chai
         .request(app)
         .put(files[1])
@@ -126,7 +126,7 @@ describe('::Uploadx', function() {
       expect(fs.statSync(join(uploadDir, userId, 'testfileSingle.mp4')).size).equal(metadata.size);
     });
 
-    it('should 404 (no id)', async function() {
+    it('should 404 (no id)', async () => {
       res = await chai
         .request(app)
         .put('/upload')
@@ -137,15 +137,15 @@ describe('::Uploadx', function() {
     });
   });
 
-  describe('DELETE', function() {
-    it('should 204', async function() {
+  describe('DELETE', () => {
+    it('should 204', async () => {
       res = await chai.request(app).delete(files[1]);
       expect(res).to.have.status(204);
     });
   });
 
-  describe('OPTIONS', function() {
-    it('should 204', async function() {
+  describe('OPTIONS', () => {
+    it('should 204', async () => {
       res = await chai.request(app).options('/upload');
       expect(res).to.have.status(204);
     });

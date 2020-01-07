@@ -7,16 +7,16 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe('::Tus', function() {
+describe('::Tus', () => {
   const files: string[] = [];
   let res: ChaiHttp.Response;
 
-  beforeEach(function() {
+  beforeEach(() => {
     res = undefined as any;
   });
 
-  describe('POST', function() {
-    it('should 200', async function() {
+  describe('POST', () => {
+    it('should 200', async () => {
       res = await chai
         .request(app)
         .post('/upload')
@@ -31,8 +31,8 @@ describe('::Tus', function() {
     });
   });
 
-  describe('HEAD', function() {
-    it('should 204', async function() {
+  describe('HEAD', () => {
+    it('should 204', async () => {
       res = await chai
         .request(app)
         .head(files[0])
@@ -44,7 +44,7 @@ describe('::Tus', function() {
     });
   });
 
-  afterAll(async function() {
+  afterAll(async () => {
     await storage.delete(userId);
   });
 });

@@ -41,7 +41,6 @@ module.exports = {
     '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/member-ordering': 'error',
     '@typescript-eslint/require-await': 'off',
-    'no-alert': 'error',
     'no-empty': 'off',
     'no-irregular-whitespace': 'error',
     'no-return-assign': 'error',
@@ -54,10 +53,10 @@ module.exports = {
     'no-var': 'error',
     'prefer-const': 'error',
     'prefer-object-spread': 'error',
-    'require-atomic-updates': 'off',
     'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }],
     'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
-    'prefer-template': 'error'
+    'prefer-template': 'error',
+    'prefer-arrow-callback': 'warn'
   },
   overrides: [
     {

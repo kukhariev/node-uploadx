@@ -1,6 +1,6 @@
 import { rangeParser } from '../src';
-describe('Content-Range parser', function() {
-  it('should parse `resume` ranges', function() {
+describe('Content-Range parser', () => {
+  it('should parse `resume` ranges', () => {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];
     samples.forEach(sample => {
       const res = rangeParser(sample);
@@ -8,7 +8,7 @@ describe('Content-Range parser', function() {
     });
   });
 
-  it('should parse `write` ranges', function() {
+  it('should parse `write` ranges', () => {
     const samples = [
       'bytes 0-*/7777777',
       'bytes 0-333333/7777777',

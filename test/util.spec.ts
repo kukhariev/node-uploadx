@@ -5,36 +5,36 @@ const ROOT = `./upload/fs-test`;
 const DIR = `${ROOT}/1/2`;
 const FILE = `${DIR}/3/file.ext`;
 
-describe('fs ensure*', function() {
-  beforeEach(function() {
+describe('fs ensure*', () => {
+  beforeEach(() => {
     rimraf.sync(ROOT);
   });
-  afterAll(function() {
+  afterAll(() => {
     rimraf.sync(ROOT);
   });
-  it('should create directory `ensureDir()`', async function() {
+  it('should create directory `ensureDir()`', async () => {
     await utils.ensureDir(DIR);
     expect(fs.existsSync(DIR)).toBe(true);
   });
 
-  it('should create file or/end return size `ensureFile()`', async function() {
+  it('should create file or/end return size `ensureFile()`', async () => {
     const size = await utils.ensureFile(FILE);
     expect(fs.existsSync(FILE)).toBe(true);
     expect(size).toBe(0);
   });
 });
 
-describe('typeis', function() {
+describe('typeis', () => {
   const mime = 'application/vnd+json';
   const headers = { headers: { 'content-type': mime } } as any;
 
-  it('typeis()', function() {
+  it('typeis()', () => {
     expect(utils.typeis({ headers: {} } as any, ['json'])).toBe(false);
     expect(utils.typeis(headers, ['html'])).toBe(false);
     expect(utils.typeis(headers, ['json'])).toBe(mime);
   });
 
-  it('typeis.is()', function() {
+  it('typeis.is()', () => {
     expect(utils.typeis.is(mime, ['application/vnd+json'])).toBe(mime);
     expect(utils.typeis.is(mime, ['vnd+json'])).toBe(mime);
     expect(utils.typeis.is(mime, ['application/*'])).toBe(mime);
@@ -43,38 +43,38 @@ describe('typeis', function() {
   });
 });
 
-describe('getHeader', function() {
+describe('getHeader', () => {
   let req: any;
-  it('empty', function() {
+  it('empty', () => {
     const res = utils.getHeader(req, 'origin');
     expect(res).toBe('');
   });
 
-  it('string', function() {
+  it('string', () => {
     req = { headers: { head: 'value' } };
     const res = utils.getHeader(req, 'head');
     expect(res).toBe('value');
   });
 
-  it('array', function() {
+  it('array', () => {
     req = { headers: { head: ['value1', 'value2'] } };
     const res = utils.getHeader(req, 'head');
     expect(res).toBe('value1');
   });
 });
 
-describe('getFiles', function() {
-  it('file', async function() {
+describe('getFiles', () => {
+  it('file', async () => {
     const files = await utils.getFiles('test/server/testfile.mp4');
     expect(files.length).toBe(1);
   });
 
-  it('directory', async function() {
+  it('directory', async () => {
     const files = await utils.getFiles('test/server');
     expect(files.length).toBeGreaterThan(1);
   });
 
-  it('empty', async function() {
+  it('empty', async () => {
     const files = await utils.getFiles('test/notfound');
     expect(files.length).toBe(0);
   });
