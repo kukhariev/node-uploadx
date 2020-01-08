@@ -59,7 +59,7 @@
     "@types/node": "10.17.13",
     "@types/node-fetch": "2.5.4",
     "@types/rimraf": "2.0.3",
-    "@types/supertest": "^2.0.8",
+    "@types/supertest": "2.0.8",
     "@typescript-eslint/eslint-plugin": "2.15.0",
     "@typescript-eslint/parser": "2.15.0",
     "eslint": "6.8.0",
@@ -74,7 +74,7 @@
     "node-mocks-http": "1.8.1",
     "prettier": "1.19.1",
     "rimraf": "3.0.0",
-    "supertest": "^4.0.2",
+    "supertest": "4.0.2",
     "ts-jest": "24.3.0",
     "ts-node-dev": "1.0.0-pre.44",
     "typescript": "3.7.4"
