@@ -45,7 +45,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     this.log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
     if (!this.storage.isReady) {
-      this.sendError(res, ERRORS.STORAGE_ERROR);
+      return this.sendError(res, ERRORS.STORAGE_ERROR);
     }
     const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
