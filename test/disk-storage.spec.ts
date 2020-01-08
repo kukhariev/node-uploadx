@@ -1,25 +1,20 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import * as rimraf from 'rimraf';
 import { DiskStorage, DiskStorageOptions, File } from '../src';
-import { testfile, uploadDir, userId } from './server';
+import { testfile, uploadDirCleanup, uploadDir, userPrefix } from './server';
 
 describe('DiskStorage', () => {
   const options: DiskStorageOptions = {
     directory: uploadDir,
     filename: file => `${file.userId}/${file.originalName}`
   };
-  const filename = join(userId, testfile.originalName);
+  const filename = join(userPrefix, testfile.originalName);
   const dstpath = join(uploadDir, filename);
   const storage = new DiskStorage(options);
 
-  beforeAll(() => {
-    rimraf.sync(uploadDir);
-  });
+  beforeAll(uploadDirCleanup);
 
-  afterAll(() => {
-    rimraf.sync(uploadDir);
-  });
+  afterAll(uploadDirCleanup);
 
   it('should create file', async () => {
     await storage.create({} as any, testfile);
@@ -33,7 +28,7 @@ describe('DiskStorage', () => {
   });
 
   it('should return user files', async () => {
-    const files = await storage.get(userId);
+    const files = await storage.get(userPrefix);
     expect(Object.keys(files)).not.toHaveLength(0);
   });
 
@@ -43,8 +38,8 @@ describe('DiskStorage', () => {
   });
 
   it('should reset user storage', async () => {
-    await storage.delete(userId);
-    const files = await storage.get(userId);
+    await storage.delete(userPrefix);
+    const files = await storage.get(userPrefix);
     expect(Object.keys(files)).toHaveLength(0);
   });
 });

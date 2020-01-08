@@ -1,93 +1,88 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import * as chai from 'chai';
 import * as fs from 'fs';
 import { join } from 'path';
-import { app, metadata, srcpath, storage, uploadDir, userId } from './server';
-import chaiHttp = require('chai-http');
-import rimraf = require('rimraf');
-chai.use(chaiHttp);
-const expect = chai.expect;
+import * as request from 'supertest';
+import { uploadx } from '../src/handlers/uploadx';
+import {
+  app,
+  metadata,
+  srcpath,
+  uploadDirCleanup,
+  UPLOADX_PATH,
+  uploadDir,
+  userPrefix
+} from './server';
 
 describe('::Uploadx', () => {
-  let res: ChaiHttp.Response;
-  let start: number;
   const files: string[] = [];
+  let res: request.Response;
+  let start: number;
 
-  beforeAll(() => {
-    rimraf.sync(uploadDir);
-  });
+  beforeAll(uploadDirCleanup);
+  afterAll(uploadDirCleanup);
+  beforeEach(() => (res = undefined as any));
 
-  beforeEach(() => {
-    res = undefined as any;
-  });
-
-  afterAll(async () => {
-    await storage.delete(userId);
+  test('wrapper', () => {
+    expect(uploadx()).toBeInstanceOf(Function);
   });
 
   describe('POST', () => {
     it('should 403 (size limit)', async () => {
-      res = await chai
-        .request(app)
-        .post('/upload')
+      res = await request(app)
+        .post(UPLOADX_PATH)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', (10e10).toString())
-        .send({ name: 'file.mp4' });
-      expect(res).to.be.json;
-      expect(res).to.have.status(403);
-      expect(res).to.not.have.header('location');
+        .send({ name: 'file.mp4' })
+        .expect(403);
+      expect(res.type).toBe('application/json');
+      expect(res.header).not.toHaveProperty('location');
     });
 
     it('should 403 (unsupported filetype)', async () => {
-      res = await chai
-        .request(app)
-        .post('/upload')
+      res = await request(app)
+        .post(UPLOADX_PATH)
         .set('x-upload-content-type', 'text/json')
         .set('x-upload-content-length', '3000')
-        .send({ name: 'file.json' });
-      expect(res).to.be.json;
-      expect(res).to.have.status(403);
-      expect(res).to.not.have.header('location');
+        .send({ name: 'file.json' })
+        .expect(403);
+      expect(res.type).toBe('application/json');
+      expect(res.header).not.toHaveProperty('location');
     });
 
     it('should 400 (bad request)', async () => {
-      res = await chai
-        .request(app)
-        .post('/upload')
-        .send('');
-      expect(res).to.have.status(400);
+      res = await request(app)
+        .post(UPLOADX_PATH)
+        .send('')
+        .expect(400);
     });
 
     it('should 201 (x-upload-content)', async () => {
-      res = await chai
-        .request(app)
-        .post('/upload')
+      res = await request(app)
+        .post(UPLOADX_PATH)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', metadata.size.toString())
-        .send(metadata);
-      expect(res).to.have.status(201);
-      expect(res).to.have.header('location');
+        .send(metadata)
+        .expect(201);
+      expect(res.header['location']).toBeDefined();
       files.push(res.header.location);
     });
 
     it('should 201 (metadata)', async () => {
-      res = await chai
-        .request(app)
-        .post('/upload')
-        .send({ ...metadata, name: 'testfileSingle.mp4' });
-      expect(res).to.have.status(201);
-      expect(res).to.have.header('location');
+      res = await request(app)
+        .post(UPLOADX_PATH)
+        .send({ ...metadata, name: 'testfileSingle.mp4' })
+        .expect(201);
+      expect(res.header['location']).toBeDefined();
       files.push(res.header.location);
     });
   });
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      res = await chai
-        .request(app)
+      res = await request(app)
         .patch(files[1])
-        .send({ name: 'newname.mp4' });
-      expect(res).to.have.status(200);
+        .send({ name: 'newname.mp4' })
+        .expect(200);
     });
   });
 
@@ -98,8 +93,7 @@ describe('::Uploadx', () => {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       readable.on('data', async chunk => {
         readable.pause();
-        res = await chai
-          .request(app)
+        res = await request(app)
           .put(files[0])
           .redirects(0)
           .set('content-type', 'application/octet-stream')
@@ -107,8 +101,8 @@ describe('::Uploadx', () => {
           .send(chunk);
         start += chunk.length;
         if (res.status === 200) {
-          expect(res).to.be.json;
-          expect(fs.statSync(join(uploadDir, userId, 'testfile.mp4')).size).equal(metadata.size);
+          expect(res.type).toBe('application/json');
+          expect(fs.statSync(join(uploadDir, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
           done();
         }
         readable.resume();
@@ -116,38 +110,39 @@ describe('::Uploadx', () => {
     });
 
     it('should 200 (single request)', async () => {
-      res = await chai
-        .request(app)
+      res = await request(app)
         .put(files[1])
         .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(srcpath));
-      expect(res).to.be.json;
-      expect(res).to.have.status(200);
-      expect(fs.statSync(join(uploadDir, userId, 'testfileSingle.mp4')).size).equal(metadata.size);
+        .send(fs.readFileSync(srcpath))
+        .expect(200);
+      expect(res.type).toBe('application/json');
+      expect(fs.statSync(join(uploadDir, userPrefix, 'testfileSingle.mp4')).size).toBe(
+        metadata.size
+      );
     });
 
     it('should 404 (no id)', async () => {
-      res = await chai
-        .request(app)
-        .put('/upload')
+      res = await request(app)
+        .put(UPLOADX_PATH)
         .set('content-type', 'application/octet-stream')
-        .send(fs.readFileSync(srcpath));
-      expect(res).to.be.json;
-      expect(res).to.have.status(404);
+        .send(fs.readFileSync(srcpath))
+        .expect(404);
     });
   });
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await chai.request(app).delete(files[1]);
-      expect(res).to.have.status(204);
+      res = await request(app)
+        .delete(files[1])
+        .expect(204);
     });
   });
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await chai.request(app).options('/upload');
-      expect(res).to.have.status(204);
+      res = await request(app)
+        .options(UPLOADX_PATH)
+        .expect(204);
     });
   });
 });
