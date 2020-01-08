@@ -4,14 +4,12 @@ import { DiskStorage, Multipart, Tus, Uploadx } from '../../src';
 export const userPrefix = 'userId';
 export const uploadDir = `files`;
 
-const auth: express.RequestHandler = (req, res, next): void => {
-  (req as any).user = { id: userPrefix };
-  next();
-};
-
 const app = express();
 
-app.use(auth);
+app.use((req, res, next) => {
+  (req as any).user = { id: userPrefix };
+  next();
+});
 
 export const storage = new DiskStorage({
   directory: `${uploadDir}`,
@@ -24,6 +22,9 @@ export const storage = new DiskStorage({
 const upx = new Uploadx({ storage });
 const tus = new Tus({ storage });
 const mpt = new Multipart({ storage });
+
+upx.on('completed', () => null);
+upx.on('error', () => null);
 
 export const TUS_PATH = '/tus/upload';
 export const UPLOADX_PATH = '/upx/upload';

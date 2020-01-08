@@ -33,7 +33,7 @@ describe('GCStorage', () => {
 
   it('should return user files', async () => {
     const files = await storage.get(file.userId);
-    expect(Object.keys(files)).not.toHaveLength(0);
+    expect(files.length).toBeGreaterThan(0);
   });
 
   it('should delete file', async () => {
