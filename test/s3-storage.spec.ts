@@ -3,19 +3,70 @@
 import { File, S3File, S3Storage } from '../src';
 import { testfile } from './server/testfile';
 
+const mockCreateMultipartUpload = jest.fn();
+const mockHeadBucket = jest.fn();
+const mockPutObject = jest.fn();
+const mockListObjectsV2 = jest.fn();
+const mockDeleteObject = jest.fn();
+const mockAbortMultipartUpload = jest.fn();
+
+mockDeleteObject.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve();
+    }
+  };
+});
+mockAbortMultipartUpload.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve();
+    }
+  };
+});
+mockCreateMultipartUpload.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve({ UploadId: '123456789' });
+    }
+  };
+});
+mockPutObject.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve();
+    }
+  };
+});
+mockListObjectsV2.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve({ Contents: [{}] });
+    }
+  };
+});
+
+jest.mock('aws-sdk', () => {
+  return {
+    S3: jest.fn(() => ({
+      createMultipartUpload: mockCreateMultipartUpload,
+      headBucket: mockHeadBucket,
+      putObject: mockPutObject,
+      listObjectsV2: mockListObjectsV2,
+      deleteObject: mockDeleteObject,
+      abortMultipartUpload: mockAbortMultipartUpload
+    }))
+  };
+});
 describe('S3Storage', () => {
   const skip = process.env.CI;
   if (skip) {
     it.only('CI, skipping tests', () => undefined);
   }
-  let storage: S3Storage;
   let filename: string;
   let file: File;
 
-  it('should create s3-storage', () => {
-    storage = new S3Storage({});
-    expect(storage).toBeInstanceOf(S3Storage);
-  });
+  const storage = new S3Storage({});
 
   it('should create file', async () => {
     file = await storage.create({} as any, testfile);
