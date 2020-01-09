@@ -1,7 +1,8 @@
 /* set AWS environment variables to pass this test */
 
-import { File, S3File, S3Storage } from '../src';
-import { testfile } from './server/testfile';
+import { createReadStream } from 'fs';
+import { File, FilePart, S3File, S3Storage } from '../src';
+import { srcpath, testfile } from './server/testfile';
 
 const mockCreateMultipartUpload = jest.fn();
 const mockHeadBucket = jest.fn();
@@ -9,6 +10,9 @@ const mockPutObject = jest.fn();
 const mockListObjectsV2 = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAbortMultipartUpload = jest.fn();
+const mockUploadPart = jest.fn();
+const mockCompleteMultipartUpload = jest.fn();
+const mockHeadObject = jest.fn();
 
 mockDeleteObject.mockImplementation(params => {
   return {
@@ -45,6 +49,27 @@ mockListObjectsV2.mockImplementation(params => {
     }
   };
 });
+mockUploadPart.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve({ Contents: [{}] });
+    }
+  };
+});
+mockCompleteMultipartUpload.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve({ Contents: [{}] });
+    }
+  };
+});
+mockHeadObject.mockImplementation(params => {
+  return {
+    promise() {
+      return Promise.resolve({ Contents: [{}] });
+    }
+  };
+});
 
 jest.mock('aws-sdk', () => {
   return {
@@ -54,10 +79,14 @@ jest.mock('aws-sdk', () => {
       putObject: mockPutObject,
       listObjectsV2: mockListObjectsV2,
       deleteObject: mockDeleteObject,
-      abortMultipartUpload: mockAbortMultipartUpload
+      abortMultipartUpload: mockAbortMultipartUpload,
+      uploadPart: mockUploadPart,
+      completeMultipartUpload: mockCompleteMultipartUpload,
+      headObject: mockHeadObject
     }))
   };
 });
+
 describe('S3Storage', () => {
   const skip = process.env.CI;
   if (skip) {
@@ -84,6 +113,17 @@ describe('S3Storage', () => {
   it('should return user files', async () => {
     const files = await storage.get(file.userId);
     expect(Object.keys(files)).not.toHaveLength(0);
+  });
+
+  it('should write', async () => {
+    const part: FilePart = {
+      name: filename,
+      body: createReadStream(srcpath),
+      start: 0,
+      contentLength: testfile.size
+    };
+    const res = await storage.write(part);
+    expect(res.bytesWritten).toEqual(testfile.size);
   });
 
   it('should delete file', async () => {
