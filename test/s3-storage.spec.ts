@@ -1,5 +1,6 @@
 /* set AWS environment variables to pass this test */
 
+import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
 import { File, FilePart, S3File, S3Storage } from '../src';
 import { srcpath, testfile } from './server/testfile';
@@ -13,6 +14,7 @@ const mockAbortMultipartUpload = jest.fn();
 const mockUploadPart = jest.fn();
 const mockCompleteMultipartUpload = jest.fn();
 const mockHeadObject = jest.fn();
+const mockListParts = jest.fn();
 
 mockDeleteObject.mockImplementation(params => {
   return {
@@ -52,60 +54,81 @@ mockListObjectsV2.mockImplementation(params => {
 mockUploadPart.mockImplementation(params => {
   return {
     promise() {
-      return Promise.resolve({ Contents: [{}] });
+      return Promise.resolve();
     }
   };
 });
 mockCompleteMultipartUpload.mockImplementation(params => {
   return {
     promise() {
-      return Promise.resolve({ Contents: [{}] });
+      return Promise.resolve({ Location: '' });
     }
   };
 });
-mockHeadObject.mockImplementation(params => {
+
+mockListParts.mockImplementation(params => {
   return {
     promise() {
-      return Promise.resolve({ Contents: [{}] });
+      return Promise.resolve({
+        Metadata: { Parts: [{ PartNumber: 1, Size: testfile.size }] }
+      });
     }
   };
 });
 
 jest.mock('aws-sdk', () => {
+  if (process.env.S3_BUCKET) {
+    return require.requireActual('aws-sdk');
+  }
   return {
-    S3: jest.fn(() => ({
-      createMultipartUpload: mockCreateMultipartUpload,
-      headBucket: mockHeadBucket,
-      putObject: mockPutObject,
-      listObjectsV2: mockListObjectsV2,
-      deleteObject: mockDeleteObject,
-      abortMultipartUpload: mockAbortMultipartUpload,
-      uploadPart: mockUploadPart,
-      completeMultipartUpload: mockCompleteMultipartUpload,
-      headObject: mockHeadObject
-    }))
+    S3: jest.fn(
+      (): Partial<S3> => ({
+        createMultipartUpload: mockCreateMultipartUpload,
+        headBucket: mockHeadBucket,
+        putObject: mockPutObject,
+        listObjectsV2: mockListObjectsV2,
+        deleteObject: mockDeleteObject,
+        abortMultipartUpload: mockAbortMultipartUpload,
+        uploadPart: mockUploadPart,
+        completeMultipartUpload: mockCompleteMultipartUpload,
+        headObject: mockHeadObject,
+        listParts: mockListParts
+      })
+    )
   };
 });
 
 describe('S3Storage', () => {
-  const skip = process.env.CI;
-  if (skip) {
-    it.only('CI, skipping tests', () => undefined);
-  }
   let filename: string;
   let file: File;
 
   const storage = new S3Storage({});
 
   it('should create file', async () => {
+    mockHeadObject.mockImplementation(params => {
+      return {
+        promise() {
+          return Promise.reject();
+        }
+      };
+    });
     file = await storage.create({} as any, testfile);
     filename = file.name;
-    expect(file).toBeInstanceOf(File);
     expect((file as S3File)['UploadId']).not.toHaveLength(0);
   });
 
   it('should update metadata', async () => {
+    mockHeadObject.mockImplementation(params => {
+      return {
+        promise() {
+          return Promise.resolve({
+            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
+          });
+        }
+      };
+    });
     file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
+    expect.assertions(2);
     expect(file.metadata.name).toBe('newname.mp4');
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
@@ -127,6 +150,14 @@ describe('S3Storage', () => {
   });
 
   it('should delete file', async () => {
+    mockHeadObject.mockImplementation(params => {
+      return {
+        promise() {
+          return Promise.reject();
+        }
+      };
+    });
+    await storage.create({} as any, testfile);
     const [deleted] = await storage.delete(filename);
     expect(deleted.name).toBe(filename);
   });

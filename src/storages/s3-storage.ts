@@ -50,7 +50,7 @@ export class S3Storage extends BaseStorage {
     const file = new S3File(config);
     await this.validate(file);
     const name = this.namingFunction(file);
-    const existing = this.metaCache[name] || (await this._getMeta(name).catch(noop));
+    const existing = await this._getMeta(name).catch(noop);
     if (existing) return existing;
     const metadata = processMetadata(file.metadata, encodeURI);
 
@@ -88,7 +88,6 @@ export class S3Storage extends BaseStorage {
 
   async delete(name: string): Promise<File[]> {
     const file = await this._getMeta(name);
-
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMetaFile(file), this._abortMultipartUpload(file)]);
@@ -196,7 +195,7 @@ export class S3Storage extends BaseStorage {
     await this.client
       .abortMultipartUpload(params)
       .promise()
-      .catch(err => this.log('abort error:', err.code));
+      .catch(noop);
   }
 
   private _checkBucket(): void {
