@@ -1,8 +1,6 @@
-/* set AWS environment variables to pass this test */
-
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
-import { File, FilePart, S3File, S3Storage } from '../src';
+import { File, FilePart, S3Storage } from '../src';
 import { srcpath, testfile } from './server/testfile';
 
 const mockCreateMultipartUpload = jest.fn();
@@ -77,9 +75,6 @@ mockListParts.mockImplementation(params => {
 });
 
 jest.mock('aws-sdk', () => {
-  if (process.env.S3_BUCKET) {
-    return require.requireActual('aws-sdk');
-  }
   return {
     S3: jest.fn(
       (): Partial<S3> => ({
@@ -101,20 +96,30 @@ jest.mock('aws-sdk', () => {
 describe('S3Storage', () => {
   let filename: string;
   let file: File;
-
-  const storage = new S3Storage({});
+  let storage: S3Storage;
+  beforeEach(() => {
+    storage = new S3Storage({});
+    mockHeadObject.mockReset();
+  });
 
   it('should create file', async () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.reject();
+          return Promise.reject({ statusCode: 404 });
         }
       };
     });
+    expect.assertions(2);
     file = await storage.create({} as any, testfile);
     filename = file.name;
-    expect((file as S3File)['UploadId']).not.toHaveLength(0);
+    expect(file).toMatchObject({
+      ...testfile,
+      UploadId: expect.any(String),
+      Parts: expect.any(Array)
+    });
+    const existing = await storage.create({} as any, testfile);
+    expect(file).toMatchObject(existing);
   });
 
   it('should update metadata', async () => {
@@ -134,11 +139,29 @@ describe('S3Storage', () => {
   });
 
   it('should return user files', async () => {
+    mockHeadObject.mockImplementation(params => {
+      return {
+        promise() {
+          return Promise.resolve({
+            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
+          });
+        }
+      };
+    });
     const files = await storage.get(file.userId);
     expect(Object.keys(files)).not.toHaveLength(0);
   });
 
   it('should write', async () => {
+    mockHeadObject.mockImplementation(params => {
+      return {
+        promise() {
+          return Promise.resolve({
+            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
+          });
+        }
+      };
+    });
     const part: FilePart = {
       name: filename,
       body: createReadStream(srcpath),
@@ -153,11 +176,12 @@ describe('S3Storage', () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.reject();
+          return Promise.resolve({
+            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
+          });
         }
       };
     });
-    await storage.create({} as any, testfile);
     const [deleted] = await storage.delete(filename);
     expect(deleted.name).toBe(filename);
   });

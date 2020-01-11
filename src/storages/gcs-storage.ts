@@ -109,7 +109,7 @@ export class GCStorage extends BaseStorage {
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus });
       await this._deleteMeta(file.name);
-      return [file];
+      return [{ ...file, name }];
     }
     return [{ name } as File];
   }
