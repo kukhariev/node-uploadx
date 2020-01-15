@@ -1,14 +1,19 @@
+import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../src/handlers/multipart';
-import { app, MULTIPART_PATH, uploadDirCleanup } from './server';
-import { metadata, srcpath } from './server/testfile';
+import { app, storageOptions, rm, root } from './_utils/app';
+import { metadata, srcpath } from './_utils/testfile';
 
 describe('::Multipart', () => {
-  const files: string[] = [];
   let res: request.Response;
+  const files: string[] = [];
+  const basePath = '/multipart';
+  const directory = join(root, 'multipart');
+  const opts = { ...storageOptions, directory };
+  app.use(basePath, multipart(opts));
 
-  beforeAll(uploadDirCleanup);
-  afterAll(uploadDirCleanup);
+  beforeAll(() => rm(directory));
+  afterAll(() => rm(directory));
   beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {
@@ -18,7 +23,7 @@ describe('::Multipart', () => {
   describe('POST', () => {
     it('should 201 (no metadata)', async () => {
       res = await request(app)
-        .post(MULTIPART_PATH)
+        .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .field('custom', JSON.stringify(metadata))
         .attach('file', srcpath, metadata.name)
@@ -29,19 +34,20 @@ describe('::Multipart', () => {
     });
 
     it('should 201 (metadata)', async () => {
+      expect.assertions(2);
       res = await request(app)
-        .post(MULTIPART_PATH)
+        .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .field('metadata', JSON.stringify(metadata))
-        .attach('file', srcpath, metadata.name);
-      expect(201);
+        .attach('file', srcpath, metadata.name)
+        .expect(201);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
     });
 
     it('should 403 (unsupported filetype)', async () => {
       res = await request(app)
-        .post(MULTIPART_PATH)
+        .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
         .expect(403);
@@ -51,7 +57,7 @@ describe('::Multipart', () => {
   describe('OPTIONS', () => {
     it('should 204', async () => {
       res = await request(app)
-        .options(MULTIPART_PATH)
+        .options(basePath)
         .expect(204);
     });
   });
@@ -65,7 +71,7 @@ describe('::Multipart', () => {
 
     it('should 404', async () => {
       res = await request(app)
-        .delete(MULTIPART_PATH)
+        .delete(basePath)
         .expect(404);
     });
   });

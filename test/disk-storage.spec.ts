@@ -1,20 +1,22 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { DiskStorage, DiskStorageOptions, File } from '../src';
-import { testfile, uploadDirCleanup, uploadDir, userPrefix } from './server';
+import { rm, root, userPrefix } from './_utils/app';
+import { testfile } from './_utils/testfile';
 
 describe('DiskStorage', () => {
+  const directory = join(root, 'ds-test');
   const options: DiskStorageOptions = {
-    directory: uploadDir,
+    directory,
     filename: file => `${file.userId}/${file.originalName}`
   };
   const filename = join(userPrefix, testfile.originalName);
-  const dstpath = join(uploadDir, filename);
+  const dstpath = join(directory, filename);
   const storage = new DiskStorage(options);
 
-  beforeAll(uploadDirCleanup);
+  beforeAll(() => rm(directory));
 
-  afterAll(uploadDirCleanup);
+  afterAll(() => rm(directory));
 
   it('should create file', async () => {
     await storage.create({} as any, testfile);

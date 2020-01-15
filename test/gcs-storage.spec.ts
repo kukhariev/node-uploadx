@@ -2,7 +2,7 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import fetch from 'node-fetch';
 import { File, FilePart, GCStorage } from '../src';
-import { srcpath, testfile } from './server/testfile';
+import { srcpath, testfile } from './_utils/testfile';
 const { Response } = jest.requireActual('node-fetch');
 
 const mockAuthRequest = jest.fn();

@@ -3,23 +3,20 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { uploadx } from '../src/handlers/uploadx';
-import {
-  app,
-  metadata,
-  srcpath,
-  uploadDirCleanup,
-  UPLOADX_PATH,
-  uploadDir,
-  userPrefix
-} from './server';
+import { app, rm, root, storageOptions, userPrefix } from './_utils/app';
+import { metadata, srcpath } from './_utils/testfile';
 
 describe('::Uploadx', () => {
-  const files: string[] = [];
   let res: request.Response;
+  const files: string[] = [];
   let start: number;
+  const basePath = '/uploadx';
+  const directory = join(root, 'uploadx');
+  const opts = { ...storageOptions, directory };
+  app.use(basePath, uploadx(opts));
 
-  beforeAll(uploadDirCleanup);
-  afterAll(uploadDirCleanup);
+  beforeAll(() => rm(directory));
+  afterAll(() => rm(directory));
   beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {
@@ -29,7 +26,7 @@ describe('::Uploadx', () => {
   describe('POST', () => {
     it('should 403 (size limit)', async () => {
       res = await request(app)
-        .post(UPLOADX_PATH)
+        .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', (10e10).toString())
         .send({ name: 'file.mp4' })
@@ -40,7 +37,7 @@ describe('::Uploadx', () => {
 
     it('should 403 (unsupported filetype)', async () => {
       res = await request(app)
-        .post(UPLOADX_PATH)
+        .post(basePath)
         .set('x-upload-content-type', 'text/json')
         .set('x-upload-content-length', '3000')
         .send({ name: 'file.json' })
@@ -51,14 +48,14 @@ describe('::Uploadx', () => {
 
     it('should 400 (bad request)', async () => {
       res = await request(app)
-        .post(UPLOADX_PATH)
+        .post(basePath)
         .send('')
         .expect(400);
     });
 
     it('should 201 (x-upload-content)', async () => {
       res = await request(app)
-        .post(UPLOADX_PATH)
+        .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', metadata.size.toString())
         .send(metadata)
@@ -69,7 +66,7 @@ describe('::Uploadx', () => {
 
     it('should 201 (metadata)', async () => {
       res = await request(app)
-        .post(UPLOADX_PATH)
+        .post(basePath)
         .send({ ...metadata, name: 'testfileSingle.mp4' })
         .expect(201);
       expect(res.header['location']).toBeDefined();
@@ -102,7 +99,7 @@ describe('::Uploadx', () => {
         start += chunk.length;
         if (res.status === 200) {
           expect(res.type).toBe('application/json');
-          expect(fs.statSync(join(uploadDir, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
+          expect(fs.statSync(join(directory, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
           done();
         }
         readable.resume();
@@ -116,14 +113,14 @@ describe('::Uploadx', () => {
         .send(fs.readFileSync(srcpath))
         .expect(200);
       expect(res.type).toBe('application/json');
-      expect(fs.statSync(join(uploadDir, userPrefix, 'testfileSingle.mp4')).size).toBe(
+      expect(fs.statSync(join(directory, userPrefix, 'testfileSingle.mp4')).size).toBe(
         metadata.size
       );
     });
 
     it('should 404 (no id)', async () => {
       res = await request(app)
-        .put(UPLOADX_PATH)
+        .put(basePath)
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(srcpath))
         .expect(404);
@@ -141,7 +138,7 @@ describe('::Uploadx', () => {
   describe('OPTIONS', () => {
     it('should 204', async () => {
       res = await request(app)
-        .options(UPLOADX_PATH)
+        .options(basePath)
         .expect(204);
     });
   });
