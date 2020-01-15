@@ -1,46 +1,47 @@
 import * as fs from 'fs';
 import { IncomingMessage } from 'http';
-import * as rimraf from 'rimraf';
+import { join } from 'path';
 import * as utils from '../src/utils';
+import { rm, root } from './_utils/app';
 
 describe('fs', () => {
-  const ROOT = `./upload/fs-test`;
-  const DIR = `${ROOT}/1/2`;
-  const FILE = `${DIR}/3/file.ext`;
+  const directory = join(root, 'fs-test');
+  const deep = `${directory}/1/2`;
+  const file = `${deep}/3/file.ext`;
 
-  beforeAll(() => rimraf.sync(ROOT));
-  afterAll(() => rimraf.sync(ROOT));
+  beforeAll(() => rm(directory));
+  afterAll(() => rm(directory));
 
   it('ensureDir(dir)', async () => {
-    await utils.ensureDir(DIR);
-    expect(fs.existsSync(DIR)).toBe(true);
+    await utils.ensureDir(deep);
+    expect(fs.existsSync(deep)).toBe(true);
   });
 
   it('ensureFile(file)', async () => {
-    const size = await utils.ensureFile(FILE);
-    expect(fs.existsSync(FILE)).toBe(true);
+    const size = await utils.ensureFile(file);
+    expect(fs.existsSync(file)).toBe(true);
     expect(size).toBe(0);
   });
 
   it('ensureFile(file, overwrite)', async () => {
-    const size = await utils.ensureFile(FILE, true);
-    expect(fs.existsSync(FILE)).toBe(true);
+    const size = await utils.ensureFile(file, true);
+    expect(fs.existsSync(file)).toBe(true);
     expect(size).toBe(0);
   });
 
   it('getFiles(file)', async () => {
-    const files = await utils.getFiles('test/server/testfile.mp4');
+    const files = await utils.getFiles(file);
     expect(files.length).toBe(1);
   });
 
   it('getFiles(directory)', async () => {
-    const files = await utils.getFiles('test/server');
-    expect(files.length).toBeGreaterThan(1);
+    const files = await utils.getFiles(directory);
+    expect(files.length).toBe(1);
   });
 
   it('getFiles(deep directory)', async () => {
-    const files = await utils.getFiles('test');
-    expect(files.length).toBeGreaterThan(1);
+    const files = await utils.getFiles(deep);
+    expect(files.length).toBe(1);
   });
 
   it('getFiles(not exist)', async () => {
@@ -49,8 +50,8 @@ describe('fs', () => {
   });
 
   it('getFileSize(file)', async () => {
-    const size = await utils.getFileSize('test/server/testfile.mp4');
-    expect(size).toBeGreaterThan(0);
+    const size = await utils.getFileSize(file);
+    expect(size).toBe(0);
   });
 
   it('getFileSize(not exist)', async () => {

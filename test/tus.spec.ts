@@ -1,14 +1,20 @@
 import * as fs from 'fs';
+import { join } from 'path';
 import * as request from 'supertest';
 import { serializeMetadata, tus } from '../src/handlers/tus';
-import { app, metadata, srcpath, TUS_PATH, uploadDirCleanup } from './server';
+import { app, rm, root, storageOptions } from './_utils/app';
+import { metadata, srcpath } from './_utils/testfile';
 
 describe('::Tus', () => {
-  const files: string[] = [];
   let res: request.Response;
+  const files: string[] = [];
+  const basePath = '/tus';
+  const directory = join(root, 'tus');
+  const opts = { ...storageOptions, directory };
+  app.use(basePath, tus(opts));
 
-  beforeAll(uploadDirCleanup);
-  afterAll(uploadDirCleanup);
+  beforeAll(() => rm(directory));
+  afterAll(() => rm(directory));
   beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {
@@ -18,7 +24,7 @@ describe('::Tus', () => {
   describe('POST', () => {
     it('should 200', async () => {
       res = await request(app)
-        .post(TUS_PATH)
+        .post(basePath)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
@@ -43,7 +49,7 @@ describe('::Tus', () => {
 
     it('should 404', async () => {
       res = await request(app)
-        .head(TUS_PATH)
+        .head(basePath)
         .set('Tus-Resumable', '1.0.0')
         .expect(404);
     });
@@ -52,7 +58,7 @@ describe('::Tus', () => {
   describe('OPTIONS', () => {
     it('should 204', async () => {
       res = await request(app)
-        .options(TUS_PATH)
+        .options(basePath)
         .set('Tus-Resumable', '1.0.0')
         .expect(204);
     });
@@ -68,7 +74,7 @@ describe('::Tus', () => {
 
     it('should 404', async () => {
       res = await request(app)
-        .delete(TUS_PATH)
+        .delete(basePath)
         .set('Tus-Resumable', '1.0.0')
         .expect(404);
     });
