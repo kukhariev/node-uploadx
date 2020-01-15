@@ -20,43 +20,43 @@ describe('fs', () => {
   it('ensureFile(file)', async () => {
     const size = await utils.ensureFile(file);
     expect(fs.existsSync(file)).toBe(true);
-    expect(size).toEqual(0);
+    expect(size).toBe(0);
   });
 
   it('ensureFile(file, overwrite)', async () => {
     const size = await utils.ensureFile(file, true);
     expect(fs.existsSync(file)).toBe(true);
-    expect(size).toEqual(0);
+    expect(size).toBe(0);
   });
 
   it('getFiles(file)', async () => {
     const files = await utils.getFiles(file);
-    expect(files.length).toEqual(1);
+    expect(files.length).toBe(1);
   });
 
   it('getFiles(directory)', async () => {
     const files = await utils.getFiles(directory);
-    expect(files.length).toEqual(1);
+    expect(files.length).toBe(1);
   });
 
   it('getFiles(deep directory)', async () => {
     const files = await utils.getFiles(deep);
-    expect(files.length).toEqual(1);
+    expect(files.length).toBe(1);
   });
 
   it('getFiles(not exist)', async () => {
     const files = await utils.getFiles('test/not exist');
-    expect(files.length).toEqual(0);
+    expect(files.length).toBe(0);
   });
 
   it('getFileSize(file)', async () => {
     const size = await utils.getFileSize(file);
-    expect(size).toEqual(0);
+    expect(size).toBe(0);
   });
 
   it('getFileSize(not exist)', async () => {
     const size = await utils.getFileSize('test/not exist');
-    expect(size).toEqual(-1);
+    expect(size).toBe(-1);
   });
 });
 

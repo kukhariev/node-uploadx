@@ -93,6 +93,8 @@ jest.mock('aws-sdk', () => {
   };
 });
 
+const headResponseObject = { Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) } };
+
 describe('S3Storage', () => {
   let filename: string;
   let file: File;
@@ -110,7 +112,6 @@ describe('S3Storage', () => {
         }
       };
     });
-    expect.assertions(2);
     file = await storage.create({} as any, testfile);
     filename = file.name;
     expect(file).toMatchObject({
@@ -126,14 +127,11 @@ describe('S3Storage', () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.resolve({
-            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-          });
+          return Promise.resolve(headResponseObject);
         }
       };
     });
     file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
-    expect.assertions(2);
     expect(file.metadata.name).toBe('newname.mp4');
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
@@ -142,9 +140,7 @@ describe('S3Storage', () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.resolve({
-            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-          });
+          return Promise.resolve(headResponseObject);
         }
       };
     });
@@ -156,9 +152,7 @@ describe('S3Storage', () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.resolve({
-            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-          });
+          return Promise.resolve(headResponseObject);
         }
       };
     });
@@ -169,16 +163,14 @@ describe('S3Storage', () => {
       contentLength: testfile.size
     };
     const res = await storage.write(part);
-    expect(res.bytesWritten).toEqual(testfile.size);
+    expect(res.bytesWritten).toBe(testfile.size);
   });
 
   it('should delete file', async () => {
     mockHeadObject.mockImplementation(params => {
       return {
         promise() {
-          return Promise.resolve({
-            Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-          });
+          return Promise.resolve(headResponseObject);
         }
       };
     });

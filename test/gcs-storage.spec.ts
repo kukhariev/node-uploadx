@@ -29,7 +29,6 @@ describe('GCStorage', () => {
   afterEach(() => mockAuthRequest.mockReset());
 
   it('should create file', async () => {
-    expect.assertions(2);
     mockAuthRequest.mockResolvedValue({
       headers: { location: 'http://api.com?upload_id=123456789' }
     });
@@ -45,7 +44,6 @@ describe('GCStorage', () => {
   });
 
   it('should update metadata', async () => {
-    expect.assertions(3);
     mockAuthRequest.mockResolvedValue(data);
     file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
     expect(file.metadata.name).toBe('newname.mp4');
@@ -60,7 +58,6 @@ describe('GCStorage', () => {
   });
 
   it('should write', async () => {
-    expect.assertions(2);
     mockAuthRequest.mockResolvedValue(data);
     ((fetch as unknown) as jest.Mock).mockResolvedValue(
       new Response('{"mediaLink":"http://api.com/123456789"}')
