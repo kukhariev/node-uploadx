@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../src/utils';
-import { rm, root } from './_utils/app';
+import { rm, root } from './fixtures/app';
 
 describe('fs', () => {
   const directory = join(root, 'fs-test');

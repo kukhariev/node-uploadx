@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { uploadx } from '../src/handlers/uploadx';
-import { app, rm, root, storageOptions, userPrefix } from './_utils/app';
-import { metadata, srcpath } from './_utils/testfile';
+import { app, rm, root, storageOptions, userPrefix } from './fixtures/app';
+import { metadata, srcpath } from './fixtures/testfile';
 
 describe('::Uploadx', () => {
   let res: request.Response;

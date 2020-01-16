@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { serializeMetadata, tus } from '../src/handlers/tus';
-import { app, rm, root, storageOptions } from './_utils/app';
-import { metadata, srcpath } from './_utils/testfile';
+import { app, rm, root, storageOptions } from './fixtures/app';
+import { metadata, srcpath } from './fixtures/testfile';
 
 describe('::Tus', () => {
   let res: request.Response;

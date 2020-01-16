@@ -1,8 +1,8 @@
 import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../src/handlers/multipart';
-import { app, storageOptions, rm, root } from './_utils/app';
-import { metadata, srcpath } from './_utils/testfile';
+import { app, storageOptions, rm, root } from './fixtures/app';
+import { metadata, srcpath } from './fixtures/testfile';
 
 describe('::Multipart', () => {
   let res: request.Response;

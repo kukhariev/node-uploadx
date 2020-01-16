@@ -1,7 +1,7 @@
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
 import { File, FilePart, S3Storage } from '../src';
-import { srcpath, testfile } from './_utils/testfile';
+import { srcpath, testfile } from './fixtures/testfile';
 
 const mockCreateMultipartUpload = jest.fn();
 const mockHeadBucket = jest.fn();
