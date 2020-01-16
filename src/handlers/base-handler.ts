@@ -67,6 +67,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
         .catch((error: any) => {
           this.listenerCount('error') && this.emit('error', error);
           this.log('[error]: %o', error);
+          if ('aborted' in req && req['aborted']) {
+            return;
+          }
           this.sendError(res, error);
           return;
         });

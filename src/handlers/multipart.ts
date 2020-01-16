@@ -15,7 +15,6 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
 
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     return new Promise((resolve, reject) => {
-      req.on('error', error => reject(error));
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
       form.on('field', (key, value) => {
@@ -27,7 +26,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
         config.originalName = part.filename;
         config.contentType = part.headers['content-type'];
         config.userId = this.getUserId(req);
-
+        part.on('error', error => null);
         this.storage
           .create(req, config)
           .then(({ name }) =>
