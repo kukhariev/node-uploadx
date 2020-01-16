@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import { DiskStorage, DiskStorageOptions, File } from '../src';
-import { rm, root, userPrefix } from './_utils/app';
-import { testfile } from './_utils/testfile';
+import { rm, root, userPrefix } from './fixtures/app';
+import { testfile } from './fixtures/testfile';
 
 describe('DiskStorage', () => {
   const directory = join(root, 'ds-test');

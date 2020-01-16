@@ -1,7 +1,7 @@
 /* set GCS environment variables to pass this test */
 
 import { File, GCStorage } from '../src';
-import { testfile } from './_utils/testfile';
+import { testfile } from './fixtures/testfile';
 
 describe('GCStorage', () => {
   const skip = process.env.CI;
