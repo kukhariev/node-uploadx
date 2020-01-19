@@ -69,7 +69,7 @@
     "eslint-plugin-promise": "4.2.1",
     "express": "4.17.1",
     "fastify": "2.11.0",
-    "husky": "4.0.9",
+    "husky": "4.0.10",
     "jest": "24.9.0",
     "lint-staged": "9.5.0",
     "node-mocks-http": "1.8.1",
@@ -78,7 +78,7 @@
     "supertest": "4.0.2",
     "ts-jest": "24.3.0",
     "ts-node-dev": "1.0.0-pre.44",
-    "typescript": "3.7.4"
+    "typescript": "3.7.5"
   },
   "private": true,
   "husky": {
