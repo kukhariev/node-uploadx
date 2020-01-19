@@ -36,6 +36,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# environment files
+.env
+
 # temp files
 /tmp
 /temp
