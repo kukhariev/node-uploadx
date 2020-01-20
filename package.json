@@ -87,12 +87,10 @@
   },
   "lint-staged": {
     "{src,test,examples}/**/*.{ts,js}": [
-      "eslint --fix",
-      "git add"
+      "eslint --fix"
     ],
     "*.{md,json}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   }
 }
