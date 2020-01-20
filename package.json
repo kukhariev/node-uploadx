@@ -33,7 +33,7 @@
     "node-fetch": "^2.6.0"
   },
   "scripts": {
-    "start": "tsnd examples/express",
+    "start": "tsnd -r dotenv/config examples/express",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "build": "rimraf dist && tsc",
     "postbuild": "tsnd scripts/post-build.ts",
@@ -43,10 +43,10 @@
     "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
     "demo:basic": "tsnd examples/express-basic",
     "demo:express": "tsnd examples/express",
-    "demo:gcs": "tsnd examples/express-gcs",
-    "demo:gcs:direct": "tsnd examples/gcs-direct",
+    "demo:gcs": "tsnd -r dotenv/config examples/express-gcs",
+    "demo:gcs:direct": "tsnd -r dotenv/config examples/gcs-direct",
     "demo:node": "tsc && node examples/node-http-server",
-    "demo:s3": "tsc && node examples/express-s3",
+    "demo:s3": "tsc && node -r dotenv/config examples/express-s3",
     "demo:tus": "tsnd examples/express-tus",
     "demo:fastify": "tsnd examples/fastify"
   },
@@ -62,6 +62,7 @@
     "@types/supertest": "2.0.8",
     "@typescript-eslint/eslint-plugin": "2.16.0",
     "@typescript-eslint/parser": "2.16.0",
+    "dotenv": "8.2.0",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.9.0",
     "eslint-plugin-prettier": "3.1.2",
