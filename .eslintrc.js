@@ -41,6 +41,7 @@ module.exports = {
     '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/member-ordering': 'error',
     '@typescript-eslint/require-await': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
     'no-empty': 'off',
     'no-irregular-whitespace': 'error',
     'no-return-assign': 'error',
@@ -62,7 +63,6 @@ module.exports = {
     {
       files: ['examples/**/*.*'],
       rules: {
-        '@typescript-eslint/no-var-requires': 'off',
         '@typescript-eslint/explicit-function-return-type': 'off',
         'no-console': 'off'
       }
