@@ -1,6 +1,5 @@
-import * as fs from 'fs';
 import { join } from 'path';
-import { DiskStorage, DiskStorageOptions, File } from '../src';
+import { DiskStorage, DiskStorageOptions, File, fsp } from '../src';
 import { rm, root, userPrefix } from './fixtures/app';
 import { testfile } from './fixtures/testfile';
 
@@ -10,17 +9,21 @@ describe('DiskStorage', () => {
     directory,
     filename: file => `${file.userId}/${file.originalName}`
   };
-  const filename = join(userPrefix, testfile.originalName);
+  const filename = `${userPrefix}/${testfile.originalName}`;
   const dstpath = join(directory, filename);
   const storage = new DiskStorage(options);
 
   beforeAll(() => rm(directory));
 
+  beforeEach(async () => {
+    await storage.create({} as any, testfile);
+  });
+
   afterAll(() => rm(directory));
 
   it('should create file', async () => {
-    await storage.create({} as any, testfile);
-    expect(fs.statSync(dstpath).size).toEqual(0);
+    const { size } = await fsp.stat(dstpath);
+    expect(size).toBe(0);
   });
 
   it('should update metadata', async () => {
@@ -30,18 +33,24 @@ describe('DiskStorage', () => {
   });
 
   it('should return user files', async () => {
-    const files = await storage.get(userPrefix);
-    expect(Object.keys(files)).not.toHaveLength(0);
+    const [file] = await storage.get(userPrefix);
+    expect(file).toMatchObject({ ...testfile });
+  });
+
+  it('should return file', async () => {
+    const [file] = await storage.get(filename);
+    expect(file).toMatchObject({ ...testfile });
   });
 
   it('should delete file', async () => {
     const [file] = await storage.delete(filename);
     expect(file.name).toBe(filename);
+    expect(file).toMatchObject({ ...testfile });
   });
 
   it('should reset user storage', async () => {
     await storage.delete(userPrefix);
-    const files = await storage.get(userPrefix);
-    expect(Object.keys(files)).toHaveLength(0);
+    const [file] = await storage.get(userPrefix);
+    expect(file).not.toBeDefined();
   });
 });
