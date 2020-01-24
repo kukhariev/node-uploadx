@@ -64,15 +64,17 @@ export class DiskStorage extends BaseStorage {
   }
 
   async get(prefix: string): Promise<File[]> {
-    const find: File[] = [];
-    const list = (await getFiles(join(this.directory, prefix))).filter(
-      filename => extname(filename) !== METAFILE_EXTNAME
-    );
-    for (const name of list) {
-      const file = await this._getMeta(name);
-      file && find.push(file);
+    const files: File[] = [];
+    for (const path of await getFiles(join(this.directory, prefix))) {
+      try {
+        const data =
+          extname(path) !== METAFILE_EXTNAME ? await fsp.readFile(path + METAFILE_EXTNAME) : null;
+        data && files.push(JSON.parse(data.toString()));
+      } catch (error) {
+        this.log('[error]: %o', error);
+      }
     }
-    return find;
+    return files;
   }
 
   async delete(name: string): Promise<File[]> {
@@ -83,7 +85,9 @@ export class DiskStorage extends BaseStorage {
         await this._deleteMeta(file.name);
         await fsp.unlink(this.fullPath(file.name));
         deleted.push(file);
-      } catch {}
+      } catch (error) {
+        this.log('[error]: %o', error);
+      }
     }
     return files.length ? deleted : [{ name } as File];
   }
