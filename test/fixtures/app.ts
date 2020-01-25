@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 export const storageOptions: BaseStorageOptions = {
   filename: file => `${file.userId}/${file.originalName}`,
   maxUploadSize: '6GB',
-  allowMIME: ['video/*', 'image/*'],
+  allowMIME: ['video/*', 'image/*', 'application/octet-stream'],
   useRelativeLocation: true
 };
 

@@ -62,12 +62,12 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
-      const start = 0;
-      file = await this.storage.write({ ...file, start, body: req });
+      const contentLength = +getHeader(req, 'content-length');
+      file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
       headers['Upload-Offset'] = file.bytesWritten;
       file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     }
-    const statusCode = file.bytesWritten > 0 ? 200 : 201;
+    const statusCode = file.bytesWritten === file.size || file.bytesWritten === 0 ? 201 : 200;
     this.send({ res, statusCode, headers });
     return file;
   }
@@ -102,7 +102,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
       'Upload-Metadata': serializeMetadata(file.metadata),
       'Tus-Resumable': TUS_RESUMABLE
     };
-    this.send({ res, statusCode: 204, headers });
+    this.send({ res, statusCode: 200, headers });
     return file;
   }
 
