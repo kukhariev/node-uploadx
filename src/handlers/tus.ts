@@ -5,6 +5,8 @@ import { File, FileInit, Metadata } from '../storages/file';
 import { BaseStorage } from '../storages/storage';
 import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
+
+export const TUS_RESUMABLE = '1.0.0';
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
     .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString('base64')}`)
@@ -35,8 +37,8 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     const headers: Headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',
-      'Tus-Version': '1.0.0',
-      'Tus-Resumable': '1.0.0',
+      'Tus-Version': TUS_RESUMABLE,
+      'Tus-Resumable': TUS_RESUMABLE,
       'Tus-Max-Size': bytes.parse(this.storage.config.maxUploadSize || 0)
     };
     res.setHeader('Content-Length', 0);
@@ -57,7 +59,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     let file = await this.storage.create(req, config);
     const headers: Headers = {
       Location: this.buildFileUrl(req, file),
-      'Tus-Resumable': '1.0.0'
+      'Tus-Resumable': TUS_RESUMABLE
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
       const start = 0;
@@ -84,7 +86,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const file = await this.storage.write({ start, name, body: req, contentLength });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
-      'Tus-Resumable': '1.0.0'
+      'Tus-Resumable': TUS_RESUMABLE
     };
     this.send({ res, statusCode: 204, headers });
     file.status = file.bytesWritten === file.size ? 'completed' : 'part';
@@ -98,7 +100,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata),
-      'Tus-Resumable': '1.0.0'
+      'Tus-Resumable': TUS_RESUMABLE
     };
     this.send({ res, statusCode: 204, headers });
     return file;
@@ -111,7 +113,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
-    const headers: Headers = { 'Tus-Resumable': '1.0.0' };
+    const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';
     return file;
