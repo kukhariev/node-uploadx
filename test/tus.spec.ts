@@ -1,13 +1,14 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { serializeMetadata, tus } from '../src/handlers/tus';
+import { serializeMetadata, tus, TUS_RESUMABLE } from '../src/handlers/tus';
 import { app, rm, root, storageOptions } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
+import { BaseStorage } from '../src/storages/storage';
 
 describe('::Tus', () => {
   let res: request.Response;
-  const files: string[] = [];
+  let uri: string;
   const basePath = '/tus';
   const directory = join(root, 'tus');
   const opts = { ...storageOptions, directory };
@@ -15,68 +16,118 @@ describe('::Tus', () => {
 
   beforeAll(() => rm(directory));
   afterAll(() => rm(directory));
-  beforeEach(() => (res = undefined as any));
+  afterEach(() => (res = undefined as any));
 
-  test('wrapper', () => {
-    expect(tus()).toBeInstanceOf(Function);
+  describe('express middleware', () => {
+    it('default storage', () => {
+      expect(tus()).toBeInstanceOf(Function);
+    });
+    it('custom storage', () => {
+      const storage = {} as BaseStorage;
+      expect(tus({ storage })).toBeInstanceOf(Function);
+    });
   });
 
   describe('POST', () => {
-    it('should 200', async () => {
+    it('should 201', async () => {
       res = await request(app)
         .post(basePath)
-        .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
-        .set('Tus-Resumable', '1.0.0')
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(201)
+        .expect('tus-resumable', TUS_RESUMABLE);
+      uri = res.header.location;
+      expect(res.header.location).toEqual(expect.stringContaining('/tus'));
+    });
+  });
+
+  describe('PATCH', () => {
+    it('should 204 and Upload-Offset', async () => {
+      res = await request(app)
+        .patch(uri)
+        .set('Content-Type', 'application/offset+octet-stream')
+        .set('Upload-Offset', '0')
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(204)
+        .expect('tus-resumable', TUS_RESUMABLE)
+        .expect('upload-offset', '0');
+    });
+
+    it('should 204', async () => {
+      res = await request(app)
+        .patch(uri)
+        .set('Content-Type', 'application/offset+octet-stream')
+        .set('Upload-Metadata', serializeMetadata(metadata))
+        .set('Upload-Offset', '0')
+        .set('Tus-Resumable', TUS_RESUMABLE)
         .send(fs.readFileSync(srcpath))
-        .expect(200);
-      expect(res.header['location']).toBeDefined();
-      files.push(res.header.location);
+        .expect(204)
+        .expect('tus-resumable', TUS_RESUMABLE)
+        .expect('upload-offset', metadata.size.toString());
     });
   });
 
   describe('HEAD', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .head(files[0])
-        .set('Tus-Resumable', '1.0.0')
-        .expect(204);
-      expect(res.header).toHaveProperty('upload-offset');
-      expect(res.header).toHaveProperty('upload-metadata');
-      expect(res.header).toHaveProperty('tus-resumable');
+      await request(app)
+        .head(uri)
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(200)
+        .expect('upload-offset', metadata.size.toString())
+        .expect('upload-metadata', /.*\S.*/)
+        .expect('tus-resumable', TUS_RESUMABLE);
     });
 
     it('should 404', async () => {
-      res = await request(app)
+      await request(app)
         .head(basePath)
-        .set('Tus-Resumable', '1.0.0')
+        .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(404);
     });
   });
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await request(app)
+      await request(app)
         .options(basePath)
-        .set('Tus-Resumable', '1.0.0')
-        .expect(204);
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(204)
+        .expect('tus-resumable', TUS_RESUMABLE);
     });
   });
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .delete(files[0])
-        .set('Tus-Resumable', '1.0.0')
-        .expect(204);
+      await request(app)
+        .delete(uri)
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(204)
+        .expect('tus-resumable', TUS_RESUMABLE);
     });
 
     it('should 404', async () => {
-      res = await request(app)
+      await request(app)
         .delete(basePath)
-        .set('Tus-Resumable', '1.0.0')
+        .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(404);
+    });
+  });
+
+  describe('POST (creation-with-upload)', () => {
+    it('should return upload-offset', async () => {
+      res = await request(app)
+        .post(basePath)
+        .set('Content-Type', 'application/offset+octet-stream')
+        .set('Upload-Metadata', serializeMetadata(metadata))
+        .set('Upload-Length', metadata.size.toString())
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .send(fs.readFileSync(srcpath).slice(0, 5))
+        .expect(200)
+        .expect('tus-resumable', TUS_RESUMABLE)
+        .expect('upload-offset', '5');
+      uri = res.header.location;
+      expect(res.header.location).toEqual(expect.stringContaining('/tus'));
     });
   });
 });
