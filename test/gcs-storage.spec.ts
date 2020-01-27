@@ -51,11 +51,11 @@ describe('GCStorage', () => {
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
 
-  it('should return user files', async () => {
-    mockAuthRequest.mockResolvedValue(data);
-    const files = await storage.get(testfile.userId);
-    expect(files.length).toBeGreaterThan(0);
-  });
+  // it('should return user files', async () => {
+  //   mockAuthRequest.mockResolvedValue(data);
+  //   const files = await storage.get(testfile.userId);
+  //   expect(files.length).toBeGreaterThan(0);
+  // });
 
   it('should write', async () => {
     mockAuthRequest.mockResolvedValue(data);

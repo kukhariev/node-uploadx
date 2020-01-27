@@ -30,7 +30,7 @@ const defaultOptions: Required<BaseStorageOptions> = {
 
 export type Validator = (file: File) => string | false;
 
-export abstract class BaseStorage {
+export abstract class BaseStorage<TFile, TList> {
   validators: Set<Validator> = new Set();
   onComplete: (file: File) => void;
   path: string;
@@ -59,9 +59,9 @@ export abstract class BaseStorage {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
-  abstract create(req: http.IncomingMessage, file: FileInit): Promise<File>;
-  abstract write(part: FilePart): Promise<File>;
-  abstract delete(prefix: string): Promise<File[]>;
-  abstract get(prefix?: string): Promise<File[]>;
-  abstract update(name: string, file: Partial<File>): Promise<File>;
+  abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
+  abstract write(part: FilePart): Promise<TFile>;
+  abstract delete(prefix: string): Promise<TFile[]>;
+  abstract get(prefix?: string): Promise<TList[]>;
+  abstract update(name: string, file: Partial<File>): Promise<TFile>;
 }

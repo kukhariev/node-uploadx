@@ -26,15 +26,20 @@ export function parseMetadata(encoded = ''): Metadata {
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
-export class Tus<T extends BaseStorage> extends BaseHandler {
-  storage: T | DiskStorage;
-  constructor(config: { storage: T } | DiskStorageOptions) {
+export class Tus<TFile extends File, L> extends BaseHandler {
+  storage: BaseStorage<TFile, L>;
+
+  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
     super();
-    this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
+    this.storage =
+      'storage' in config
+        ? config.storage
+        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
+    this.responseType = 'json';
     this.log('options: %o', config);
   }
 
-  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers: Headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',
       'Tus-Version': TUS_RESUMABLE,
@@ -44,13 +49,13 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     res.setHeader('Content-Length', 0);
     res.writeHead(204, headers);
     res.end();
-    return Promise.resolve({} as File);
+    return Promise.resolve({} as any);
   }
 
   /**
    * Create File from request and send file url to client
    */
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = parseMetadata(metadataHeader);
     const config: FileInit = { metadata };
@@ -75,7 +80,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   /**
    * Write chunk to file or/and return chunk offset
    */
-  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadataHeader = getHeader(req, 'upload-metadata');
@@ -93,7 +98,7 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
     return file;
   }
 
-  async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const file = await this.storage.write({ name: name });
@@ -109,22 +114,22 @@ export class Tus<T extends BaseStorage> extends BaseHandler {
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<L> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });
     file.status = 'deleted';
-    return file;
+    return file as any;
   }
 }
 
 /**
  * Basic express wrapper
  */
-export function tus(
-  options: DiskStorageOptions | { storage: BaseStorage } = {}
+export function tus<T extends File, L>(
+  options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Tus(options).handle;
 }

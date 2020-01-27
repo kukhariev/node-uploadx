@@ -20,7 +20,10 @@ export type S3StorageOptions = BaseStorageOptions &
     bucket?: string;
     keyFile?: string;
   };
-
+export interface S3ListObject {
+  Key: string;
+  uri?: string;
+}
 export function processMetadata(
   metadata: Record<string, any>,
   func: (value: any) => string
@@ -32,7 +35,7 @@ export function processMetadata(
   return encoded;
 }
 
-export class S3Storage extends BaseStorage {
+export class S3Storage extends BaseStorage<S3File, any> {
   bucket: string;
   client: S3;
   private metaCache: Record<string, S3File> = {};
@@ -46,7 +49,7 @@ export class S3Storage extends BaseStorage {
     this._checkBucket();
   }
 
-  async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
+  async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
     const file = new S3File(config);
     await this.validate(file);
     const name = this.namingFunction(file);
@@ -72,7 +75,7 @@ export class S3Storage extends BaseStorage {
     return file;
   }
 
-  async write(part: FilePart): Promise<File> {
+  async write(part: FilePart): Promise<S3File> {
     const file = await this._getMeta(part.name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     if (Number(part.start) >= 0) {
@@ -86,24 +89,24 @@ export class S3Storage extends BaseStorage {
     return file;
   }
 
-  async delete(name: string): Promise<File[]> {
+  async delete(name: string): Promise<S3File[]> {
     const file = await this._getMeta(name);
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMetaFile(file), this._abortMultipartUpload(file)]);
       delete this.metaCache[file.name];
     }
-    return [{ name } as File];
+    return [{ name } as S3File];
   }
 
-  async get(prefix: string): Promise<File[]> {
+  async get(prefix: string): Promise<S3ListObject[]> {
     const { Contents } = await this.client
       .listObjectsV2({ Bucket: this.bucket, Prefix: prefix })
       .promise();
     return Contents as any;
   }
 
-  async update(name: string, { metadata }: Partial<File>): Promise<File> {
+  async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
     const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.metadata = { ...file.metadata, ...metadata };
