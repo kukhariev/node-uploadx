@@ -114,6 +114,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus });
       await this._deleteMeta(file.name);
+      file.status = 'deleted';
       return [{ ...file, name }];
     }
     return [{ name } as GCSFile];
@@ -184,7 +185,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const file = this.metaCache[name];
     if (file) return file;
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
-    const { data } = await this.authClient.request({ params: { alt: 'media' }, url });
+    const { data } = await this.authClient.request<GCSFile>({ params: { alt: 'media' }, url });
     this.metaCache[name] = data;
     return data;
   }

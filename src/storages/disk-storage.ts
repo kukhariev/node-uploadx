@@ -88,10 +88,12 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
 
   async delete(name: string): Promise<DiskFile[]> {
     const file = await this._getMeta(name);
-    await this._deleteMeta(name);
-    await fsp.unlink(this.fullPath(name));
-
-    return [file as File];
+    if (file) {
+      file.status = 'deleted';
+      await Promise.all([this._deleteMeta(name), fsp.unlink(this.fullPath(name))]);
+      return [file];
+    }
+    return [{ name } as DiskFile];
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<DiskFile> {
