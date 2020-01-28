@@ -1,8 +1,9 @@
 import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../src/handlers/multipart';
-import { app, storageOptions, rm, root } from './fixtures/app';
-import { metadata, srcpath } from './fixtures/testfile';
+import { app } from './fixtures/app';
+import { metadata, srcpath, storageOptions, root } from './fixtures';
+import rimraf = require('rimraf');
 
 describe('::Multipart', () => {
   let res: request.Response;
@@ -12,8 +13,8 @@ describe('::Multipart', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, multipart(opts));
 
-  beforeAll(() => rm(directory));
-  afterAll(() => rm(directory));
+  beforeAll(() => rimraf.sync(directory));
+  afterAll(() => rimraf.sync(directory));
   beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {

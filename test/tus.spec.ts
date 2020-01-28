@@ -2,9 +2,10 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { serializeMetadata, tus, TUS_RESUMABLE } from '../src/handlers/tus';
-import { app, rm, root, storageOptions } from './fixtures/app';
-import { metadata, srcpath } from './fixtures/testfile';
 import { BaseStorage } from '../src/storages/storage';
+import { metadata, root, srcpath, storageOptions } from './fixtures';
+import { app } from './fixtures/app';
+import rimraf = require('rimraf');
 
 describe('::Tus', () => {
   let res: request.Response;
@@ -14,8 +15,8 @@ describe('::Tus', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, tus(opts));
 
-  beforeAll(() => rm(directory));
-  afterAll(() => rm(directory));
+  beforeAll(() => rimraf.sync(directory));
+  afterAll(() => rimraf.sync(directory));
   afterEach(() => (res = undefined as any));
 
   describe('express middleware', () => {

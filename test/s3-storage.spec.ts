@@ -1,7 +1,7 @@
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
-import { File, FilePart, S3Storage } from '../src';
-import { srcpath, testfile } from './fixtures/testfile';
+import { File, FilePart, METAFILE_EXTNAME, S3Storage } from '../src';
+import { filename, srcpath, storageOptions, testfile } from './fixtures';
 
 const mockCreateMultipartUpload = jest.fn();
 const mockHeadBucket = jest.fn();
@@ -93,15 +93,17 @@ jest.mock('aws-sdk', () => {
   };
 });
 
-const headResponseObject = { Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) } };
-
 describe('S3Storage', () => {
-  let filename: string;
+  const options = { ...storageOptions };
+  testfile.name = filename;
+  const headResponseObject: S3.HeadObjectOutput = {
+    Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
+  };
   let file: File;
   let storage: S3Storage;
   beforeEach(() => {
-    storage = new S3Storage({});
     mockHeadObject.mockReset();
+    storage = new S3Storage(options);
   });
 
   it('should create file', async () => {
@@ -113,7 +115,7 @@ describe('S3Storage', () => {
       };
     });
     file = await storage.create({} as any, testfile);
-    filename = file.name;
+    expect(file.name).toEqual(filename);
     expect(file).toMatchObject({
       ...testfile,
       UploadId: expect.any(String),
@@ -137,15 +139,23 @@ describe('S3Storage', () => {
   });
 
   it('should return user files', async () => {
-    mockHeadObject.mockImplementation(params => {
+    const metafile = filename + METAFILE_EXTNAME;
+    mockListObjectsV2.mockImplementation(params => {
       return {
         promise() {
-          return Promise.resolve(headResponseObject);
+          return Promise.resolve<S3.ListObjectsV2Output>({
+            Contents: [
+              { Key: 'already.uploaded', LastModified: new Date() },
+              { Key: metafile, LastModified: new Date() }
+            ]
+          });
         }
       };
     });
-    const files = await storage.get(file.userId);
-    expect(Object.keys(files)).not.toHaveLength(0);
+    const files = await storage.get(testfile.userId);
+    expect(files).toEqual(expect.any(Array));
+    expect(files.length).toEqual(1);
+    expect(files[0]).toMatchObject({ name: filename });
   });
 
   it('should write', async () => {
@@ -175,6 +185,6 @@ describe('S3Storage', () => {
       };
     });
     const [deleted] = await storage.delete(filename);
-    expect(deleted.name).toBe(filename);
+    expect(deleted.status).toBe<File['status']>('deleted');
   });
 });

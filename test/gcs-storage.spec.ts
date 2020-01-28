@@ -1,8 +1,8 @@
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import fetch from 'node-fetch';
-import { File, FilePart, GCStorage } from '../src';
-import { srcpath, testfile } from './fixtures/testfile';
+import { File, FilePart, GCStorage, METAFILE_EXTNAME } from '../src';
+import { filename, srcpath, storageOptions, testfile } from './fixtures';
 const { Response } = jest.requireActual('node-fetch');
 
 const mockAuthRequest = jest.fn();
@@ -12,6 +12,7 @@ jest.mock('google-auth-library', () => {
 });
 
 describe('GCStorage', () => {
+  const options = { ...storageOptions };
   const data = {
     data: {
       ...testfile,
@@ -19,12 +20,11 @@ describe('GCStorage', () => {
     }
   };
   let storage: GCStorage;
-  let filename: string;
   let file: File;
 
   beforeEach(() => {
     mockAuthRequest.mockResolvedValue({});
-    storage = new GCStorage({});
+    storage = new GCStorage(options);
   });
   afterEach(() => mockAuthRequest.mockReset());
 
@@ -34,7 +34,7 @@ describe('GCStorage', () => {
     });
     const req = { headers: { origin: 'http://api.com' } } as any;
     file = await storage.create(req, testfile);
-    filename = file.name;
+    expect(file.name).toEqual(filename);
     expect(file).toMatchObject({
       ...testfile,
       uri: expect.any(String)
@@ -51,11 +51,17 @@ describe('GCStorage', () => {
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
 
-  // it('should return user files', async () => {
-  //   mockAuthRequest.mockResolvedValue(data);
-  //   const files = await storage.get(testfile.userId);
-  //   expect(files.length).toBeGreaterThan(0);
-  // });
+  it('should return user files', async () => {
+    const metafile = filename + METAFILE_EXTNAME;
+    const list = {
+      data: { items: [{ name: metafile }] }
+    };
+    mockAuthRequest.mockResolvedValue(list);
+    const files = await storage.get(testfile.userId);
+    expect(files).toEqual(expect.any(Array));
+    expect(files.length).toEqual(1);
+    expect(files[0]).toMatchObject({ name: filename });
+  });
 
   it('should write', async () => {
     mockAuthRequest.mockResolvedValue(data);
@@ -83,5 +89,6 @@ describe('GCStorage', () => {
     mockAuthRequest.mockResolvedValue(data);
     const [deleted] = await storage.delete(filename);
     expect(deleted.name).toBe(filename);
+    expect(deleted.status).toBe<File['status']>('deleted');
   });
 });

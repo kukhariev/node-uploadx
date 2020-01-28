@@ -1,7 +1,10 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { File } from '../../src';
-import { userPrefix } from './app';
+import { File, BaseStorageOptions } from '../../src';
+export const userPrefix = 'userId';
+
+export const root = 'files';
+
 export const srcpath = join(__dirname, `testfile.mp4`);
 const stat = fs.statSync(srcpath);
 
@@ -18,3 +21,12 @@ export const testfile = {
   contentType: 'video/mp4',
   metadata
 } as File;
+
+export const filename = `${testfile.userId}/${testfile.originalName}`;
+
+export const storageOptions: BaseStorageOptions = {
+  filename: file => `${file.userId}/${file.originalName}`,
+  maxUploadSize: '6GB',
+  allowMIME: ['video/*', 'image/*', 'application/octet-stream'],
+  useRelativeLocation: true
+};

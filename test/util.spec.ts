@@ -2,15 +2,17 @@ import * as fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../src/utils';
-import { rm, root } from './fixtures/app';
+import { root } from './fixtures';
+import rimraf = require('rimraf');
 
 describe('fs', () => {
   const directory = join(root, 'fs-test');
   const deep = `${directory}/1/2`;
   const file = `${deep}/3/file.ext`;
+  const file2 = `${deep}/3/fi  le.ext.META`;
 
-  beforeAll(() => rm(directory));
-  afterAll(() => rm(directory));
+  beforeAll(() => rimraf.sync(directory));
+  afterAll(() => rimraf.sync(directory));
 
   it('ensureDir(dir)', async () => {
     await utils.ensureDir(deep);
@@ -20,6 +22,12 @@ describe('fs', () => {
   it('ensureFile(file)', async () => {
     const size = await utils.ensureFile(file);
     expect(fs.existsSync(file)).toBe(true);
+    expect(size).toBe(0);
+  });
+
+  it('ensureFile(file2)', async () => {
+    const size = await utils.ensureFile(file2);
+    expect(fs.existsSync(file2)).toBe(true);
     expect(size).toBe(0);
   });
 
@@ -36,12 +44,12 @@ describe('fs', () => {
 
   it('getFiles(directory)', async () => {
     const files = await utils.getFiles(directory);
-    expect(files.length).toBe(1);
+    expect(files.length).toBe(2);
   });
 
   it('getFiles(deep directory)', async () => {
     const files = await utils.getFiles(deep);
-    expect(files.length).toBe(1);
+    expect(files.length).toBe(2);
   });
 
   it('getFiles(not exist)', async () => {

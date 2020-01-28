@@ -1,25 +1,21 @@
 import { join } from 'path';
-import { DiskStorage, DiskStorageOptions, File, fsp } from '../src';
-import { rm, root, userPrefix } from './fixtures/app';
-import { testfile } from './fixtures/testfile';
+import { DiskStorage, File, fsp } from '../src';
+import { filename, root, storageOptions, testfile } from './fixtures';
+import rimraf = require('rimraf');
 
 describe('DiskStorage', () => {
   const directory = join(root, 'ds-test');
-  const options: DiskStorageOptions = {
-    directory,
-    filename: file => `${file.userId}/${file.originalName}`
-  };
-  const filename = `${userPrefix}/${testfile.originalName}`;
+  const options = { ...storageOptions, directory };
   const dstpath = join(directory, filename);
   const storage = new DiskStorage(options);
 
-  beforeAll(() => rm(directory));
+  beforeAll(() => rimraf.sync(directory));
 
   beforeEach(async () => {
     await storage.create({} as any, testfile);
   });
 
-  afterAll(() => rm(directory));
+  afterEach(() => rimraf.sync(directory));
 
   it('should create file', async () => {
     const { size } = await fsp.stat(dstpath);
@@ -33,24 +29,20 @@ describe('DiskStorage', () => {
   });
 
   it('should return user files', async () => {
-    const [file] = await storage.get(userPrefix);
-    expect(file).toMatchObject({ name: expect.any(String) });
+    const files = await storage.get(testfile.userId);
+    expect(files).toEqual(expect.any(Array));
+    expect(files.length).toEqual(1);
+    expect(files[0]).toMatchObject({ name: filename });
   });
 
   it('should return file', async () => {
-    const [file] = await storage.get(filename);
-    expect(file).toMatchObject({ name: expect.any(String) });
+    const files = await storage.get(filename);
+    expect(files).toEqual(expect.any(Array));
   });
 
   it('should delete file', async () => {
-    const [file] = await storage.delete(filename);
-    expect(file.name).toBe(filename);
-    expect(file).toMatchObject({ ...testfile });
+    const [deleted] = await storage.delete(filename);
+    expect(deleted.name).toBe(filename);
+    expect(deleted.status).toBe<File['status']>('deleted');
   });
-
-  // it('should reset user storage', async () => {
-  //   await storage.delete(userPrefix);
-  //   const [file] = await storage.get(userPrefix);
-  //   expect(file).not.toBeDefined();
-  // });
 });
