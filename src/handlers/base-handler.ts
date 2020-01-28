@@ -13,18 +13,14 @@ type Handlers = typeof handlers[number];
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
+type UploadEvents = 'created' | 'completed' | 'deleted' | 'part';
+
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
-  on<T = File>(
-    event: 'created' | 'completed' | 'deleted' | 'part',
-    listener: (file: T) => void
-  ): this;
-  off<T = File>(
-    event: 'created' | 'completed' | 'deleted' | 'part',
-    listener: (file: T) => void
-  ): this;
+  on<T = File>(event: UploadEvents, listener: (file: T) => void): this;
+  off<T = File>(event: UploadEvents, listener: (file: T) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit<T = File>(event: 'created' | 'completed' | 'deleted' | 'part', evt: T): boolean;
+  emit<T = File>(event: UploadEvents, evt: T): boolean;
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
