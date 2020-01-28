@@ -38,7 +38,7 @@ export class GCSFile extends File {
 
 interface CGSObject {
   name: string;
-  mediaLink: string;
+  updated: Date;
 }
 /**
  * Google cloud storage based backend.
@@ -121,11 +121,14 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   }
 
   async get(prefix: string): Promise<CGSObject[]> {
+    const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const baseURL = this.storageBaseURI;
     const url = '/';
     const options = { baseURL, url, params: { prefix } };
-    const { data } = await this.authClient.request(options);
-    return data.items;
+    const { data } = await this.authClient.request<{ items: CGSObject[] }>(options);
+    return data.items
+      .filter(item => item.name.endsWith(METAFILE_EXTNAME))
+      .map(({ name, updated }) => ({ name: name.replace(re, ''), updated }));
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<GCSFile> {

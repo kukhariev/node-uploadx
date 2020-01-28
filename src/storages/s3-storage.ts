@@ -21,8 +21,9 @@ export type S3StorageOptions = BaseStorageOptions &
     keyFile?: string;
   };
 export interface S3ListObject {
-  Key: string;
-  uri?: string;
+  name?: string;
+
+  updated?: any;
 }
 export function processMetadata(
   metadata: Record<string, any>,
@@ -99,10 +100,16 @@ export class S3Storage extends BaseStorage<S3File, any> {
   }
 
   async get(prefix: string): Promise<S3ListObject[]> {
+    const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const { Contents } = await this.client
       .listObjectsV2({ Bucket: this.bucket, Prefix: prefix })
       .promise();
-    return Contents as any;
+    if (Contents) {
+      return Contents.filter(item =>
+        item.Key?.endsWith(METAFILE_EXTNAME)
+      ).map(({ Key, LastModified }) => ({ name: Key?.replace(re, ''), updated: LastModified }));
+    }
+    return [];
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<S3File> {

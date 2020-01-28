@@ -1,17 +1,16 @@
-import { createWriteStream } from 'fs';
+import { createWriteStream, statSync } from 'fs';
 import * as http from 'http';
-import { join, resolve as pathResolve } from 'path';
+import { join, relative, resolve as pathResolve, extname } from 'path';
 import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
-export class DiskFile extends File {
-  timestamp?: number;
-}
+export class DiskFile extends File {}
+
 export interface DiskListObject {
   name: string;
-  uri?: string;
+  updated: Date;
 }
 export interface DiskStorageOptions extends BaseStorageOptions {
   /**
@@ -67,23 +66,14 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     }
   }
 
-  // async get(prefix: string): Promise<DiskFile[]> {
-  //   const files: File[] = [];
-  //   for (const path of await getFiles(join(this.directory, prefix))) {
-  //     try {
-  //       const data =
-  //         extname(path) !== METAFILE_EXTNAME ? await fsp.readFile(path + METAFILE_EXTNAME) : null;
-  //       data && files.push(JSON.parse(data.toString()));
-  //     } catch (error) {
-  //       this.log('[error]: %o', error);
-  //     }
-  //   }
-  //   return files as  DiskFile[];
-  // }
-
   async get(prefix: string): Promise<DiskListObject[]> {
     const files = await getFiles(join(this.directory, prefix));
-    return files.map(name => ({ name })) as DiskListObject[];
+    return files
+      .filter(name => extname(name) !== METAFILE_EXTNAME)
+      .map(path => ({
+        name: relative(this.directory, path).replace(/\\/g, '/'),
+        updated: statSync(path).mtime
+      }));
   }
 
   async delete(name: string): Promise<DiskFile[]> {
