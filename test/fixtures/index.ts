@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
-import { File, BaseStorageOptions } from '../../src';
+import { BaseStorageOptions, File, METAFILE_EXTNAME } from '../../src';
 export const userPrefix = 'userId';
 
 export const root = 'files';
@@ -23,6 +23,7 @@ export const testfile = {
 } as File;
 
 export const filename = `${testfile.userId}/${testfile.originalName}`;
+export const metafile = filename + METAFILE_EXTNAME;
 
 export const storageOptions: BaseStorageOptions = {
   filename: file => `${file.userId}/${file.originalName}`,

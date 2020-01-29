@@ -197,7 +197,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const name = encodeURIComponent(path);
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
     delete this.metaCache[name];
-    return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
+    return this.authClient.request({ method: 'DELETE', url }).catch(err => this.log(err));
   }
 
   private _checkBucket(bucketName: string): Promise<any> {

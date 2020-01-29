@@ -1,7 +1,7 @@
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
-import { File, FilePart, METAFILE_EXTNAME, S3Storage } from '../src';
-import { filename, srcpath, storageOptions, testfile } from './fixtures';
+import { File, FilePart, S3Storage } from '../src';
+import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
 
 const mockCreateMultipartUpload = jest.fn();
 const mockHeadBucket = jest.fn();
@@ -14,65 +14,49 @@ const mockCompleteMultipartUpload = jest.fn();
 const mockHeadObject = jest.fn();
 const mockListParts = jest.fn();
 
-mockDeleteObject.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve();
-    }
-  };
-});
-mockAbortMultipartUpload.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve();
-    }
-  };
-});
-mockCreateMultipartUpload.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve({ UploadId: '123456789' });
-    }
-  };
-});
-mockPutObject.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve();
-    }
-  };
-});
-mockListObjectsV2.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve({ Contents: [{}] });
-    }
-  };
-});
-mockUploadPart.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve();
-    }
-  };
-});
-mockCompleteMultipartUpload.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve({ Location: '' });
-    }
-  };
-});
+mockDeleteObject.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve();
+  }
+}));
+mockAbortMultipartUpload.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve();
+  }
+}));
+mockCreateMultipartUpload.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve({ UploadId: '123456789' });
+  }
+}));
+mockPutObject.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve();
+  }
+}));
+mockListObjectsV2.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve({ Contents: [{}] });
+  }
+}));
+mockUploadPart.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve();
+  }
+}));
+mockCompleteMultipartUpload.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve({ Location: '' });
+  }
+}));
 
-mockListParts.mockImplementation(params => {
-  return {
-    promise() {
-      return Promise.resolve({
-        Metadata: { Parts: [{ PartNumber: 1, Size: testfile.size }] }
-      });
-    }
-  };
-});
+mockListParts.mockImplementation(params => ({
+  promise() {
+    return Promise.resolve({
+      Metadata: { Parts: [{ PartNumber: 1, Size: testfile.size }] }
+    });
+  }
+}));
 
 jest.mock('aws-sdk', () => {
   return {
@@ -107,13 +91,11 @@ describe('S3Storage', () => {
   });
 
   it('should create file', async () => {
-    mockHeadObject.mockImplementation(params => {
-      return {
-        promise() {
-          return Promise.reject({ statusCode: 404 });
-        }
-      };
-    });
+    mockHeadObject.mockImplementation(params => ({
+      promise() {
+        return Promise.reject({ statusCode: 404 });
+      }
+    }));
     file = await storage.create({} as any, testfile);
     expect(file.name).toEqual(filename);
     expect(file).toMatchObject({
@@ -126,32 +108,39 @@ describe('S3Storage', () => {
   });
 
   it('should update metadata', async () => {
-    mockHeadObject.mockImplementation(params => {
-      return {
-        promise() {
-          return Promise.resolve(headResponseObject);
-        }
-      };
-    });
+    mockHeadObject.mockImplementation(params => ({
+      promise() {
+        return Promise.resolve(headResponseObject);
+      }
+    }));
     file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
     expect(file.metadata.name).toBe('newname.mp4');
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
 
+  it('should `not found` error', async () => {
+    expect.assertions(1);
+    mockHeadObject.mockImplementation(params => ({
+      promise() {
+        return Promise.reject({ statusCode: 404 });
+      }
+    }));
+    await expect(
+      storage.update(filename, { metadata: { name: 'newname.mp4' } } as any)
+    ).rejects.toHaveProperty('statusCode', 404);
+  });
+
   it('should return user files', async () => {
-    const metafile = filename + METAFILE_EXTNAME;
-    mockListObjectsV2.mockImplementation(params => {
-      return {
-        promise() {
-          return Promise.resolve<S3.ListObjectsV2Output>({
-            Contents: [
-              { Key: 'already.uploaded', LastModified: new Date() },
-              { Key: metafile, LastModified: new Date() }
-            ]
-          });
-        }
-      };
-    });
+    mockListObjectsV2.mockImplementation(params => ({
+      promise() {
+        return Promise.resolve<S3.ListObjectsV2Output>({
+          Contents: [
+            { Key: 'already.uploaded', LastModified: new Date() },
+            { Key: metafile, LastModified: new Date() }
+          ]
+        });
+      }
+    }));
     const files = await storage.get(testfile.userId);
     expect(files).toEqual(expect.any(Array));
     expect(files.length).toEqual(1);
@@ -159,13 +148,11 @@ describe('S3Storage', () => {
   });
 
   it('should write', async () => {
-    mockHeadObject.mockImplementation(params => {
-      return {
-        promise() {
-          return Promise.resolve(headResponseObject);
-        }
-      };
-    });
+    mockHeadObject.mockImplementation(params => ({
+      promise() {
+        return Promise.resolve(headResponseObject);
+      }
+    }));
     const part: FilePart = {
       name: filename,
       body: createReadStream(srcpath),
@@ -177,13 +164,11 @@ describe('S3Storage', () => {
   });
 
   it('should delete file', async () => {
-    mockHeadObject.mockImplementation(params => {
-      return {
-        promise() {
-          return Promise.resolve(headResponseObject);
-        }
-      };
-    });
+    mockHeadObject.mockImplementation(params => ({
+      promise() {
+        return Promise.resolve(headResponseObject);
+      }
+    }));
     const [deleted] = await storage.delete(filename);
     expect(deleted.status).toBe<File['status']>('deleted');
   });

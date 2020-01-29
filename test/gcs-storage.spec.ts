@@ -1,8 +1,8 @@
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import fetch from 'node-fetch';
-import { File, FilePart, GCStorage, METAFILE_EXTNAME } from '../src';
-import { filename, srcpath, storageOptions, testfile } from './fixtures';
+import { GCSFile, FilePart, GCStorage } from '../src';
+import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
 const { Response } = jest.requireActual('node-fetch');
 
 const mockAuthRequest = jest.fn();
@@ -13,14 +13,13 @@ jest.mock('google-auth-library', () => {
 
 describe('GCStorage', () => {
   const options = { ...storageOptions };
-  const data = {
-    data: {
-      ...testfile,
-      uri: 'http://api.com?upload_id=123456789'
-    }
-  };
+  const uri = 'http://api.com?upload_id=123456789';
+  const successResponse = { data: { ...testfile, uri } };
+  const errorObject = { code: 401, response: {} };
+  const createResponse = { headers: { location: 'http://api.com?upload_id=123456789' } };
+
   let storage: GCStorage;
-  let file: File;
+  let file: GCSFile;
 
   beforeEach(() => {
     mockAuthRequest.mockResolvedValue({});
@@ -29,9 +28,9 @@ describe('GCStorage', () => {
   afterEach(() => mockAuthRequest.mockReset());
 
   it('should create file', async () => {
-    mockAuthRequest.mockResolvedValue({
-      headers: { location: 'http://api.com?upload_id=123456789' }
-    });
+    mockAuthRequest.mockRejectedValueOnce({});
+    mockAuthRequest.mockResolvedValueOnce(createResponse);
+    mockAuthRequest.mockResolvedValue({});
     const req = { headers: { origin: 'http://api.com' } } as any;
     file = await storage.create(req, testfile);
     expect(file.name).toEqual(filename);
@@ -39,20 +38,34 @@ describe('GCStorage', () => {
       ...testfile,
       uri: expect.any(String)
     });
+    expect(mockAuthRequest).toHaveBeenCalledTimes(4);
     const existing = await storage.create(req, testfile);
     expect(file).toMatchObject(existing);
   });
 
+  it('should create error', async () => {
+    mockAuthRequest.mockRejectedValue(errorObject);
+    const req = { headers: { origin: 'http://api.com' } } as any;
+    await expect(storage.create(req, testfile)).rejects.toEqual(errorObject);
+  });
+
   it('should update metadata', async () => {
-    mockAuthRequest.mockResolvedValue(data);
-    file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as File);
+    mockAuthRequest.mockResolvedValue(successResponse);
+    file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as GCSFile);
     expect(file.metadata.name).toBe('newname.mp4');
     expect(file.originalName).toBe('newname.mp4');
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
 
+  it('should `not found` error', async () => {
+    expect.assertions(1);
+    mockAuthRequest.mockResolvedValue({});
+    await expect(
+      storage.update(filename, { metadata: { name: 'newname.mp4' } } as any)
+    ).rejects.toHaveProperty('statusCode', 404);
+  });
+
   it('should return user files', async () => {
-    const metafile = filename + METAFILE_EXTNAME;
     const list = {
       data: { items: [{ name: metafile }] }
     };
@@ -63,8 +76,8 @@ describe('GCStorage', () => {
     expect(files[0]).toMatchObject({ name: filename });
   });
 
-  it('should write', async () => {
-    mockAuthRequest.mockResolvedValue(data);
+  it('should update', async () => {
+    mockAuthRequest.mockResolvedValue(successResponse);
     ((fetch as unknown) as jest.Mock).mockResolvedValue(
       new Response('{"mediaLink":"http://api.com/123456789"}')
     );
@@ -86,9 +99,9 @@ describe('GCStorage', () => {
   });
 
   it('should delete file', async () => {
-    mockAuthRequest.mockResolvedValue(data);
+    mockAuthRequest.mockResolvedValue(successResponse);
     const [deleted] = await storage.delete(filename);
     expect(deleted.name).toBe(filename);
-    expect(deleted.status).toBe<File['status']>('deleted');
+    expect(deleted.status).toBe<GCSFile['status']>('deleted');
   });
 });
