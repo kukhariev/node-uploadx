@@ -1,8 +1,7 @@
-import { createWriteStream, statSync } from 'fs';
 import * as http from 'http';
-import { join, relative, resolve as pathResolve, extname } from 'path';
+import { extname, join, relative, resolve as pathResolve } from 'path';
 import { Readable } from 'stream';
-import { ensureFile, ERRORS, fail, fsp, getFiles } from '../utils';
+import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
@@ -68,12 +67,13 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
 
   async get(prefix: string): Promise<DiskListObject[]> {
     const files = await getFiles(join(this.directory, prefix));
-    return files
-      .filter(name => extname(name) !== METAFILE_EXTNAME)
-      .map(path => ({
-        name: relative(this.directory, path).replace(/\\/g, '/'),
-        updated: statSync(path).mtime
-      }));
+    const props = async (path: string): Promise<DiskListObject> => ({
+      name: relative(this.directory, path).replace(/\\/g, '/'),
+      updated: (await fsp.stat(path)).mtime
+    });
+    return Promise.all(
+      files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path))
+    );
   }
 
   async delete(name: string): Promise<DiskFile[]> {
@@ -100,10 +100,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
    */
   protected _write(req: Readable, path: string, start: number): Promise<number> {
     return new Promise((resolve, reject) => {
-      const file = createWriteStream(path, { flags: 'r+', start });
-      file.once('error', error => reject(error));
-      req.once('aborted', () => file.close());
-      req.pipe(file).on('finish', () => resolve(start + file.bytesWritten));
+      const writeStream = getWriteStream(path, start);
+      writeStream.once('error', error => reject(error));
+      req.once('aborted', () => writeStream.close());
+      req.pipe(writeStream).on('finish', () => resolve(start + writeStream.bytesWritten));
     });
   }
 

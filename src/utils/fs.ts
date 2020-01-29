@@ -1,4 +1,4 @@
-import { promises as fsp } from 'fs';
+import { createWriteStream, promises as fsp, WriteStream } from 'fs';
 import { dirname, resolve } from 'path';
 
 export async function ensureDir(dir: string): Promise<void> {
@@ -23,6 +23,9 @@ export async function getFileSize(path: string): Promise<number> {
   } catch {
     return -1;
   }
+}
+export function getWriteStream(path: string, start: number): WriteStream {
+  return createWriteStream(path, { flags: 'r+', start });
 }
 export async function getFiles(prefix: string): Promise<string[]> {
   try {
