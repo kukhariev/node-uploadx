@@ -14,7 +14,7 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 /**
  * X-headers  protocol implementation
  */
-export class Uploadx<TFile extends File, L> extends BaseHandler {
+export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
   static RESUME_STATUS_CODE = 308;
 
   storage: BaseStorage<TFile, L>;
@@ -39,7 +39,6 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);
-
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
@@ -112,7 +111,7 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function uploadx<T extends File, L>(
+export function uploadx<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Uploadx(options).handle;

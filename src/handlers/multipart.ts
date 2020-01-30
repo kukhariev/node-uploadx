@@ -5,7 +5,7 @@ import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../utils';
 import { BaseHandler } from './base-handler';
 
-export class Multipart<TFile extends File, L> extends BaseHandler {
+export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
   storage: BaseStorage<TFile, L>;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
@@ -74,7 +74,7 @@ export class Multipart<TFile extends File, L> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function multipart<T extends File, L>(
+export function multipart<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Multipart(options).handle;
