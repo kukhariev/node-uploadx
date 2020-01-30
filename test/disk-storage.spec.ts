@@ -5,7 +5,18 @@ import { PassThrough } from 'stream';
 
 const directory = join(root, 'ds-test');
 const options = { ...storageOptions, directory };
-let writeStream = new PassThrough();
+
+class FileWriteStream extends PassThrough {
+  get bytesWritten(): number {
+    return super.readableLength;
+  }
+
+  close(): void {
+    return;
+  }
+}
+
+let writeStream: FileWriteStream;
 
 jest.mock('../src/utils/fs', () => ({
   ensureFile: async () => 0,
@@ -21,8 +32,11 @@ jest.mock('../src/utils/fs', () => ({
 
 describe('DiskStorage', () => {
   const storage = new DiskStorage(options);
+  let mockReadable: PassThrough;
 
   beforeEach(async () => {
+    writeStream = new FileWriteStream();
+    mockReadable = new PassThrough();
     await storage.create({} as any, testfile);
   });
 
@@ -45,19 +59,28 @@ describe('DiskStorage', () => {
   });
 
   it('should write error', async () => {
-    const mockReadable = new PassThrough();
     setTimeout(() => {
       mockReadable.emit('data', '12345');
       mockReadable.emit('data', '12345');
-      writeStream.emit('error', 'aborted');
+      writeStream.emit('error', 'write error');
     }, 100);
     const stream = storage.write({ ...testfile, start: 0, body: mockReadable });
     await expect(stream).rejects.toHaveProperty('statusCode', 500);
   });
 
+  it('should close on abort', async () => {
+    const close = spyOn(writeStream, 'close');
+    setTimeout(() => {
+      mockReadable.emit('data', '12345');
+      mockReadable.emit('aborted');
+      mockReadable.emit('end');
+    }, 100);
+    const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
+    expect(+file.bytesWritten).toBeNaN();
+    expect(close).toBeCalled();
+  });
+
   it('should write', async () => {
-    writeStream = new PassThrough();
-    const mockReadable = new PassThrough();
     setTimeout(() => {
       mockReadable.emit('data', '12345');
       mockReadable.emit('data', '12345');
@@ -65,8 +88,8 @@ describe('DiskStorage', () => {
     }, 100);
 
     const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
-    expect(writeStream.readableLength).toBe(10);
-    expect(file.bytesWritten).toBe(NaN);
+    expect(file.status).toBe('part');
+    expect(file.bytesWritten).toBe(10);
   });
 
   it('should return files', async () => {

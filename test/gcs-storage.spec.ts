@@ -14,6 +14,7 @@ jest.mock('google-auth-library', () => ({
 describe('GCStorage', () => {
   const options = { ...storageOptions };
   const uri = 'http://api.com?upload_id=123456789';
+  const req = { headers: { origin: 'http://api.com' } } as any;
   const successResponse = { data: { ...testfile, uri } };
   const errorObject = { code: 401, response: {} };
   const createResponse = { headers: { location: 'http://api.com?upload_id=123456789' } };
@@ -21,19 +22,21 @@ describe('GCStorage', () => {
   let storage: GCStorage;
   let file: GCSFile;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockAuthRequest.mockResolvedValue({});
     storage = new GCStorage(options);
+    file = { ...testfile, uri: expect.any(String) };
   });
+
   afterEach(() => mockAuthRequest.mockReset());
 
   it('should create file', async () => {
     mockAuthRequest.mockRejectedValueOnce({});
     mockAuthRequest.mockResolvedValueOnce(createResponse);
     mockAuthRequest.mockResolvedValue({});
-    const req = { headers: { origin: 'http://api.com' } } as any;
     file = await storage.create(req, testfile);
     expect(file.name).toEqual(filename);
+    expect(file.status).toEqual<GCSFile['status']>('created');
     expect(file).toMatchObject({
       ...testfile,
       uri: expect.any(String)
@@ -45,7 +48,6 @@ describe('GCStorage', () => {
 
   it('should create error', async () => {
     mockAuthRequest.mockRejectedValue(errorObject);
-    const req = { headers: { origin: 'http://api.com' } } as any;
     await expect(storage.create(req, testfile)).rejects.toEqual(errorObject);
   });
 
@@ -76,7 +78,7 @@ describe('GCStorage', () => {
     expect(files[0]).toMatchObject({ name: filename });
   });
 
-  it('should update', async () => {
+  it('should write', async () => {
     mockAuthRequest.mockResolvedValue(successResponse);
     ((fetch as unknown) as jest.Mock).mockResolvedValue(
       new Response('{"mediaLink":"http://api.com/123456789"}')
@@ -95,6 +97,7 @@ describe('GCStorage', () => {
       headers: expect.any(Object),
       signal: expect.any(AbortSignal)
     });
+    expect(res.status).toEqual<GCSFile['status']>('completed');
     expect(res.bytesWritten).toEqual(testfile.size);
   });
 

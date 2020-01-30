@@ -27,7 +27,7 @@ export interface FileInit {
 }
 
 export class File implements FileInit {
-  bytesWritten = 0;
+  bytesWritten = NaN;
   contentType: string;
   originalName: string;
   id = '';
