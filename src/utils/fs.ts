@@ -25,7 +25,10 @@ export async function getFileSize(path: string): Promise<number> {
   }
 }
 export function getWriteStream(path: string, start: number): WriteStream {
-  return createWriteStream(path, { flags: 'r+', start });
+  if (path && start >= 0) {
+    return createWriteStream(path, { flags: 'r+', start });
+  }
+  throw new Error('getWriteStream: invalid parameters!');
 }
 export async function getFiles(prefix: string): Promise<string[]> {
   try {

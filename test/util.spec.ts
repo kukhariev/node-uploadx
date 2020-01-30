@@ -4,6 +4,7 @@ import { join } from 'path';
 import * as utils from '../src/utils';
 import { root } from './fixtures';
 import rimraf = require('rimraf');
+import { getWriteStream } from '../src/utils';
 
 describe('fs', () => {
   const directory = join(root, 'fs-test');
@@ -65,6 +66,16 @@ describe('fs', () => {
   it('getFileSize(not exist)', async () => {
     const size = await utils.getFileSize('test/not exist');
     expect(size).toBe(-1);
+  });
+
+  it('getWriteStream', () => {
+    const stream = getWriteStream(file, 0);
+    expect(stream).toBeInstanceOf(fs.WriteStream);
+    stream.close();
+  });
+
+  it('getWriteStream (throw)', () => {
+    expect(() => getWriteStream('', NaN)).toThrow();
   });
 });
 

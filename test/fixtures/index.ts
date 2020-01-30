@@ -16,14 +16,15 @@ export const metadata = {
 };
 export const testfile = {
   userId: userPrefix,
-  originalName: 'testfile.mp4',
+  name: `${userPrefix}/${metadata.name}`,
+  originalName: metadata.name,
   size: stat.size,
-  contentType: 'video/mp4',
+  contentType: metadata.mimeType,
   metadata
 } as File;
 
-export const filename = `${testfile.userId}/${testfile.originalName}`;
-export const metafile = filename + METAFILE_EXTNAME;
+export const metafile = testfile.name + METAFILE_EXTNAME;
+export const filename = testfile.name;
 
 export const storageOptions: BaseStorageOptions = {
   filename: file => `${file.userId}/${file.originalName}`,

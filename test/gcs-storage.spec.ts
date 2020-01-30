@@ -2,14 +2,14 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import fetch from 'node-fetch';
 import { GCSFile, FilePart, GCStorage } from '../src';
-import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
+import { metafile, srcpath, storageOptions, testfile, filename } from './fixtures';
 const { Response } = jest.requireActual('node-fetch');
 
 const mockAuthRequest = jest.fn();
 jest.mock('node-fetch');
-jest.mock('google-auth-library', () => {
-  return { GoogleAuth: jest.fn(() => ({ request: mockAuthRequest })) };
-});
+jest.mock('google-auth-library', () => ({
+  GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
+}));
 
 describe('GCStorage', () => {
   const options = { ...storageOptions };
