@@ -59,6 +59,15 @@ export abstract class BaseStorage<TFile, TList> {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
+  protected setStatus(file: File): File['status'] {
+    if (file.bytesWritten < file.size) {
+      return 'part';
+    } else if (file.bytesWritten === file.size) {
+      return 'completed';
+    }
+    return;
+  }
+
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
   abstract write(part: FilePart): Promise<TFile>;
   abstract delete(prefix: string): Promise<TFile[]>;

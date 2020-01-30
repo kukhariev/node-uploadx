@@ -82,7 +82,8 @@ export class S3Storage extends BaseStorage<S3File, any> {
     if (Number(part.start) >= 0) {
       await this._write({ ...file, ...part });
     }
-    if (file.bytesWritten === file.size) {
+    file.status = this.setStatus(file);
+    if (file.status === 'completed') {
       const [completed] = await Promise.all([this._complete(file), this._deleteMeta(file)]);
       file.uri = completed.Location;
     }

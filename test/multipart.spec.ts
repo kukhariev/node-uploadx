@@ -22,19 +22,19 @@ describe('::Multipart', () => {
   });
 
   describe('POST', () => {
-    it('should 201 (no metadata)', async () => {
+    it('should support custom fields', async () => {
       res = await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
-        .field('custom', JSON.stringify(metadata))
-        .attach('file', srcpath, metadata.name)
+        .field('custom', 'customfield')
+        .attach('file', srcpath, 'customfield')
         .expect(201);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
       files.push(res.header.location);
     });
 
-    it('should 201 (metadata)', async () => {
+    it('should support json metadata', async () => {
       expect.assertions(2);
       res = await request(app)
         .post(basePath)

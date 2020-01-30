@@ -65,13 +65,11 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     const contentLength = +getHeader(req, 'content-length');
     const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
     const file = await this.storage.write({ start, name, contentLength, body: req });
-    if (file.bytesWritten < file.size) {
+    if (file.status === 'part') {
       const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-      file.status = 'part';
-    } else if (file.bytesWritten === file.size) {
-      file.status = 'completed';
+    } else if (file.status === 'completed') {
       this.send({ res, body: file });
     }
     return file;
@@ -85,7 +83,6 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     this.send({ res, statusCode: 204 });
-    file.status = 'deleted';
     return file;
   }
 

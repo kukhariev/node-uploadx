@@ -89,12 +89,13 @@ export class Tus<TFile extends File, L> extends BaseHandler {
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
     const file = await this.storage.write({ start, name, body: req, contentLength });
-    const headers: Headers = {
-      'Upload-Offset': `${file.bytesWritten}`,
-      'Tus-Resumable': TUS_RESUMABLE
-    };
-    this.send({ res, statusCode: 204, headers });
-    file.status = file.bytesWritten === file.size ? 'completed' : 'part';
+    if (file.status) {
+      const headers: Headers = {
+        'Upload-Offset': `${file.bytesWritten}`,
+        'Tus-Resumable': TUS_RESUMABLE
+      };
+      this.send({ res, statusCode: 204, headers });
+    }
     return file;
   }
 
@@ -120,7 +121,6 @@ export class Tus<TFile extends File, L> extends BaseHandler {
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });
-    file.status = 'deleted';
     return file as any;
   }
 }
