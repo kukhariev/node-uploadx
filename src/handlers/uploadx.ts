@@ -14,14 +14,17 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 /**
  * X-headers  protocol implementation
  */
-export class Uploadx<T extends BaseStorage> extends BaseHandler {
+export class Uploadx<TFile extends File, L> extends BaseHandler {
   static RESUME_STATUS_CODE = 308;
 
-  storage: T | DiskStorage;
+  storage: BaseStorage<TFile, L>;
 
-  constructor(config: { storage: T } | DiskStorageOptions) {
+  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
     super();
-    this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
+    this.storage =
+      'storage' in config
+        ? config.storage
+        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
     this.responseType = 'json';
     this.log('options: %o', config);
   }
@@ -29,7 +32,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   /**
    * Create File from request and send file url to client
    */
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req);
@@ -43,7 +46,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
     return file;
   }
 
-  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
@@ -55,7 +58,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   /**
    * Write chunk to file or/and return chunk offset
    */
-  async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const contentRange = getHeader(req, 'content-range');
@@ -77,7 +80,7 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
@@ -112,8 +115,8 @@ export class Uploadx<T extends BaseStorage> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function uploadx(
-  options: DiskStorageOptions | { storage: BaseStorage } = {}
+export function uploadx<T extends File, L>(
+  options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Uploadx(options).handle;
 }

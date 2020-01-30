@@ -3,8 +3,9 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { uploadx } from '../src/handlers/uploadx';
-import { app, rm, root, storageOptions, userPrefix } from './fixtures/app';
-import { metadata, srcpath } from './fixtures/testfile';
+import { metadata, root, srcpath, storageOptions, userPrefix } from './fixtures';
+import { app } from './fixtures/app';
+import rimraf = require('rimraf');
 
 describe('::Uploadx', () => {
   let res: request.Response;
@@ -15,8 +16,8 @@ describe('::Uploadx', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, uploadx(opts));
 
-  beforeAll(() => rm(directory));
-  afterAll(() => rm(directory));
+  beforeAll(() => rimraf.sync(directory));
+  afterAll(() => rimraf.sync(directory));
   beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {

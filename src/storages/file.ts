@@ -16,6 +16,8 @@ const generateFileId = (file: File): string => {
     : uid();
 };
 
+export type FileListObject = Pick<File, 'status' | 'name'>;
+
 export interface FileInit {
   contentType?: string;
   originalName?: string;

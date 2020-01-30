@@ -1,29 +1,36 @@
 import { join } from 'path';
-import { DiskStorage, DiskStorageOptions, File, fsp } from '../src';
-import { rm, root, userPrefix } from './fixtures/app';
-import { testfile } from './fixtures/testfile';
+import { DiskStorage, File } from '../src';
+import { filename, metafile, root, storageOptions, testfile } from './fixtures';
+import { PassThrough } from 'stream';
+
+const directory = join(root, 'ds-test');
+const options = { ...storageOptions, directory };
+let writeStream = new PassThrough();
+
+jest.mock('../src/utils/fs', () => ({
+  ensureFile: async () => 0,
+  getFiles: async () => [join(directory, filename), join(directory, metafile)],
+  getWriteStream: () => writeStream,
+  fsp: {
+    stat: async () => ({ mtime: new Date() }),
+    writeFile: async () => 0,
+    readFile: async () => JSON.stringify(testfile),
+    unlink: async () => null
+  }
+}));
 
 describe('DiskStorage', () => {
-  const directory = join(root, 'ds-test');
-  const options: DiskStorageOptions = {
-    directory,
-    filename: file => `${file.userId}/${file.originalName}`
-  };
-  const filename = `${userPrefix}/${testfile.originalName}`;
-  const dstpath = join(directory, filename);
   const storage = new DiskStorage(options);
-
-  beforeAll(() => rm(directory));
 
   beforeEach(async () => {
     await storage.create({} as any, testfile);
   });
 
-  afterAll(() => rm(directory));
-
   it('should create file', async () => {
-    const { size } = await fsp.stat(dstpath);
-    expect(size).toBe(0);
+    const { size, status, bytesWritten } = await storage.create({} as any, testfile);
+    expect(bytesWritten).toBe(0);
+    expect(size).toBe(testfile.size);
+    expect(status).toBe('created');
   });
 
   it('should update metadata', async () => {
@@ -32,25 +39,51 @@ describe('DiskStorage', () => {
     expect(file.metadata.mimeType).toBe('video/mp4');
   });
 
-  it('should return user files', async () => {
-    const [file] = await storage.get(userPrefix);
-    expect(file).toMatchObject({ ...testfile });
+  it('should resume', async () => {
+    const file = await storage.write({ ...testfile });
+    expect(file.bytesWritten).toBe(0);
+  });
+
+  it('should write error', async () => {
+    const mockReadable = new PassThrough();
+    setTimeout(() => {
+      mockReadable.emit('data', '12345');
+      mockReadable.emit('data', '12345');
+      writeStream.emit('error', 'aborted');
+    }, 100);
+    const stream = storage.write({ ...testfile, start: 0, body: mockReadable });
+    await expect(stream).rejects.toHaveProperty('statusCode', 500);
+  });
+
+  it('should write', async () => {
+    writeStream = new PassThrough();
+    const mockReadable = new PassThrough();
+    setTimeout(() => {
+      mockReadable.emit('data', '12345');
+      mockReadable.emit('data', '12345');
+      mockReadable.emit('end');
+    }, 100);
+
+    const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
+    expect(writeStream.readableLength).toBe(10);
+    expect(file.bytesWritten).toBe(NaN);
+  });
+
+  it('should return files', async () => {
+    const files = await storage.get(testfile.userId);
+    expect(files).toEqual(expect.any(Array));
+    expect(files.length).toEqual(1);
+    expect(files[0]).toMatchObject({ name: filename });
   });
 
   it('should return file', async () => {
-    const [file] = await storage.get(filename);
-    expect(file).toMatchObject({ ...testfile });
+    const files = await storage.get(filename);
+    expect(files).toEqual(expect.any(Array));
   });
 
   it('should delete file', async () => {
-    const [file] = await storage.delete(filename);
-    expect(file.name).toBe(filename);
-    expect(file).toMatchObject({ ...testfile });
-  });
-
-  it('should reset user storage', async () => {
-    await storage.delete(userPrefix);
-    const [file] = await storage.get(userPrefix);
-    expect(file).not.toBeDefined();
+    const [deleted] = await storage.delete(filename);
+    expect(deleted.name).toBe(filename);
+    expect(deleted.status).toBe<File['status']>('deleted');
   });
 });

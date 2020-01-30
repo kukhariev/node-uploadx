@@ -5,15 +5,20 @@ import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../utils';
 import { BaseHandler } from './base-handler';
 
-export class Multipart<T extends BaseStorage> extends BaseHandler {
-  storage: T | DiskStorage;
-  constructor(config: { storage: T } | DiskStorageOptions) {
+export class Multipart<TFile extends File, L> extends BaseHandler {
+  storage: BaseStorage<TFile, L>;
+
+  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
     super();
-    this.storage = 'storage' in config ? config.storage : new DiskStorage(config);
+    this.storage =
+      'storage' in config
+        ? config.storage
+        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
+    this.responseType = 'json';
     this.log('options: %o', config);
   }
 
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
@@ -51,7 +56,7 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
@@ -64,8 +69,8 @@ export class Multipart<T extends BaseStorage> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function multipart(
-  options: DiskStorageOptions | { storage: BaseStorage } = {}
+export function multipart<T extends File, L>(
+  options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Multipart(options).handle;
 }

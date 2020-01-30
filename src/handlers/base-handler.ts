@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage } from '../storages';
 import { File } from '../storages/file';
 import { ERRORS, ErrorStatus, getBaseUrl, Logger } from '../utils';
 import { Cors } from './cors';
@@ -14,12 +13,14 @@ type Handlers = typeof handlers[number];
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
+type UploadEvents = 'created' | 'completed' | 'deleted' | 'part';
+
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
-  on(event: 'created' | 'completed' | 'deleted' | 'part', listener: (file: File) => void): this;
-  off(event: 'created' | 'completed' | 'deleted' | 'part', listener: (file: File) => void): this;
+  on<T = File>(event: UploadEvents, listener: (file: T) => void): this;
+  off<T = File>(event: UploadEvents, listener: (file: T) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit(event: 'created' | 'completed' | 'deleted' | 'part', evt: File): boolean;
+  emit<T = File>(event: UploadEvents, evt: T): boolean;
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 
@@ -90,7 +91,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * `GET` request handler
    */
-  async get(req: http.IncomingMessage): Promise<File[]> {
+  async get<T>(req: http.IncomingMessage): Promise<T[]> {
     const name = this.getName(req);
     const files = await this.storage.get(name);
     return files;
@@ -155,5 +156,5 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  abstract storage: BaseStorage;
+  abstract storage: any;
 }

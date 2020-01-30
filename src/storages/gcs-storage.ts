@@ -35,10 +35,15 @@ export type GCStorageOptions = BaseStorageOptions &
 export class GCSFile extends File {
   GCSUploadURI?: string;
 }
+
+interface CGSObject {
+  name: string;
+  updated: Date;
+}
 /**
  * Google cloud storage based backend.
  */
-export class GCStorage extends BaseStorage {
+export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   authClient: GoogleAuth;
 
   storageBaseURI: string;
@@ -60,7 +65,7 @@ export class GCStorage extends BaseStorage {
       });
   }
 
-  async create(req: http.IncomingMessage, config: FileInit): Promise<File> {
+  async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
     const file = new GCSFile(config);
     await this.validate(file);
     const name = this.namingFunction(file);
@@ -93,7 +98,7 @@ export class GCStorage extends BaseStorage {
     return file;
   }
 
-  async write(part: FilePart): Promise<File> {
+  async write(part: FilePart): Promise<GCSFile> {
     const file = await this._getMeta(part.name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.bytesWritten = await this._write({ ...file, ...part });
@@ -104,25 +109,29 @@ export class GCStorage extends BaseStorage {
     return file;
   }
 
-  async delete(name: string): Promise<File[]> {
+  async delete(name: string): Promise<GCSFile[]> {
     const file: GCSFile = await this._getMeta(name).catch(noop);
     if (file) {
       await this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus });
       await this._deleteMeta(file.name);
+      file.status = 'deleted';
       return [{ ...file, name }];
     }
-    return [{ name } as File];
+    return [{ name } as GCSFile];
   }
 
-  async get(prefix: string): Promise<File[]> {
+  async get(prefix: string): Promise<CGSObject[]> {
+    const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const baseURL = this.storageBaseURI;
     const url = '/';
     const options = { baseURL, url, params: { prefix } };
-    const { data } = await this.authClient.request(options);
-    return [data] as any;
+    const { data } = await this.authClient.request<{ items: CGSObject[] }>(options);
+    return data.items
+      .filter(item => item.name.endsWith(METAFILE_EXTNAME))
+      .map(({ name, updated }) => ({ name: name.replace(re, ''), updated }));
   }
 
-  async update(name: string, { metadata }: Partial<File>): Promise<File> {
+  async update(name: string, { metadata }: Partial<File>): Promise<GCSFile> {
     const file = await this._getMeta(name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.metadata = { ...file.metadata, ...metadata };
@@ -179,7 +188,7 @@ export class GCStorage extends BaseStorage {
     const file = this.metaCache[name];
     if (file) return file;
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
-    const { data } = await this.authClient.request({ params: { alt: 'media' }, url });
+    const { data } = await this.authClient.request<GCSFile>({ params: { alt: 'media' }, url });
     this.metaCache[name] = data;
     return data;
   }
@@ -188,7 +197,7 @@ export class GCStorage extends BaseStorage {
     const name = encodeURIComponent(path);
     const url = `${this.storageBaseURI}/${name}${METAFILE_EXTNAME}`;
     delete this.metaCache[name];
-    return this.authClient.request({ method: 'DELETE', url }).catch(err => console.warn(err));
+    return this.authClient.request({ method: 'DELETE', url }).catch(err => this.log(err));
   }
 
   private _checkBucket(bucketName: string): Promise<any> {
