@@ -5,7 +5,7 @@ import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../utils';
 import { BaseHandler } from './base-handler';
 
-export class Multipart<TFile extends File, L> extends BaseHandler {
+export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
   storage: BaseStorage<TFile, L>;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
@@ -34,13 +34,19 @@ export class Multipart<TFile extends File, L> extends BaseHandler {
         part.on('error', error => null);
         this.storage
           .create(req, config)
-          .then(({ name }) =>
-            this.storage.write({ start: 0, contentLength: part.byteCount, body: part, name })
+          .then(created =>
+            this.storage.write({
+              start: 0,
+              contentLength: part.byteCount,
+              body: part,
+              name: created.name
+            })
           )
           .then(file => {
-            file.status = 'completed';
-            const headers = { Location: this.buildFileUrl(req, file) };
-            this.send({ res, statusCode: 201, headers, body: file });
+            if (file.status === 'completed') {
+              const headers = { Location: this.buildFileUrl(req, file) };
+              this.send({ res, statusCode: 201, headers, body: file });
+            }
             return resolve(file);
           })
           .catch(err => {
@@ -61,7 +67,6 @@ export class Multipart<TFile extends File, L> extends BaseHandler {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     this.send({ res, statusCode: 204 });
-    file.status = 'deleted';
     return file;
   }
 }
@@ -69,7 +74,7 @@ export class Multipart<TFile extends File, L> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function multipart<T extends File, L>(
+export function multipart<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Multipart(options).handle;

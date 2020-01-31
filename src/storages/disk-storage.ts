@@ -59,6 +59,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
         if (start !== 0 || file.bytesWritten > 0 || !body) return file;
       }
       file.bytesWritten = await this._write(body, this.fullPath(file.name), start);
+      file.status = this.setStatus(file);
       return file;
     } catch (ex) {
       return fail(ERRORS.FILE_ERROR, ex);
@@ -102,7 +103,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return new Promise((resolve, reject) => {
       const writeStream = getWriteStream(path, start);
       writeStream.once('error', error => reject(error));
-      req.once('aborted', () => writeStream.close());
+      req.once('aborted', () => {
+        writeStream.close();
+        return resolve();
+      });
       req.pipe(writeStream).on('finish', () => resolve(start + writeStream.bytesWritten));
     });
   }

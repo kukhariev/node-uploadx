@@ -25,16 +25,20 @@ export interface FileInit {
   size?: number | string;
   userId?: string;
 }
+export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part';
 
+export interface Upload extends File {
+  readonly status?: UploadEventType;
+}
 export class File implements FileInit {
-  bytesWritten = 0;
+  bytesWritten = NaN;
   contentType: string;
   originalName: string;
   id = '';
   metadata: Metadata;
   name = '';
   size: number;
-  status?: 'created' | 'completed' | 'deleted' | 'part';
+  status?: UploadEventType;
   uri = '';
   userId?: any;
 

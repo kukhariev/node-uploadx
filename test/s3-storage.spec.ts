@@ -1,6 +1,6 @@
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
-import { File, FilePart, S3Storage } from '../src';
+import { File, FilePart, S3Storage, S3File } from '../src';
 import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
 
 const mockHeadBucket = jest.fn();
@@ -82,10 +82,15 @@ describe('S3Storage', () => {
   const options = { ...storageOptions };
   testfile.name = filename;
 
-  let file: File;
+  let file: S3File;
   let storage: S3Storage;
-  beforeEach(() => {
+  beforeEach(async () => {
     storage = new S3Storage(options);
+    file = {
+      ...testfile,
+      UploadId: '123456789',
+      Parts: []
+    };
   });
 
   it('should create file', async () => {
@@ -96,6 +101,7 @@ describe('S3Storage', () => {
     }));
     file = await storage.create({} as any, testfile);
     expect(file.name).toEqual(filename);
+    expect(file.status).toBe<File['status']>('created');
     expect(file).toMatchObject({
       ...testfile,
       UploadId: expect.any(String),
@@ -138,6 +144,7 @@ describe('S3Storage', () => {
       contentLength: testfile.size
     };
     const res = await storage.write(part);
+    expect(res.status).toBe<File['status']>('completed');
     expect(res.bytesWritten).toBe(testfile.size);
   });
 

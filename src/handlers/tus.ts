@@ -26,7 +26,7 @@ export function parseMetadata(encoded = ''): Metadata {
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
-export class Tus<TFile extends File, L> extends BaseHandler {
+export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
   storage: BaseStorage<TFile, L>;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
@@ -70,7 +70,6 @@ export class Tus<TFile extends File, L> extends BaseHandler {
       const contentLength = +getHeader(req, 'content-length');
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
       headers['Upload-Offset'] = file.bytesWritten;
-      file.status = file.bytesWritten === file.size ? 'completed' : 'part';
     }
     const statusCode = file.bytesWritten === file.size || file.bytesWritten === 0 ? 201 : 200;
     this.send({ res, statusCode, headers });
@@ -89,12 +88,13 @@ export class Tus<TFile extends File, L> extends BaseHandler {
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
     const file = await this.storage.write({ start, name, body: req, contentLength });
-    const headers: Headers = {
-      'Upload-Offset': `${file.bytesWritten}`,
-      'Tus-Resumable': TUS_RESUMABLE
-    };
-    this.send({ res, statusCode: 204, headers });
-    file.status = file.bytesWritten === file.size ? 'completed' : 'part';
+    if (file.status) {
+      const headers: Headers = {
+        'Upload-Offset': `${file.bytesWritten}`,
+        'Tus-Resumable': TUS_RESUMABLE
+      };
+      this.send({ res, statusCode: 204, headers });
+    }
     return file;
   }
 
@@ -120,7 +120,6 @@ export class Tus<TFile extends File, L> extends BaseHandler {
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });
-    file.status = 'deleted';
     return file as any;
   }
 }

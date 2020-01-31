@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { File } from '../storages/file';
+import { File, UploadEventType } from '../storages/file';
 import { ERRORS, ErrorStatus, getBaseUrl, Logger } from '../utils';
 import { Cors } from './cors';
 
@@ -13,14 +13,13 @@ type Handlers = typeof handlers[number];
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
-type UploadEvents = 'created' | 'completed' | 'deleted' | 'part';
 
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: ErrorStatus) => void): this;
-  on<T = File>(event: UploadEvents, listener: (file: T) => void): this;
-  off<T = File>(event: UploadEvents, listener: (file: T) => void): this;
+  on<T = File>(event: UploadEventType, listener: (file: T) => void): this;
+  off<T = File>(event: UploadEventType, listener: (file: T) => void): this;
   off(event: 'error', listener: (error: ErrorStatus) => void): this;
-  emit<T = File>(event: UploadEvents, evt: T): boolean;
+  emit<T = File>(event: UploadEventType, evt: T): boolean;
   emit(event: 'error', evt: ErrorStatus): boolean;
 }
 

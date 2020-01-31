@@ -14,7 +14,7 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 /**
  * X-headers  protocol implementation
  */
-export class Uploadx<TFile extends File, L> extends BaseHandler {
+export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
   static RESUME_STATUS_CODE = 308;
 
   storage: BaseStorage<TFile, L>;
@@ -39,7 +39,6 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);
-
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
     this.send({ res, statusCode, headers });
@@ -65,13 +64,11 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     const contentLength = +getHeader(req, 'content-length');
     const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
     const file = await this.storage.write({ start, name, contentLength, body: req });
-    if (file.bytesWritten < file.size) {
+    if (file.status === 'part') {
       const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-      file.status = 'part';
-    } else if (file.bytesWritten === file.size) {
-      file.status = 'completed';
+    } else if (file.status === 'completed') {
       this.send({ res, body: file });
     }
     return file;
@@ -85,7 +82,6 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     this.send({ res, statusCode: 204 });
-    file.status = 'deleted';
     return file;
   }
 
@@ -115,7 +111,7 @@ export class Uploadx<TFile extends File, L> extends BaseHandler {
 /**
  * Basic express wrapper
  */
-export function uploadx<T extends File, L>(
+export function uploadx<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
   return new Uploadx(options).handle;

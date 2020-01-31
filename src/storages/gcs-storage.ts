@@ -102,7 +102,9 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const file = await this._getMeta(part.name);
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.bytesWritten = await this._write({ ...file, ...part });
-    if (file.status === 'deleted' || file.bytesWritten === file.size) {
+    // fixme:  delete
+    file.status = this.setStatus(file);
+    if (file.status === 'completed') {
       await this._deleteMeta(file.name);
       file.uri = `${this.storageBaseURI}/${file.name}`;
     }
