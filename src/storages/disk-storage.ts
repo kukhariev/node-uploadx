@@ -54,11 +54,11 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     const file = await this._getMeta(name || '');
     if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     try {
-      if (!start || !body) {
+      if (Number(start) >= 0 && body) {
+        file.bytesWritten = await this._write(body, this.fullPath(file.name), start);
+      } else {
         file.bytesWritten = await ensureFile(this.fullPath(file.name));
-        if (start !== 0 || file.bytesWritten > 0 || !body) return file;
       }
-      file.bytesWritten = await this._write(body, this.fullPath(file.name), start);
       file.status = this.setStatus(file);
       return file;
     } catch (ex) {
@@ -99,7 +99,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   /**
    * Append chunk to file
    */
-  protected _write(req: Readable, path: string, start: number): Promise<number> {
+  protected _write(req: Readable, path: string, start: any): Promise<number> {
     return new Promise((resolve, reject) => {
       const writeStream = getWriteStream(path, start);
       writeStream.once('error', error => reject(error));
