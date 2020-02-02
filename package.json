@@ -1,6 +1,6 @@
 {
   "name": "node-uploadx",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
