@@ -39,7 +39,6 @@ export class File implements FileInit {
   name = '';
   size: number;
   status?: UploadEventType;
-  uri = '';
   userId?: any;
 
   constructor(opts: FileInit) {
