@@ -34,6 +34,7 @@ export type GCStorageOptions = BaseStorageOptions &
   };
 export class GCSFile extends File {
   GCSUploadURI?: string;
+  uri = '';
 }
 
 interface CGSObject {
