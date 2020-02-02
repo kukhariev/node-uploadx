@@ -55,6 +55,7 @@ describe('DiskStorage', () => {
 
   it('should resume', async () => {
     const file = await storage.write({ ...testfile });
+    expect(file.status).toBe('part');
     expect(file.bytesWritten).toBe(0);
   });
 
