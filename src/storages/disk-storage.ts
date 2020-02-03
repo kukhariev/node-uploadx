@@ -25,7 +25,7 @@ export interface DiskStorageOptions extends BaseStorageOptions {
 export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   directory: string;
 
-  constructor(public config: DiskStorageOptions) {
+  constructor(public config: DiskStorageOptions = {}) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this.isReady = true;
