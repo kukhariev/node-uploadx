@@ -20,7 +20,7 @@ function getRangeEnd(range: any = ''): number {
 const validateStatus: (code: number) => boolean = (code: number) =>
   (code >= 200 && code < 300) || code === 308 || code === 499;
 
-export type GCStorageOptions = BaseStorageOptions &
+export type GCStorageOptions = BaseStorageOptions<GCSFile> &
   GoogleAuthOptions & {
     /**
      * Google Cloud Storage bucket
