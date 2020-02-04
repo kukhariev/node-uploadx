@@ -9,7 +9,7 @@ const BUCKET_NAME = 'node-uploadx';
 export class S3File extends File {
   Parts: S3.Parts = [];
   UploadId = '';
-  uri = '';
+  uri?: string;
 }
 
 export type S3StorageOptions = BaseStorageOptions<S3File> &
