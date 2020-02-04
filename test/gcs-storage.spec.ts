@@ -139,13 +139,17 @@ describe('Range utils', () => {
   ])('getRangeEnd(%s) === %i', (str, expected) => {
     expect(getRangeEnd(str)).toBe(expected);
   });
+  const body = true;
 
   it.each([
     [{}, 'bytes */*'],
-    [{ start: 0 }, 'bytes 0-*/*'],
-    [{ start: 10, size: 80 }, 'bytes 10-*/80'],
-    [{ start: 0, contentLength: 80, size: 80 }, 'bytes 0-79/80']
-  ])('buildContentRange(%o) === %p', (str, expected) => {
+    [{ body }, 'bytes */*'],
+    [{ start: 0 }, 'bytes */*'],
+    [{ start: 0, body } as any, 'bytes 0-*/*'],
+    [{ start: 10, size: 80, body }, 'bytes 10-*/80'],
+    [{ start: 0, contentLength: 80, size: 80, body }, 'bytes 0-79/80'],
+    [{ start: 0, contentLength: 80, size: 80 }, 'bytes */80']
+  ])('buildContentRange(%o) === %s', (str, expected) => {
     expect(buildContentRange(str)).toBe(expected);
   });
 });
