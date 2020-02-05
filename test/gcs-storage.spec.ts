@@ -23,7 +23,7 @@ describe('GCStorage', () => {
   const req = { headers: { origin: 'http://api.com' } } as any;
 
   beforeEach(async () => {
-    mockAuthRequest.mockResolvedValue({ buket: 'ok' });
+    mockAuthRequest.mockResolvedValueOnce({ buket: 'ok' });
     storage = new GCStorage({ ...storageOptions });
     file = _fileResponse().data;
   });
@@ -32,18 +32,27 @@ describe('GCStorage', () => {
 
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
-      mockAuthRequest
-        .mockRejectedValueOnce({ code: 404 })
-        .mockResolvedValueOnce(_createResponse())
-        .mockResolvedValue({});
+      mockAuthRequest.mockRejectedValueOnce({ code: 404, detail: 'meta not found' });
+      mockAuthRequest.mockResolvedValueOnce(_createResponse());
+      mockAuthRequest.mockResolvedValueOnce('_saveOk');
       file = await storage.create(req, testfile);
       expect(file.name).toEqual(filename);
       expect(file.status).toEqual('created');
       expect(file).toMatchObject({ ...testfile, uri });
       expect(mockAuthRequest).toHaveBeenCalledTimes(4);
       expect(mockAuthRequest).toBeCalledWith(request.create);
-      const existing = await storage.create(req, testfile);
-      expect(file).toMatchObject(existing);
+    });
+
+    it('should return existing file', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response('', {
+          status: 308,
+          headers: { Range: '0-5' }
+        })
+      );
+      storage['cache'] = { [filename]: { ...testfile, uri } };
+      file = await storage.create(req, testfile);
+      expect(file.uri).toEqual(uri);
     });
 
     it('should reject on api error', async () => {
@@ -83,6 +92,7 @@ describe('GCStorage', () => {
   describe('.write()', () => {
     it('should request api and set status and bytesWritten', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
+      mockAuthRequest.mockResolvedValueOnce('_delete');
       mockFetch.mockResolvedValueOnce(new Response('{"mediaLink":"http://api.com/123456789"}'));
       const body = createReadStream(srcpath);
       const part: FilePart = {

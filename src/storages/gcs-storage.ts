@@ -78,9 +78,11 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const file = new GCSFile(config);
     await this.validate(file);
     file.name = this.namingFunction(file);
-    const existing = await this._getMeta(file.name).catch(noop);
-    if (existing) return existing;
-
+    try {
+      const existing = await this._getMeta(file.name);
+      existing.bytesWritten = await this._write(existing);
+      if (existing.bytesWritten >= 0) return existing;
+    } catch {}
     const origin = getHeader(req, 'origin');
     const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
     headers['X-Upload-Content-Length'] = file.size.toString();
@@ -180,14 +182,15 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   }
 
   private async _saveMeta(file: GCSFile): Promise<any> {
+    const name = file.name;
     await this.authClient.request({
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       method: 'POST',
-      params: { name: `${encodeURIComponent(file.name)}${METAFILE_EXTNAME}`, uploadType: 'media' },
+      params: { name: this.metaName(name), uploadType: 'media' },
       url: this.uploadBaseURI
     });
-    this.cache[file.name] = file;
+    this.cache[name] = file;
     return file;
   }
 
@@ -195,20 +198,26 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const file = this.cache[name];
     if (file) return file;
     try {
-      const url = `${this.storageBaseURI}/${encodeURIComponent(name)}${METAFILE_EXTNAME}`;
+      const url = `${this.storageBaseURI}/${this.metaName(name)}`;
       const { data } = await this.authClient.request<GCSFile>({ params: { alt: 'media' }, url });
-      if (data.name !== name) return fail(ERRORS.FILE_NOT_FOUND);
-      this.cache[name] = data;
-      return data;
-    } catch (error) {
-      return fail(ERRORS.FILE_NOT_FOUND, error);
-    }
+      if (data?.name === name) {
+        this.cache[name] = data;
+        return data;
+      }
+    } catch (error) {}
+    return fail(ERRORS.FILE_NOT_FOUND);
   }
 
-  private async _deleteMeta(name: string): Promise<any> {
-    const url = `${this.storageBaseURI}/${encodeURIComponent(name)}${METAFILE_EXTNAME}`;
+  private async _deleteMeta(name: string): Promise<void> {
+    const url = `${this.storageBaseURI}/${this.metaName(name)}`;
+    try {
+      await this.authClient.request({ method: 'DELETE', url });
+    } catch {}
     delete this.cache[name];
-    return this.authClient.request({ method: 'DELETE', url }).catch(err => this.log(err));
+  }
+
+  private metaName(name: string): string {
+    return `${encodeURIComponent(name)}${METAFILE_EXTNAME}`;
   }
 
   private async _checkBucket(bucketName: string): Promise<any> {

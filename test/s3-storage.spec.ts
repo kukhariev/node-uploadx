@@ -105,8 +105,12 @@ describe('S3Storage', () => {
         UploadId: expect.any(String),
         Parts: expect.any(Array)
       });
+    });
+
+    it('should return existing file', async () => {
+      storage['cache'] = { [filename]: { ...file } };
       const existing = await storage.create({} as any, testfile);
-      expect(file).toMatchObject(existing);
+      expect(existing.UploadId).toEqual(file.UploadId);
     });
   });
   describe('.update()', () => {
