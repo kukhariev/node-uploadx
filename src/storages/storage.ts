@@ -5,6 +5,8 @@ import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
+export type OnComplete<T = File> = (file: Readonly<T>) => any;
+
 export interface BaseStorageOptions<T> {
   /** Allowed file types */
   allowMIME?: string[];
@@ -14,7 +16,7 @@ export interface BaseStorageOptions<T> {
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
-  onComplete?: (file: Readonly<T>) => any;
+  onComplete?: OnComplete<T>;
   /** Node http base path */
   path?: string;
 }
