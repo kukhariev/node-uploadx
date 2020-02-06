@@ -1,6 +1,6 @@
 import * as express from 'express';
-import { linkSync, mkdirSync } from 'fs';
-import { DiskStorage, File, Multipart, Uploadx } from '../src';
+import { promises } from 'fs';
+import { DiskFile, DiskStorage, Multipart, OnComplete, Uploadx } from '../src';
 
 const app = express();
 const auth: express.Handler = (req, res, next) => {
@@ -10,23 +10,23 @@ const auth: express.Handler = (req, res, next) => {
 
 app.use(auth);
 
-const onComplete = ({ name, originalName }: File): void => {
-  const srcpath = `upload/${name}`;
-  const dstpath = `files/${originalName}`;
-  try {
-    mkdirSync('files', { recursive: true });
-    linkSync(srcpath, dstpath);
-    console.log(`File upload is finished, path: ${dstpath}`);
-  } catch (error) {
-    console.error(error);
-  }
+const onComplete: OnComplete<DiskFile> = async file => {
+  const srcpath = `upload/${file.name}`;
+  const dstpath = `files/${file.originalName}`;
+  await promises.mkdir('files', { recursive: true });
+  promises.link(srcpath, dstpath);
+  const message = `File upload is finished, path: ${dstpath}`;
+  console.log(message);
+  (file as any).message = message;
 };
 
-const storage = new DiskStorage({ allowMIME: ['video/*', 'image/*'], directory: 'upload' });
+const storage = new DiskStorage({
+  allowMIME: ['video/*', 'image/*'],
+  directory: 'upload',
+  onComplete
+});
 const uploadx = new Uploadx({ storage });
 const multipart = new Multipart({ storage });
-uploadx.on('completed', onComplete);
-multipart.on('completed', onComplete);
 
 app.use('/files', express.static('files'));
 app.use('/upload/files', uploadx.handle);
