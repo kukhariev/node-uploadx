@@ -2,7 +2,8 @@
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { buildContentRange, FilePart, GCSFile, GCStorage, getRangeEnd } from '../src';
-import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
+import { storageOptions } from './fixtures';
+import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 import { request } from './fixtures/gcs';
 
 const mockFetch = require('node-fetch');

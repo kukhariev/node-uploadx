@@ -1,8 +1,9 @@
 import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../src/handlers/multipart';
+import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
-import { metadata, srcpath, storageOptions, root } from './fixtures';
+import { metadata, srcpath } from './fixtures/testfile';
 import rimraf = require('rimraf');
 
 describe('::Multipart', () => {

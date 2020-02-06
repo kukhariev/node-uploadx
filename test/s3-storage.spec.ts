@@ -1,7 +1,8 @@
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
 import { FilePart, S3File, S3Storage } from '../src';
-import { filename, metafile, srcpath, storageOptions, testfile } from './fixtures';
+import { storageOptions } from './fixtures';
+import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 
 const mockHeadBucket = jest.fn();
 const mockCreateMultipartUpload = jest.fn(() => ({
@@ -88,7 +89,7 @@ describe('S3Storage', () => {
       ...testfile,
       UploadId: '123456789',
       Parts: []
-    } as any;
+    };
   });
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {

@@ -1,7 +1,8 @@
 import { join } from 'path';
 import { DiskStorage, fsp } from '../src';
-import { filename, metafile, storageOptions, testfile } from './fixtures';
+import { filename, metafile, testfile } from './fixtures/testfile';
 import { FileWriteStream, RequestReadStream } from './fixtures/streams';
+import { storageOptions } from './fixtures';
 
 const directory = 'ds-test';
 
