@@ -3,8 +3,9 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { uploadx } from '../src/handlers/uploadx';
-import { metadata, root, srcpath, storageOptions, userPrefix } from './fixtures';
+import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
+import { metadata, srcpath } from './fixtures/testfile';
 import rimraf = require('rimraf');
 
 describe('::Uploadx', () => {
