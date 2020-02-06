@@ -143,10 +143,10 @@ describe('GCStorage', () => {
 
 describe('Range utils', () => {
   it.each([
-    ['', -1],
-    ['0--1', -1],
+    ['', 0],
     ['0-0', 0],
-    ['0-1', 1]
+    ['0-1', 2],
+    ['0-10000', 10001]
   ])('getRangeEnd(%s) === %i', (str, expected) => {
     expect(getRangeEnd(str)).toBe(expected);
   });

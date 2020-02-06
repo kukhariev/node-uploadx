@@ -12,9 +12,9 @@ const uploadAPI = `https://storage.googleapis.com/upload/storage/v1/b`;
 const storageAPI = `https://storage.googleapis.com/storage/v1/b`;
 const authScopes = ['https://www.googleapis.com/auth/devstorage.full_control'];
 
-export function getRangeEnd(range: any): number {
+export function getRangeEnd(range: string): number {
   const end = +range.split(/0-/)[1];
-  return end >= 0 ? end : -1;
+  return end > 0 ? end + 1 : 0;
 }
 
 export function buildContentRange(part: FilePart & GCSFile): string {
@@ -81,7 +81,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     try {
       const existing = await this._getMeta(file.name);
       existing.bytesWritten = await this._write(existing);
-      if (existing.bytesWritten >= 0) return existing;
+      return existing;
     } catch {}
     const origin = getHeader(req, 'origin');
     const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
@@ -167,11 +167,12 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     try {
       const res = await request(uri, options);
       if (res.status === 308) {
-        return getRangeEnd(res.headers.get('range')) + 1;
+        const range = res.headers.get('range');
+        return range ? getRangeEnd(range) : 0;
       } else if (res.ok) {
         const data = await res.json();
         this.log('uploaded %o', data);
-        return data?.mediaLink ? size : NaN;
+        return size;
       }
       const message = await res.text();
       return Promise.reject({ message, code: res.status });
