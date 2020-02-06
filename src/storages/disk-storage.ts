@@ -10,13 +10,13 @@ export interface DiskListObject {
   name: string;
   updated: Date;
 }
-export interface DiskStorageOptions extends BaseStorageOptions {
+export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Uploads directory
    * @defaultValue './files'
    */
   directory?: string;
-}
+};
 
 /**
  * Local Disk Storage

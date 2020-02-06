@@ -12,7 +12,7 @@ export class S3File extends File {
   uri?: string;
 }
 
-export type S3StorageOptions = BaseStorageOptions &
+export type S3StorageOptions = BaseStorageOptions<S3File> &
   S3.ClientConfiguration & {
     /**
      * AWS S3 bucket
