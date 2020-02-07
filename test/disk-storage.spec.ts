@@ -30,7 +30,7 @@ describe('DiskStorage', () => {
     storage = new DiskStorage(options);
     return storage.create({} as any, testfile);
   });
-  describe('initialisation', () => {
+  describe('initialization', () => {
     it('should set defaults', () => {
       storage = new DiskStorage();
       expect(storage.isReady).toBe(true);
@@ -123,7 +123,7 @@ describe('DiskStorage', () => {
       expect(deleted.name).toBe(filename);
       expect(deleted.status).toBe('deleted');
     });
-    it('should ignore not fond', async () => {
+    it('should ignore not found', async () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce('notfound');
       const [deleted] = await storage.delete('notfound');

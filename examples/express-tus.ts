@@ -5,7 +5,7 @@ import { DiskStorageOptions, tus } from '../src';
 const app = express();
 
 const opts: DiskStorageOptions = {
-  filename: file => `.${file.originalName}`, // dot hide incomlete uploads
+  filename: file => `.${file.originalName}`, // dot hide incomplete uploads
   onComplete: async file => {
     console.log('File upload complete: ', file.originalName);
     await promises.rename(file.name, file.originalName); // unhide

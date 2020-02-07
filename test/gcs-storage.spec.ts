@@ -24,7 +24,7 @@ describe('GCStorage', () => {
   const req = { headers: { origin: 'http://api.com' } } as any;
 
   beforeEach(async () => {
-    mockAuthRequest.mockResolvedValueOnce({ buket: 'ok' });
+    mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
     storage = new GCStorage({ ...storageOptions });
     file = _fileResponse().data;
   });
@@ -63,7 +63,7 @@ describe('GCStorage', () => {
     });
   });
   describe('.update()', () => {
-    it('should update changen metadata keys', async () => {
+    it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(_fileResponse());
       file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as GCSFile);
       expect(file.metadata.name).toBe('newname.mp4');

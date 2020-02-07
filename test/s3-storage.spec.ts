@@ -115,7 +115,7 @@ describe('S3Storage', () => {
     });
   });
   describe('.update()', () => {
-    it('should update changen metadata keys', async () => {
+    it('should update changed metadata keys', async () => {
       file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
