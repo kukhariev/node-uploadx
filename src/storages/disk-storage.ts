@@ -75,7 +75,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMeta(name), fsp.unlink(this._getPath(name))]);
-      return [file];
+      return [{ ...file }];
     }
     return [{ name } as DiskFile];
   }
@@ -88,8 +88,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return file;
   }
 
-  protected _onComplete = (file: DiskFile): any => undefined;
-
   private _write(part: FilePart): Promise<number> {
     return new Promise((resolve, reject) => {
       const path = this._getPath(part.name);
@@ -98,7 +96,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
         file.once('error', error => reject(error));
         part.body.once('aborted', () => {
           file.close();
-          return resolve();
+          return resolve(NaN);
         });
         part.body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
       } else {
@@ -111,21 +109,26 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     const path = this._getPath(file.name);
     const bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     await fsp.writeFile(this._getMetaPath(file.name), JSON.stringify(file, null, 2));
+    this.cache.set(file.name, file);
     return bytesWritten;
   }
 
   private async _deleteMeta(name: string): Promise<void> {
+    this.cache.delete(name);
     await fsp.unlink(this._getMetaPath(name));
     return;
   }
 
   private async _getMeta(name: string): Promise<DiskFile> {
+    const file = this.cache.get(name);
+    if (file?.size) return file;
     try {
-      const data = await fsp.readFile(this._getMetaPath(name));
-      return JSON.parse(data.toString());
-    } catch (e) {
-      return fail(ERRORS.FILE_NOT_FOUND, e);
-    }
+      const json = await fsp.readFile(this._getMetaPath(name));
+      const data = JSON.parse(json.toString());
+      this.cache.set(name, data);
+      return data;
+    } catch {}
+    return fail(ERRORS.FILE_NOT_FOUND);
   }
 
   private _getPath(name: string): string {

@@ -1,4 +1,4 @@
-import { S3, config as AWSConfig } from 'aws-sdk';
+import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart } from './file';
@@ -40,7 +40,6 @@ export function processMetadata(
 export class S3Storage extends BaseStorage<S3File, any> {
   bucket: string;
   client: S3;
-  private cache: Record<string, S3File> = {};
 
   constructor(public config: S3StorageOptions) {
     super(config);
@@ -92,7 +91,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
   }
 
   _onComplete = (file: S3File): Promise<any> => {
-    return Promise.all([this._complete(file), this._deleteMeta(file)]);
+    return Promise.all([this._complete(file), this._deleteMeta(file.name)]);
   };
 
   async delete(name: string): Promise<S3File[]> {
@@ -100,7 +99,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMeta(file), this._abortMultipartUpload(file)]);
-      return [file];
+      return [{ ...file }];
     }
     return [{ name } as S3File];
   }
@@ -120,7 +119,6 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
     const file = await this._getMeta(name);
-    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.metadata = { ...file.metadata, ...metadata };
     file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file);
@@ -139,13 +137,12 @@ export class S3Storage extends BaseStorage<S3File, any> {
     };
     const data: S3.UploadPartOutput = await this.client.uploadPart(partOpts).promise();
     const part: S3.Part = { ...data, ...{ PartNumber: partNumber, Size: file.contentLength } };
-    file.bytesWritten = file.bytesWritten + (file.contentLength || 0);
     file.Parts = [...(file.Parts || []), part];
-    this.cache[file.name] = file;
-    return file.bytesWritten;
+    this.cache.set(file.name, file);
+    return file.bytesWritten + (file.contentLength || 0);
   }
 
-  private _listParts(key: string, uploadId: string): Promise<S3.ListPartsOutput> {
+  private async _listParts(key: string, uploadId: string): Promise<S3.ListPartsOutput> {
     const opts = { Bucket: this.bucket, Key: key, UploadId: uploadId };
     return this.client.listParts(opts).promise();
   }
@@ -172,36 +169,36 @@ export class S3Storage extends BaseStorage<S3File, any> {
         Metadata: { metadata }
       })
       .promise();
-    this.cache[file.name] = file;
+    this.cache.set(file.name, file);
   }
 
   private async _getMeta(name: string): Promise<S3File> {
-    let file: S3File = this.cache[name];
+    const file = this.cache.get(name);
     if (file) return file;
     try {
       const { Metadata } = await this.client
         .headObject({ Bucket: this.bucket, Key: name + METAFILE_EXTNAME })
         .promise();
       if (Metadata) {
-        file = JSON.parse(decodeURIComponent(Metadata.metadata));
-        const { Parts } = await this._listParts(name, file?.UploadId);
-        file.Parts = Parts || [];
-        file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce(
+        const data: S3File = JSON.parse(decodeURIComponent(Metadata.metadata));
+        const { Parts } = await this._listParts(name, data?.UploadId);
+        data.Parts = Parts || [];
+        data.bytesWritten = data.Parts.map(item => item.Size || 0).reduce(
           (prev, next) => prev + next,
           0
         );
-        this.cache[name] = file;
-        return file;
+        this.cache.set(data.name, data);
+        return data;
       }
     } catch (e) {}
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
-  private async _deleteMeta(file: S3File): Promise<void> {
-    delete this.cache[file.name];
+  private async _deleteMeta(name: string): Promise<void> {
+    this.cache.delete(name);
     try {
       await this.client
-        .deleteObject({ Bucket: this.bucket, Key: file.name + METAFILE_EXTNAME })
+        .deleteObject({ Bucket: this.bucket, Key: name + METAFILE_EXTNAME })
         .promise();
     } catch {}
   }

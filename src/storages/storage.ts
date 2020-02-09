@@ -1,6 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { ERRORS, fail, Logger, typeis } from '../utils';
+import { Cache, ERRORS, fail, Logger, typeis } from '../utils';
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
@@ -39,6 +39,8 @@ export abstract class BaseStorage<TFile, TList> {
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: Partial<File>) => string;
+  protected cache = new Cache<TFile>();
+
   constructor(public config: BaseStorageOptions<TFile>) {
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
@@ -61,12 +63,9 @@ export abstract class BaseStorage<TFile, TList> {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
-  protected setStatus(file: File): File['status'] {
-    if (file.bytesWritten < file.size) {
-      return 'part';
-    } else if (file.bytesWritten === file.size) {
-      return 'completed';
-    }
+  protected setStatus(file: File): File['status'] | undefined {
+    if (file.bytesWritten < file.size) return 'part';
+    if (file.bytesWritten === file.size) return 'completed';
     return;
   }
 
