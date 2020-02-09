@@ -200,7 +200,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     try {
       const url = `${this.storageBaseURI}/${this.metaName(name)}`;
       const { data } = await this.authClient.request<GCSFile>({ params: { alt: 'media' }, url });
-      if (data?.uri === name) {
+      if (data?.name === name) {
         this.cache.set(name, data);
         return data;
       }
