@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { createRequest, createResponse } from 'node-mocks-http';
-import { BaseHandler, BaseStorage } from '../src';
-
-class TestUploader extends BaseHandler {
-  storage = ({
-    path: '/files',
-    isReady: true,
-    get: (url: any) => Promise.resolve([])
-  } as unknown) as BaseStorage<any, any>;
-}
+import { TestUploader } from './fixtures/uploader';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
@@ -31,6 +23,37 @@ describe('BaseHandler', () => {
     const res = createResponse();
     uploader.handle(createRequest({ method: 'TRACE' }), res);
     expect(res.statusCode).toEqual(404);
+  });
+
+  describe('sendError', () => {
+    let res: any;
+    beforeEach(() => {
+      uploader = new TestUploader();
+      res = createResponse();
+    });
+
+    it('should send Error (as string)', () => {
+      const sendSpy = jest.spyOn(uploader, 'send');
+      const err = new Error('errorMessage');
+      uploader.sendError(res, err);
+      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: 'errorMessage' });
+    });
+
+    it('should send Error (as json)', () => {
+      uploader.responseType = 'json';
+      const sendSpy = jest.spyOn(uploader, 'send');
+      const err = new Error('errorMessage');
+      uploader.sendError(res, err);
+      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: { message: 'errorMessage' } });
+    });
+
+    it('should send string (json)', () => {
+      uploader.responseType = 'json';
+      const sendSpy = jest.spyOn(uploader, 'send');
+      const err = 'string error';
+      uploader.sendError(res, err);
+      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: { message: 'string error' } });
+    });
   });
 
   describe('getPath(framework)', () => {
