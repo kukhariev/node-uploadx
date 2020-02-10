@@ -204,7 +204,9 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
         this.cache.set(name, data);
         return data;
       }
-    } catch (error) {}
+    } catch (err) {
+      this.log('_getMetaError: ', err);
+    }
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
@@ -213,7 +215,9 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     this.cache.delete(name);
     try {
       await this.authClient.request({ method: 'DELETE', url });
-    } catch {}
+    } catch (err) {
+      this.log('_deleteMetaError: ', err);
+    }
   }
 
   private metaName(name: string): string {

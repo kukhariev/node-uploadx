@@ -56,7 +56,6 @@ export class S3Storage extends BaseStorage<S3File, any> {
     file.name = this.namingFunction(file);
     try {
       const existing = await this._getMeta(file.name);
-      existing.bytesWritten = await this._write(existing);
       if (existing.bytesWritten >= 0) return existing;
     } catch {}
     const metadata = processMetadata(file.metadata, encodeURI);
@@ -126,9 +125,9 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async _write(file: S3File & FilePart): Promise<number> {
     file.Parts = file.Parts || [];
-    const partNumber = file.Parts.length + 1;
     if (hasContent(file)) {
-      const partOpts: S3.UploadPartRequest = {
+      const partNumber = file.Parts.length + 1;
+      const params: S3.UploadPartRequest = {
         Bucket: this.bucket,
         Key: file.name,
         UploadId: file.UploadId,
@@ -136,11 +135,12 @@ export class S3Storage extends BaseStorage<S3File, any> {
         Body: file.body,
         ContentLength: file.contentLength
       };
-      const data: S3.UploadPartOutput = await this.client.uploadPart(partOpts).promise();
-      const part: S3.Part = { ...data, ...{ PartNumber: partNumber, Size: file.contentLength } };
-      file.Parts = [...file.Parts, part];
+      await this.client.uploadPart(params).promise();
+      const uploadPart: S3.Part = { PartNumber: partNumber, Size: file.contentLength };
+      file.Parts = [...file.Parts, uploadPart];
+      file.bytesWritten = file.bytesWritten + (file.contentLength || 0);
       this.cache.set(file.name, file);
-      return file.bytesWritten + (file.contentLength || 0);
+      return file.bytesWritten;
     }
     return file.bytesWritten;
   }
@@ -181,8 +181,8 @@ export class S3Storage extends BaseStorage<S3File, any> {
         this.cache.set(name, meta);
         return meta;
       }
-    } catch (error) {
-      this.log(error);
+    } catch (err) {
+      this.log('_getMetaError: ', err);
     }
     return fail(ERRORS.FILE_NOT_FOUND);
   }
@@ -200,8 +200,8 @@ export class S3Storage extends BaseStorage<S3File, any> {
     try {
       const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
       await this.client.deleteObject(params).promise();
-    } catch (error) {
-      this.log(error);
+    } catch (err) {
+      this.log('_deleteMetaError: ', err);
     }
   }
 
@@ -209,8 +209,8 @@ export class S3Storage extends BaseStorage<S3File, any> {
     try {
       const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
       await this.client.abortMultipartUpload(params).promise();
-    } catch (error) {
-      this.log(error);
+    } catch (err) {
+      this.log('_abortMultipartUploadError: ', err);
     }
   }
 
