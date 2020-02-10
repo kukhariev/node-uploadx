@@ -3,7 +3,7 @@ import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
 import { ERRORS, fail, getHeader, noop } from '../utils';
-import { File, FileInit, FilePart, extractOriginalName, hasContent } from './file';
+import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -57,7 +57,6 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   storageBaseURI: string;
   uploadBaseURI: string;
-  private cache: Record<string, GCSFile> = {};
 
   constructor(public config: GCStorageOptions = {}) {
     super(config);
@@ -126,10 +125,10 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   async delete(name: string): Promise<GCSFile[]> {
     const file: GCSFile = await this._getMeta(name).catch(noop);
     if (file) {
-      await this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus });
-      await this._deleteMeta(file.name);
       file.status = 'deleted';
-      return [{ ...file, name }];
+      const opts = { method: 'DELETE' as 'DELETE', url: file.uri, validateStatus };
+      await Promise.all([this.authClient.request(opts), this._deleteMeta(file.name)]);
+      return [{ ...file }];
     }
     return [{ name } as GCSFile];
   }
@@ -177,7 +176,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       const message = await res.text();
       return Promise.reject({ message, code: res.status });
     } catch (error) {
-      this.log(error.message);
+      this.log(uri, error.message);
       return NaN;
     }
   }
@@ -191,30 +190,34 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       params: { name: this.metaName(name), uploadType: 'media' },
       url: this.uploadBaseURI
     });
-    this.cache[name] = file;
+    this.cache.set(name, file);
     return file;
   }
 
   private async _getMeta(name: string): Promise<GCSFile> {
-    const file = this.cache[name];
-    if (file) return file;
+    const file = this.cache.get(name);
+    if (file?.uri) return file;
     try {
       const url = `${this.storageBaseURI}/${this.metaName(name)}`;
       const { data } = await this.authClient.request<GCSFile>({ params: { alt: 'media' }, url });
       if (data?.name === name) {
-        this.cache[name] = data;
+        this.cache.set(name, data);
         return data;
       }
-    } catch (error) {}
+    } catch (err) {
+      this.log('_getMetaError: ', err);
+    }
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
   private async _deleteMeta(name: string): Promise<void> {
     const url = `${this.storageBaseURI}/${this.metaName(name)}`;
+    this.cache.delete(name);
     try {
       await this.authClient.request({ method: 'DELETE', url });
-    } catch {}
-    delete this.cache[name];
+    } catch (err) {
+      this.log('_deleteMetaError: ', err);
+    }
   }
 
   private metaName(name: string): string {

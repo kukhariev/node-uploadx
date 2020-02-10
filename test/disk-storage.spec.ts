@@ -1,12 +1,13 @@
 import { join } from 'path';
 import { DiskStorage, fsp } from '../src';
-import { filename, metafile, testfile } from './fixtures/testfile';
-import { FileWriteStream, RequestReadStream } from './fixtures/streams';
 import { storageOptions } from './fixtures';
+import { FileWriteStream, RequestReadStream } from './fixtures/streams';
+import { filename, metafile, testfile } from './fixtures/testfile';
 
 const directory = 'ds-test';
-
 let writeStream: FileWriteStream;
+
+jest.mock('../src/utils/cache');
 jest.mock('../src/utils/fs', () => {
   return {
     ensureFile: async () => 0,
@@ -49,10 +50,7 @@ describe('DiskStorage', () => {
     });
     it('should reject on limits', async () => {
       try {
-        await storage.create({} as any, {
-          ...testfile,
-          size: 54760833024
-        });
+        await storage.create({} as any, { ...testfile, size: 6e10 });
       } catch (error) {
         expect(error).toHaveProperty('statusCode', 403);
       }

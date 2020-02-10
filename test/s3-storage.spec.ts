@@ -4,6 +4,7 @@ import { FilePart, S3File, S3Storage } from '../src';
 import { storageOptions } from './fixtures';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 
+jest.mock('../src/utils/cache');
 const mockHeadBucket = jest.fn();
 const mockCreateMultipartUpload = jest.fn(() => ({
   promise() {
@@ -37,7 +38,7 @@ const mockAbortMultipartUpload = jest.fn(() => ({
 }));
 const mockUploadPart = jest.fn(() => ({
   promise() {
-    return Promise.resolve();
+    return Promise.resolve({});
   }
 }));
 const mockCompleteMultipartUpload = jest.fn(() => ({
@@ -55,7 +56,7 @@ const mockHeadObject = jest.fn(() => ({
 const mockListParts = jest.fn(() => ({
   promise() {
     return Promise.resolve({
-      Metadata: { Parts: [{ PartNumber: 1, Size: testfile.size }] }
+      Parts: []
     });
   }
 }));
@@ -106,12 +107,6 @@ describe('S3Storage', () => {
         UploadId: expect.any(String),
         Parts: expect.any(Array)
       });
-    });
-
-    it('should return existing file', async () => {
-      storage['cache'] = { [filename]: { ...file } };
-      const existing = await storage.create({} as any, testfile);
-      expect(existing.UploadId).toEqual(file.UploadId);
     });
   });
   describe('.update()', () => {

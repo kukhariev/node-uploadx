@@ -3,17 +3,19 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { buildContentRange, FilePart, GCSFile, GCStorage, getRangeEnd } from '../src';
 import { storageOptions } from './fixtures';
-import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 import { request } from './fixtures/gcs';
+import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 
 const mockFetch = require('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
-
 jest.mock('node-fetch');
+
 const mockAuthRequest = jest.fn();
 jest.mock('google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
+
+jest.mock('../src/utils/cache');
 
 describe('GCStorage', () => {
   let storage: GCStorage;
@@ -42,18 +44,6 @@ describe('GCStorage', () => {
       expect(file).toMatchObject({ ...testfile, uri });
       expect(mockAuthRequest).toHaveBeenCalledTimes(4);
       expect(mockAuthRequest).toBeCalledWith(request.create);
-    });
-
-    it('should return existing file', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response('', {
-          status: 308,
-          headers: { Range: '0-5' }
-        })
-      );
-      storage['cache'] = { [filename]: { ...testfile, uri } };
-      file = await storage.create(req, testfile);
-      expect(file.uri).toEqual(uri);
     });
 
     it('should reject on api error', async () => {

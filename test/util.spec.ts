@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../src/utils';
+import { getWriteStream } from '../src/utils';
 import { root } from './fixtures';
 import rimraf = require('rimraf');
-import { getWriteStream } from '../src/utils';
 
 describe('fs', () => {
   const directory = join(root, 'fs-test');
@@ -136,7 +136,7 @@ describe('http', () => {
 
 describe('primitives', () => {
   it('fnv', () => {
-    expect(utils.fnv('teststring')).toBeGreaterThan(0);
+    expect(utils.fnv('test string')).toBeGreaterThan(0);
   });
 
   it('pick', () => {
