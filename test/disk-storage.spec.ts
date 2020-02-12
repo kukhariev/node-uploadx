@@ -82,7 +82,7 @@ describe('DiskStorage', () => {
 
     it('should reject with 404', async () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
-      mockReadFile.mockRejectedValueOnce('notfound');
+      mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
       await expect(write).rejects.toHaveProperty('statusCode', 404);
     });

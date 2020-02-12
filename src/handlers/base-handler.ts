@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
 import { File, UploadEventType } from '../storages/file';
-import { ERRORS, ErrorStatus, getBaseUrl, Logger } from '../utils';
+import { ERRORS, getBaseUrl, Logger, pick, UploadxError } from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -15,12 +15,12 @@ export type MethodHandler = {
 };
 
 export interface BaseHandler extends EventEmitter {
-  on(event: 'error', listener: (error: ErrorStatus) => void): this;
+  on(event: 'error', listener: (error: UploadxError) => void): this;
   on<T = File>(event: UploadEventType, listener: (file: T) => void): this;
   off<T = File>(event: UploadEventType, listener: (file: T) => void): this;
-  off(event: 'error', listener: (error: ErrorStatus) => void): this;
+  off(event: 'error', listener: (error: UploadxError) => void): this;
   emit<T = File>(event: UploadEventType, evt: T): boolean;
-  emit(event: 'error', evt: ErrorStatus): boolean;
+  emit(event: 'error', evt: UploadxError): boolean;
 }
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
@@ -64,11 +64,13 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           return;
         })
         .catch((error: any) => {
-          this.listenerCount('error') && this.emit('error', error);
-          this.log('[error]: %o', error);
-          if ('aborted' in req && req['aborted']) {
-            return;
-          }
+          const errorEvent: UploadxError = {
+            ...error,
+            request: pick(req, ['headers', 'method', 'url'])
+          };
+          this.listenerCount('error') && this.emit('error', errorEvent);
+          this.log('[error]: %o', errorEvent);
+          if ('aborted' in req && req['aborted']) return;
           this.sendError(res, error);
           return;
         });
@@ -83,7 +85,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     res.setHeader('Content-Length', 0);
     res.writeHead(204);
     res.end();
-    return Promise.resolve({} as File);
+    return Promise.resolve({} as any);
   }
 
   /**
@@ -91,8 +93,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   async get<T>(req: http.IncomingMessage): Promise<T[]> {
     const name = this.getName(req);
-    const files = await this.storage.get(name);
-    return files;
+    return this.storage.get(name);
   }
 
   /**
@@ -124,10 +125,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: any): void {
-    const statusCode = +error.statusCode || +error.code || +error.status || 500;
-    error.message = error.message || 'unknown error';
-    const { message, code, detail } = error;
-    const body = this.responseType === 'json' ? { message, code, detail } : error.message;
+    const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
+    const message = error.title || error.message;
+    const { code, detail } = error;
+    const body = this.responseType === 'json' ? { message, code, detail } : message;
     this.send({ res, statusCode, body });
   }
 

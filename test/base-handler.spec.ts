@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { createRequest, createResponse } from 'node-mocks-http';
-import { BaseHandler, BaseStorage } from '../src';
-
-class TestUploader extends BaseHandler {
-  storage = ({
-    path: '/files',
-    isReady: true,
-    get: (url: any) => Promise.resolve([])
-  } as unknown) as BaseStorage<any, any>;
-}
+import { TestUploader } from './fixtures/uploader';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
@@ -17,7 +9,7 @@ describe('BaseHandler', () => {
   });
 
   it('should implement get()', () => {
-    expect(uploader.get({ url: '' } as any)).resolves.toEqual([]);
+    expect(uploader.get({ url: '/files/12345' } as any)).resolves.toEqual([]);
   });
 
   it('should check if storage not ready', () => {
@@ -33,31 +25,46 @@ describe('BaseHandler', () => {
     expect(res.statusCode).toEqual(404);
   });
 
-  describe('getPath(framework)', () => {
-    const valid = ['/1/2', '/3', '/files'];
-    const paths = ['1/2', '3', 'files'];
-    const invalid = ['/'];
-
-    it('should return path', () => {
-      valid.forEach((url, i) => expect(uploader.getName(createRequest({ url }))).toBe(paths[i]));
+  describe('sendError', () => {
+    let res: any;
+    beforeEach(() => {
+      uploader = new TestUploader();
+      res = createResponse();
     });
 
-    it('should return empty', () => {
-      invalid.forEach(url => expect(uploader.getName(createRequest({ url }))).toHaveLength(0));
+    it('should send Error (as string)', () => {
+      const sendSpy = jest.spyOn(uploader, 'send');
+      const err = new Error('errorMessage');
+      uploader.sendError(res, err);
+      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: 'errorMessage' });
+    });
+
+    it('should send Error (as json)', () => {
+      uploader.responseType = 'json';
+      const sendSpy = jest.spyOn(uploader, 'send');
+      const err = new Error('errorMessage');
+      uploader.sendError(res, err);
+      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: { message: 'errorMessage' } });
     });
   });
 
-  describe('getPath(node http)', () => {
-    const valid = ['/files/1/2', '/files/3', '/files/4/5/files/6/files/7'];
-    const paths = ['1/2', '3', '4/5/files/6/files/7'];
-    const invalid = ['/', '/1/2', '/3', '/4/5/files/6/files/7'];
+  it.each([
+    ['/1/2', '1/2'],
+    ['/3', '3'],
+    ['/files', 'files'],
+    ['/', '']
+  ])('express: getName(%p) === %p', (url, name) => {
+    expect(uploader.getName(createRequest({ url }))).toBe(name);
+  });
 
-    it('should return path', () => {
-      valid.forEach((url, i) => expect(uploader.getName({ url } as any)).toBe(paths[i]));
-    });
-
-    it('should return empty', () => {
-      invalid.forEach(url => expect(uploader.getName({ url } as any)).toHaveLength(0));
-    });
+  it.each([
+    ['/files/1/2', '1/2'],
+    ['/files/3', '3'],
+    ['/files/files', 'files'],
+    ['/', ''],
+    ['/1/2', ''],
+    ['/3/files/4', '']
+  ])('nodejs: getName(%p) === %p', (url, name) => {
+    expect(uploader.getName({ url } as any)).toBe(name);
   });
 });
