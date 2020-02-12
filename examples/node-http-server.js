@@ -1,3 +1,4 @@
+// @ts-check
 const { createServer } = require('http');
 const { parse } = require('url');
 const { DiskStorage, Uploadx } = require('../dist');
@@ -11,9 +12,9 @@ const storage = new DiskStorage({
 const uploads = new Uploadx({ storage });
 
 uploads.on('error', error => console.error('error: ', error));
-uploads.on('created', ({ path }) => console.log('created: ', path));
-uploads.on('part', ({ path }) => console.log('part: ', path));
-uploads.on('deleted', ({ path }) => console.log('deleted: ', path));
+uploads.on('created', ({ name }) => console.log('created: ', name));
+uploads.on('part', ({ name }) => console.log('part: ', name));
+uploads.on('deleted', ({ name }) => console.log('deleted: ', name));
 uploads.on('completed', file => console.log('completed: ', file));
 
 const server = createServer((req, res) => {

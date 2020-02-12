@@ -1,3 +1,5 @@
+import { IncomingMessage } from 'http';
+
 /**
  * @beta
  */
@@ -65,11 +67,17 @@ export const ERRORS = {
   }
 } as const;
 
-export interface ErrorStatus {
+export interface ErrorInit {
   statusCode: number;
   message: string;
 }
 
-export function fail(error: ErrorStatus, detail?: any): Promise<never> {
+export class UploadxError extends Error {
+  statusCode?: number;
+  request: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
+  detail?: any;
+}
+
+export function fail(error: ErrorInit, detail?: any): Promise<never> {
   return Promise.reject({ ...error, detail });
 }
