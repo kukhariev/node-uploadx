@@ -1,21 +1,22 @@
 import * as fs from 'fs';
 
 try {
-  const oldPackage = JSON.parse(fs.readFileSync('package.json', { encoding: 'utf8' }));
-  const newPackage: any = {};
-  newPackage.name = oldPackage.name;
-  newPackage.version = oldPackage.version;
-  newPackage.description = oldPackage.description;
-  newPackage.keywords = oldPackage.keywords;
-  newPackage.author = oldPackage.author;
-  newPackage.repository = oldPackage.repository;
-  newPackage.homepage = oldPackage.homepage;
-  newPackage.license = oldPackage.license;
-  newPackage.typings = 'types/index.d.ts';
-  newPackage.main = 'index.js';
-  newPackage.dependencies = oldPackage.dependencies;
-  newPackage.engines = oldPackage.engines;
-  fs.writeFileSync(`dist/package.json`, JSON.stringify(newPackage, undefined, 2));
+  const rootPackage = JSON.parse(fs.readFileSync('package.json', { encoding: 'utf8' }));
+  const libPackage: any = {};
+  libPackage.name = rootPackage.name;
+  libPackage.version = rootPackage.version;
+  libPackage.description = rootPackage.description;
+  libPackage.keywords = rootPackage.keywords;
+  libPackage.author = rootPackage.author;
+  libPackage.repository = rootPackage.repository;
+  libPackage.homepage = rootPackage.homepage;
+  libPackage.license = rootPackage.license;
+  libPackage.typings = 'types/index.d.ts';
+  libPackage.main = 'index.js';
+  libPackage.dependencies = rootPackage.dependencies;
+  libPackage.optionalDependencies = rootPackage.optionalDependencies;
+  libPackage.engines = rootPackage.engines;
+  fs.writeFileSync(`dist/package.json`, JSON.stringify(libPackage, undefined, 2));
   fs.copyFileSync('LICENSE', `dist/LICENSE`);
   fs.copyFileSync('README.md', `dist/README.md`);
 } catch (error) {
