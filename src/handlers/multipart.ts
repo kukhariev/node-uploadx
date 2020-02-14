@@ -49,10 +49,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
             }
             return resolve(file);
           })
-          .catch(err => {
-            res.setHeader('Connection', 'close');
-            return reject(err);
-          });
+          .catch(err => reject(err));
       });
 
       form.parse(req);
