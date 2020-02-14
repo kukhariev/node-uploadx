@@ -42,6 +42,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   }
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
+    req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
     if (!this.storage.isReady) {
