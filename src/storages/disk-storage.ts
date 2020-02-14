@@ -1,8 +1,7 @@
 import * as http from 'http';
 import { extname, join, relative, resolve as pathResolve } from 'path';
-import { Readable } from 'stream';
 import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
-import { extractOriginalName, File, FileInit, FilePart } from './file';
+import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {}
@@ -11,13 +10,13 @@ export interface DiskListObject {
   name: string;
   updated: Date;
 }
-export interface DiskStorageOptions extends BaseStorageOptions {
+export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Uploads directory
    * @defaultValue './files'
    */
   directory?: string;
-}
+};
 
 /**
  * Local Disk Storage
@@ -25,7 +24,7 @@ export interface DiskStorageOptions extends BaseStorageOptions {
 export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   directory: string;
 
-  constructor(public config: DiskStorageOptions) {
+  constructor(public config: DiskStorageOptions = {}) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this.isReady = true;
@@ -34,14 +33,11 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   /**
    * Add file to storage
    */
-  async create(req: http.IncomingMessage, config: FileInit): Promise<DiskFile> {
-    const file = new File(config);
-    await this.validate(file);
+  async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
+    const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file);
-
-    const path = this.fullPath(file.name);
-    file.bytesWritten = await ensureFile(path).catch(ex => fail(ERRORS.FILE_ERROR, ex));
-    await this._saveMeta(file.name, file);
+    await this.validate(file);
+    await this._saveMeta(file);
     file.status = 'created';
     return file;
   }
@@ -49,20 +45,18 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   /**
    * Write chunks
    */
-  async write(chunk: FilePart): Promise<DiskFile> {
-    const { start, name, body } = chunk;
-    const file = await this._getMeta(name || '');
-    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
+  async write(part: FilePart): Promise<DiskFile> {
+    const file = await this._getMeta(part.name);
     try {
-      if (Number(start) >= 0 && body) {
-        file.bytesWritten = await this._write(body, this.fullPath(file.name), start);
-      } else {
-        file.bytesWritten = await ensureFile(this.fullPath(file.name));
-      }
+      file.bytesWritten = await this._write({ ...file, ...part });
       file.status = this.setStatus(file);
+      if (file.status === 'completed') {
+        await Promise.all([this.onComplete(file)]);
+      }
       return file;
-    } catch (ex) {
-      return fail(ERRORS.FILE_ERROR, ex);
+    } catch (err) {
+      this.log('writeError: ', err);
+      return fail(ERRORS.FILE_ERROR, err);
     }
   }
 
@@ -78,58 +72,77 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   }
 
   async delete(name: string): Promise<DiskFile[]> {
-    const file = await this._getMeta(name);
-    if (file) {
-      file.status = 'deleted';
-      await Promise.all([this._deleteMeta(name), fsp.unlink(this.fullPath(name))]);
-      return [file];
+    try {
+      const file = await this._getMeta(name);
+      if (file) {
+        file.status = 'deleted';
+        await Promise.all([this._deleteMeta(name), fsp.unlink(this._getPath(name))]);
+        return [{ ...file }];
+      }
+    } catch (err) {
+      this.log('deleteError: ', err);
     }
     return [{ name } as DiskFile];
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<DiskFile> {
     const file = await this._getMeta(name);
-    if (!file) return fail(ERRORS.FILE_NOT_FOUND);
     file.metadata = { ...file.metadata, ...metadata };
     file.originalName = extractOriginalName(file.metadata) || file.originalName;
-    await this._saveMeta(file.name, file);
+    await this._saveMeta(file);
     return file;
   }
 
-  /**
-   * Append chunk to file
-   */
-  protected _write(req: Readable, path: string, start: any): Promise<number> {
+  private _write(part: FilePart): Promise<number> {
     return new Promise((resolve, reject) => {
-      const writeStream = getWriteStream(path, start);
-      writeStream.once('error', error => reject(error));
-      req.once('aborted', () => {
-        writeStream.close();
-        return resolve();
-      });
-      req.pipe(writeStream).on('finish', () => resolve(start + writeStream.bytesWritten));
+      const path = this._getPath(part.name);
+      if (hasContent(part)) {
+        const file = getWriteStream(path, part.start);
+        file.once('error', error => reject(error));
+        part.body.once('aborted', () => {
+          file.close();
+          return resolve(NaN);
+        });
+        part.body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
+      } else {
+        resolve(ensureFile(path));
+      }
     });
   }
 
-  private async _saveMeta(name: string, file: File): Promise<any> {
-    await fsp.writeFile(this.fullPath(name) + METAFILE_EXTNAME, JSON.stringify(file, null, 2));
-    return;
+  private async _saveMeta(file: DiskFile): Promise<number> {
+    const path = this._getPath(file.name);
+    file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
+    await fsp.writeFile(this._getMetaPath(file.name), JSON.stringify(file, null, 2));
+    this.cache.set(file.name, file);
+    return file.bytesWritten;
   }
 
   private async _deleteMeta(name: string): Promise<void> {
-    await fsp.unlink(this.fullPath(name) + METAFILE_EXTNAME);
+    this.cache.delete(name);
+    await fsp.unlink(this._getMetaPath(name));
     return;
   }
 
-  private async _getMeta(name: string): Promise<DiskFile | undefined> {
+  private async _getMeta(name: string): Promise<DiskFile> {
+    const file = this.cache.get(name);
+    if (file?.size) return file;
     try {
-      const data = await fsp.readFile(this.fullPath(name) + METAFILE_EXTNAME);
-      return JSON.parse(data.toString());
-    } catch {}
-    return;
+      const json = await fsp.readFile(this._getMetaPath(name));
+      const data = JSON.parse(json.toString());
+      this.cache.set(name, data);
+      return data;
+    } catch (err) {
+      this.log('_getMetaError: ', err);
+    }
+    return fail(ERRORS.FILE_NOT_FOUND);
   }
 
-  private fullPath(name: string): string {
+  private _getPath(name: string): string {
     return pathResolve(this.directory, name);
+  }
+
+  private _getMetaPath(name: string): string {
+    return this._getPath(name) + METAFILE_EXTNAME;
   }
 }

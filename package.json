@@ -1,6 +1,6 @@
 {
   "name": "node-uploadx",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
@@ -23,15 +23,6 @@
   "engines": {
     "node": ">=10.10.0"
   },
-  "dependencies": {
-    "abort-controller": "^3.0.0",
-    "aws-sdk": "^2.598.0",
-    "bytes": "^3.1.0",
-    "debug": "^4.1.1",
-    "google-auth-library": "^5.8.0",
-    "multiparty": "^4.2.1",
-    "node-fetch": "^2.6.0"
-  },
   "scripts": {
     "start": "tsnd -r dotenv/config examples/express",
     "prettier": "prettier --write \"**/*.{json,md}\"",
@@ -50,6 +41,17 @@
     "demo:tus": "tsnd examples/express-tus",
     "demo:fastify": "tsnd examples/fastify"
   },
+  "dependencies": {
+    "bytes": "^3.1.0",
+    "debug": "^4.1.1",
+    "multiparty": "^4.2.1"
+  },
+  "optionalDependencies": {
+    "abort-controller": "^3.0.0",
+    "aws-sdk": "^2.616.0",
+    "google-auth-library": "^5.9.2",
+    "node-fetch": "^2.6.0"
+  },
   "devDependencies": {
     "@types/bytes": "3.1.0",
     "@types/debug": "4.1.5",
@@ -62,6 +64,8 @@
     "@types/supertest": "2.0.8",
     "@typescript-eslint/eslint-plugin": "2.19.2",
     "@typescript-eslint/parser": "2.19.2",
+    "abort-controller": "^3.0.0",
+    "aws-sdk": "^2.616.0",
     "dotenv": "8.2.0",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.10.0",
@@ -69,9 +73,11 @@
     "eslint-plugin-promise": "4.2.1",
     "express": "4.17.1",
     "fastify": "2.12.0",
+    "google-auth-library": "^5.9.2",
     "husky": "4.2.3",
     "jest": "25.1.0",
     "lint-staged": "10.0.7",
+    "node-fetch": "2.6.0",
     "node-mocks-http": "1.8.1",
     "prettier": "1.19.1",
     "rimraf": "3.0.2",

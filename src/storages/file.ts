@@ -39,7 +39,6 @@ export class File implements FileInit {
   name = '';
   size: number;
   status?: UploadEventType;
-  uri = '';
   userId?: any;
 
   constructor(opts: FileInit) {
@@ -62,6 +61,13 @@ export interface FilePart {
   start?: number;
 }
 
+interface HasContent {
+  start: number;
+  body: Readable;
+}
+export function hasContent(part: Partial<FilePart>): part is HasContent {
+  return typeof part.start === 'number' && part.start >= 0 && !!part.body;
+}
 export interface Metadata {
   [key: string]: any;
   size?: string | number;

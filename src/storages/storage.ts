@@ -1,11 +1,13 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { ERRORS, fail, Logger, typeis } from '../utils';
+import { Cache, ERRORS, fail, Logger, typeis } from '../utils';
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
-export interface BaseStorageOptions {
+export type OnComplete<T = File> = (file: Readonly<T>) => any;
+
+export interface BaseStorageOptions<T> {
   /** Allowed file types */
   allowMIME?: string[];
   /** File size limit */
@@ -14,12 +16,12 @@ export interface BaseStorageOptions {
   filename?: (file: Partial<File>) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
-  onComplete?: (file: File) => void;
+  onComplete?: OnComplete<T>;
   /** Node http base path */
   path?: string;
 }
 
-const defaultOptions: Required<BaseStorageOptions> = {
+const defaultOptions: Required<BaseStorageOptions<any>> = {
   allowMIME: ['*/*'],
   maxUploadSize: '50GB',
   filename: ({ userId, id }: Partial<File>): string => [userId, id].filter(Boolean).join('-'),
@@ -32,13 +34,15 @@ export type Validator = (file: File) => string | false;
 
 export abstract class BaseStorage<TFile, TList> {
   validators: Set<Validator> = new Set();
-  onComplete: (file: File) => void;
+  onComplete: (file: Readonly<TFile>) => void;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: Partial<File>) => string;
-  constructor(public config: BaseStorageOptions) {
-    const opts: Required<BaseStorageOptions> = { ...defaultOptions, ...config };
+  protected cache = new Cache<TFile>();
+
+  constructor(public config: BaseStorageOptions<TFile>) {
+    const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
@@ -59,12 +63,9 @@ export abstract class BaseStorage<TFile, TList> {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
-  protected setStatus(file: File): File['status'] {
-    if (file.bytesWritten < file.size) {
-      return 'part';
-    } else if (file.bytesWritten === file.size) {
-      return 'completed';
-    }
+  protected setStatus(file: File): File['status'] | undefined {
+    if (file.bytesWritten < file.size) return 'part';
+    if (file.bytesWritten === file.size) return 'completed';
     return;
   }
 

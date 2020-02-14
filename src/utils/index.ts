@@ -1,3 +1,4 @@
+export * from './cache';
 export * from './errors';
 export * from './fs';
 export * from './http';

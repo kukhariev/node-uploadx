@@ -4,8 +4,13 @@ import { uploadx, GCStorage } from '../src';
 const app = express();
 
 const storage = new GCStorage();
-storage.onComplete = file => console.log('File upload complete: ', file);
-app.use('/upload/files', uploadx({ storage }));
+
+storage.onComplete = file => {
+  (file as any)['custom'] = 'Hi!';
+  console.log('File upload complete: ', file);
+};
+
+app.use('/files', uploadx({ storage }));
 
 app.listen(3003, error => {
   if (error) throw error;

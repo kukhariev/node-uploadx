@@ -11,6 +11,26 @@
 npm install node-uploadx
 ```
 
+Optionally, to support
+
+- AWS S3 Storage:
+
+```sh
+ npm install aws-sdk
+```
+
+- Google Cloud Storage:
+
+```sh
+ npm install google-auth-library
+```
+
+Full installation:
+
+```sh
+npm install node-uploadx -f
+```
+
 ## Usage
 
 Express example:
