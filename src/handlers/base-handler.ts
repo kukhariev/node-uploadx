@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
 import { File, UploadEventType } from '../storages/file';
-import { ERRORS, getBaseUrl, Logger, pick, UploadxError } from '../utils';
+import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -72,6 +72,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           this.listenerCount('error') && this.emit('error', errorEvent);
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
+          typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
           this.sendError(res, error);
           return;
         });
