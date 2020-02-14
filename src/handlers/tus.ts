@@ -67,6 +67,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
+      getHeader(req, 'expect') && this.send({ res, statusCode: 100 });
       const contentLength = +getHeader(req, 'content-length');
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
       headers['Upload-Offset'] = file.bytesWritten;
