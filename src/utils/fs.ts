@@ -14,8 +14,6 @@ export async function ensureFile(path: string, overwrite = false): Promise<numbe
 
 /**
  * Resolve the Promise with file size or `-1` on error
- *
- * @param path
  */
 export async function getFileSize(path: string): Promise<number> {
   try {
@@ -24,12 +22,14 @@ export async function getFileSize(path: string): Promise<number> {
     return -1;
   }
 }
+
 export function getWriteStream(path: string, start: number): WriteStream {
   if (path && start >= 0) {
     return createWriteStream(path, { flags: 'r+', start });
   }
   throw new Error('getWriteStream: invalid parameters!');
 }
+
 export async function getFiles(prefix: string): Promise<string[]> {
   try {
     if ((await fsp.stat(prefix)).isFile()) return [prefix];
@@ -46,4 +46,5 @@ export async function getFiles(prefix: string): Promise<string[]> {
   );
   return Array.prototype.concat(...files);
 }
+
 export { fsp };

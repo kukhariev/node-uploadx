@@ -8,9 +8,9 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
 
 export const uid = (): string => randomBytes(16).toString('hex');
 
-export function md5(print: string): string {
+export function md5(str: string): string {
   return createHash('md5')
-    .update(print)
+    .update(str)
     .digest('hex');
 }
 
