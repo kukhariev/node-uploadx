@@ -23,6 +23,13 @@ export interface BaseHandler extends EventEmitter {
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
+interface SendParameters {
+  res: http.ServerResponse;
+  statusCode?: number;
+  headers?: Headers;
+  body?: Record<string, any> | string;
+}
+
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
   protected log = Logger.get(this.constructor.name);
@@ -101,17 +108,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Make response
    */
-  send({
-    res,
-    statusCode = 200,
-    headers = {},
-    body = ''
-  }: {
-    res: http.ServerResponse;
-    statusCode?: number;
-    headers?: Headers;
-    body?: Record<string, any> | string;
-  }): void {
+  send({ res, statusCode = 200, headers = {}, body = '' }: SendParameters): void {
     const json = typeof body !== 'string';
     const data = json ? JSON.stringify(body) : `${body}`;
     res.setHeader('Content-Length', Buffer.byteLength(data));
