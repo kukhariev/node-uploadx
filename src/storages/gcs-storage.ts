@@ -152,7 +152,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     return file;
   }
 
-  async _write(part: FilePart & GCSFile): Promise<number> {
+  protected async _write(part: FilePart & GCSFile): Promise<number> {
     const { size, uri, body } = part;
     const contentRange = buildContentRange(part);
     const options: any = { method: 'PUT' };
@@ -181,7 +181,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     }
   }
 
-  private async _saveMeta(file: GCSFile): Promise<any> {
+  protected async _saveMeta(file: GCSFile): Promise<any> {
     const name = file.name;
     await this.authClient.request({
       body: JSON.stringify(file),
@@ -194,7 +194,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     return file;
   }
 
-  private async _getMeta(name: string): Promise<GCSFile> {
+  protected async _getMeta(name: string): Promise<GCSFile> {
     const file = this.cache.get(name);
     if (file?.uri) return file;
     try {
@@ -210,7 +210,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
-  private async _deleteMeta(name: string): Promise<void> {
+  protected async _deleteMeta(name: string): Promise<void> {
     const url = `${this.storageBaseURI}/${this.metaName(name)}`;
     this.cache.delete(name);
     try {

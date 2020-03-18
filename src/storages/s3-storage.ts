@@ -89,10 +89,6 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return file;
   }
 
-  _onComplete = (file: S3File): Promise<any> => {
-    return Promise.all([this._complete(file), this._deleteMeta(file.name)]);
-  };
-
   async delete(name: string): Promise<S3File[]> {
     const file = await this._getMeta(name).catch(noop);
     if (file) {
@@ -123,7 +119,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return file;
   }
 
-  async _write(file: S3File & FilePart): Promise<number> {
+  protected async _write(file: S3File & FilePart): Promise<number> {
     file.Parts = file.Parts || [];
     if (hasContent(file)) {
       const partNumber = file.Parts.length + 1;
@@ -145,19 +141,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return file.bytesWritten;
   }
 
-  private _complete(meta: S3File): Promise<S3.CompleteMultipartUploadOutput> {
-    const params = {
-      Bucket: this.bucket,
-      Key: meta.name,
-      UploadId: meta.UploadId,
-      MultipartUpload: {
-        Parts: meta.Parts.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
-      }
-    };
-    return this.client.completeMultipartUpload(params).promise();
-  }
-
-  private async _saveMeta(file: S3File): Promise<any> {
+  protected async _saveMeta(file: S3File): Promise<any> {
     const metadata = encodeURIComponent(JSON.stringify(file));
     const params = {
       Bucket: this.bucket,
@@ -168,7 +152,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     this.cache.set(file.name, file);
   }
 
-  private async _getMeta(name: string): Promise<S3File> {
+  protected async _getMeta(name: string): Promise<S3File> {
     const file = this.cache.get(name);
     if (file) return file;
     try {
@@ -187,6 +171,20 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
+  protected async _deleteMeta(name: string): Promise<void> {
+    this.cache.delete(name);
+    try {
+      const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
+      await this.client.deleteObject(params).promise();
+    } catch (err) {
+      this.log('_deleteMetaError: ', err);
+    }
+  }
+
+  protected _onComplete = (file: S3File): Promise<any> => {
+    return Promise.all([this._complete(file), this._deleteMeta(file.name)]);
+  };
+
   private async _getParts(file: S3File): Promise<{ bytesWritten: number; Parts: S3.Parts }> {
     const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
     const res = await this.client.listParts(params).promise();
@@ -195,14 +193,16 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return { bytesWritten, Parts };
   }
 
-  private async _deleteMeta(name: string): Promise<void> {
-    this.cache.delete(name);
-    try {
-      const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
-      await this.client.deleteObject(params).promise();
-    } catch (err) {
-      this.log('_deleteMetaError: ', err);
-    }
+  private _complete(meta: S3File): Promise<S3.CompleteMultipartUploadOutput> {
+    const params = {
+      Bucket: this.bucket,
+      Key: meta.name,
+      UploadId: meta.UploadId,
+      MultipartUpload: {
+        Parts: meta.Parts.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
+      }
+    };
+    return this.client.completeMultipartUpload(params).promise();
   }
 
   private async _abortMultipartUpload(file: S3File): Promise<any> {

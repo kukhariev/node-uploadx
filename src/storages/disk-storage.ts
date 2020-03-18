@@ -93,7 +93,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return file;
   }
 
-  private _write(part: FilePart): Promise<number> {
+  protected _write(part: FilePart): Promise<number> {
     return new Promise((resolve, reject) => {
       const path = this._getPath(part.name);
       if (hasContent(part)) {
@@ -110,7 +110,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     });
   }
 
-  private async _saveMeta(file: DiskFile): Promise<number> {
+  protected async _saveMeta(file: DiskFile): Promise<number> {
     const path = this._getPath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     await fsp.writeFile(this._getMetaPath(file.name), JSON.stringify(file, null, 2));
@@ -118,13 +118,13 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return file.bytesWritten;
   }
 
-  private async _deleteMeta(name: string): Promise<void> {
+  protected async _deleteMeta(name: string): Promise<void> {
     this.cache.delete(name);
     await fsp.unlink(this._getMetaPath(name));
     return;
   }
 
-  private async _getMeta(name: string): Promise<DiskFile> {
+  protected async _getMeta(name: string): Promise<DiskFile> {
     const file = this.cache.get(name);
     if (file?.size) return file;
     try {
@@ -138,11 +138,11 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
-  private _getPath(name: string): string {
+  protected _getPath(name: string): string {
     return pathResolve(this.directory, name);
   }
 
-  private _getMetaPath(name: string): string {
+  protected _getMetaPath(name: string): string {
     return this._getPath(name) + METAFILE_EXTNAME;
   }
 }
