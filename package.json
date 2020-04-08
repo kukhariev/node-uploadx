@@ -69,7 +69,7 @@
     "fastify": "2.13.0",
     "google-auth-library": "6.0.0",
     "husky": "4.2.3",
-    "jest": "25.2.7",
+    "jest": "25.3.0",
     "lint-staged": "10.1.2",
     "node-fetch": "2.6.0",
     "node-mocks-http": "1.8.1",
