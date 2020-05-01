@@ -55,7 +55,7 @@
     "@types/node": "10.17.21",
     "@types/node-fetch": "2.5.7",
     "@types/rimraf": "3.0.0",
-    "@types/supertest": "2.0.8",
+    "@types/supertest": "2.0.9",
     "@typescript-eslint/eslint-plugin": "2.30.0",
     "@typescript-eslint/parser": "2.30.0",
     "abort-controller": "3.0.0",
