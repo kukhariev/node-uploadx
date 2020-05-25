@@ -70,7 +70,7 @@
     "google-auth-library": "6.0.0",
     "husky": "4.2.5",
     "jest": "26.0.1",
-    "lint-staged": "10.2.4",
+    "lint-staged": "10.2.6",
     "node-fetch": "2.6.0",
     "node-mocks-http": "1.8.1",
     "prettier": "2.0.5",
