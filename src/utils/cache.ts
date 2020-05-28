@@ -1,5 +1,5 @@
 export class Cache<T> {
-  private _map: Map<string, T> = new Map();
+  private _map: Map<string, T> = new Map() as Map<string, T>;
 
   constructor(public limit = 100) {}
 
@@ -23,6 +23,7 @@ export class Cache<T> {
   }
 
   private get _head(): string {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this._map.keys().next().value;
   }
 }

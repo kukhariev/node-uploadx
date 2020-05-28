@@ -60,7 +60,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     }
   }
 
-  async get(prefix: string): Promise<DiskListObject[]> {
+  async get(prefix = ''): Promise<DiskListObject[]> {
     const files = await getFiles(join(this.directory, prefix));
     const props = async (path: string): Promise<DiskListObject> => ({
       name: relative(this.directory, path).replace(/\\/g, '/'),
@@ -129,7 +129,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     if (file?.size) return file;
     try {
       const json = await fsp.readFile(this._getMetaPath(name));
-      const data = JSON.parse(json.toString());
+      const data = JSON.parse(json.toString()) as DiskFile;
       this.cache.set(name, data);
       return data;
     } catch (err) {

@@ -34,17 +34,25 @@ describe('BaseHandler', () => {
 
     it('should send Error (as string)', () => {
       const sendSpy = jest.spyOn(uploader, 'send');
-      const err = new Error('errorMessage');
+      const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: 'errorMessage' });
+      expect(sendSpy).toBeCalledWith({
+        res,
+        statusCode: 500,
+        body: 'Error Message'
+      });
     });
 
     it('should send Error (as json)', () => {
       uploader.responseType = 'json';
       const sendSpy = jest.spyOn(uploader, 'send');
-      const err = new Error('errorMessage');
+      const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toBeCalledWith({ res, statusCode: 500, body: { message: 'errorMessage' } });
+      expect(sendSpy).toBeCalledWith({
+        res,
+        statusCode: 500,
+        body: { message: 'Error Message', code: 500, detail: 'Error Message' }
+      });
     });
   });
 

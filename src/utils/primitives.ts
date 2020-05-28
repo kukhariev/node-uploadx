@@ -1,17 +1,15 @@
-import { randomBytes, createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
-  const result: any = {};
+  const result: Record<string, unknown> = {};
   whitelist.forEach(key => (result[key] = obj[key]));
-  return result;
+  return result as Pick<T, K>;
 };
 
 export const uid = (): string => randomBytes(16).toString('hex');
 
 export function md5(str: string): string {
-  return createHash('md5')
-    .update(str)
-    .digest('hex');
+  return createHash('md5').update(str).digest('hex');
 }
 
 /**
@@ -28,4 +26,4 @@ export function fnv(str: string): number {
 }
 
 // eslint-disable-next-line
-export const noop = (): any => {};
+export const noop = (): any => { };

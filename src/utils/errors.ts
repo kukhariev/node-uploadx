@@ -75,9 +75,9 @@ export interface ErrorInit {
 export class UploadxError extends Error {
   statusCode?: number;
   request: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
-  detail?: any;
+  detail?: string | Record<string, unknown>;
 }
 
-export function fail(error: ErrorInit, detail?: any): Promise<never> {
+export function fail(error: ErrorInit, detail?: Record<string, unknown> | string): Promise<never> {
   return Promise.reject({ ...error, detail });
 }

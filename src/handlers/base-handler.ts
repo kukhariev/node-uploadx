@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
+import { BaseStorage } from 'storages/storage';
 import * as url from 'url';
 import { File, UploadEventType } from '../storages/file';
 import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
@@ -30,10 +31,19 @@ interface SendParameters {
   body?: Record<string, any> | string;
 }
 
+interface AuthRequest extends http.IncomingMessage {
+  [propName: string]: any;
+  user?: {
+    [idKey: string]: any;
+    id?: string;
+    _id?: string;
+  };
+}
+
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
   responseType: 'text' | 'json' = 'text';
   protected log = Logger.get(this.constructor.name);
-  private _registeredHandlers: Map<string, AsyncHandler> = new Map();
+  private _registeredHandlers: Map<string, AsyncHandler> = new Map() as Map<string, AsyncHandler>;
   constructor() {
     super();
 
@@ -48,7 +58,11 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     this.log('Handlers', this._registeredHandlers);
   }
 
-  handle = (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void => {
+  handle = (
+    req: http.IncomingMessage & { body?: any },
+    res: http.ServerResponse,
+    next?: () => void
+  ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
     Cors.preflight(req, res);
@@ -66,12 +80,12 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
             return;
           }
           if (req.method === 'GET') {
-            (req as any).body = file;
+            req['body'] = file;
             next ? next() : this.send({ res, body: file });
           }
           return;
         })
-        .catch((error: any) => {
+        .catch((error: Error) => {
           const errorEvent: UploadxError = {
             ...error,
             request: pick(req, ['headers', 'method', 'url'])
@@ -80,7 +94,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
           typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
-          this.sendError(res, error);
+          this.sendError(res, errorEvent);
           return;
         });
     } else {
@@ -88,13 +102,15 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     }
   };
 
-  getUserId = (req: any): string | undefined => req.user?.id || req.user?._id;
+  getUserId = (req: AuthRequest): string | undefined => {
+    return req.user?.id || req.user?.id;
+  };
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     res.setHeader('Content-Length', 0);
     res.writeHead(204);
     res.end();
-    return Promise.resolve({} as any);
+    return Promise.resolve({} as File);
   }
 
   /**
@@ -102,20 +118,24 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   async get<T>(req: http.IncomingMessage): Promise<T[]> {
     const name = this.getName(req);
-    return this.storage.get(name);
+    return this.storage.get(name) as Promise<T[]>;
   }
 
   /**
    * Make response
    */
   send({ res, statusCode = 200, headers = {}, body = '' }: SendParameters): void {
-    const json = typeof body !== 'string';
-    const data = json ? JSON.stringify(body) : `${body}`;
+    let data: string;
+    if (typeof body !== 'string') {
+      data = JSON.stringify(body);
+      res.setHeader('Content-Type', 'application/json');
+    } else {
+      data = body;
+    }
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
     const exposeHeaders = Object.keys(headers).toString();
     exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
-    json && data && res.setHeader('Content-Type', 'application/json');
     res.writeHead(statusCode, headers);
     res.end(data);
   }
@@ -123,10 +143,20 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Send Error to client
    */
-  sendError(res: http.ServerResponse, error: any): void {
+  sendError(
+    res: http.ServerResponse,
+    error: {
+      statusCode?: number;
+      message?: string;
+      code?: number;
+      status?: any;
+      title?: string;
+      detail?: Record<string, unknown> | string;
+    }
+  ): void {
     const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
     const message = error.title || error.message;
-    const { code, detail } = error;
+    const { code = statusCode, detail = message } = error;
     const body = this.responseType === 'json' ? { message, code, detail } : message;
     this.send({ res, statusCode, body });
   }
@@ -134,9 +164,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Get id from request
    */
-  getName(req: http.IncomingMessage): string {
-    const { pathname } = url.parse(req.url as string);
-    const path = (req as any)['originalUrl']
+  getName(req: http.IncomingMessage & { originalUrl?: string }): string {
+    const { pathname = '' } = url.parse(req.url as string);
+    const path = req['originalUrl']
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
     return path.startsWith('/') ? '' : path;
@@ -147,12 +177,12 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
    */
   protected buildFileUrl(req: http.IncomingMessage, file: File): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname, query } = url.parse(originalUrl, true);
+    const { pathname = '', query } = url.parse(originalUrl, true);
     const path = url.format({ pathname: `${pathname}/${file.name}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  abstract storage: any;
+  abstract storage: BaseStorage<any, any>;
 }

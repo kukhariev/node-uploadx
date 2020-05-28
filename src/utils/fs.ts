@@ -44,7 +44,7 @@ export async function getFiles(prefix: string): Promise<string[]> {
       return dirent.isDirectory() ? getFiles(path) : path;
     })
   );
-  return Array.prototype.concat(...files);
+  return Array.prototype.concat(...files) as string[];
 }
 
 export { fsp };

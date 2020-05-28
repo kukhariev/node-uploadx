@@ -100,7 +100,6 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
 
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { query, pathname } = url.parse(originalUrl, true);
-    // eslint-disable-next-line @typescript-eslint/camelcase
     query.upload_id = file.name;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
@@ -113,6 +112,6 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function uploadx<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
   return new Uploadx(options).handle;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
 import { ERRORS, fail, noop } from '../utils';
@@ -90,16 +91,16 @@ export class S3Storage extends BaseStorage<S3File, any> {
   }
 
   async delete(name: string): Promise<S3File[]> {
-    const file = await this._getMeta(name).catch(noop);
+    const file = await this._getMeta(name).catch<undefined>(noop);
     if (file) {
       file.status = 'deleted';
-      await Promise.all([this._deleteMeta(file), this._abortMultipartUpload(file)]);
+      await Promise.all([this._deleteMeta(file.name), this._abortMultipartUpload(file)]);
       return [{ ...file }];
     }
     return [{ name } as S3File];
   }
 
-  async get(prefix: string): Promise<S3ListObject[]> {
+  async get(prefix = ''): Promise<S3ListObject[]> {
     const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const params = { Bucket: this.bucket, Prefix: prefix };
     const { Contents } = await this.client.listObjectsV2(params).promise();
@@ -159,7 +160,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
       const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
       const { Metadata } = await this.client.headObject(params).promise();
       if (Metadata) {
-        const data: S3File = JSON.parse(decodeURIComponent(Metadata.metadata));
+        const data: S3File = JSON.parse(decodeURIComponent(Metadata.metadata)) as S3File;
         const uploaded = await this._getParts(data);
         const meta = { ...data, ...uploaded };
         this.cache.set(name, meta);
@@ -181,7 +182,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     }
   }
 
-  protected _onComplete = (file: S3File): Promise<any> => {
+  protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {
     return Promise.all([this._complete(file), this._deleteMeta(file.name)]);
   };
 
