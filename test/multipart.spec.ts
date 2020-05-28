@@ -58,23 +58,17 @@ describe('::Multipart', () => {
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .options(basePath)
-        .expect(204);
+      res = await request(app).options(basePath).expect(204);
     });
   });
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .delete(files[0])
-        .expect(204);
+      res = await request(app).delete(files[0]).expect(204);
     });
 
     it('should 404', async () => {
-      res = await request(app)
-        .delete(basePath)
-        .expect(404);
+      res = await request(app).delete(basePath).expect(404);
     });
   });
 });

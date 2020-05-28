@@ -47,7 +47,8 @@ export abstract class BaseStorage<TFile, TList> {
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
     const fileTypeLimit: Validator = file =>
-      !typeis.is(file.contentType, opts.allowMIME) && `Acceptable file types: ${opts.allowMIME}`;
+      !typeis.is(file.contentType, opts.allowMIME) &&
+      `Acceptable file types: ${opts.allowMIME.toString()}`;
     const fileSizeLimit: Validator = file =>
       file.size > bytes.parse(opts.maxUploadSize) && `File size limit: ${opts.maxUploadSize}`;
     this.validators.add(fileTypeLimit);

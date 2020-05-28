@@ -28,10 +28,10 @@ export function readBody(message: Readable, encoding = 'utf8', limit = 16777216)
 
 export async function getJsonBody(req: http.IncomingMessage): Promise<Record<string, any>> {
   if (!typeis(req, ['json'])) return Promise.reject('content-type error');
-  if ('body' in req) return (req as any).body;
+  if ('body' in req) return req['body'];
   try {
     const raw = await readBody(req);
-    return JSON.parse(raw);
+    return JSON.parse(raw) as Record<string, any>;
   } catch (error) {
     return Promise.reject(error);
   }

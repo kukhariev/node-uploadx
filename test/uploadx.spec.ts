@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
@@ -49,10 +48,7 @@ describe('::Uploadx', () => {
     });
 
     it('should 400 (bad request)', async () => {
-      res = await request(app)
-        .post(basePath)
-        .send('')
-        .expect(400);
+      res = await request(app).post(basePath).send('').expect(400);
     });
 
     it('should 201 (x-upload-content)', async () => {
@@ -78,10 +74,7 @@ describe('::Uploadx', () => {
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      res = await request(app)
-        .patch(files[1])
-        .send({ name: 'newname.mp4' })
-        .expect(200);
+      res = await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
     });
   });
 
@@ -131,17 +124,13 @@ describe('::Uploadx', () => {
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .delete(files[1])
-        .expect(204);
+      res = await request(app).delete(files[1]).expect(204);
     });
   });
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await request(app)
-        .options(basePath)
-        .expect(204);
+      res = await request(app).options(basePath).expect(204);
     });
   });
 });

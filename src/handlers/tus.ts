@@ -15,7 +15,7 @@ export function serializeMetadata(obj: Metadata): string {
 
 export function parseMetadata(encoded = ''): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
-  const metadata = Object.create(null);
+  const metadata = Object.create(null) as Record<string, string>;
   for (const [key, value] of kvPairs) {
     if (!value || !key) return metadata;
     metadata[key] = Buffer.from(value, 'base64').toString();
@@ -49,7 +49,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     res.setHeader('Content-Length', 0);
     res.writeHead(204, headers);
     res.end();
-    return Promise.resolve({} as any);
+    return Promise.resolve({} as TFile);
   }
 
   /**
@@ -115,13 +115,13 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
   /**
    * Delete upload by id
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<L> {
+  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });
-    return file as any;
+    return file;
   }
 }
 
@@ -130,6 +130,6 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function tus<T extends File, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: Function) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
   return new Tus(options).handle;
 }

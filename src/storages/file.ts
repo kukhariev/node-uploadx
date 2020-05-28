@@ -39,7 +39,7 @@ export class File implements FileInit {
   name = '';
   size: number;
   status?: UploadEventType;
-  userId?: any;
+  userId?: string;
 
   constructor(opts: FileInit) {
     this.metadata = opts.metadata || {};
@@ -48,7 +48,7 @@ export class File implements FileInit {
     this.contentType =
       opts.contentType || extractMimeType(this.metadata) || 'application/octet-stream';
     this.size = Number(opts.size || this.metadata.size) || 0;
-    this.userId = opts.userId || null;
+    this.userId = opts.userId;
     this.id = this.id || generateFileId(this);
   }
 }
@@ -73,9 +73,11 @@ export interface Metadata {
   size?: string | number;
   name?: string;
   filetype?: string;
+  type?: string;
   mimeType?: string;
   contentType?: string;
   title?: string;
   filename?: string;
+  originalName?: string;
   lastModified?: string | number;
 }

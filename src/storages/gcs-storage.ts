@@ -68,7 +68,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     this.authClient = new GoogleAuth(config);
     this._checkBucket(bucketName)
       .then(() => (this.isReady = true))
-      .catch(error => {
+      .catch((error: Error & { code: number }) => {
         throw new Error(`Bucket code: ${error.code}`);
       });
   }
@@ -83,21 +83,21 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       return existing;
     } catch {}
     const origin = getHeader(req, 'origin');
-    const headers = { 'Content-Type': 'application/json; charset=utf-8' } as any;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json; charset=utf-8' };
     headers['X-Upload-Content-Length'] = file.size.toString();
     headers['X-Upload-Content-Type'] = file.contentType;
     origin && (headers['Origin'] = origin);
     const opts = {
       body: JSON.stringify({ metadata: file.metadata }),
       headers,
-      method: 'POST' as 'POST',
+      method: 'POST' as const,
       params: { name: file.name, size: file.size, uploadType: 'resumable' },
       url: this.uploadBaseURI
     };
     const res = await this.authClient.request(opts);
-    file.uri = res.headers.location;
+    file.uri = res.headers.location as string;
     if (this.config.clientDirectUpload) {
-      file.GCSUploadURI = res.headers.location;
+      file.GCSUploadURI = file.uri;
       this.log('send upload url to client: %s', file.GCSUploadURI);
       file.status = 'created';
       return file;
@@ -123,17 +123,17 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   };
 
   async delete(name: string): Promise<GCSFile[]> {
-    const file: GCSFile = await this._getMeta(name).catch(noop);
+    const file = await this._getMeta(name).catch<undefined>(noop);
     if (file) {
       file.status = 'deleted';
-      const opts = { method: 'DELETE' as 'DELETE', url: file.uri, validateStatus };
+      const opts = { method: 'DELETE' as const, url: file.uri, validateStatus };
       await Promise.all([this.authClient.request(opts), this._deleteMeta(file.name)]);
       return [{ ...file }];
     }
     return [{ name } as GCSFile];
   }
 
-  async get(prefix: string): Promise<CGSObject[]> {
+  async get(prefix = ''): Promise<CGSObject[]> {
     const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const baseURL = this.storageBaseURI;
     const url = '/';
@@ -155,7 +155,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   protected async _write(part: FilePart & GCSFile): Promise<number> {
     const { size, uri, body } = part;
     const contentRange = buildContentRange(part);
-    const options: any = { method: 'PUT' };
+    const options: Record<string, any> = { method: 'PUT' };
     if (body?.on) {
       const abortController = new AbortController();
       body.on('aborted', _ => abortController.abort());
@@ -169,7 +169,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
         const range = res.headers.get('range');
         return range ? getRangeEnd(range) : 0;
       } else if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Record<string, any>;
         this.log('uploaded %o', data);
         return size;
       }
