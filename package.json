@@ -31,7 +31,7 @@
     "cleanup": "rimraf upload files dist",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "lint": "eslint \"{src,test,examples}/**/*.{ts,js}\" --fix",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "demo:basic": "tsnd examples/express-basic",
     "demo:express": "tsnd examples/express",
     "demo:gcs": "tsnd -r dotenv/config examples/express-gcs",

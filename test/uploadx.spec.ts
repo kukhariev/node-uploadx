@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
@@ -8,7 +9,6 @@ import { metadata, srcpath } from './fixtures/testfile';
 import rimraf = require('rimraf');
 
 describe('::Uploadx', () => {
-  let res: request.Response;
   const files: string[] = [];
   let start: number;
   const basePath = '/uploadx';
@@ -18,7 +18,6 @@ describe('::Uploadx', () => {
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
-  beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {
     expect(uploadx()).toBeInstanceOf(Function);
@@ -26,7 +25,7 @@ describe('::Uploadx', () => {
 
   describe('POST', () => {
     it('should 403 (size limit)', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', (10e10).toString())
@@ -37,7 +36,7 @@ describe('::Uploadx', () => {
     });
 
     it('should 403 (unsupported filetype)', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'text/json')
         .set('x-upload-content-length', '3000')
@@ -48,33 +47,33 @@ describe('::Uploadx', () => {
     });
 
     it('should 400 (bad request)', async () => {
-      res = await request(app).post(basePath).send('').expect(400);
+      await request(app).post(basePath).send('').expect(400);
     });
 
     it('should 201 (x-upload-content)', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', metadata.size.toString())
         .send(metadata)
         .expect(201);
       expect(res.header['location']).toBeDefined();
-      files.push(res.header.location);
+      files.push(res.header['location']);
     });
 
     it('should 201 (metadata)', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .send({ ...metadata, name: 'testfileSingle.mp4' })
         .expect(201);
       expect(res.header['location']).toBeDefined();
-      files.push(res.header.location);
+      files.push(res.header['location']);
     });
   });
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      res = await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
+      await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
     });
   });
 
@@ -83,9 +82,9 @@ describe('::Uploadx', () => {
       start = 0;
       const readable = fs.createReadStream(srcpath);
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      readable.on('data', async chunk => {
+      readable.on('data', async (chunk: { length: number }) => {
         readable.pause();
-        res = await request(app)
+        const res = await request(app)
           .put(files[0])
           .redirects(0)
           .set('content-type', 'application/octet-stream')
@@ -102,7 +101,7 @@ describe('::Uploadx', () => {
     });
 
     it('should 200 (single request)', async () => {
-      res = await request(app)
+      const res = await request(app)
         .put(files[1])
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(srcpath))
@@ -114,7 +113,7 @@ describe('::Uploadx', () => {
     });
 
     it('should 404 (no id)', async () => {
-      res = await request(app)
+      await request(app)
         .put(basePath)
         .set('content-type', 'application/octet-stream')
         .send(fs.readFileSync(srcpath))
@@ -124,13 +123,13 @@ describe('::Uploadx', () => {
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await request(app).delete(files[1]).expect(204);
+      await request(app).delete(files[1]).expect(204);
     });
   });
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await request(app).options(basePath).expect(204);
+      await request(app).options(basePath).expect(204);
     });
   });
 });

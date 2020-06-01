@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
 import { FilePart, S3File, S3Storage } from '../src';

@@ -4,7 +4,7 @@ import { DiskFile, DiskStorage, Multipart, OnComplete, Uploadx } from '../src';
 
 const app = express();
 const auth: express.Handler = (req, res, next) => {
-  (req as any).user = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
+  req['user'] = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
   next();
 };
 
@@ -14,10 +14,10 @@ const onComplete: OnComplete<DiskFile> = async file => {
   const srcpath = `upload/${file.name}`;
   const dstpath = `files/${file.originalName}`;
   await promises.mkdir('files', { recursive: true });
-  promises.link(srcpath, dstpath);
+  await promises.link(srcpath, dstpath);
   const message = `File upload is finished, path: ${dstpath}`;
   console.log(message);
-  (file as any).message = message;
+  file['message'] = message;
 };
 
 const storage = new DiskStorage({

@@ -1,14 +1,12 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { createRequest, createResponse } from 'node-mocks-http';
 import { TestUploader } from './fixtures/uploader';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
-  beforeEach(() => {
-    uploader = new TestUploader();
-  });
+  beforeEach(() => (uploader = new TestUploader()));
 
   it('should implement get()', () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     expect(uploader.get({ url: '/files/12345' } as any)).resolves.toEqual([]);
   });
 
@@ -26,13 +24,12 @@ describe('BaseHandler', () => {
   });
 
   describe('sendError', () => {
-    let res: any;
     beforeEach(() => {
       uploader = new TestUploader();
-      res = createResponse();
     });
 
     it('should send Error (as string)', () => {
+      const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);
@@ -45,6 +42,7 @@ describe('BaseHandler', () => {
 
     it('should send Error (as json)', () => {
       uploader.responseType = 'json';
+      const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);

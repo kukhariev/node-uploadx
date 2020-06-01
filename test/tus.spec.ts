@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
@@ -9,7 +10,6 @@ import { metadata, srcpath } from './fixtures/testfile';
 import rimraf = require('rimraf');
 
 describe('::Tus', () => {
-  let res: request.Response;
   let uri: string;
   const basePath = '/tus';
   const directory = join(root, 'tus');
@@ -18,7 +18,6 @@ describe('::Tus', () => {
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
-  afterEach(() => (res = undefined as any));
 
   describe('express middleware', () => {
     it('default storage', () => {
@@ -32,21 +31,21 @@ describe('::Tus', () => {
 
   describe('POST', () => {
     it('should 201', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(201)
         .expect('tus-resumable', TUS_RESUMABLE);
-      uri = res.header.location;
+      uri = res.header.location as string;
       expect(res.header.location).toEqual(expect.stringContaining('/tus'));
     });
   });
 
   describe('PATCH', () => {
     it('should 204 and Upload-Offset', async () => {
-      res = await request(app)
+      await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Offset', '0')
@@ -57,7 +56,7 @@ describe('::Tus', () => {
     });
 
     it('should 204', async () => {
-      res = await request(app)
+      await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Metadata', serializeMetadata(metadata))
@@ -112,7 +111,7 @@ describe('::Tus', () => {
 
   describe('POST (creation-with-upload)', () => {
     it('should return upload-offset', async () => {
-      res = await request(app)
+      const res = await request(app)
         .post(basePath)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Metadata', serializeMetadata(metadata))
@@ -122,7 +121,7 @@ describe('::Tus', () => {
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', '5');
-      uri = res.header.location;
+      uri = res.header.location as string;
       expect(res.header.location).toEqual(expect.stringContaining('/tus'));
     });
   });
