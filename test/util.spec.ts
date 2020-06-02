@@ -81,13 +81,12 @@ describe('fs', () => {
 
 describe('http', () => {
   const mime = 'application/vnd+json';
-  const headers = { headers: { 'content-type': mime } } as any;
-  const req = { headers } as IncomingMessage;
+  const req = { headers: { 'content-type': mime } } as IncomingMessage;
 
   it('typeis()', () => {
     expect(utils.typeis({ headers: {} } as any, ['json'])).toBe(false);
-    expect(utils.typeis(headers, ['html'])).toBe(false);
-    expect(utils.typeis(headers, ['json'])).toBe(mime);
+    expect(utils.typeis(req, ['html'])).toBe(false);
+    expect(utils.typeis(req, ['json'])).toBe(mime);
   });
 
   it('typeis.is()', () => {
@@ -100,6 +99,8 @@ describe('http', () => {
 
   it('typeis.hasBody()', () => {
     expect(utils.typeis.hasBody({ headers: {} } as any)).toBe(false);
+    expect(utils.typeis.hasBody({ headers: { 'content-length': '0' } } as IncomingMessage)).toBe(0);
+    expect(utils.typeis.hasBody({ headers: { 'content-length': '1' } } as IncomingMessage)).toBe(1);
   });
 
   it('getHeader(not exist)', () => {

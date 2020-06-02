@@ -13,7 +13,7 @@ export interface BaseStorageOptions<T> {
   /** File size limit */
   maxUploadSize?: number | string;
   /** Filename generator function */
-  filename?: (file: Partial<File>) => string;
+  filename?: (file: File) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
@@ -24,7 +24,7 @@ export interface BaseStorageOptions<T> {
 const defaultOptions: Required<BaseStorageOptions<any>> = {
   allowMIME: ['*/*'],
   maxUploadSize: '50GB',
-  filename: ({ userId, id }: Partial<File>): string => [userId, id].filter(Boolean).join('-'),
+  filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
   useRelativeLocation: false,
   onComplete: () => undefined,
   path: '/files'
@@ -38,7 +38,7 @@ export abstract class BaseStorage<TFile, TList> {
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
-  protected namingFunction: (file: Partial<File>) => string;
+  protected namingFunction: (file: File) => string;
   protected cache = new Cache<TFile>();
 
   constructor(public config: BaseStorageOptions<TFile>) {

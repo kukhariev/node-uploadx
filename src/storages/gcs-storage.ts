@@ -40,6 +40,7 @@ export type GCStorageOptions = BaseStorageOptions<GCSFile> &
      */
     clientDirectUpload?: boolean;
   };
+
 export class GCSFile extends File {
   GCSUploadURI?: string;
   uri = '';
@@ -49,12 +50,12 @@ interface CGSObject {
   name: string;
   updated: Date;
 }
+
 /**
  * Google cloud storage based backend.
  */
 export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   authClient: GoogleAuth;
-
   storageBaseURI: string;
   uploadBaseURI: string;
 
@@ -176,7 +177,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       const message = await res.text();
       return Promise.reject({ message, code: res.status });
     } catch (error) {
-      this.log(uri, error.message);
+      this.log(uri, error);
       return NaN;
     }
   }

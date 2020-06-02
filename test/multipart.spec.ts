@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../src/handlers/multipart';
@@ -16,7 +17,6 @@ describe('::Multipart', () => {
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
-  beforeEach(() => (res = undefined as any));
 
   test('wrapper', () => {
     expect(multipart()).toBeInstanceOf(Function);

@@ -1,12 +1,12 @@
 import * as express from 'express';
-import { uploadx, GCStorage } from '../src';
+import { GCStorage, uploadx } from '../src';
 
 const app = express();
 
 const storage = new GCStorage();
 
 storage.onComplete = file => {
-  (file as any)['custom'] = 'Hi!';
+  file['custom'] = 'Hi!';
   console.log('File upload complete: ', file);
 };
 

@@ -1,9 +1,11 @@
 import * as express from 'express';
 import { userPrefix } from '.';
-
+interface ExtendedRequest extends express.Request {
+  [key: string]: any;
+}
 const app = express();
-app.use((req, res, next) => {
-  (req as any).user = { id: userPrefix };
+app.use((req: ExtendedRequest, res, next) => {
+  req['user'] = { id: userPrefix };
   next();
 });
 

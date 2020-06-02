@@ -5,6 +5,12 @@ import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
 import { ERRORS, fail } from '../utils';
 import { BaseHandler } from './base-handler';
 
+interface MultipartyPart extends multiparty.Part {
+  headers: {
+    [key: string]: any;
+    'content-type': string;
+  };
+}
 export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
   storage: BaseStorage<TFile, L>;
 
@@ -26,7 +32,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
         Object.assign(config.metadata, key === 'metadata' ? JSON.parse(value) : { [key]: value });
       });
       form.on('error', error => reject(error));
-      form.on('part', (part: multiparty.Part) => {
+      form.on('part', (part: MultipartyPart) => {
         config.size = part.byteCount;
         config.originalName = part.filename;
         config.contentType = part.headers['content-type'];

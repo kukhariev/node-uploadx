@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 export const request = {
   create: {
     body: expect.any(String),
