@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-const peerDependencies = {
+const optionalDependencies = {
   'aws-sdk': '^2.616.0',
   'google-auth-library': '^5.9.2'
 };
@@ -17,7 +17,7 @@ try {
   libPackage.typings = 'types/index.d.ts';
   libPackage.main = 'index.js';
   libPackage.dependencies = rootPackage.dependencies;
-  libPackage.peerDependencies = peerDependencies;
+  libPackage.optionalDependencies = optionalDependencies;
   libPackage.engines = rootPackage.engines;
   fs.writeFileSync(`dist/package.json`, JSON.stringify(libPackage, undefined, 2));
   fs.copyFileSync('LICENSE', `dist/LICENSE`);
