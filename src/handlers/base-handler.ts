@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
-import { BaseStorage } from 'storages/storage';
+import { BaseStorage } from '../storages/storage';
 import * as url from 'url';
 import { File, UploadEventType } from '../storages/file';
 import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
