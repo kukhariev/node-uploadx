@@ -68,7 +68,7 @@
     "eslint-plugin-promise": "4.2.1",
     "express": "4.17.1",
     "fastify": "3.3.0",
-    "google-auth-library": "^6.0.0",
+    "google-auth-library": "6.1.0",
     "husky": "4.2.5",
     "jest": "26.0.1",
     "lint-staged": "10.2.7",
