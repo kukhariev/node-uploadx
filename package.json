@@ -62,7 +62,7 @@
     "@typescript-eslint/parser": "3.1.0",
     "aws-sdk": "2.763.0",
     "dotenv": "8.2.0",
-    "eslint": "7.7.0",
+    "eslint": "7.10.0",
     "eslint-config-prettier": "6.11.0",
     "eslint-plugin-prettier": "3.1.4",
     "eslint-plugin-promise": "4.2.1",
