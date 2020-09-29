@@ -71,7 +71,7 @@
     "google-auth-library": "6.1.0",
     "husky": "4.2.5",
     "jest": "26.4.2",
-    "lint-staged": "10.2.7",
+    "lint-staged": "10.4.0",
     "node-mocks-http": "1.8.1",
     "prettier": "2.1.0",
     "rimraf": "3.0.2",
