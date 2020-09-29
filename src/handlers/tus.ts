@@ -46,10 +46,8 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE,
       'Tus-Max-Size': bytes.parse(this.storage.config.maxUploadSize || 0)
     };
-    res.setHeader('Content-Length', 0);
-    res.writeHead(204, headers);
-    res.end();
-    return Promise.resolve({} as TFile);
+    this.send({ res, statusCode: 204, headers });
+    return {} as TFile;
   }
 
   /**
