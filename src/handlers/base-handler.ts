@@ -107,10 +107,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   };
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    res.setHeader('Content-Length', 0);
-    res.writeHead(204);
-    res.end();
-    return Promise.resolve({} as File);
+    this.send({ res, statusCode: 204 });
+    return {} as File;
   }
 
   /**
