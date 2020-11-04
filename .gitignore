@@ -1,11 +1,11 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-/dist
-/lib
+**/dist
+**/lib
 
 # dependencies
-/node_modules
+**/node_modules
 
 # IDEs and editors
 /.idea
@@ -30,6 +30,7 @@
 /libpeerconnection.log
 npm-debug.log
 testem.log
+lerna-debug.log
 /typings
 
 # system files
@@ -40,12 +41,14 @@ Thumbs.db
 .env
 
 # temp files
-/tmp
-/temp
+**/tmp
+**/temp
 
 /upload
 /uploads
 /files
 
-package-lock.json
+**/package-lock.json
+
+**/tsconfig.tsbuildinfo
 

@@ -41,7 +41,7 @@ export abstract class BaseStorage<TFile, TList> {
   protected namingFunction: (file: File) => string;
   protected cache = new Cache<TFile>();
 
-  constructor(public config: BaseStorageOptions<TFile>) {
+  protected constructor(public config: BaseStorageOptions<TFile>) {
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
@@ -64,15 +64,19 @@ export abstract class BaseStorage<TFile, TList> {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
+  abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
+
+  abstract write(part: FilePart): Promise<TFile>;
+
+  abstract delete(prefix: string): Promise<TFile[]>;
+
+  abstract get(prefix?: string): Promise<TList[]>;
+
+  abstract update(name: string, file: Partial<File>): Promise<TFile>;
+
   protected setStatus(file: File): File['status'] | undefined {
     if (file.bytesWritten < file.size) return 'part';
     if (file.bytesWritten === file.size) return 'completed';
     return;
   }
-
-  abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
-  abstract write(part: FilePart): Promise<TFile>;
-  abstract delete(prefix: string): Promise<TFile[]>;
-  abstract get(prefix?: string): Promise<TList[]>;
-  abstract update(name: string, file: Partial<File>): Promise<TFile>;
 }

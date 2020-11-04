@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { DiskStorage, fsp } from '../src';
+import { DiskStorage, fsp } from '../packages/core/src';
 import { storageOptions } from './fixtures';
 import { FileWriteStream, RequestReadStream } from './fixtures/streams';
 import { filename, metafile, testfile } from './fixtures/testfile';
@@ -7,8 +7,8 @@ import { filename, metafile, testfile } from './fixtures/testfile';
 const directory = 'ds-test';
 let writeStream: FileWriteStream;
 
-jest.mock('../src/utils/cache');
-jest.mock('../src/utils/fs', () => {
+jest.mock('../packages/core/src/utils/cache');
+jest.mock('../packages/core/src/utils/fs', () => {
   return {
     ensureFile: async () => 0,
     getFiles: async () => [join(directory, filename), join(directory, metafile)],

@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import { parse } from 'url';
-import { GCSFile, GCStorage, Uploadx } from '../src';
+import { GCSFile, GCStorage, Uploadx } from 'node-uploadx';
 
 const storage = new GCStorage({
   clientDirectUpload: true,

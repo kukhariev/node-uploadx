@@ -1,12 +1,18 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { File, FileInit, Metadata } from '../storages/file';
-import { BaseStorage } from '../storages/storage';
+import {
+  BaseStorage,
+  DiskStorage,
+  DiskStorageOptions,
+  File,
+  FileInit,
+  Metadata
+} from '../storages';
 import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
+
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
     .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString('base64')}`)
@@ -17,11 +23,14 @@ export function parseMetadata(encoded = ''): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
   const metadata = Object.create(null) as Record<string, string>;
   for (const [key, value] of kvPairs) {
-    if (!value || !key) return metadata;
+    if (!value || !key) {
+      return metadata;
+    }
     metadata[key] = Buffer.from(value, 'base64').toString();
   }
   return metadata;
 }
+
 /**
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
@@ -80,7 +89,9 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    if (!name) {
+      return fail(ERRORS.FILE_NOT_FOUND);
+    }
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
     metadata && (await this.storage.update(name, { metadata, name }));
@@ -99,7 +110,9 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
 
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    if (!name) {
+      return fail(ERRORS.FILE_NOT_FOUND);
+    }
     const file = await this.storage.write({ name: name });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
@@ -115,7 +128,9 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    if (!name) {
+      return fail(ERRORS.FILE_NOT_FOUND);
+    }
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
     this.send({ res, statusCode: 204, headers });

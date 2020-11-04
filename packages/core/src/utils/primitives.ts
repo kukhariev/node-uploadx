@@ -26,4 +26,4 @@ export function fnv(str: string): number {
 }
 
 // eslint-disable-next-line
-export const noop = (): any => { };
+export const noop = (): any => {};

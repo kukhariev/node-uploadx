@@ -1,4 +1,4 @@
-import { BaseHandler, BaseStorage } from '../../src';
+import { BaseHandler, BaseStorage } from '../../packages/core/src';
 export class TestUploader extends BaseHandler {
   storage = ({
     path: '/files',

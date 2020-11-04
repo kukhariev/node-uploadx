@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { GCStorage, uploadx } from '../src';
+import { GCStorage, uploadx } from 'node-uploadx';
 
 const app = express();
 
@@ -12,7 +12,6 @@ storage.onComplete = file => {
 
 app.use('/files', uploadx({ storage }));
 
-app.listen(3003, error => {
-  if (error) throw error;
+app.listen(3003, () => {
   console.log('listening on port:', 3003);
 });

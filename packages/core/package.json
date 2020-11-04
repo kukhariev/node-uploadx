@@ -1,0 +1,18 @@
+{
+  "name": "@uploadx/core",
+  "version": "4.2.0",
+  "files": [
+    "lib/"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b .",
+    "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf ./lib"
+  },
+  "dependencies": {
+    "bytes": "^3.1.0",
+    "debug": "^4.2.0",
+    "multiparty": "^4.2.2"
+  }
+}

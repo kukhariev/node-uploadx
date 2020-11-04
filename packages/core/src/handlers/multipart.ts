@@ -11,6 +11,7 @@ interface MultipartyPart extends multiparty.Part {
     'content-type': string;
   };
 }
+
 export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
   storage: BaseStorage<TFile, L>;
 

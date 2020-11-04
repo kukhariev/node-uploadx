@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { promises } from 'fs';
 import { join } from 'path';
-import { DiskStorageOptions, tus } from '../src';
+import { DiskStorageOptions, tus } from 'node-uploadx';
 
 const app = express();
 const dir = 'files';

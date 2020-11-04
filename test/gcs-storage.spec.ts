@@ -2,23 +2,24 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { AbortSignal } from 'abort-controller';
+import { AbortSignal } from '../packages/gcs/node_modules/abort-controller';
 import { createReadStream } from 'fs';
-import { buildContentRange, FilePart, GCSFile, GCStorage, getRangeEnd } from '../src';
+import { FilePart } from '../packages/core/src';
+import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '../packages/gcs/src';
 import { storageOptions } from './fixtures';
 import { request } from './fixtures/gcs';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
 
-const mockFetch = require('node-fetch');
+const mockFetch = require('../packages/gcs/node_modules/node-fetch');
 const { Response } = jest.requireActual('node-fetch');
-jest.mock('node-fetch');
+jest.mock('../packages/gcs/node_modules/node-fetch');
 
 const mockAuthRequest = jest.fn();
-jest.mock('google-auth-library', () => ({
+jest.mock('../packages/gcs/node_modules/google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
 
-jest.mock('../src/utils/cache');
+jest.mock('../packages/core/src/utils/cache');
 
 describe('GCStorage', () => {
   let storage: GCStorage;

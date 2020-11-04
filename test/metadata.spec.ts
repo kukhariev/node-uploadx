@@ -1,4 +1,4 @@
-import { parseMetadata } from '../src';
+import { parseMetadata } from '../packages/core/src';
 describe('metadata parser', () => {
   it('should return empty object', () => {
     const sample = '';
