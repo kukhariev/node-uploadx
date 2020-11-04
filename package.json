@@ -24,13 +24,13 @@
     "node": ">=10.10.0"
   },
   "scripts": {
-    "lerna:init": "lerna bootstrap",
+    "boot": "lerna bootstrap --no-ci",
     "start": "tsnd -r dotenv/config examples/express",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "build": "rimraf dist && lerna bootstrap && lerna run build",
     "postbuild_": "tsnd scripts/post-build.ts",
     "cleanup": "rimraf upload files dist && lerna clean --yes && lerna run clean",
-    "test": "jest --coverage",
+    "test": "jest",
     "test:watch": "jest --watchAll",
     "lint": "eslint \"{packages,test}/**/*.ts\" --fix",
     "demo:basic": "tsnd -r tsconfig-paths/register examples/express-basic",
