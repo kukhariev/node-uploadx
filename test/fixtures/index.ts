@@ -1,4 +1,4 @@
-import { BaseStorageOptions, File } from '../../packages/core/src';
+import type { BaseStorageOptions, File } from '../../packages/core/src';
 export const userPrefix = 'userId';
 
 export const root = 'files';

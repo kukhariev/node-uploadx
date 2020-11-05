@@ -64,6 +64,12 @@ export abstract class BaseStorage<TFile, TList> {
     return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
+  protected setStatus(file: File): File['status'] | undefined {
+    if (file.bytesWritten < file.size) return 'part';
+    if (file.bytesWritten === file.size) return 'completed';
+    return;
+  }
+
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
   abstract write(part: FilePart): Promise<TFile>;
@@ -73,10 +79,4 @@ export abstract class BaseStorage<TFile, TList> {
   abstract get(prefix?: string): Promise<TList[]>;
 
   abstract update(name: string, file: Partial<File>): Promise<TFile>;
-
-  protected setStatus(file: File): File['status'] | undefined {
-    if (file.bytesWritten < file.size) return 'part';
-    if (file.bytesWritten === file.size) return 'completed';
-    return;
-  }
 }
