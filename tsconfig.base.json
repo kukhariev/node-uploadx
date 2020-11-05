@@ -7,7 +7,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "emitDeclarationOnly": false,
-    "composite": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": false,
@@ -19,9 +18,5 @@
     "stripInternal": true,
     "keyofStringsOnly": true,
     "strictPropertyInitialization": true
-  },
-  "paths": {
-    "node-uploadx": ["packages/uploadx"],
-    "@uploadx/*": ["packages/*"]
   }
 }

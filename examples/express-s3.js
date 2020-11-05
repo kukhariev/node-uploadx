@@ -1,5 +1,5 @@
 const express = require('express');
-const { multipart, S3Storage } = require('../dist');
+const { multipart, S3Storage } = require('node-uploadx');
 
 const app = express();
 
@@ -11,7 +11,4 @@ const storage = new S3Storage({ bucket: 'node-uploadx', onComplete });
 
 app.use('/files', multipart({ storage }));
 
-app.listen(3003, error => {
-  if (error) throw error;
-  console.log('listening on port:', 3003);
-});
+app.listen(3003, () => console.log('listening on port:', 3003));

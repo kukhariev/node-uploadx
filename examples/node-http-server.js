@@ -1,7 +1,7 @@
 // @ts-check
 const { createServer } = require('http');
 const { parse } = require('url');
-const { DiskStorage, Uploadx } = require('../dist');
+const { DiskStorage, Uploadx } = require('node-uploadx');
 
 const storage = new DiskStorage({
   directory: 'upload',

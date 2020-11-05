@@ -6,7 +6,8 @@ const app = express();
 const storage = new GCStorage();
 
 storage.onComplete = file => {
-  file['custom'] = 'Hi!';
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  (file as any)['custom'] = 'Hi!';
   console.log('File upload complete: ', file);
 };
 
