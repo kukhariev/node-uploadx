@@ -1,4 +1,9 @@
 {
   "packages": ["packages/*", "examples"],
-  "version": "4.2"
+  "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  },
+  "version": "4.2.0"
 }

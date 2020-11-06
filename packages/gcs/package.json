@@ -41,5 +41,8 @@
   },
   "devDependencies": {
     "@uploadx/core": "^4.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
