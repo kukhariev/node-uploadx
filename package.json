@@ -6,14 +6,14 @@
     "resumable",
     "upload",
     "express",
-    "fastify",
+    "uploadx",
     "middleware",
     "s3",
     "gcloud"
   ],
   "author": {
-    "name": "kukhariev",
-    "email": "q_h@inbox.ru"
+    "name": "Oleg Kukhariev",
+    "url": "https://github.com/kukhariev"
   },
   "repository": {
     "type": "git",
@@ -25,14 +25,14 @@
   },
   "scripts": {
     "boot": "lerna bootstrap --no-ci",
-    "start": "tsnd -r dotenv/config examples/express",
-    "prettier": "prettier --write \"**/*.{json,md}\"",
     "build": "rimraf dist && lerna bootstrap && lerna run build",
-    "postbuild_": "tsnd scripts/post-build.ts",
     "cleanup": "rimraf upload files dist && lerna clean --yes && lerna run clean",
+    "lint": "eslint \"{packages,examples,test}/**/*.ts\" --fix",
+    "postbuild_": "tsnd scripts/post-build.ts",
+    "prettier": "prettier --write \"**/*.{json,md}\"",
+    "start": "tsnd -r dotenv/config examples/express",
     "test": "jest",
-    "test:watch": "jest --watchAll",
-    "lint": "eslint \"{packages,examples,test}/**/*.ts\" --fix"
+    "test:watch": "jest --watchAll"
   },
   "dependencies": {},
   "devDependencies": {
@@ -72,7 +72,7 @@
     }
   },
   "lint-staged": {
-    "{packages,test}/**/*.{ts}": "eslint --fix",
-    "*.{md,json}": "prettier --write"
+    "*.{md,json}": "prettier --write",
+    "{packages,examples,test}/**/*.{ts}": "eslint --fix"
   }
 }

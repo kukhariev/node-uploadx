@@ -1,5 +1,5 @@
 {
-  "name": "examples",
+  "name": "node-uploadx-examples",
   "version": "1.0.0",
   "scripts": {
     "demo:basic": "tsnd express-basic",
