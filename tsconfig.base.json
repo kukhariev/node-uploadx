@@ -18,5 +18,9 @@
     "stripInternal": true,
     "keyofStringsOnly": true,
     "strictPropertyInitialization": true
+  },
+  "paths": {
+    "@uploadx/*": ["packages/*"],
+    "node-uploadx": ["packages/uploadx"]
   }
 }
