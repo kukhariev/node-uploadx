@@ -24,10 +24,10 @@
     "node": ">=10.10.0"
   },
   "files": [
-    "lib/"
+    "lib/*"
   ],
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "scripts": {
     "build": "tsc -b .",
     "clean": "rimraf ./tsconfig.tsbuildinfo ./lib"

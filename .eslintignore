@@ -2,3 +2,4 @@ dist
 scripts
 lib
 test
+.eslintrc.js

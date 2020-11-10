@@ -1,9 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "lib"
+    "rootDir": ".",
+    "baseUrl": "../../",
+    "outDir": "./lib"
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules"]
+  "references": [{ "path": "../core" }, { "path": "../gcs" }, { "path": "../s3" }],
+  "include": ["src/**/*"]
 }

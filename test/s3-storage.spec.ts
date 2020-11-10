@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { S3 } from '../packages/s3/node_modules/aws-sdk';
+import { S3 } from 'aws-sdk';
 import { createReadStream } from 'fs';
 import { S3File, S3Storage } from '../packages/s3/src';
 import { FilePart } from '../packages/core/src';
@@ -63,7 +63,7 @@ const mockListParts = jest.fn(() => ({
   }
 }));
 
-jest.mock('../packages/s3/node_modules/aws-sdk', () => ({
+jest.mock('aws-sdk', () => ({
   S3: jest.fn(
     (): Partial<S3> => ({
       abortMultipartUpload: mockAbortMultipartUpload as any,

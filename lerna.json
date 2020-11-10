@@ -1,9 +1,6 @@
 {
   "packages": ["packages/*", "examples"],
-  "command": {
-    "bootstrap": {
-      "npmClientArgs": ["--no-package-lock"]
-    }
-  },
+  "npmClient": "yarn",
+  "useWorkspaces": true,
   "version": "4.2.0"
 }

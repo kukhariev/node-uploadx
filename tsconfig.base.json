@@ -3,6 +3,8 @@
     "module": "commonjs",
     "baseUrl": "./",
     "rootDir": ".",
+    "outDir": "dist",
+    "composite": true,
     "target": "es2018",
     "moduleResolution": "node",
     "declaration": true,
@@ -17,10 +19,12 @@
     "resolveJsonModule": true,
     "stripInternal": true,
     "keyofStringsOnly": true,
-    "strictPropertyInitialization": true
-  },
-  "paths": {
-    "@uploadx/*": ["packages/*"],
-    "node-uploadx": ["packages/uploadx"]
+    "strictPropertyInitialization": true,
+    "paths": {
+      "@uploadx/core": ["packages/core/src"],
+      "@uploadx/gcs": ["packages/gcs/src"],
+      "@uploadx/s3": ["packages/s3/src"],
+      "node-uploadx": ["packages/uploadx/src"]
+    }
   }
 }
