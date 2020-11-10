@@ -48,11 +48,12 @@ describe('::Multipart', () => {
     });
 
     it('should 403 (unsupported filetype)', async () => {
-      res = await request(app)
+      await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
-        .expect(403);
+        .expect(403).catch(() => {
+        });
     });
   });
 

@@ -24,14 +24,11 @@
     "node": ">=10.10.0"
   },
   "scripts": {
-    "boot": "lerna bootstrap --no-ci",
     "build": "yarn tsc --build packages",
-    "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib",
-    "cleanup": "rimraf upload files dist && lerna clean --yes && lerna run clean",
+    "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib upload files dist",
     "lint": "eslint --fix",
     "postbuild_": "tsnd scripts/post-build.ts",
     "prettier": "prettier --write \"**/*.{json,md}\"",
-    "start": "tsnd -r dotenv/config examples/express",
     "test": "jest",
     "test:watch": "jest --watchAll"
   },
