@@ -26,7 +26,7 @@
   "scripts": {
     "boot": "lerna bootstrap --no-ci",
     "build": "yarn tsc --build packages",
-    "clean": "yarn tsc --build packages --clean",
+    "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib",
     "cleanup": "rimraf upload files dist && lerna clean --yes && lerna run clean",
     "lint": "eslint --fix",
     "postbuild_": "tsnd scripts/post-build.ts",
