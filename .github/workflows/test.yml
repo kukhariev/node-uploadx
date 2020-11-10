@@ -18,8 +18,7 @@ jobs:
           node-version: ${{ matrix.node}}
       - name: install
         run: |
-          npm install
-          npm run boot
+          yarn
         env:
           CI: true
       - name: build
