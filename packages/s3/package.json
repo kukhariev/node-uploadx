@@ -1,6 +1,6 @@
 {
   "name": "@uploadx/s3",
-  "version": "4.2.0",
+  "version": "4.1.7",
   "description": "Uploadx S3 storage",
   "keywords": [
     "resumable",
