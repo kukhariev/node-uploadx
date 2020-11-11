@@ -1,0 +1,43 @@
+{
+  "name": "@uploadx/core",
+  "version": "4.2.0-alpha.0",
+  "description": "Node.js resumable upload middleware base",
+  "keywords": [
+    "resumable",
+    "upload",
+    "uploadx",
+    "express",
+    "middleware",
+    "s3",
+    "gcloud"
+  ],
+  "author": {
+    "name": "Oleg Kukhariev",
+    "url": "https://github.com/kukhariev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kukhariev/node-uploadx.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=10.10.0"
+  },
+  "files": [
+    "lib/*"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b .",
+    "clean": "rimraf ./tsconfig.tsbuildinfo ./lib"
+  },
+  "dependencies": {
+    "bytes": "^3.1.0",
+    "debug": "^4.2.0",
+    "multiparty": "^4.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

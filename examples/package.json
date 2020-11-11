@@ -1,0 +1,22 @@
+{
+  "name": "node-uploadx-examples",
+  "version": "4.2.0-alpha.0",
+  "private": "true",
+  "scripts": {
+    "demo:basic": "tsnd express-basic",
+    "demo:express": "tsnd express",
+    "demo:gcs": "tsnd -r dotenv/config express-gcs",
+    "demo:gcs:direct": "tsnd -r dotenv/config gcs-direct",
+    "demo:node": "node node-http-server",
+    "demo:s3": "node -r dotenv/config express-s3",
+    "demo:tus": "tsnd express-tus",
+    "demo:fastify": "tsnd fastify"
+  },
+  "dependencies": {
+    "@uploadx/core": "^4.2.0-alpha.0",
+    "dotenv": "8.2.0",
+    "fastify": "2.15.3",
+    "node-uploadx": "^4.2.0-alpha.0",
+    "ts-node-dev": "1.0.0"
+  }
+}

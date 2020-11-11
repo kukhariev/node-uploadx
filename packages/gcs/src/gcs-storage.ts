@@ -2,9 +2,20 @@ import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
-import { ERRORS, fail, getHeader, noop } from '../utils';
-import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
-import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
+import {
+  BaseStorage,
+  BaseStorageOptions,
+  ERRORS,
+  extractOriginalName,
+  fail,
+  File,
+  FileInit,
+  FilePart,
+  getHeader,
+  hasContent,
+  METAFILE_EXTNAME,
+  noop
+} from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -25,6 +36,7 @@ export function buildContentRange(part: FilePart & GCSFile): string {
     return `bytes */${part.size ?? '*'}`;
   }
 }
+
 const validateStatus: (code: number) => boolean = (code: number) =>
   (code >= 200 && code < 300) || code === 308 || code === 499;
 

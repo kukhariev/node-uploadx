@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import { parse } from 'url';
-import { GCSFile, GCStorage, Uploadx } from '../src';
+import { GCSFile, GCStorage, Uploadx } from 'node-uploadx';
 
 const storage = new GCStorage({
   clientDirectUpload: true,
@@ -12,7 +12,7 @@ uploads.on<GCSFile>('created', file =>
   console.log('google upload link sent to client: ', file.GCSUploadURI)
 );
 
-const server = createServer((req, res) => {
+createServer((req, res) => {
   const { pathname } = parse(req.url || '');
   if (pathname === '/upload/files') {
     uploads.handle(req, res);
@@ -20,5 +20,4 @@ const server = createServer((req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plan' });
     res.end('Not Found');
   }
-});
-server.listen(3003, () => console.log('listening on port:', 3003));
+}).listen(3003, () => console.log('listening on port:', 3003));

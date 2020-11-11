@@ -18,7 +18,11 @@ jobs:
           node-version: ${{ matrix.node}}
       - name: install
         run: |
-          npm install
+          yarn
+        env:
+          CI: true
+      - name: build
+        run: npm run build
         env:
           CI: true
       - name: lint
@@ -26,7 +30,3 @@ jobs:
           npm run lint
       - name: test
         run: npm test
-        env:
-          CI: true
-      - name: build
-        run: npm run build

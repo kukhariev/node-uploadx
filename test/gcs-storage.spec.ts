@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
-import { buildContentRange, FilePart, GCSFile, GCStorage, getRangeEnd } from '../src';
+import { FilePart } from '../packages/core/src';
+import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '../packages/gcs/src';
 import { storageOptions } from './fixtures';
 import { request } from './fixtures/gcs';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
@@ -18,7 +15,7 @@ jest.mock('google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
 
-jest.mock('../src/utils/cache');
+jest.mock('../packages/core/src/utils/cache');
 
 describe('GCStorage', () => {
   let storage: GCStorage;

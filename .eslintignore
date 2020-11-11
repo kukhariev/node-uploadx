@@ -1,2 +1,10 @@
-dist
-scripts
+dist/
+scripts/
+lib/
+test/
+tmp/
+temp/
+node_modules/
+coverage/
+.eslintrc.js
+*.config.js

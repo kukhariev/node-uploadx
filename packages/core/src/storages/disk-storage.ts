@@ -10,6 +10,7 @@ export interface DiskListObject {
   name: string;
   updated: Date;
 }
+
 export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Uploads directory

@@ -15,7 +15,7 @@ try {
   libPackage.main = 'index.js';
   libPackage.dependencies = rootPackage.dependencies;
   libPackage.engines = rootPackage.engines;
-  fs.writeFileSync(`dist/package.json`, JSON.stringify(libPackage, undefined, 2));
+  // fs.writeFileSync(`dist/package.json`, JSON.stringify(libPackage, undefined, 2));
   fs.copyFileSync('LICENSE', `dist/LICENSE`);
   fs.copyFileSync('README.md', `dist/README.md`);
 } catch (error) {
