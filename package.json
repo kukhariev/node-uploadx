@@ -1,6 +1,6 @@
 {
   "name": "node-uploadx-src",
-  "version": "4.1.7",
+  "version": "4.0.0-monorepo",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
@@ -27,6 +27,7 @@
     "build": "yarn tsc --build packages",
     "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib upload files dist",
     "lint": "eslint . --fix --ext .js,.ts",
+    "prepare": "yarn run build",
     "postbuild_": "tsnd scripts/post-build.ts",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
