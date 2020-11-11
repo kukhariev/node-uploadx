@@ -1,6 +1,6 @@
 {
   "name": "node-uploadx-examples",
-  "version": "4.2.0-alpha.0",
+  "version": "4.2.0-alpha.1",
   "private": "true",
   "scripts": {
     "demo:basic": "tsnd express-basic",
@@ -13,10 +13,10 @@
     "demo:fastify": "tsnd fastify"
   },
   "dependencies": {
-    "@uploadx/core": "^4.2.0-alpha.0",
+    "@uploadx/core": "^4.2.0-alpha.1",
     "dotenv": "8.2.0",
     "fastify": "2.15.3",
-    "node-uploadx": "^4.2.0-alpha.0",
+    "node-uploadx": "^4.2.0-alpha.1",
     "ts-node-dev": "1.0.0"
   }
 }
