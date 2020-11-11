@@ -1,8 +1,7 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
-import { BaseStorage } from '../storages/storage';
+import { BaseStorage, File, UploadEventType } from '../storages';
 import * as url from 'url';
-import { File, UploadEventType } from '../storages/file';
 import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
 import { Cors } from './cors';
 
@@ -17,10 +16,15 @@ export type MethodHandler = {
 
 export interface BaseHandler extends EventEmitter {
   on(event: 'error', listener: (error: UploadxError) => void): this;
+
   on<T = File>(event: UploadEventType, listener: (file: T) => void): this;
+
   off<T = File>(event: UploadEventType, listener: (file: T) => void): this;
+
   off(event: 'error', listener: (error: UploadxError) => void): this;
+
   emit<T = File>(event: UploadEventType, evt: T): boolean;
+
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
@@ -44,6 +48,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   responseType: 'text' | 'json' = 'text';
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers: Map<string, AsyncHandler> = new Map() as Map<string, AsyncHandler>;
+  abstract storage: BaseStorage<any, any>;
   constructor() {
     super();
 
@@ -114,7 +119,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * `GET` request handler
    */
-  async get<T>(req: http.IncomingMessage): Promise<T[]> {
+  get<T>(req: http.IncomingMessage): Promise<T[]> {
     const name = this.getName(req);
     return this.storage.get(name) as Promise<T[]>;
   }
@@ -180,7 +185,4 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
   }
-
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  abstract storage: BaseStorage<any, any>;
 }

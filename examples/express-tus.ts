@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { promises } from 'fs';
 import { join } from 'path';
-import { DiskStorageOptions, tus } from '../src';
+import { DiskStorageOptions, tus } from '@uploadx/core';
 
 const app = express();
 const dir = 'files';
@@ -15,9 +15,6 @@ const opts: DiskStorageOptions = {
   }
 };
 
-app.use('/files', [express.static(dir), tus(opts)]);
+app.use('/files', express.static(dir), tus(opts));
 
-app.listen(3003, error => {
-  if (error) throw error;
-  console.log('listening on port:', 3003);
-});
+app.listen(3003, () => console.log('listening on port:', 3003));

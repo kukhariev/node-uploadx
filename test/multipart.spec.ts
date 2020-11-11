@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 import * as request from 'supertest';
-import { multipart } from '../src/handlers/multipart';
+import { multipart } from '../packages/core/src';
 import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -48,11 +48,12 @@ describe('::Multipart', () => {
     });
 
     it('should 403 (unsupported filetype)', async () => {
-      res = await request(app)
+      await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
-        .expect(403);
+        .expect(403).catch(() => {
+        });
     });
   });
 

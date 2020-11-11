@@ -1,0 +1,44 @@
+{
+  "name": "@uploadx/s3",
+  "version": "4.2.0-alpha.0",
+  "description": "Uploadx S3 storage",
+  "keywords": [
+    "resumable",
+    "upload",
+    "uploadx",
+    "express",
+    "fastify",
+    "middleware",
+    "s3"
+  ],
+  "author": {
+    "name": "Oleg Kukhariev",
+    "url": "https://github.com/kukhariev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kukhariev/node-uploadx.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=10.10.0"
+  },
+  "files": [
+    "lib/"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b .",
+    "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf ./lib"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.782.0"
+  },
+  "peerDependencies": {
+    "@uploadx/core": "^4.2.0-alpha.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

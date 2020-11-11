@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { multipart, uploadx, DiskStorageOptions } from '../src';
+import { multipart, uploadx, DiskStorageOptions } from '@uploadx/core';
 
 const app = express();
 
@@ -15,7 +15,6 @@ app.use('/files', multipart(opts));
 
 app.use('/upload/files', uploadx(opts));
 
-app.listen(3003, error => {
-  if (error) throw error;
+app.listen(3003, () => {
   console.log('listening on port:', 3003);
 });

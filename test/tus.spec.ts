@@ -2,8 +2,8 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { serializeMetadata, tus, TUS_RESUMABLE } from '../src/handlers/tus';
-import { BaseStorage } from '../src/storages/storage';
+import { serializeMetadata, tus, TUS_RESUMABLE } from '../packages/core/src';
+import { BaseStorage } from '../packages/core/src';
 import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';

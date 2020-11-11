@@ -9,7 +9,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
     tsconfigRootDir: __dirname,
-    project: ['./tsconfig.eslint.json'],
+    project: ['./tsconfig.json', 'packages/tsconfig.json'],
     warnOnUnsupportedTypeScriptVersion: false
   },
   extends: [
@@ -40,7 +40,7 @@ module.exports = {
     '@typescript-eslint/prefer-function-type': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'error',
     '@typescript-eslint/promise-function-async': 'off',
-    '@typescript-eslint/member-ordering': 'error',
+    '@typescript-eslint/member-ordering': 'warn',
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     'no-empty': 'off',

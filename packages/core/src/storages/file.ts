@@ -25,11 +25,13 @@ export interface FileInit {
   size?: number | string;
   userId?: string;
 }
+
 export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part';
 
 export interface Upload extends File {
   readonly status?: UploadEventType;
 }
+
 export class File implements FileInit {
   bytesWritten = NaN;
   contentType: string;
@@ -65,9 +67,11 @@ interface HasContent {
   start: number;
   body: Readable;
 }
+
 export function hasContent(part: Partial<FilePart>): part is HasContent {
   return typeof part.start === 'number' && part.start >= 0 && !!part.body;
 }
+
 export interface Metadata {
   [key: string]: any;
   size?: string | number;

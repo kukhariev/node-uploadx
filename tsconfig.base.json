@@ -1,0 +1,31 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "module": "commonjs",
+    "baseUrl": "./",
+    "rootDir": ".",
+    "outDir": "dist",
+    "composite": true,
+    "target": "es2018",
+    "moduleResolution": "node",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": false,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "stripInternal": true,
+    "keyofStringsOnly": true,
+    "strictPropertyInitialization": true,
+    "paths": {
+      "@uploadx/core": ["packages/core/src"],
+      "@uploadx/gcs": ["packages/gcs/src"],
+      "@uploadx/s3": ["packages/s3/src"],
+      "node-uploadx": ["packages/uploadx/src"]
+    }
+  }
+}

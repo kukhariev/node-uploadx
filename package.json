@@ -1,19 +1,19 @@
 {
-  "name": "node-uploadx",
+  "name": "node-uploadx-src",
   "version": "4.1.7",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
     "upload",
     "express",
-    "fastify",
+    "uploadx",
     "middleware",
     "s3",
     "gcloud"
   ],
   "author": {
-    "name": "kukhariev",
-    "email": "q_h@inbox.ru"
+    "name": "Oleg Kukhariev",
+    "url": "https://github.com/kukhariev"
   },
   "repository": {
     "type": "git",
@@ -24,32 +24,15 @@
     "node": ">=10.10.0"
   },
   "scripts": {
-    "start": "tsnd -r dotenv/config examples/express",
+    "build": "yarn tsc --build packages",
+    "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib upload files dist",
+    "lint": "eslint . --fix --ext .js,.ts",
+    "postbuild_": "tsnd scripts/post-build.ts",
     "prettier": "prettier --write \"**/*.{json,md}\"",
-    "build": "rimraf dist && tsc",
-    "postbuild": "tsnd scripts/post-build.ts",
-    "cleanup": "rimraf upload files dist",
     "test": "jest",
-    "test:watch": "jest --watchAll",
-    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
-    "demo:basic": "tsnd examples/express-basic",
-    "demo:express": "tsnd examples/express",
-    "demo:gcs": "tsnd -r dotenv/config examples/express-gcs",
-    "demo:gcs:direct": "tsnd -r dotenv/config examples/gcs-direct",
-    "demo:node": "tsc && node examples/node-http-server",
-    "demo:s3": "tsc && node -r dotenv/config examples/express-s3",
-    "demo:tus": "tsnd examples/express-tus",
-    "demo:fastify": "tsnd examples/fastify"
+    "test:watch": "jest --watchAll"
   },
-  "dependencies": {
-    "bytes": "^3.1.0",
-    "debug": "^4.2.0",
-    "multiparty": "^4.2.2",
-    "abort-controller": "^3.0.0",
-    "node-fetch": "^2.6.1",
-    "aws-sdk": "2.782.0",
-    "google-auth-library": "6.1.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/bytes": "3.1.0",
     "@types/debug": "4.1.5",
@@ -62,15 +45,14 @@
     "@types/supertest": "2.0.10",
     "@typescript-eslint/eslint-plugin": "4.6.0",
     "@typescript-eslint/parser": "4.6.0",
-    "dotenv": "8.2.0",
     "eslint": "7.12.1",
     "eslint-config-prettier": "6.15.0",
     "eslint-plugin-prettier": "3.1.4",
     "eslint-plugin-promise": "4.2.1",
     "express": "4.17.1",
-    "fastify": "2.15.3",
     "husky": "4.3.0",
     "jest": "26.6.1",
+    "lerna": "^3.22.1",
     "lint-staged": "10.5.0",
     "node-mocks-http": "1.9.0",
     "prettier": "2.1.2",
@@ -78,16 +60,21 @@
     "supertest": "6.0.0",
     "ts-jest": "26.4.3",
     "ts-node-dev": "1.0.0",
+    "tsconfig-paths": "^3.9.0",
     "typescript": "4.0.5"
   },
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
     }
   },
   "lint-staged": {
-    "{src,test,examples}/**/*.{ts,js}": "eslint --fix",
-    "*.{md,json}": "prettier --write"
+    "*.{md,json}": "prettier --write",
+    "{packages,examples,test}/**/*.ts": "eslint --fix"
   }
 }

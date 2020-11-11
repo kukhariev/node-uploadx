@@ -1,9 +1,19 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
-import { ERRORS, fail, noop } from '../utils';
-import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
-import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
+import {
+  BaseStorage,
+  BaseStorageOptions,
+  ERRORS,
+  extractOriginalName,
+  fail,
+  File,
+  FileInit,
+  FilePart,
+  hasContent,
+  METAFILE_EXTNAME,
+  noop
+} from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -22,11 +32,13 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
     bucket?: string;
     keyFile?: string;
   };
+
 export interface S3ListObject {
   name?: string;
 
   updated?: any;
 }
+
 export function processMetadata(
   metadata: Record<string, any>,
   func: (value: any) => string

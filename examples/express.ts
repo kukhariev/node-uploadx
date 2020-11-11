@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as express from 'express';
 import { promises } from 'fs';
-import { DiskFile, DiskStorage, Multipart, OnComplete, Uploadx } from '../src';
+import { DiskFile, DiskStorage, Multipart, OnComplete, Uploadx } from 'node-uploadx';
 
 const app = express();
+
 const auth: express.Handler = (req, res, next) => {
-  req['user'] = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
+  (req as any)['user'] = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
   next();
 };
 
@@ -17,7 +19,7 @@ const onComplete: OnComplete<DiskFile> = async file => {
   await promises.link(srcpath, dstpath);
   const message = `File upload is finished, path: ${dstpath}`;
   console.log(message);
-  file['message'] = message;
+  (file as any)['message'] = message;
 };
 
 const storage = new DiskStorage({
@@ -32,7 +34,6 @@ app.use('/files', express.static('files'));
 app.use('/upload/files', uploadx.handle);
 app.use('/files', multipart.handle);
 
-app.listen(3003, error => {
-  if (error) throw error;
+app.listen(3003, () => {
   console.log('listening on port:', 3003);
 });

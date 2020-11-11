@@ -1,4 +1,4 @@
-import { Cors } from '../src';
+import { Cors } from '../packages/core/src';
 import { Request, Response } from 'express';
 import * as httpMocks from 'node-mocks-http';
 

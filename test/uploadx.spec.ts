@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx } from '../src/handlers/uploadx';
+import { uploadx } from '../packages/core/src';
 import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';

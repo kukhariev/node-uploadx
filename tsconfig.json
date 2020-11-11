@@ -1,25 +1,3 @@
 {
-  "compileOnSave": true,
-  "compilerOptions": {
-    "module": "commonjs",
-    "outDir": "./dist",
-    "baseUrl": "src",
-    "target": "es2018",
-    "moduleResolution": "node",
-    "declaration": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": false,
-    "experimentalDecorators": true,
-    "resolveJsonModule": true,
-    "stripInternal": true,
-    "keyofStringsOnly": true,
-    "strictPropertyInitialization": true,
-    "declarationDir": "./dist/types"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "extends": "./tsconfig.base.json"
 }

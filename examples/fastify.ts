@@ -1,5 +1,5 @@
 import * as Fastify from 'fastify';
-import { Uploadx } from '../src';
+import { Uploadx } from 'node-uploadx';
 import { join } from 'path';
 
 const fastify = Fastify({ logger: true });

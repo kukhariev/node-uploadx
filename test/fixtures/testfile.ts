@@ -1,6 +1,6 @@
 import { statSync } from 'fs';
 import { join } from 'path';
-import { File, METAFILE_EXTNAME } from '../../src';
+import { File, METAFILE_EXTNAME } from '../../packages/core/src';
 import { userPrefix } from './index';
 export const srcpath = join(__dirname, `testfile.mp4`);
 const stat = statSync(srcpath);

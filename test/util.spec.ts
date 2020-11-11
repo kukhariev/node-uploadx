@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
-import * as utils from '../src/utils';
-import { getWriteStream } from '../src/utils';
+import * as utils from '../packages/core/src/utils';
+import { getWriteStream } from '../packages/core/src/utils';
 import { root } from './fixtures';
 import rimraf = require('rimraf');
 
