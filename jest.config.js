@@ -3,6 +3,6 @@ const { pathsToModuleNameMapper } = require('ts-jest/utils');
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testRegex: '.*spec.ts$',
+  testRegex: '.*\\.spec\\.ts$',
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' })
 };

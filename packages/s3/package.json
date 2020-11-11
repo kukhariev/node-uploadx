@@ -38,9 +38,6 @@
   "peerDependencies": {
     "@uploadx/core": "^4.2.0"
   },
-  "devDependencies": {
-    "@uploadx/core": "^4.2.0"
-  },
   "publishConfig": {
     "access": "public"
   }

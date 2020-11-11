@@ -26,7 +26,7 @@
   "scripts": {
     "build": "yarn tsc --build packages",
     "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib upload files dist",
-    "lint": "eslint --fix",
+    "lint": "eslint . --fix --ext .js,.ts",
     "postbuild_": "tsnd scripts/post-build.ts",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
@@ -75,6 +75,6 @@
   },
   "lint-staged": {
     "*.{md,json}": "prettier --write",
-    "{packages,examples,test}/**/*.{ts}": "eslint --fix"
+    "{packages,examples,test}/**/*.ts": "eslint --fix"
   }
 }
