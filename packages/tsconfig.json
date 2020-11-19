@@ -4,6 +4,6 @@
     { "path": "./core" },
     { "path": "./gcs" },
     { "path": "./s3" },
-    { "path": "./uploadx" }
+    { "path": "./node-uploadx"}
   ]
 }

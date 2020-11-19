@@ -5,39 +5,41 @@
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
-## Install
+## 🌩 Installation
 
-```sh
-npm install node-uploadx
-```
+All-In-One:
 
-Optionally, to support
+    ```sh
+    npm install node-uploadx
+    ```
 
-- AWS S3 Storage:
+Separate modules can also be used to save disk space and for faster installation process.:
 
-```sh
- npm install aws-sdk
-```
+- core module:
 
-- Google Cloud Storage:
+  ```sh
+  npm install @uploadx/core
+  ```
 
-```sh
- npm install google-auth-library
-```
+- _Google Cloud Storage_ support:
 
-Full installation:
+  ```sh
+  npm install @uploadx/gcs
+  ```
 
-```sh
-npm install node-uploadx -f
-```
+- _AWS S3_ support:
 
-## Usage
+  ```sh
+  npm install @uploadx/s3
+  ```
+
+## ♨ Usage
 
 Express example:
 
 ```js
 const express = require('express');
-const { uploadx } = require('node-uploadx');
+const { uploadx } = require('@uploadx/core');
 
 const app = express();
 const opts = {
@@ -76,7 +78,7 @@ const server = http
 
 Please navigate to the [examples](examples) for more.
 
-### Options
+### 🛠 Options
 
 Available options are:
 
