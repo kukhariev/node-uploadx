@@ -9,9 +9,9 @@
 
 All-In-One:
 
-    ```sh
-    npm install node-uploadx
-    ```
+```sh
+npm install node-uploadx
+```
 
 Separate modules can also be used to save disk space and for faster installation process.:
 
