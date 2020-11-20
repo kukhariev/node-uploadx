@@ -1,43 +1,46 @@
 # node-uploadx
 
-[![npm version][npm-image]][npm-url] [![Travis status][travis-image]][travis-url] [![Build status][gha-image]][gha-url]
+[![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
+[![commits since latest release][comm-image]][comm-url] [![Snyk Vulnerabilities][snyk-image]][snyk-url]
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
-## Install
+## 🌩 Installation
+
+All-In-One:
 
 ```sh
 npm install node-uploadx
 ```
 
-Optionally, to support
+Separate modules can also be used to save disk space and for faster installation process.:
 
-- AWS S3 Storage:
+- core module:
 
-```sh
- npm install aws-sdk
-```
+  ```sh
+  npm install @uploadx/core
+  ```
 
-- Google Cloud Storage:
+- _Google Cloud Storage_ support:
 
-```sh
- npm install google-auth-library
-```
+  ```sh
+  npm install @uploadx/gcs
+  ```
 
-Full installation:
+- _AWS S3_ support:
 
-```sh
-npm install node-uploadx -f
-```
+  ```sh
+  npm install @uploadx/s3
+  ```
 
-## Usage
+## ♨ Usage
 
 Express example:
 
 ```js
 const express = require('express');
-const { uploadx } = require('node-uploadx');
+const { uploadx } = require('@uploadx/core');
 
 const app = express();
 const opts = {
@@ -76,7 +79,7 @@ const server = http
 
 Please navigate to the [examples](examples) for more.
 
-### Options
+### 🛠 Options
 
 Available options are:
 
@@ -111,7 +114,9 @@ Pull requests are welcome!
 
 [npm-image]: https://img.shields.io/npm/v/node-uploadx.svg
 [npm-url]: https://www.npmjs.com/package/node-uploadx
-[travis-image]: https://img.shields.io/travis/kukhariev/node-uploadx/master.svg
-[travis-url]: https://travis-ci.org/kukhariev/node-uploadx
 [gha-image]: https://github.com/kukhariev/node-uploadx/workflows/CI/badge.svg
 [gha-url]: https://github.com/kukhariev/node-uploadx
+[comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest
+[comm-url]: https://github.com/kukhariev/node-uploadx/releases/latest
+[snyk-image]: https://img.shields.io/snyk/vulnerabilities/npm/node-uploadx
+[snyk-url]: https://snyk.io/test/github/kukhariev/node-uploadx?targetFile=package.json
