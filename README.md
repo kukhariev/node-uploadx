@@ -1,7 +1,7 @@
 # node-uploadx
 
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
-![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest) ![Snyk Vulnerabilities for npm package version](https://img.shields.io/snyk/vulnerabilities/npm/node-uploadx)
+[![commits since latest release][comm-image]][comm-url] [![Snyk Vulnerabilities][snyk-image]][snyk-url]
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
@@ -116,3 +116,7 @@ Pull requests are welcome!
 [npm-url]: https://www.npmjs.com/package/node-uploadx
 [gha-image]: https://github.com/kukhariev/node-uploadx/workflows/CI/badge.svg
 [gha-url]: https://github.com/kukhariev/node-uploadx
+[comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest
+[comm-url]: https://github.com/kukhariev/node-uploadx/releases/latest
+[snyk-image]: https://img.shields.io/snyk/vulnerabilities/npm/node-uploadx
+[snyk-url]: https://snyk.io/test/github/kukhariev/node-uploadx?targetFile=package.json
