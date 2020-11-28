@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { config as AWSConfig, S3 } from 'aws-sdk';
-import * as http from 'http';
 import {
   BaseStorage,
   BaseStorageOptions,
@@ -14,6 +12,8 @@ import {
   METAFILE_EXTNAME,
   noop
 } from '@uploadx/core';
+import { config as AWSConfig, S3 } from 'aws-sdk';
+import * as http from 'http';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -69,7 +69,9 @@ export class S3Storage extends BaseStorage<S3File, any> {
     file.name = this.namingFunction(file);
     try {
       const existing = await this._getMeta(file.name);
-      if (existing.bytesWritten >= 0) return existing;
+      if (existing.bytesWritten >= 0) {
+        return existing;
+      }
     } catch {}
     const metadata = processMetadata(file.metadata, encodeURI);
 
@@ -85,6 +87,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
       return fail(ERRORS.FILE_ERROR, 's3 create multipart upload error');
     }
     file.UploadId = UploadId;
+    file.bytesWritten = 0;
     await this._saveMeta(file);
     file.status = 'created';
     return file;
@@ -92,7 +95,24 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async write(part: FilePart): Promise<S3File> {
     const file = await this._getMeta(part.name);
-    file.bytesWritten = await this._write({ ...file, ...part });
+    file.Parts = file.Parts || [];
+    if (hasContent(part)) {
+      const partNumber = file.Parts.length + 1;
+      const params: S3.UploadPartRequest = {
+        Bucket: this.bucket,
+        Key: file.name,
+        UploadId: file.UploadId,
+        PartNumber: partNumber,
+        Body: part.body,
+        ContentLength: part.contentLength
+      };
+      const { ETag } = await this.client.uploadPart(params).promise();
+
+      const uploadPart: S3.Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
+      file.Parts = [...file.Parts, uploadPart];
+      file.bytesWritten = file.bytesWritten + (part.contentLength || 0);
+      this.cache.set(file.name, file);
+    }
     file.status = this.setStatus(file);
     if (file.status === 'completed') {
       const [completed] = await this._onComplete(file);
@@ -132,28 +152,6 @@ export class S3Storage extends BaseStorage<S3File, any> {
     return file;
   }
 
-  protected async _write(file: S3File & FilePart): Promise<number> {
-    file.Parts = file.Parts || [];
-    if (hasContent(file)) {
-      const partNumber = file.Parts.length + 1;
-      const params: S3.UploadPartRequest = {
-        Bucket: this.bucket,
-        Key: file.name,
-        UploadId: file.UploadId,
-        PartNumber: partNumber,
-        Body: file.body,
-        ContentLength: file.contentLength
-      };
-      await this.client.uploadPart(params).promise();
-      const uploadPart: S3.Part = { PartNumber: partNumber, Size: file.contentLength };
-      file.Parts = [...file.Parts, uploadPart];
-      file.bytesWritten = file.bytesWritten + (file.contentLength || 0);
-      this.cache.set(file.name, file);
-      return file.bytesWritten;
-    }
-    return file.bytesWritten;
-  }
-
   protected async _saveMeta(file: S3File): Promise<any> {
     const metadata = encodeURIComponent(JSON.stringify(file));
     const params = {
@@ -167,7 +165,9 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   protected async _getMeta(name: string): Promise<S3File> {
     const file = this.cache.get(name);
-    if (file) return file;
+    if (file) {
+      return file;
+    }
     try {
       const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
       const { Metadata } = await this.client.headObject(params).promise();
@@ -179,7 +179,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
         return meta;
       }
     } catch (err) {
-      this.log('_getMetaError: ', err);
+      this.log('_getMeta Error: ', err);
     }
     return fail(ERRORS.FILE_NOT_FOUND);
   }
