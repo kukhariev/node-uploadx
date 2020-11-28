@@ -19,7 +19,7 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "stripInternal": true,
-    "keyofStringsOnly": true,
+    "keyofStringsOnly": false,
     "strictPropertyInitialization": true,
     "paths": {
       "@uploadx/core": ["packages/core/src"],

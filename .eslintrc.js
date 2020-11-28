@@ -9,7 +9,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
     tsconfigRootDir: __dirname,
-    project: ['./tsconfig.json', 'packages/tsconfig.json'],
+    project: ['./tsconfig.json', 'packages/tsconfig.json', 'examples/tsconfig.json'],
     warnOnUnsupportedTypeScriptVersion: false
   },
   extends: [
