@@ -44,9 +44,9 @@ Thumbs.db
 **/tmp
 **/temp
 
-/upload
-/uploads
-/files
+**/upload
+**/uploads
+**/files
 
 **/package-lock.json
 
