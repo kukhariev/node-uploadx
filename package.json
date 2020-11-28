@@ -1,5 +1,5 @@
 {
-  "name": "node-uploadx",
+  "name": "node-uploadx-src",
   "version": "4.2.0",
   "description": "Node.js resumable upload middleware",
   "keywords": [
@@ -26,17 +26,16 @@
     "yarn": ">= 1.22.0"
   },
   "scripts": {
-    "build": "yarn tsc --build packages",
-    "clean": "yarn tsc --build packages --clean && rimraf packages/*/lib upload files dist",
+    "build": "tsc --build packages",
+    "build:watch": "tsc --build --watch packages",
+    "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",
     "lint": "eslint . --fix --ext .js,.ts",
     "prepare": "yarn run build",
-    "postbuild_": "tsnd scripts/post-build.ts",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
     "test:watch": "jest --watchAll",
     "postinstall": "husky install"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/express": "^4.17.8",
     "@types/jest": "^26.0.15",
