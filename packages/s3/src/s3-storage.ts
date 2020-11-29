@@ -178,20 +178,14 @@ export class S3Storage extends BaseStorage<S3File, any> {
         this.cache.set(name, meta);
         return meta;
       }
-    } catch (err) {
-      this.log('_getMeta Error: ', err);
-    }
+    } catch {}
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
   protected async _deleteMeta(name: string): Promise<void> {
     this.cache.delete(name);
-    try {
-      const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
-      await this.client.deleteObject(params).promise();
-    } catch (err) {
-      this.log('_deleteMetaError: ', err);
-    }
+    const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
+    await this.client.deleteObject(params).promise().catch(noop);
   }
 
   protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {

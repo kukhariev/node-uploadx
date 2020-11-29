@@ -217,9 +217,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
         this.cache.set(name, data);
         return data;
       }
-    } catch (err) {
-      this.log('_getMetaError: ', err);
-    }
+    } catch {}
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
