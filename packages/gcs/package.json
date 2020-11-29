@@ -1,7 +1,7 @@
 {
   "name": "@uploadx/gcs",
   "version": "4.2.0",
-  "description": "Node.js resumable upload middleware",
+  "description": "Uploadx GCS module",
   "keywords": [
     "resumable",
     "upload",
