@@ -16,8 +16,6 @@ const generateFileId = (file: File): string => {
     : uid();
 };
 
-export type FileListObject = Pick<File, 'status' | 'name'>;
-
 export interface FileInit {
   contentType?: string;
   originalName?: string;
@@ -28,30 +26,24 @@ export interface FileInit {
 
 export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part';
 
-export interface Upload extends File {
-  readonly status?: UploadEventType;
-}
-
 export class File implements FileInit {
   bytesWritten = NaN;
-  contentType: string;
-  originalName: string;
-  id = '';
+  contentType;
+  originalName;
+  id;
   metadata: Metadata;
   name = '';
-  size: number;
+  size;
   status?: UploadEventType;
-  userId?: string;
+  userId?;
 
-  constructor(opts: FileInit) {
-    this.metadata = opts.metadata || {};
-    this.originalName =
-      opts.originalName || extractOriginalName(this.metadata) || (this.id = uid());
-    this.contentType =
-      opts.contentType || extractMimeType(this.metadata) || 'application/octet-stream';
-    this.size = Number(opts.size || this.metadata.size) || 0;
-    this.userId = opts.userId;
-    this.id = this.id || generateFileId(this);
+  constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
+    this.metadata = metadata;
+    this.originalName = originalName || extractOriginalName(this.metadata) || (this.id = uid());
+    this.contentType = contentType || extractMimeType(this.metadata) || 'application/octet-stream';
+    this.size = Number(size || this.metadata.size) || 0;
+    this.userId = userId;
+    this.id ||= generateFileId(this);
   }
 }
 

@@ -25,5 +25,14 @@ export function fnv(str: string): number {
   return hash >>> 0;
 }
 
-// eslint-disable-next-line
-export const noop = (): any => {};
+export function mapValues<T>(
+  object: Record<string, any>,
+  func: (value: any) => T
+): Record<string, T> {
+  const result: Record<string, T> = {};
+  const keys = Object.keys(object);
+  for (const key of keys) {
+    result[key] = func(object[key]);
+  }
+  return result;
+}

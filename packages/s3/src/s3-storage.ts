@@ -10,7 +10,7 @@ import {
   FilePart,
   hasContent,
   METAFILE_EXTNAME,
-  noop
+  mapValues
 } from '@uploadx/core';
 import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
@@ -39,17 +39,6 @@ export interface S3ListObject {
   updated?: any;
 }
 
-export function processMetadata(
-  metadata: Record<string, any>,
-  func: (value: any) => string
-): Record<string, string> {
-  const encoded: Record<string, string> = {};
-  for (const k in metadata) {
-    encoded[k] = func(metadata[k]);
-  }
-  return encoded;
-}
-
 export class S3Storage extends BaseStorage<S3File, any> {
   bucket: string;
   client: S3;
@@ -73,13 +62,12 @@ export class S3Storage extends BaseStorage<S3File, any> {
         return existing;
       }
     } catch {}
-    const metadata = processMetadata(file.metadata, encodeURI);
 
     const params: S3.CreateMultipartUploadRequest = {
       Bucket: this.bucket,
       Key: file.name,
       ContentType: file.contentType,
-      Metadata: metadata
+      Metadata: mapValues(file.metadata, encodeURI)
     };
 
     const { UploadId } = await this.client.createMultipartUpload(params).promise();
@@ -95,7 +83,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async write(part: FilePart): Promise<S3File> {
     const file = await this._getMeta(part.name);
-    file.Parts = file.Parts || [];
+    file.Parts ||= [];
     if (hasContent(part)) {
       const partNumber = file.Parts.length + 1;
       const params: S3.UploadPartRequest = {
@@ -104,13 +92,12 @@ export class S3Storage extends BaseStorage<S3File, any> {
         UploadId: file.UploadId,
         PartNumber: partNumber,
         Body: part.body,
-        ContentLength: part.contentLength
+        ContentLength: part.contentLength || 0
       };
       const { ETag } = await this.client.uploadPart(params).promise();
-
       const uploadPart: S3.Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
       file.Parts = [...file.Parts, uploadPart];
-      file.bytesWritten = file.bytesWritten + (part.contentLength || 0);
+      file.bytesWritten = +(part.contentLength || 0);
       this.cache.set(file.name, file);
     }
     file.status = this.setStatus(file);
@@ -123,7 +110,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
   }
 
   async delete(name: string): Promise<S3File[]> {
-    const file = await this._getMeta(name).catch<undefined>(noop);
+    const file = await this._getMeta(name).catch(() => null);
     if (file) {
       file.status = 'deleted';
       await Promise.all([this._deleteMeta(file.name), this._abortMultipartUpload(file)]);
@@ -136,7 +123,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     const re = new RegExp(`${METAFILE_EXTNAME}$`);
     const params = { Bucket: this.bucket, Prefix: prefix };
     const { Contents } = await this.client.listObjectsV2(params).promise();
-    if (Contents) {
+    if (Contents?.length) {
       return Contents.filter(item =>
         item.Key?.endsWith(METAFILE_EXTNAME)
       ).map(({ Key, LastModified }) => ({ name: Key?.replace(re, ''), updated: LastModified }));
@@ -164,19 +151,17 @@ export class S3Storage extends BaseStorage<S3File, any> {
   }
 
   protected async _getMeta(name: string): Promise<S3File> {
-    const file = this.cache.get(name);
-    if (file) {
-      return file;
-    }
+    let file = this.cache.get(name);
+    if (file) return file;
     try {
       const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
       const { Metadata } = await this.client.headObject(params).promise();
       if (Metadata) {
         const data: S3File = JSON.parse(decodeURIComponent(Metadata.metadata)) as S3File;
         const uploaded = await this._getParts(data);
-        const meta = { ...data, ...uploaded };
-        this.cache.set(name, meta);
-        return meta;
+        file = { ...data, ...uploaded };
+        this.cache.set(name, file);
+        return file;
       }
     } catch {}
     return fail(ERRORS.FILE_NOT_FOUND);
@@ -185,7 +170,10 @@ export class S3Storage extends BaseStorage<S3File, any> {
   protected async _deleteMeta(name: string): Promise<void> {
     this.cache.delete(name);
     const params = { Bucket: this.bucket, Key: name + METAFILE_EXTNAME };
-    await this.client.deleteObject(params).promise().catch(noop);
+    await this.client
+      .deleteObject(params)
+      .promise()
+      .catch(() => null);
   }
 
   protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {
@@ -194,19 +182,18 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   private async _getParts(file: S3File): Promise<{ bytesWritten: number; Parts: S3.Parts }> {
     const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
-    const res = await this.client.listParts(params).promise();
-    const Parts = res.Parts || [];
+    const { Parts = [] } = await this.client.listParts(params).promise();
     const bytesWritten = Parts.map(item => item.Size || 0).reduce((prev, next) => prev + next, 0);
     return { bytesWritten, Parts };
   }
 
-  private _complete(meta: S3File): Promise<S3.CompleteMultipartUploadOutput> {
+  private _complete(file: S3File): Promise<S3.CompleteMultipartUploadOutput> {
     const params = {
       Bucket: this.bucket,
-      Key: meta.name,
-      UploadId: meta.UploadId,
+      Key: file.name,
+      UploadId: file.UploadId,
       MultipartUpload: {
-        Parts: meta.Parts.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
+        Parts: file.Parts.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
       }
     };
     return this.client.completeMultipartUpload(params).promise();

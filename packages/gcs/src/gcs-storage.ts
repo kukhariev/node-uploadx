@@ -13,8 +13,7 @@ import {
   FilePart,
   getHeader,
   hasContent,
-  METAFILE_EXTNAME,
-  noop
+  METAFILE_EXTNAME
 } from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -37,7 +36,7 @@ export function buildContentRange(part: FilePart & GCSFile): string {
   }
 }
 
-const validateStatus: (code: number) => boolean = (code: number) =>
+const validateStatus = (code: number): boolean =>
   (code >= 200 && code < 300) || code === 308 || code === 499;
 
 export type GCStorageOptions = BaseStorageOptions<GCSFile> &
@@ -73,16 +72,16 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   constructor(public config: GCStorageOptions = {}) {
     super(config);
-    config.scopes = config.scopes || authScopes;
-    config.keyFile = config.keyFile || process.env.GCS_KEYFILE;
+    config.scopes ||= authScopes;
+    config.keyFile ||= process.env.GCS_KEYFILE;
     const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
     this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
     this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
     this.authClient = new GoogleAuth(config);
     this._checkBucket(bucketName)
       .then(() => (this.isReady = true))
-      .catch((error: Error & { code: number }) => {
-        throw new Error(`Bucket code: ${error.code}`);
+      .catch((err: Error & { code: number }) => {
+        throw new Error(`Bucket code: ${err.code}`);
       });
   }
 
@@ -131,13 +130,9 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     return file;
   }
 
-  _onComplete = (file: GCSFile): Promise<any> => {
-    return this._deleteMeta(file.name);
-  };
-
   async delete(name: string): Promise<GCSFile[]> {
-    const file = await this._getMeta(name).catch<undefined>(noop);
-    if (file) {
+    const file = await this._getMeta(name).catch(() => null);
+    if (file?.uri) {
       file.status = 'deleted';
       const opts = { method: 'DELETE' as const, url: file.uri, validateStatus };
       await Promise.all([this.authClient.request(opts), this._deleteMeta(file.name)]);
@@ -188,8 +183,8 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       }
       const message = await res.text();
       return Promise.reject({ message, code: res.status });
-    } catch (error) {
-      this.log(uri, error);
+    } catch (err) {
+      this.log(uri, err);
       return NaN;
     }
   }
@@ -230,6 +225,10 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       this.log('_deleteMetaError: ', err);
     }
   }
+
+  private _onComplete = (file: GCSFile): Promise<any> => {
+    return this._deleteMeta(file.name);
+  };
 
   private metaName(name: string): string {
     return `${encodeURIComponent(name)}${METAFILE_EXTNAME}`;
