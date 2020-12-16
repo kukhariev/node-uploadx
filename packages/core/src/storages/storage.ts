@@ -5,15 +5,15 @@ import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
-export type OnComplete<T = File> = (file: Readonly<T>) => any;
+export type OnComplete<T extends File> = (file: Readonly<T>) => any;
 
-export interface BaseStorageOptions<T> {
+export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
   /** Filename generator function */
-  filename?: (file: File) => string;
+  filename?: (file: T) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
@@ -21,24 +21,24 @@ export interface BaseStorageOptions<T> {
   path?: string;
 }
 
-const defaultOptions: Required<BaseStorageOptions<any>> = {
+const defaultOptions: Required<BaseStorageOptions<File>> = {
   allowMIME: ['*/*'],
   maxUploadSize: '50GB',
   filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
   useRelativeLocation: false,
-  onComplete: () => undefined,
+  onComplete: () => null,
   path: '/files'
 };
 
 export type Validator = (file: File) => string | false;
 
-export abstract class BaseStorage<TFile, TList> {
+export abstract class BaseStorage<TFile extends File, TList> {
   validators: Set<Validator> = new Set();
   onComplete: (file: Readonly<TFile>) => void;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
-  protected namingFunction: (file: File) => string;
+  protected namingFunction: (file: TFile) => string;
   protected cache = new Cache<TFile>();
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
@@ -55,7 +55,7 @@ export abstract class BaseStorage<TFile, TList> {
     this.validators.add(fileSizeLimit);
   }
 
-  async validate(file: File): Promise<any> {
+  async validate(file: TFile): Promise<any> {
     const errors: string[] = [];
     for (const validator of this.validators) {
       const error = validator.call(this, file);
