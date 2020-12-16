@@ -5,6 +5,8 @@
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
+> Supported APIs: Google resumable v3.0, tus 1.0, multipart upload.
+> Capable store uploads locally on disk, on Google Storage or on AWS S3.
 
 ## 🌩 Installation
 
@@ -83,16 +85,17 @@ Please navigate to the [examples](examples) for more.
 
 Available options are:
 
-| option                |       type       |  default value   | description                     |
-| :-------------------- | :--------------: | :--------------: | ------------------------------- |
-| `directory`           |     `string`     |    `"files"`     | _DiskStorage upload directory_  |
-| `bucket`              |     `string`     | `"node-uploadx"` | _S3 or GCS bucket_              |
-| `path`                |     `string`     |    `"/files"`    | _Node http base path_           |
-| `allowMIME`           |    `string[]`    |    `["*\*"]`     | _Array of allowed MIME types_   |
-| `maxUploadSize`       | `string\|number` |     `"50GB"`     | _Limit allowed file size_       |
-| `useRelativeLocation` |    `boolean`     |     `false`      | _Generate relative upload link_ |
-| `filename`            |    `Function`    |                  | _Filename generator function_   |
-| `onComplete`          |    `Function`    |                  | _File upload complete callback_ |
+| option                |       type       |  default value   | description                                         |
+| :-------------------- | :--------------: | :--------------: | --------------------------------------------------- |
+| `directory`           |     `string`     |    `"files"`     | _DiskStorage upload directory_                      |
+| `bucket`              |     `string`     | `"node-uploadx"` | _S3 or GCS bucket_                                  |
+| `path`                |     `string`     |    `"/files"`    | _Node http base path_                               |
+| `allowMIME`           |    `string[]`    |    `["*\*"]`     | _Array of allowed MIME types_                       |
+| `maxUploadSize`       | `string\|number` |     `"50GB"`     | _Limit allowed file size_                           |
+| `useRelativeLocation` |    `boolean`     |     `false`      | _Generate relative upload link_                     |
+| `filename`            |    `Function`    |                  | _Filename generator function_                       |
+| `onComplete`          |    `Function`    |                  | _File upload complete callback_                     |
+| `clientDirectUpload`  |    `boolean`     |                  | _Upload by a compatible client directly to the GCS_ |
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 
