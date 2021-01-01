@@ -51,7 +51,7 @@
     "express": "4.17.1",
     "husky": "5.0.4",
     "jest": "26.6.3",
-    "lint-staged": "10.5.2",
+    "lint-staged": "10.5.3",
     "node-mocks-http": "1.9.0",
     "oao": "2.0.0",
     "prettier": "2.2.1",
