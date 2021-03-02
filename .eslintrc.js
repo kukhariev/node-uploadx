@@ -18,9 +18,7 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:promise/recommended',
-    'plugin:prettier/recommended',
-    'prettier',
-    'prettier/@typescript-eslint'
+    'plugin:prettier/recommended'
   ],
   plugins: ['@typescript-eslint', 'prettier', 'promise'],
   rules: {
