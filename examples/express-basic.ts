@@ -1,19 +1,16 @@
 import * as express from 'express';
-import { multipart, uploadx, DiskStorageOptions } from '@uploadx/core';
+import { multipart, uploadx } from '@uploadx/core';
 
 const app = express();
 
-const opts: DiskStorageOptions = {
-  onComplete: file => {
-    console.log('File upload complete: ', file);
-  }
-};
-
 app.use('/files', express.static('files'));
 
-app.use('/files', multipart(opts));
-
-app.use('/upload/files', uploadx(opts));
+app.use('/files', multipart(), (req, res) => {
+  res.json({ ...req.body, uploadType: 'multipart' });
+});
+app.use('/upload/files', uploadx(), (req, res) => {
+  res.json({ ...req.body, uploadType: 'uploadx' });
+});
 
 app.listen(3003, () => {
   console.log('listening on port:', 3003);
