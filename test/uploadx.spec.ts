@@ -14,7 +14,7 @@ describe('::Uploadx', () => {
   const basePath = '/uploadx';
   const directory = join(root, 'uploadx');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, uploadx(opts));
+  app.use(basePath, uploadx(opts), (req, res) => res.json(req.body));
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));

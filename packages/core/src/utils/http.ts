@@ -49,8 +49,6 @@ export function setHeaders(
   const exposeHeaders = Object.keys(headers).toString();
   exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
   for (const [key, value] of Object.entries(headers)) {
-    console.log(key, value);
-
     res.setHeader(key, value.toString());
   }
 }

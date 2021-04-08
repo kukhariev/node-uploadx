@@ -14,7 +14,7 @@ describe('::Tus', () => {
   const basePath = '/tus';
   const directory = join(root, 'tus');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, tus(opts));
+  app.use(basePath, tus(opts), (req, res) => res.json(req.body));
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
@@ -55,7 +55,7 @@ describe('::Tus', () => {
         .expect('upload-offset', '0');
     });
 
-    it('should 204', async () => {
+    it('should 200', async () => {
       await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
@@ -63,7 +63,7 @@ describe('::Tus', () => {
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
         .send(fs.readFileSync(srcpath))
-        .expect(204)
+        .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', metadata.size.toString());
     });

@@ -13,7 +13,7 @@ describe('::Multipart', () => {
   const basePath = '/multipart';
   const directory = join(root, 'multipart');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, multipart(opts));
+  app.use(basePath, multipart(opts), (req, res) => res.status(201).json(req.body));
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
@@ -52,8 +52,8 @@ describe('::Multipart', () => {
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
-        .expect(403).catch(() => {
-        });
+        .expect(403)
+        .catch(() => {});
     });
   });
 
