@@ -68,8 +68,6 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
       const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-    } else if (file.status === 'completed') {
-      this.send({ res, body: file });
     }
     return file;
   }

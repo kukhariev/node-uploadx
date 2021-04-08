@@ -8,7 +8,7 @@ import {
   FileInit,
   Metadata
 } from '../storages';
-import { ERRORS, fail, getHeader, typeis } from '../utils';
+import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -103,7 +103,9 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
         'Upload-Offset': `${file.bytesWritten}`,
         'Tus-Resumable': TUS_RESUMABLE
       };
-      this.send({ res, statusCode: 204, headers });
+      // add 'Upload-Metadata' on complete?
+      setHeaders(res, headers);
+      file.status === 'part' && this.send({ res, statusCode: 204 });
     }
     return file;
   }

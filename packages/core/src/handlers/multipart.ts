@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, File, FileInit } from '../storages';
 import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { ERRORS, fail } from '../utils';
+import { ERRORS, fail, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
 interface MultipartyPart extends multiparty.Part {
@@ -52,7 +52,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
           .then(file => {
             if (file.status === 'completed') {
               const headers = { Location: this.buildFileUrl(req, file) };
-              this.send({ res, statusCode: 201, headers, body: file });
+              setHeaders(res, headers);
             }
             return resolve(file);
           })

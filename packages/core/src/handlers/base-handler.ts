@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import { BaseStorage, File, UploadEventType } from '../storages';
 import * as url from 'url';
-import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
+import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -64,7 +64,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   }
 
   handle = (
-    req: http.IncomingMessage & { body?: any },
+    req: http.IncomingMessage & { body?: any; _body?: boolean },
     res: http.ServerResponse,
     next?: () => void
   ): void => {
@@ -82,6 +82,11 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
+            if (file.status === 'completed') {
+              req['_body'] = true;
+              req['body'] = file;
+              next ? next() : this.send({ res, body: file });
+            }
             return;
           }
           if (req.method === 'GET') {
@@ -137,9 +142,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     }
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
-    const exposeHeaders = Object.keys(headers).toString();
-    exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
-    res.writeHead(statusCode, headers);
+    setHeaders(res, headers);
+    res.writeHead(statusCode);
     res.end(data);
   }
 
