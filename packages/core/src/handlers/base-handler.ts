@@ -80,14 +80,16 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     if (handler) {
       handler
         .call(this, req, res)
-        .then((file: File | File[]) => {
+        .then(async (file: File | File[]) => {
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
             if (file.status === 'completed') {
+              const body = { ...file };
+              await this.storage.onComplete(body);
               req['_body'] = true;
-              req['body'] = file;
-              next ? next() : this.send({ res, body: file });
+              req['body'] = body;
+              next ? next() : this.finish(req, res, body);
             }
             return;
           }
@@ -117,6 +119,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   getUserId = (req: AuthRequest): string | undefined => {
     return req.user?.id || req.user?.id;
   };
+
+  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
+    return this.send({ res, body: file });
+  }
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     this.send({ res, statusCode: 204 });

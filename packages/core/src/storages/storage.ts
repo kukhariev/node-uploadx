@@ -34,7 +34,7 @@ export type Validator = (file: File) => string | false;
 
 export abstract class BaseStorage<TFile extends File, TList> {
   validators: Set<Validator> = new Set();
-  onComplete: (file: Readonly<TFile>) => void;
+  onComplete: (file: Readonly<TFile>) => Promise<void> | void;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);

@@ -138,6 +138,10 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     this.send({ res, statusCode: 204, headers });
     return file;
   }
+
+  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
+    return this.send({ res, statusCode: 204 });
+  }
 }
 
 /**

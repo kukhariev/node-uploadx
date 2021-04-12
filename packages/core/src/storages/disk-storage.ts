@@ -51,9 +51,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       file.status = this.setStatus(file);
-      if (file.status === 'completed') {
-        await Promise.all([this.onComplete(file)]);
-      }
       return file;
     } catch (err) {
       this.log('writeError: ', err);

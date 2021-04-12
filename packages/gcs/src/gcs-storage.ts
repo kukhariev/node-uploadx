@@ -125,7 +125,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     file.status = this.setStatus(file);
     if (file.status === 'completed') {
       file.uri = `${this.storageBaseURI}/${file.name}`;
-      await Promise.all([this._onComplete(file), this.onComplete(file)]);
+      await this._onComplete(file);
     }
     return file;
   }
