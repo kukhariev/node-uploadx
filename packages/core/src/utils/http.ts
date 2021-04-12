@@ -49,9 +49,12 @@ export function setHeaders(
   const exposeHeaders = Object.keys(headers).toString();
   exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
   for (const [key, value] of Object.entries(headers)) {
-    res.setHeader(key, value.toString());
+    key.toLowerCase() in ['location']
+      ? res.setHeader(key, encodeURI(value.toString()))
+      : res.setHeader(key, value.toString());
   }
 }
+
 export function getBaseUrl(req: http.IncomingMessage): string {
   const proto = getHeader(req, 'x-forwarded-proto');
   const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');

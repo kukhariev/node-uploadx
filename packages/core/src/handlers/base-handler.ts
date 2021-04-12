@@ -176,7 +176,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     const path = req['originalUrl']
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
-    return path.startsWith('/') ? '' : path;
+    return path.startsWith('/') ? '' : decodeURI(path);
   }
 
   /**
