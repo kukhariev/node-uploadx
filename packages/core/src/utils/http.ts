@@ -49,7 +49,7 @@ export function setHeaders(
   const exposeHeaders = Object.keys(headers).toString();
   exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
   for (const [key, value] of Object.entries(headers)) {
-    key.toLowerCase() in ['location']
+    ['location'].includes(key.toLowerCase())
       ? res.setHeader(key, encodeURI(value.toString()))
       : res.setHeader(key, value.toString());
   }

@@ -85,8 +85,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
             if (file.status === 'completed') {
-              const body = { ...file };
-              await this.storage.onComplete(body);
+              const body = ((await this.storage.onComplete(file)) as File) || file;
               req['_body'] = true;
               req['body'] = body;
               next ? next() : this.finish(req, res, body);
