@@ -15,8 +15,6 @@ const opts: DiskStorageOptions = {
   }
 };
 
-app.use('/files', express.static(dir), tus(opts), (req, res) => {
-  res.json({ ...req.body, custom: 'custom' });
-});
+app.use('/files', express.static(dir), tus(opts), (req, res) => res.sendStatus(204));
 
 app.listen(3003, () => console.log('listening on port:', 3003));
