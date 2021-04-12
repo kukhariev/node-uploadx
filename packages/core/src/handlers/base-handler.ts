@@ -63,7 +63,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     this.log('Handlers', this._registeredHandlers);
   }
 
-  handle = (
+  handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
+
+  upload = (
     req: http.IncomingMessage & { body?: any; _body?: boolean },
     res: http.ServerResponse,
     next?: () => void
