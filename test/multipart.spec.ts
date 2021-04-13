@@ -13,7 +13,7 @@ describe('::Multipart', () => {
   const basePath = '/multipart';
   const directory = join(root, 'multipart');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, multipart(opts), (req, res) => res.status(201).json(req.body));
+  app.use(basePath, multipart(opts));
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
@@ -29,7 +29,7 @@ describe('::Multipart', () => {
         .set('Content-Type', 'multipart/formdata')
         .field('custom', 'customfield')
         .attach('file', srcpath, 'customfield')
-        .expect(201);
+        .expect(200);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
       files.push(res.header.location);
@@ -42,7 +42,7 @@ describe('::Multipart', () => {
         .set('Content-Type', 'multipart/formdata')
         .field('metadata', JSON.stringify(metadata))
         .attach('file', srcpath, metadata.name)
-        .expect(201);
+        .expect(200);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
     });

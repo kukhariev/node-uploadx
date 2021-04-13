@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, File, FileInit } from '../storages';
-import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
+import { DiskStorage, DiskStorageOptions } from '../storages';
 import { ERRORS, fail, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 

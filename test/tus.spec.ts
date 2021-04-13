@@ -14,7 +14,7 @@ describe('::Tus', () => {
   const basePath = '/tus';
   const directory = join(root, 'tus');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, tus(opts), (req, res) => res.sendStatus(204));
+  app.use(basePath, tus(opts));
 
   beforeAll(() => rimraf.sync(directory));
   afterAll(() => rimraf.sync(directory));
