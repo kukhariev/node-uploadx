@@ -84,7 +84,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
   }
 
   getName(req: http.IncomingMessage): string {
-    const { query } = url.parse(req.url || '', true);
+    const { query } = url.parse(decodeURI(req.url || ''), true);
     if (query.name) return query.name as string;
     if (query.upload_id) return query.upload_id as string;
     return super.getName(req);
