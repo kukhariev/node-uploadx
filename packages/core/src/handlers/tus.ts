@@ -122,7 +122,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE
     };
     this.send({ res, statusCode: 200, headers });
-    return file;
+    return {} as TFile;
   }
 
   /**
