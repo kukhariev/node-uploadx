@@ -110,6 +110,8 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function uploadx<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Uploadx(options).handle;
 }
+
+uploadx.upload = (options: DiskStorageOptions | { storage: any }) => new Uploadx(options).upload;

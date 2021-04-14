@@ -149,6 +149,8 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function tus<T extends File, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
+
+tus.upload = (options: DiskStorageOptions | { storage: any }) => new Tus(options).upload;

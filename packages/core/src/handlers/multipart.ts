@@ -80,6 +80,9 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function multipart<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }
+
+multipart.upload = (options: DiskStorageOptions | { storage: any }) =>
+  new Multipart(options).upload;
