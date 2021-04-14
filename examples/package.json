@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "demo:basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
-    "demo:express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
-    "demo:gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
-    "demo:gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
-    "demo:node": "tsnd -r tsconfig-paths/register -r dotenv/config node-http-server",
-    "demo:s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
-    "demo:tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
-    "demo:fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify"
+    "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
+    "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
+    "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
+    "node": "tsnd -r tsconfig-paths/register -r dotenv/config node-http-server",
+    "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
+    "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
+    "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify"
   },
   "dependencies": {
     "@uploadx/core": "^4.2.3",
