@@ -8,7 +8,7 @@ import {
   FileInit,
   Metadata
 } from '../storages';
-import { ERRORS, fail, getHeader, typeis } from '../utils';
+import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -103,7 +103,9 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
         'Upload-Offset': `${file.bytesWritten}`,
         'Tus-Resumable': TUS_RESUMABLE
       };
-      this.send({ res, statusCode: 204, headers });
+      // add 'Upload-Metadata' on complete?
+      setHeaders(res, headers);
+      file.status === 'part' && this.send({ res, statusCode: 204 });
     }
     return file;
   }
@@ -120,7 +122,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE
     };
     this.send({ res, statusCode: 200, headers });
-    return file;
+    return {} as TFile;
   }
 
   /**
@@ -136,6 +138,10 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     this.send({ res, statusCode: 204, headers });
     return file;
   }
+
+  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
+    return this.send({ res, statusCode: 204 });
+  }
 }
 
 /**
@@ -143,6 +149,8 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function tus<T extends File, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
+
+tus.upload = (options: DiskStorageOptions | { storage: any }) => new Tus(options).upload;

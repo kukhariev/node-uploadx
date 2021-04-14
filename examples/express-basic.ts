@@ -6,6 +6,7 @@ const app = express();
 const opts: DiskStorageOptions = {
   onComplete: file => {
     console.log('File upload complete: ', file);
+    return file.status;
   }
 };
 

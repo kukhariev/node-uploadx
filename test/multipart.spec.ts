@@ -29,7 +29,7 @@ describe('::Multipart', () => {
         .set('Content-Type', 'multipart/formdata')
         .field('custom', 'customfield')
         .attach('file', srcpath, 'customfield')
-        .expect(201);
+        .expect(200);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
       files.push(res.header.location);
@@ -42,7 +42,7 @@ describe('::Multipart', () => {
         .set('Content-Type', 'multipart/formdata')
         .field('metadata', JSON.stringify(metadata))
         .attach('file', srcpath, metadata.name)
-        .expect(201);
+        .expect(200);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();
     });
@@ -52,8 +52,8 @@ describe('::Multipart', () => {
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
-        .expect(403).catch(() => {
-        });
+        .expect(403)
+        .catch(() => {});
     });
   });
 

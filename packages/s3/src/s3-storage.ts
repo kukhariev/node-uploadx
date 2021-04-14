@@ -104,7 +104,6 @@ export class S3Storage extends BaseStorage<S3File, any> {
     if (file.status === 'completed') {
       const [completed] = await this._onComplete(file);
       file.uri = completed.Location;
-      await Promise.all([this.onComplete(file)]);
     }
     return file;
   }

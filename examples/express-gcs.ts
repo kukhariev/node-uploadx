@@ -5,10 +5,10 @@ const app = express();
 
 const storage = new GCStorage();
 
-storage.onComplete = file => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  (file as any)['custom'] = 'Hi!';
-  console.log('File upload complete: ', file);
+storage.onComplete = ({ uri, id }) => {
+  console.log(`File upload complete, storage path: ${uri}`);
+  // send gcs link to client
+  return { id, link: uri };
 };
 
 app.use('/files', uploadx({ storage }));

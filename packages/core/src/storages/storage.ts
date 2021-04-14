@@ -5,7 +5,7 @@ import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
-export type OnComplete<T extends File> = (file: Readonly<T>) => any;
+export type OnComplete<T extends File> = (file: T) => any;
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
@@ -34,7 +34,7 @@ export type Validator = (file: File) => string | false;
 
 export abstract class BaseStorage<TFile extends File, TList> {
   validators: Set<Validator> = new Set();
-  onComplete: (file: Readonly<TFile>) => void;
+  onComplete: (file: TFile) => Promise<any> | any;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);

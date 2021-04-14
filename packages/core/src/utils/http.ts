@@ -42,6 +42,19 @@ export function getHeader(req: http.IncomingMessage, name: string): string {
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
+export function setHeaders(
+  res: http.ServerResponse,
+  headers: Record<string, string | number> = {}
+): void {
+  const exposeHeaders = Object.keys(headers).toString();
+  exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
+  for (const [key, value] of Object.entries(headers)) {
+    ['location'].includes(key.toLowerCase())
+      ? res.setHeader(key, encodeURI(value.toString()))
+      : res.setHeader(key, value.toString());
+  }
+}
+
 export function getBaseUrl(req: http.IncomingMessage): string {
   const proto = getHeader(req, 'x-forwarded-proto');
   const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');

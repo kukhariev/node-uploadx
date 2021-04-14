@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import { BaseStorage, File, UploadEventType } from '../storages';
 import * as url from 'url';
-import { ERRORS, getBaseUrl, Logger, pick, typeis, UploadxError } from '../utils';
+import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -63,8 +63,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     this.log('Handlers', this._registeredHandlers);
   }
 
-  handle = (
-    req: http.IncomingMessage & { body?: any },
+  handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
+
+  upload = (
+    req: http.IncomingMessage & { body?: any; _body?: boolean },
     res: http.ServerResponse,
     next?: () => void
   ): void => {
@@ -78,10 +80,16 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     if (handler) {
       handler
         .call(this, req, res)
-        .then((file: File | File[]) => {
+        .then(async (file: File | File[]) => {
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
+            if (file.status === 'completed') {
+              const body = ((await this.storage.onComplete(file)) as File) || file;
+              req['_body'] = true;
+              req['body'] = body;
+              next ? next() : this.finish(req, res, body);
+            }
             return;
           }
           if (req.method === 'GET') {
@@ -111,6 +119,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     return req.user?.id || req.user?.id;
   };
 
+  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
+    return this.send({ res, body: file });
+  }
+
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
     this.send({ res, statusCode: 204 });
     return {} as File;
@@ -137,9 +149,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     }
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
-    const exposeHeaders = Object.keys(headers).toString();
-    exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
-    res.writeHead(statusCode, headers);
+    setHeaders(res, headers);
+    res.writeHead(statusCode);
     res.end(data);
   }
 
@@ -172,7 +183,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     const path = req['originalUrl']
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
-    return path.startsWith('/') ? '' : path;
+    return path.startsWith('/') ? '' : decodeURI(path);
   }
 
   /**

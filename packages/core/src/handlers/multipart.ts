@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, File, FileInit } from '../storages';
-import { DiskStorage, DiskStorageOptions } from '../storages/disk-storage';
-import { ERRORS, fail } from '../utils';
+import { DiskStorage, DiskStorageOptions } from '../storages';
+import { ERRORS, fail, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
 interface MultipartyPart extends multiparty.Part {
@@ -52,7 +52,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
           .then(file => {
             if (file.status === 'completed') {
               const headers = { Location: this.buildFileUrl(req, file) };
-              this.send({ res, statusCode: 201, headers, body: file });
+              setHeaders(res, headers);
             }
             return resolve(file);
           })
@@ -80,6 +80,9 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
  */
 export function multipart<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
-): (req: http.IncomingMessage, res: http.ServerResponse, next: () => void) => void {
+): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }
+
+multipart.upload = (options: DiskStorageOptions | { storage: any }) =>
+  new Multipart(options).upload;
