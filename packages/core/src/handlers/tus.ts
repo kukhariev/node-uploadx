@@ -1,4 +1,3 @@
-import * as bytes from 'bytes';
 import * as http from 'http';
 import {
   BaseStorage,
@@ -53,7 +52,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Extension': 'creation,creation-with-upload,termination',
       'Tus-Version': TUS_RESUMABLE,
       'Tus-Resumable': TUS_RESUMABLE,
-      'Tus-Max-Size': bytes.parse(this.storage.config.maxUploadSize || 0)
+      'Tus-Max-Size': this.storage.maxUploadSize
     };
     this.send({ res, statusCode: 204, headers });
     return {} as TFile;

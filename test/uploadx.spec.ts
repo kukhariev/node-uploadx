@@ -24,24 +24,24 @@ describe('::Uploadx', () => {
   });
 
   describe('POST', () => {
-    it('should 403 (size limit)', async () => {
+    it('should 413 (size limit)', async () => {
       const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
         .set('x-upload-content-length', (10e10).toString())
         .send({ name: 'file.mp4' })
-        .expect(403);
+        .expect(413);
       expect(res.type).toBe('application/json');
       expect(res.header).not.toHaveProperty('location');
     });
 
-    it('should 403 (unsupported filetype)', async () => {
+    it('should 415 (unsupported filetype)', async () => {
       const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'text/json')
         .set('x-upload-content-length', '3000')
         .send({ name: 'file.json' })
-        .expect(403);
+        .expect(415);
       expect(res.type).toBe('application/json');
       expect(res.header).not.toHaveProperty('location');
     });
