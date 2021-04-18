@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { promises } from 'fs';
-import { DiskFile, DiskStorage, multipart, OnComplete, uploadx } from 'node-uploadx';
+import { DiskFile, DiskStorage, OnComplete, uploadx } from 'node-uploadx';
 
 const app = express();
 
@@ -25,15 +25,14 @@ const onComplete: OnComplete<DiskFile> = async file => {
   };
 };
 
-const options = new DiskStorage({
-  allowMIME: ['video/*', 'image/*'],
+const storage = new DiskStorage({
+  allowMIME: { value: ['video/*'], message: 'Only Video files is supported.', statusCode: 415 },
+  maxUploadSize: { value: '1GB', message: 'File is too big.', statusCode: 413 },
   directory: 'upload',
   onComplete
 });
 
-app.use('/files', express.static('files'));
-app.use('/upload/files', uploadx(options));
-app.use('/files', multipart(options));
+app.use('/files', express.static('files'), uploadx({ storage }));
 
 app.listen(3003, () => {
   console.log('listening on port:', 3003);

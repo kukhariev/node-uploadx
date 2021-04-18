@@ -52,7 +52,7 @@ describe('DiskStorage', () => {
       try {
         await storage.create({} as any, { ...testfile, size: 6e10 });
       } catch (error) {
-        expect(error).toHaveProperty('statusCode', 403);
+        expect(error).toHaveProperty('statusCode', 413);
       }
     });
   });

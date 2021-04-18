@@ -66,6 +66,7 @@ export function hasContent(part: Partial<FilePart>): part is HasContent {
 
 export interface Metadata {
   [key: string]: any;
+
   size?: string | number;
   name?: string;
   filetype?: string;

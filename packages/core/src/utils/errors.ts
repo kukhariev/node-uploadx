@@ -41,6 +41,10 @@ export const ERRORS = {
     statusCode: 413,
     message: 'request entity too large'
   },
+  UNSUPPORTED_MEDIA_TYPE: {
+    statusCode: 415,
+    message: 'unsupported media type'
+  },
   TOO_MANY_REQUESTS: {
     statusCode: 429,
     message: 'too many requests'

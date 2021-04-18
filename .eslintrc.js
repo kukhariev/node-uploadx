@@ -56,7 +56,9 @@ module.exports = {
     'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }],
     'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
     'prefer-template': 'error',
-    'prefer-arrow-callback': 'warn'
+    'prefer-arrow-callback': 'warn',
+    'linebreak-style': ['error', 'unix'],
+    'no-console': 'error'
   },
   overrides: [
     {

@@ -5,13 +5,25 @@ import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
+type ValidatorConfig<T> = {
+  value: T;
+  message?: string;
+  statusCode?: number;
+};
+
+export type Validator = (file: File) => Required<ValidatorConfig<any>> | false;
+
+function validatorsParams<T>(params: T | ValidatorConfig<T>): ValidatorConfig<T> {
+  return typeof params === 'object' && 'value' in params ? params : { value: params };
+}
+
 export type OnComplete<T extends File> = (file: T) => any;
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
-  allowMIME?: string[];
+  allowMIME?: string[] | ValidatorConfig<string[]>;
   /** File size limit */
-  maxUploadSize?: number | string;
+  maxUploadSize?: number | string | ValidatorConfig<string | number>;
   /** Filename generator function */
   filename?: (file: T) => string;
   useRelativeLocation?: boolean;
@@ -23,18 +35,17 @@ export interface BaseStorageOptions<T extends File> {
 
 const defaultOptions: Required<BaseStorageOptions<File>> = {
   allowMIME: ['*/*'],
-  maxUploadSize: '50GB',
+  maxUploadSize: '5TB',
   filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
   useRelativeLocation: false,
   onComplete: () => null,
   path: '/files'
 };
 
-export type Validator = (file: File) => string | false;
-
 export abstract class BaseStorage<TFile extends File, TList> {
   validators: Set<Validator> = new Set();
   onComplete: (file: TFile) => Promise<any> | any;
+  maxUploadSize: number;
   path: string;
   isReady = false;
   protected log = Logger.get(`store:${this.constructor.name}`);
@@ -46,22 +57,25 @@ export abstract class BaseStorage<TFile extends File, TList> {
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
-    const fileTypeLimit: Validator = file =>
-      !typeis.is(file.contentType, opts.allowMIME) &&
-      `Acceptable file types: ${opts.allowMIME.toString()}`;
-    const fileSizeLimit: Validator = file =>
-      file.size > bytes.parse(opts.maxUploadSize) && `File size limit: ${opts.maxUploadSize}`;
-    this.validators.add(fileTypeLimit);
-    this.validators.add(fileSizeLimit);
+
+    const mime = validatorsParams(opts.allowMIME);
+    const fileTypeValidator: Validator = file =>
+      !typeis.is(file.contentType, mime.value) && { ...ERRORS.UNSUPPORTED_MEDIA_TYPE, ...mime };
+
+    const size = validatorsParams(opts.maxUploadSize);
+    this.maxUploadSize = size.value = bytes.parse(size.value);
+    const fileSizeValidator: Validator = file =>
+      file.size > size.value && { ...ERRORS.REQUEST_ENTITY_TOO_LARGE, ...size };
+
+    this.validators.add(fileTypeValidator);
+    this.validators.add(fileSizeValidator);
   }
 
   async validate(file: TFile): Promise<any> {
-    const errors: string[] = [];
     for (const validator of this.validators) {
       const error = validator.call(this, file);
-      if (error) errors.push(error);
+      if (error) return fail(error);
     }
-    return errors.length ? fail(ERRORS.FILE_NOT_ALLOWED, errors.toString()) : true;
   }
 
   protected setStatus(file: File): File['status'] | undefined {
