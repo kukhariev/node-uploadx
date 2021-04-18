@@ -91,7 +91,7 @@ Available options are:
 | `bucket`              |     `string`     | `"node-uploadx"` | _S3 or GCS bucket_                                  |
 | `path`                |     `string`     |    `"/files"`    | _Node http base path_                               |
 | `allowMIME`           |    `string[]`    |    `["*\*"]`     | _Array of allowed MIME types_                       |
-| `maxUploadSize`       | `string\|number` |     `"50GB"`     | _Limit allowed file size_                           |
+| `maxUploadSize`       | `string\|number` |     `"5TB"`      | _Limit allowed file size_                           |
 | `useRelativeLocation` |    `boolean`     |     `false`      | _Generate relative upload link_                     |
 | `filename`            |    `Function`    |                  | _Filename generator function_                       |
 | `onComplete`          |    `Function`    |                  | _File upload complete callback_                     |
