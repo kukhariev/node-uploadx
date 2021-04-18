@@ -37,6 +37,7 @@ interface SendParameters {
 
 interface AuthRequest extends http.IncomingMessage {
   [propName: string]: any;
+
   user?: {
     [idKey: string]: any;
     id?: string;
@@ -49,6 +50,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers: Map<string, AsyncHandler> = new Map() as Map<string, AsyncHandler>;
   abstract storage: BaseStorage<any, any>;
+
   constructor() {
     super();
 

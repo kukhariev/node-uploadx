@@ -3,7 +3,7 @@
   "version": "4.3.0",
   "private": true,
   "scripts": {
-    "demo:basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
+    "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
     "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",

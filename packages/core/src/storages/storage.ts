@@ -1,33 +1,29 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { Cache, fail, Logger, typeis } from '../utils';
+import { Cache, ERRORS, fail, Logger, typeis } from '../utils';
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
 
-type ValidationConfig<T> = {
+type ValidatorConfig<T> = {
   value: T;
   message?: string;
   statusCode?: number;
 };
-export type Validator = (file: File) => Required<ValidationConfig<any>> | undefined;
 
-function validatorsParams<T>(params: T | ValidationConfig<T>): ValidationConfig<T> {
-  const { value, message = '', statusCode = 0 } =
-    typeof params === 'object' && 'value' in params ? params : { value: params };
-  return { value, message, statusCode };
+export type Validator = (file: File) => Required<ValidatorConfig<any>> | false;
+
+function validatorsParams<T>(params: T | ValidatorConfig<T>): ValidatorConfig<T> {
+  return typeof params === 'object' && 'value' in params ? params : { value: params };
 }
 
 export type OnComplete<T extends File> = (file: T) => any;
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
-  allowMIME?: string[] | { value: string[]; message?: string; statusCode?: number };
+  allowMIME?: string[] | ValidatorConfig<string[]>;
   /** File size limit */
-  maxUploadSize?:
-    | number
-    | string
-    | { value: number | string; message?: string; statusCode?: number };
+  maxUploadSize?: number | string | ValidatorConfig<string | number>;
   /** Filename generator function */
   filename?: (file: T) => string;
   useRelativeLocation?: boolean;
@@ -63,29 +59,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
     this.namingFunction = opts.filename;
 
     const mime = validatorsParams(opts.allowMIME);
-    const fileTypeValidator: Validator = file => {
-      if (!typeis.is(file.contentType, mime.value)) {
-        return {
-          value: mime.value,
-          message: mime.message || `Acceptable file types: ${mime.value.toString()}`,
-          statusCode: mime.statusCode || 415
-        };
-      }
-      return;
-    };
+    const fileTypeValidator: Validator = file =>
+      !typeis.is(file.contentType, mime.value) && { ...ERRORS.UNSUPPORTED_MEDIA_TYPE, ...mime };
 
     const size = validatorsParams(opts.maxUploadSize);
-    this.maxUploadSize = bytes.parse(size.value);
-    const fileSizeValidator: Validator = file => {
-      if (file.size > this.maxUploadSize) {
-        return {
-          value: mime.value,
-          message: size.message || `File size limit: ${this.maxUploadSize}`,
-          statusCode: size.statusCode || 413
-        };
-      }
-      return;
-    };
+    this.maxUploadSize = size.value = bytes.parse(size.value);
+    const fileSizeValidator: Validator = file =>
+      file.size > size.value && { ...ERRORS.REQUEST_ENTITY_TOO_LARGE, ...size };
 
     this.validators.add(fileTypeValidator);
     this.validators.add(fileSizeValidator);

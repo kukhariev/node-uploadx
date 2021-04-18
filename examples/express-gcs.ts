@@ -3,7 +3,7 @@ import { GCStorage, uploadx } from 'node-uploadx';
 
 const app = express();
 
-const storage = new GCStorage();
+const storage = new GCStorage({ maxUploadSize: '1GB' });
 
 storage.onComplete = ({ uri, id }) => {
   console.log(`File upload complete, storage path: ${uri}`);
