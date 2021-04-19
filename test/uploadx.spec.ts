@@ -121,6 +121,13 @@ describe('::Uploadx', () => {
     });
   });
 
+  describe('GET', () => {
+    it('should return info array', async () => {
+      const res = await request(app).get(basePath).expect(200);
+      expect(res.body.length).toBe(2);
+    });
+  });
+  
   describe('DELETE', () => {
     it('should 204', async () => {
       await request(app).delete(files[1]).expect(204);
@@ -132,4 +139,6 @@ describe('::Uploadx', () => {
       await request(app).options(basePath).expect(204);
     });
   });
+
+
 });
