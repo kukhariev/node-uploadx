@@ -37,7 +37,6 @@ interface SendParameters {
 
 interface AuthRequest extends http.IncomingMessage {
   [propName: string]: any;
-
   user?: {
     [idKey: string]: any;
     id?: string;
@@ -46,6 +45,7 @@ interface AuthRequest extends http.IncomingMessage {
 }
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
+  cors: Cors;
   responseType: 'text' | 'json' = 'text';
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers: Map<string, AsyncHandler> = new Map() as Map<string, AsyncHandler>;
@@ -53,14 +53,14 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
 
   constructor() {
     super();
-
+    this.cors = new Cors();
     this.compose();
   }
 
   compose(): void {
     handlers.forEach(method => {
-      const enabled = (this as MethodHandler)[method];
-      enabled && this._registeredHandlers.set(method.toUpperCase(), enabled);
+      const handler = (this as MethodHandler)[method];
+      handler && this._registeredHandlers.set(method.toUpperCase(), handler);
     });
     this.log('Handlers', this._registeredHandlers);
   }
@@ -74,7 +74,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
-    Cors.preflight(req, res);
+    this.cors.preflight(req, res);
     if (!this.storage.isReady) {
       return this.sendError(res, ERRORS.STORAGE_ERROR);
     }
