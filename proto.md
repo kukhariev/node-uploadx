@@ -51,7 +51,7 @@
 
   ```http
   HTTP/1.1 200 OK
-  Content-Length: 135
+  Content-Length: 86
   Content-Type: application/json
   {"name":"file.mp4","mimeType":"video/mp4","size":2469036,"lastModified":1497077951924}
   ```
@@ -81,4 +81,46 @@
   ```http
   HTTP/1.1 204 No Content
   Content-Length: 0
+  ```
+
+### EXTRAS (EXPERIMENTAL)
+
+- `update:`
+
+  ```http
+  PATCH http://example.com/upload?upload_id=471e97554f21dec3b8bb5d4602939c51
+  Content-Type: application/json; charset=UTF-8
+  {"name":"file2.mp4"}
+  ```
+
+  ```http
+  HTTP/1.1 200 OK
+  Content-Length: 87
+  Content-Type: application/json
+  {"name":"file2.mp4","mimeType":"video/mp4","size":2469036,"lastModified":1497077951924}
+  ```
+
+- `info:`
+
+  ```http
+  GET http://example.com/upload?upload_id=471e97554f21dec3b8bb5d4602939c51
+  GET http://example.com/upload/471e97554f21dec3b8bb5d4602939c51
+  ```
+
+  ```http
+  HTTP/1.1 200 OK
+  Content-Length: 87
+  Content-Type: application/json
+  [{"name":"videos/file.mp4","updated":"2021-04-19T12:19:46.132Z"}]
+  ```
+
+  ```http
+  GET http://example.com/upload
+  ```
+
+  ```http
+  HTTP/1.1 200 OK
+  Content-Length: 130
+  Content-Type: application/json
+  [{"name":"videos/file.mp4","updated":"2021-04-19T12:19:46.132Z"},{"name":"videos/file2.mp4","updated":"2021-04-19T12:19:45.132Z"}]
   ```
