@@ -3,11 +3,12 @@ import { Request, Response } from 'express';
 import * as httpMocks from 'node-mocks-http';
 
 describe('CORS', () => {
-  const cors = new Cors();
+  let cors: Cors;
   let req: Request;
   let res: Response;
   describe('Actual Request', () => {
     beforeEach(() => {
+      cors = new Cors();
       req = httpMocks.createRequest({ url: 'https://example.com/upload', method: 'POST' });
       res = httpMocks.createResponse();
     });
@@ -24,6 +25,7 @@ describe('CORS', () => {
     });
   });
   describe('Preflight Request', () => {
+    cors = new Cors();
     beforeEach(() => {
       req = httpMocks.createRequest({ url: 'https://example.com/upload', method: 'OPTIONS' });
       res = httpMocks.createResponse();
@@ -36,6 +38,16 @@ describe('CORS', () => {
       cors.preflight(req, res);
       expect(res.header('Access-Control-Allow-Headers')).toBe('x-header1,x-header2');
       expect(res.header('Access-Control-Allow-Methods')).toContain('PUT');
+    });
+
+    it('should allow block cors requests', () => {
+      cors.allowedMethods = ['PUT', 'POST', 'HEAD'];
+      cors.allowedHeaders = ['x-header3'];
+      req.headers['access-control-request-method'] = 'PATCH';
+      req.headers['access-control-request-headers'] = 'x-header4';
+      cors.preflight(req, res);
+      expect(res.header('Access-Control-Allow-Headers')).not.toContain('x-header4');
+      expect(res.header('Access-Control-Allow-Methods')).not.toContain('PATCH');
     });
 
     it('should not set headers for invalid preflight', () => {
