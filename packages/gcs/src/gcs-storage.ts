@@ -157,7 +157,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     file.metadata = { ...file.metadata, ...metadata };
     file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file);
-    return file;
+    return { ...file, status: 'updated' };
   }
 
   protected async _write(part: FilePart & GCSFile): Promise<number> {

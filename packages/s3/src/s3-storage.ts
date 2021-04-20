@@ -135,7 +135,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
     file.metadata = { ...file.metadata, ...metadata };
     file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file);
-    return file;
+    return { ...file, status: 'updated' };
   }
 
   protected async _saveMeta(file: S3File): Promise<any> {

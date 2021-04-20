@@ -24,7 +24,7 @@ export interface FileInit {
   userId?: string;
 }
 
-export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part';
+export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part' | 'updated';
 
 export class File implements FileInit {
   bytesWritten = NaN;
