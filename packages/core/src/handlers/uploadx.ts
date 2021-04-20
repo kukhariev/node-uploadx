@@ -50,7 +50,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
     const file = await this.storage.update(name, { metadata, name });
-    this.send({ res, body: file });
+    this.send({ res, body: file.metadata });
     return file;
   }
 
