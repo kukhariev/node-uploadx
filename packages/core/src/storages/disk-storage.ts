@@ -73,9 +73,8 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     try {
       const file = await this._getMeta(name);
       if (file) {
-        file.status = 'deleted';
         await Promise.all([this._deleteMeta(name), fsp.unlink(this._getPath(name))]);
-        return [{ ...file }];
+        return [{ ...file, status: 'deleted' }];
       }
     } catch (err) {
       this.log('deleteError: ', err);
@@ -88,7 +87,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     file.metadata = { ...file.metadata, ...metadata };
     file.originalName = extractOriginalName(file.metadata) || file.originalName;
     await this._saveMeta(file);
-    return file;
+    return { ...file, status: 'updated' };
   }
 
   protected _write(part: FilePart): Promise<number> {
