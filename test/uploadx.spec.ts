@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx } from '../packages/core/src';
+import { uploadx } from '@uploadx/core';
 import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -73,7 +73,8 @@ describe('::Uploadx', () => {
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
+      const res =  await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
+      expect(res.body.name).toBe('newname.mp4')
     });
   });
 
