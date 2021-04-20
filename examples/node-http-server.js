@@ -16,6 +16,7 @@ uploads.on('created', ({ name }) => console.log('created: ', name));
 uploads.on('part', ({ name }) => console.log('part: ', name));
 uploads.on('deleted', ({ name }) => console.log('deleted: ', name));
 uploads.on('completed', file => console.log('completed: ', file));
+uploads.on('updated', file => console.log(' metadata updated: ', file));
 
 const server = createServer((req, res) => {
   const { pathname } = parse(req.url || '');
