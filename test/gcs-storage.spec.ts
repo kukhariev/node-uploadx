@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
-import { FilePart } from '../packages/core/src';
-import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '../packages/gcs/src';
+import { FilePart } from '@uploadx/core';
+import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '@uploadx/gcs';
 import { storageOptions } from './fixtures';
 import { request } from './fixtures/gcs';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
+import fetch from 'node-fetch';
+import { IncomingMessage } from 'http';
 
-const mockFetch = require('node-fetch');
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');
 jest.mock('node-fetch');
 
@@ -21,9 +24,9 @@ describe('GCStorage', () => {
   let storage: GCStorage;
   let file: GCSFile;
   const uri = 'http://api.com?upload_id=123456789';
-  const _fileResponse = () => ({ data: { ...testfile, uri } });
-  const _createResponse = () => ({ headers: { location: uri } });
-  const req = { headers: { origin: 'http://api.com' } } as any;
+  const _fileResponse = (): { data: GCSFile } => ({ data: { ...testfile, uri } });
+  const _createResponse = (): any => ({ headers: { location: uri } });
+  const req = { headers: { origin: 'http://api.com' } } as IncomingMessage;
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
@@ -43,7 +46,7 @@ describe('GCStorage', () => {
       expect(file.status).toEqual('created');
       expect(file).toMatchObject({ ...testfile, uri });
       expect(mockAuthRequest).toHaveBeenCalledTimes(4);
-      expect(mockAuthRequest).toBeCalledWith(request.create);
+      expect(mockAuthRequest).toHaveBeenCalledWith(request.create);
     });
 
     it('should reject on api error', async () => {
@@ -55,7 +58,7 @@ describe('GCStorage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(_fileResponse());
-      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as GCSFile);
+      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.originalName).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
@@ -64,7 +67,7 @@ describe('GCStorage', () => {
     it('should reject if not found', async () => {
       mockAuthRequest.mockResolvedValue({});
       await expect(
-        storage.update(filename, { metadata: { name: 'newname.mp4' } } as any)
+        storage.update(filename, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('statusCode', 404);
     });
   });
@@ -76,7 +79,7 @@ describe('GCStorage', () => {
       mockAuthRequest.mockResolvedValue(list);
       const files = await storage.get(testfile.userId);
       expect(files).toEqual(expect.any(Array));
-      expect(files.length).toEqual(1);
+      expect(files).toHaveLength(1);
       expect(files[0]).toMatchObject({ name: filename });
     });
   });
@@ -84,6 +87,7 @@ describe('GCStorage', () => {
     it('should request api and set status and bytesWritten', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
       mockAuthRequest.mockResolvedValueOnce('_delete');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       mockFetch.mockResolvedValueOnce(new Response('{"mediaLink":"http://api.com/123456789"}'));
       const body = createReadStream(srcpath);
       const part: FilePart = {
@@ -106,6 +110,7 @@ describe('GCStorage', () => {
     it('should request api and set status and bytesWritten on resume', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
       mockFetch.mockResolvedValueOnce(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         new Response('', {
           status: 308,
           headers: { Range: '0-5' }

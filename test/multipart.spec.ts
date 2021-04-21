@@ -53,7 +53,7 @@ describe('::Multipart', () => {
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', metadata.name)
         .expect(403)
-        .catch(() => {});
+        .catch(() => null);
     });
   });
 

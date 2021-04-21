@@ -134,7 +134,7 @@ describe('S3Storage', () => {
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
       expect(files).toEqual(expect.any(Array));
-      expect(files.length).toEqual(1);
+      expect(files).toHaveLength(1);
       expect(files[0]).toMatchObject({ name: filename });
     });
   });
