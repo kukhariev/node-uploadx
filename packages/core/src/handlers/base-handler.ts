@@ -70,7 +70,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   upload = (
     req: http.IncomingMessage & { body?: any; _body?: boolean },
     res: http.ServerResponse,
-    next?: () => void
+    next?: (error?: any) => void
   ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
@@ -109,8 +109,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
           typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
-          this.sendError(res, errorEvent);
-          return;
+          return next ? next(error) : this.sendError(res, errorEvent);
         });
     } else {
       this.send({ res, statusCode: 404 });
