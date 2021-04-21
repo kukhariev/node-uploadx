@@ -1,7 +1,6 @@
 dist/
 scripts/
 lib/
-test/
 tmp/
 temp/
 node_modules/
