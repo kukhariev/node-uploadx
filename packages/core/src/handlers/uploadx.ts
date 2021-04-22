@@ -107,6 +107,8 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
 
 /**
  * Basic express wrapper
+ * @example
+ * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
  */
 export function uploadx<T extends Readonly<File>, L>(
   options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
@@ -114,4 +116,19 @@ export function uploadx<T extends Readonly<File>, L>(
   return new Uploadx(options).handle;
 }
 
-uploadx.upload = (options: DiskStorageOptions | { storage: any }) => new Uploadx(options).upload;
+/**
+ * Express wrapper
+ *
+ * - express ***should*** respond to the client when the upload is complete and handle errors and GET requests
+ * @example
+ * app.use('/files', uploadx.upload({ storage }), (req, res, next) => {
+  if (req.method === 'GET') {
+    return res.sendStatus(404);
+  }
+  console.log('File upload complete: ', req.body.name);
+  return res.json(req.body);
+});
+ */
+uploadx.upload = <T extends Readonly<File>, L>(
+  options: DiskStorageOptions | { storage: BaseStorage<T, L> }
+) => new Uploadx(options).upload;
