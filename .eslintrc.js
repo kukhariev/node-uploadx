@@ -14,6 +14,8 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
+    'plugin:jest/recommended',
+    'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
@@ -41,6 +43,7 @@ module.exports = {
     '@typescript-eslint/member-ordering': 'warn',
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    'jest/expect-expect': ['error', { assertFunctionNames: ['expect', 'request.**.expect'] }],
     'no-empty': 'off',
     'no-irregular-whitespace': 'error',
     'no-return-assign': 'error',

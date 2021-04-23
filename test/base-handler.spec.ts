@@ -5,9 +5,8 @@ describe('BaseHandler', () => {
   let uploader: TestUploader;
   beforeEach(() => (uploader = new TestUploader()));
 
-  it('should implement get()', () => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    expect(uploader.get({ url: '/files/12345' } as any)).resolves.toEqual([]);
+  it('should implement get()', async () => {
+    await expect(uploader.get({ url: '/files/12345' } as any)).resolves.toEqual([]);
   });
 
   it('should check if storage not ready', () => {
@@ -33,7 +32,7 @@ describe('BaseHandler', () => {
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toBeCalledWith({
+      expect(sendSpy).toHaveBeenCalledWith({
         res,
         statusCode: 500,
         body: 'Error Message'
@@ -46,7 +45,7 @@ describe('BaseHandler', () => {
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toBeCalledWith({
+      expect(sendSpy).toHaveBeenCalledWith({
         res,
         statusCode: 500,
         body: { message: 'Error Message', code: 500, detail: 'Error Message' }

@@ -49,11 +49,10 @@ describe('DiskStorage', () => {
       expect(status).toBe('created');
     });
     it('should reject on limits', async () => {
-      try {
-        await storage.create({} as any, { ...testfile, size: 6e10 });
-      } catch (error) {
-        expect(error).toHaveProperty('statusCode', 413);
-      }
+      await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toHaveProperty(
+        'statusCode',
+        413
+      );
     });
   });
   describe('.update()', () => {
@@ -98,19 +97,19 @@ describe('DiskStorage', () => {
       mockReadable.__mockAbort();
       const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
       expect(+file.bytesWritten).toBeNaN();
-      expect(close).toBeCalled();
+      expect(close).toHaveBeenCalled();
     });
   });
   describe('.get()', () => {
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
-      expect(files.length).toEqual(1);
+      expect(files).toHaveLength(1);
       expect(files[0]).toMatchObject({ name: filename });
     });
 
     it('should return one file', async () => {
       const files = await storage.get(filename);
-      expect(files.length).toEqual(1);
+      expect(files).toHaveLength(1);
       expect(files[0]).toMatchObject({ name: filename });
     });
   });

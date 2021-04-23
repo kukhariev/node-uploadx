@@ -19,7 +19,7 @@ describe('CORS', () => {
       expect(res.header('Access-Control-Allow-Origin')).toBeDefined();
     });
 
-    it('should not enable CORS if no `origin` header ', () => {
+    it('should not enable CORS if no `origin` header', () => {
       cors.preflight(req, res);
       expect(res.header('Access-Control-Allow-Origin')).toBeUndefined();
     });

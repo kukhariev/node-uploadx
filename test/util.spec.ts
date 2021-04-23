@@ -40,22 +40,22 @@ describe('fs', () => {
 
   it('getFiles(file)', async () => {
     const files = await utils.getFiles(file);
-    expect(files.length).toBe(1);
+    expect(files).toHaveLength(1);
   });
 
   it('getFiles(directory)', async () => {
     const files = await utils.getFiles(directory);
-    expect(files.length).toBe(2);
+    expect(files).toHaveLength(2);
   });
 
   it('getFiles(deep directory)', async () => {
     const files = await utils.getFiles(deep);
-    expect(files.length).toBe(2);
+    expect(files).toHaveLength(2);
   });
 
   it('getFiles(not exist)', async () => {
     const files = await utils.getFiles('test/not exist');
-    expect(files.length).toBe(0);
+    expect(files).toHaveLength(0);
   });
 
   it('getFileSize(file)', async () => {

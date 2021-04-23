@@ -73,32 +73,35 @@ describe('::Uploadx', () => {
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      const res =  await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
-      expect(res.body.name).toBe('newname.mp4')
+      const res = await request(app).patch(files[1]).send({ name: 'newname.mp4' }).expect(200);
+      expect(res.body.name).toBe('newname.mp4');
     });
   });
 
   describe('PUT', () => {
-    it('should 200 (chunks)', done => {
-      start = 0;
-      const readable = fs.createReadStream(srcpath);
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      readable.on('data', async (chunk: { length: number }) => {
-        readable.pause();
-        const res = await request(app)
-          .put(files[0])
-          .redirects(0)
-          .set('content-type', 'application/octet-stream')
-          .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${metadata.size}`)
-          .send(chunk);
-        start += chunk.length;
-        if (res.status === 200) {
-          expect(res.type).toBe('application/json');
-          expect(fs.statSync(join(directory, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
-          done();
-        }
-        readable.resume();
-      });
+    it('should 200 (chunks)', async () => {
+      function upload(): Promise<request.Response> {
+        return new Promise(resolve => {
+          start = 0;
+          const readable = fs.createReadStream(srcpath);
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          readable.on('data', async (chunk: { length: number }) => {
+            readable.pause();
+            const res = await request(app)
+              .put(files[0])
+              .redirects(0)
+              .set('content-type', 'application/octet-stream')
+              .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${metadata.size}`)
+              .send(chunk);
+            res.status === 200 && resolve(res);
+            start += chunk.length;
+            readable.resume();
+          });
+        });
+      }
+      const res = await upload();
+      expect(res.type).toBe('application/json');
+      expect(fs.statSync(join(directory, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
     });
 
     it('should 200 (single request)', async () => {
@@ -125,10 +128,10 @@ describe('::Uploadx', () => {
   describe('GET', () => {
     it('should return info array', async () => {
       const res = await request(app).get(basePath).expect(200);
-      expect(res.body.length).toBe(2);
+      expect(res.body).toHaveLength(2);
     });
   });
-  
+
   describe('DELETE', () => {
     it('should 204', async () => {
       await request(app).delete(files[1]).expect(204);
@@ -140,6 +143,4 @@ describe('::Uploadx', () => {
       await request(app).options(basePath).expect(204);
     });
   });
-
-
 });
