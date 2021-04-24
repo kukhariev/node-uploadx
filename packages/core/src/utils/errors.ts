@@ -28,7 +28,6 @@ export const ERRORS = {
     statusCode: 403,
     message: 'authenticated user is not allowed access'
   },
-
   FILE_NOT_ALLOWED: {
     statusCode: 403,
     message: 'file not allowed'
@@ -69,7 +68,7 @@ export const ERRORS = {
     statusCode: 503,
     message: 'storage error'
   }
-} as const;
+};
 
 export interface ErrorInit {
   statusCode: number;
@@ -78,6 +77,7 @@ export interface ErrorInit {
 
 export class UploadxError extends Error {
   statusCode?: number;
+  status?: number;
   request: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
   detail?: string | Record<string, unknown>;
 }

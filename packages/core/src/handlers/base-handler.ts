@@ -101,10 +101,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           return;
         })
         .catch((error: Error) => {
-          const errorEvent: UploadxError = {
-            ...error,
+          const errorEvent: UploadxError = Object.assign(error, {
             request: pick(req, ['headers', 'method', 'url'])
-          };
+          });
           this.listenerCount('error') && this.emit('error', errorEvent);
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
@@ -172,7 +171,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   ): void {
     const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
     const message = error.title || error.message;
-    const { code = statusCode, detail = message } = error;
+    const { code = statusCode, detail } = error;
     const body = this.responseType === 'json' ? { message, code, detail } : message;
     this.send({ res, statusCode, body });
   }
