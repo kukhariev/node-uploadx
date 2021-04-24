@@ -54,7 +54,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE,
       'Tus-Max-Size': this.storage.maxUploadSize
     };
-    this.send({ res, statusCode: 204, headers });
+    this.send(res, { statusCode: 204, headers });
     return {} as TFile;
   }
 
@@ -73,13 +73,13 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Tus-Resumable': TUS_RESUMABLE
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
-      getHeader(req, 'expect') && this.send({ res, statusCode: 100 });
+      getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
       const contentLength = +getHeader(req, 'content-length');
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
       headers['Upload-Offset'] = file.bytesWritten;
     }
     const statusCode = file.bytesWritten === file.size || file.bytesWritten === 0 ? 201 : 200;
-    this.send({ res, statusCode, headers });
+    this.send(res, { statusCode, headers });
     return file;
   }
 
@@ -104,7 +104,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       };
       // add 'Upload-Metadata' on complete?
       setHeaders(res, headers);
-      file.status === 'part' && this.send({ res, statusCode: 204 });
+      file.status === 'part' && this.send(res, { statusCode: 204 });
     }
     return file;
   }
@@ -120,7 +120,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       'Upload-Metadata': serializeMetadata(file.metadata),
       'Tus-Resumable': TUS_RESUMABLE
     };
-    this.send({ res, statusCode: 200, headers });
+    this.send(res, { statusCode: 200, headers });
     return {} as TFile;
   }
 
@@ -134,12 +134,12 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     }
     const [file] = await this.storage.delete(name);
     const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
-    this.send({ res, statusCode: 204, headers });
+    this.send(res, { statusCode: 204, headers });
     return file;
   }
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send({ res, statusCode: 204 });
+    return this.send(res, { statusCode: 204 });
   }
 }
 

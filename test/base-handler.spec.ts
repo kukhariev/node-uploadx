@@ -32,11 +32,7 @@ describe('BaseHandler', () => {
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toHaveBeenCalledWith({
-        res,
-        statusCode: 500,
-        body: 'Error Message'
-      });
+      expect(sendSpy).toHaveBeenCalledWith(res, { statusCode: 500, body: 'Error Message' });
     });
 
     it('should send Error (as json)', () => {
@@ -45,8 +41,7 @@ describe('BaseHandler', () => {
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');
       uploader.sendError(res, err);
-      expect(sendSpy).toHaveBeenCalledWith({
-        res,
+      expect(sendSpy).toHaveBeenCalledWith(res, {
         statusCode: 500,
         body: { message: 'Error Message', code: 500, detail: 'Error Message' }
       });

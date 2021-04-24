@@ -41,7 +41,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
     const file = await this.storage.create(req, config);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
-    this.send({ res, statusCode, headers });
+    this.send(res, { statusCode, headers });
     return file;
   }
 
@@ -50,7 +50,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
     const file = await this.storage.update(name, { metadata, name });
-    this.send({ res, body: file.metadata });
+    this.send(res, { body: file.metadata });
     return file;
   }
 
@@ -67,7 +67,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
     if (file.status === 'part') {
       const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
-      this.send({ res, statusCode: Uploadx.RESUME_STATUS_CODE, headers });
+      this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
     }
     return file;
   }
@@ -79,7 +79,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
-    this.send({ res, statusCode: 204 });
+    this.send(res, { statusCode: 204 });
     return file;
   }
 

@@ -29,7 +29,6 @@ export interface BaseHandler extends EventEmitter {
 }
 
 interface SendParameters {
-  res: http.ServerResponse;
   statusCode?: number;
   headers?: Headers;
   body?: Record<string, any> | string;
@@ -96,7 +95,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           }
           if (req.method === 'GET') {
             req['body'] = file;
-            next ? next() : this.send({ res, body: file });
+            next ? next() : this.send(res, { body: file });
           }
           return;
         })
@@ -112,7 +111,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           return;
         });
     } else {
-      this.send({ res, statusCode: 404 });
+      this.send(res, { statusCode: 404 });
     }
   };
 
@@ -121,11 +120,11 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   };
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send({ res, body: file });
+    return this.send(res, { body: file });
   }
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
-    this.send({ res, statusCode: 204 });
+    this.send(res, { statusCode: 204 });
     return {} as File;
   }
 
@@ -140,7 +139,10 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Make response
    */
-  send({ res, statusCode = 200, headers = {}, body = '' }: SendParameters): void {
+  send(
+    res: http.ServerResponse,
+    { statusCode = 200, headers = {}, body = '' }: SendParameters
+  ): void {
     let data: string;
     if (typeof body !== 'string') {
       data = JSON.stringify(body);
@@ -171,9 +173,9 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   ): void {
     const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
     const message = error.title || error.message;
-    const { code = statusCode, detail } = error;
+    const { code = statusCode, detail = message } = error;
     const body = this.responseType === 'json' ? { message, code, detail } : message;
-    this.send({ res, statusCode, body });
+    this.send(res, { statusCode, body });
   }
 
   /**

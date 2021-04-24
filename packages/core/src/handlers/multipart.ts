@@ -70,7 +70,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
-    this.send({ res, statusCode: 204 });
+    this.send(res, { statusCode: 204 });
     return file;
   }
 }
