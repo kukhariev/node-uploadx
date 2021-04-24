@@ -81,7 +81,11 @@ describe('::Tus', () => {
     });
 
     it('should 404', async () => {
-      await request(app).head(basePath).set('Tus-Resumable', TUS_RESUMABLE).expect(404);
+      await request(app)
+        .head(basePath)
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(404)
+        .expect('tus-resumable', TUS_RESUMABLE);
     });
   });
 
@@ -105,7 +109,11 @@ describe('::Tus', () => {
     });
 
     it('should 404', async () => {
-      await request(app).delete(basePath).set('Tus-Resumable', TUS_RESUMABLE).expect(404);
+      await request(app)
+        .delete(basePath)
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .expect(404)
+        .expect('tus-resumable', TUS_RESUMABLE);
     });
   });
 

@@ -8,7 +8,7 @@ import {
   Metadata
 } from '../storages';
 import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
-import { BaseHandler, Headers } from './base-handler';
+import { BaseHandler, Headers, SendParameters } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
 
@@ -51,7 +51,6 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     const headers: Headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',
       'Tus-Version': TUS_RESUMABLE,
-      'Tus-Resumable': TUS_RESUMABLE,
       'Tus-Max-Size': this.storage.maxUploadSize
     };
     this.send(res, { statusCode: 204, headers });
@@ -69,8 +68,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
     const headers: Headers = {
-      Location: this.buildFileUrl(req, file),
-      'Tus-Resumable': TUS_RESUMABLE
+      Location: this.buildFileUrl(req, file)
     };
     if (typeis(req, ['application/offset+octet-stream'])) {
       getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
@@ -99,8 +97,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     const file = await this.storage.write({ start, name, body: req, contentLength });
     if (file.status) {
       const headers: Headers = {
-        'Upload-Offset': `${file.bytesWritten}`,
-        'Tus-Resumable': TUS_RESUMABLE
+        'Upload-Offset': `${file.bytesWritten}`
       };
       // add 'Upload-Metadata' on complete?
       setHeaders(res, headers);
@@ -117,8 +114,7 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
     const file = await this.storage.write({ name: name });
     const headers: Headers = {
       'Upload-Offset': `${file.bytesWritten}`,
-      'Upload-Metadata': serializeMetadata(file.metadata),
-      'Tus-Resumable': TUS_RESUMABLE
+      'Upload-Metadata': serializeMetadata(file.metadata)
     };
     this.send(res, { statusCode: 200, headers });
     return {} as TFile;
@@ -133,13 +129,17 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
       return fail(ERRORS.FILE_NOT_FOUND);
     }
     const [file] = await this.storage.delete(name);
-    const headers: Headers = { 'Tus-Resumable': TUS_RESUMABLE };
-    this.send(res, { statusCode: 204, headers });
+    this.send(res, { statusCode: 204 });
     return file;
   }
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
     return this.send(res, { statusCode: 204 });
+  }
+
+  send(res: http.ServerResponse, { statusCode, headers = {}, body }: SendParameters): void {
+    headers['Tus-Resumable'] = TUS_RESUMABLE;
+    super.send(res, { statusCode, headers, body });
   }
 }
 

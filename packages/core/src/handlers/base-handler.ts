@@ -28,7 +28,7 @@ export interface BaseHandler extends EventEmitter {
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
-interface SendParameters {
+export interface SendParameters {
   statusCode?: number;
   headers?: Headers;
   body?: Record<string, any> | string;
