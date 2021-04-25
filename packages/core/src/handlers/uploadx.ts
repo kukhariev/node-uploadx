@@ -35,7 +35,7 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
     const config: FileInit = { metadata };
-    config.userId = this.getUserId(req);
+    config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);

@@ -37,7 +37,7 @@ export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
         config.size = part.byteCount;
         config.originalName = part.filename;
         config.contentType = part.headers['content-type'];
-        config.userId = this.getUserId(req);
+        config.userId = this.getUserId(req, res);
         part.on('error', error => null);
         this.storage
           .create(req, config)

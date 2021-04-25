@@ -6,7 +6,6 @@ import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } fr
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
-export const REQUEST_METHODS = handlers.map(s => s.toUpperCase());
 export type Headers = Record<string, string | number>;
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
 type Handlers = typeof handlers[number];
@@ -32,15 +31,6 @@ export interface SendParameters {
   statusCode?: number;
   headers?: Headers;
   body?: Record<string, any> | string;
-}
-
-interface AuthRequest extends http.IncomingMessage {
-  [propName: string]: any;
-  user?: {
-    [idKey: string]: any;
-    id?: string;
-    _id?: string;
-  };
 }
 
 export abstract class BaseHandler extends EventEmitter implements MethodHandler {
@@ -107,7 +97,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
           typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
-          this.sendError(res, errorEvent);
+          this.sendError(res, error);
           return;
         });
     } else {
@@ -115,9 +105,8 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     }
   };
 
-  getUserId = (req: AuthRequest): string | undefined => {
-    return req.user?.id || req.user?.id;
-  };
+  // eslint-disable-next-line
+  getUserId = (req: any, res: any): string | undefined => req.user?.id || req.user?.id;
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
     return this.send(res, { body: file });
