@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, File, FileInit } from '../storages';
-import { DiskStorage, DiskStorageOptions } from '../storages';
+import { DiskStorageOptions } from '../storages';
 import { ERRORS, fail, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
@@ -12,18 +12,8 @@ interface MultipartyPart extends multiparty.Part {
   };
 }
 
-export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler {
-  storage: BaseStorage<TFile, L>;
-
-  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
-    super();
-    this.storage =
-      'storage' in config
-        ? config.storage
-        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
-    this.responseType = 'json';
-    this.log('options: %o', config);
-  }
+export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
+  responseType = 'json' as const;
 
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {

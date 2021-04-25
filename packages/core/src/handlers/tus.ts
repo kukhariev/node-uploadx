@@ -1,12 +1,5 @@
 import * as http from 'http';
-import {
-  BaseStorage,
-  DiskStorage,
-  DiskStorageOptions,
-  File,
-  FileInit,
-  Metadata
-} from '../storages';
+import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
 import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
 import { BaseHandler, Headers, SendParameters } from './base-handler';
 
@@ -34,18 +27,8 @@ export function parseMetadata(encoded = ''): Metadata {
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
-export class Tus<TFile extends Readonly<File>, L> extends BaseHandler {
-  storage: BaseStorage<TFile, L>;
-
-  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
-    super();
-    this.storage =
-      'storage' in config
-        ? config.storage
-        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
-    this.responseType = 'json';
-    this.log('options: %o', config);
-  }
+export class Tus<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
+  responseType = 'json' as const;
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers: Headers = {
