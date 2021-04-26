@@ -16,7 +16,6 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
  */
 export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
   static RESUME_STATUS_CODE = 308;
-  responseType = 'json' as const;
 
   /**
    * Create File from request and send file url to client

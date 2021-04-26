@@ -28,8 +28,6 @@ export function parseMetadata(encoded = ''): Metadata {
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
 export class Tus<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
-  responseType = 'json' as const;
-
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers: Headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',

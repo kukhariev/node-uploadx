@@ -43,11 +43,13 @@ interface AuthRequest extends http.IncomingMessage {
   };
 }
 
+export type ResponseBodyType = 'text' | 'json';
+
 export abstract class BaseHandler<TFile extends Readonly<File>, L>
   extends EventEmitter
   implements MethodHandler {
   cors: Cors;
-  responseType: 'text' | 'json' = 'text';
+  responseType: ResponseBodyType = 'json';
   storage: BaseStorage<TFile, L>;
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers = new Map<string, AsyncHandler>();

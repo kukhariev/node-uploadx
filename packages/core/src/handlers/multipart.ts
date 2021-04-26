@@ -13,8 +13,6 @@ interface MultipartyPart extends multiparty.Part {
 }
 
 export class Multipart<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
-  responseType = 'json' as const;
-
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
