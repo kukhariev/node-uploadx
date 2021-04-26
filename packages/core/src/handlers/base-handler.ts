@@ -34,15 +34,6 @@ export interface SendParameters {
   body?: Record<string, any> | string;
 }
 
-interface AuthRequest extends http.IncomingMessage {
-  [propName: string]: any;
-  user?: {
-    [idKey: string]: any;
-    id?: string;
-    _id?: string;
-  };
-}
-
 export type ResponseBodyType = 'text' | 'json';
 
 export abstract class BaseHandler<TFile extends Readonly<File>, L>
@@ -116,7 +107,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
           this.log('[error]: %o', errorEvent);
           if ('aborted' in req && req['aborted']) return;
           typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
-          this.sendError(res, errorEvent);
+          this.sendError(res, error);
           return;
         });
     } else {
@@ -124,9 +115,8 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     }
   };
 
-  getUserId = (req: AuthRequest): string | undefined => {
-    return req.user?.id || req.user?.id;
-  };
+  // eslint-disable-next-line
+  getUserId = (req: any, res: any): string | undefined => req.user?.id || req.user?.id;
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
     return this.send(res, { body: file });
