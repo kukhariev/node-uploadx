@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage, DiskStorage, DiskStorageOptions, File, FileInit } from '../storages';
+import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
 import { BaseHandler, Headers } from './base-handler';
 
@@ -12,22 +12,10 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 }
 
 /**
- * X-headers  protocol implementation
+ * X-headers protocol implementation
  */
-export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler {
+export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
   static RESUME_STATUS_CODE = 308;
-
-  storage: BaseStorage<TFile, L>;
-
-  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions) {
-    super();
-    this.storage =
-      'storage' in config
-        ? config.storage
-        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
-    this.responseType = 'json';
-    this.log('options: %o', config);
-  }
 
   /**
    * Create File from request and send file url to client

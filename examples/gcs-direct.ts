@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import { parse } from 'url';
-import { GCSFile, GCStorage, Uploadx } from 'node-uploadx';
+import { GCStorage, Uploadx } from 'node-uploadx';
 
 const storage = new GCStorage({
   clientDirectUpload: true,
@@ -8,7 +8,7 @@ const storage = new GCStorage({
   allowMIME: ['video/*', 'image/*']
 });
 const uploads = new Uploadx({ storage });
-uploads.on<GCSFile>('created', file =>
+uploads.on('created', file =>
   console.log('google upload link sent to client: ', file.GCSUploadURI)
 );
 
