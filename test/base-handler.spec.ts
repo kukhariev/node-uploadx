@@ -28,6 +28,7 @@ describe('BaseHandler', () => {
     });
 
     it('should send Error (as string)', () => {
+      uploader.responseType = 'text';
       const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');
       const err = new Error('Error Message');

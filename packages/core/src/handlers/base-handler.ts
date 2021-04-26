@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
-import { BaseStorage, File, UploadEventType } from '../storages';
 import * as url from 'url';
+import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } from '../utils';
 import { Cors } from './cors';
 
@@ -13,16 +13,17 @@ export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
 
-export interface BaseHandler extends EventEmitter {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface BaseHandler<TFile extends Readonly<File>, L> extends EventEmitter {
   on(event: 'error', listener: (error: UploadxError) => void): this;
 
-  on<T = File>(event: UploadEventType, listener: (file: T) => void): this;
+  on(event: UploadEventType, listener: (file: TFile) => void): this;
 
-  off<T = File>(event: UploadEventType, listener: (file: T) => void): this;
+  off(event: UploadEventType, listener: (file: TFile) => void): this;
 
   off(event: 'error', listener: (error: UploadxError) => void): this;
 
-  emit<T = File>(event: UploadEventType, evt: T): boolean;
+  emit(event: UploadEventType, evt: TFile): boolean;
 
   emit(event: 'error', evt: UploadxError): boolean;
 }
@@ -33,17 +34,26 @@ export interface SendParameters {
   body?: Record<string, any> | string;
 }
 
-export abstract class BaseHandler extends EventEmitter implements MethodHandler {
-  cors: Cors;
-  responseType: 'text' | 'json' = 'text';
-  protected log = Logger.get(this.constructor.name);
-  private _registeredHandlers: Map<string, AsyncHandler> = new Map() as Map<string, AsyncHandler>;
-  abstract storage: BaseStorage<any, any>;
+export type ResponseBodyType = 'text' | 'json';
 
-  constructor() {
+export abstract class BaseHandler<TFile extends Readonly<File>, L>
+  extends EventEmitter
+  implements MethodHandler {
+  cors: Cors;
+  responseType: ResponseBodyType = 'json';
+  storage: BaseStorage<TFile, L>;
+  protected log = Logger.get(this.constructor.name);
+  private _registeredHandlers = new Map<string, AsyncHandler>();
+
+  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions = {}) {
     super();
     this.cors = new Cors();
+    this.storage =
+      'storage' in config
+        ? config.storage
+        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
     this.compose();
+    this.log('options: %o', config);
   }
 
   compose(): void {
@@ -71,7 +81,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     if (handler) {
       handler
         .call(this, req, res)
-        .then(async (file: File | File[]) => {
+        .then(async (file: TFile | L[]) => {
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
@@ -112,17 +122,17 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
     return this.send(res, { body: file });
   }
 
-  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<File> {
+  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     this.send(res, { statusCode: 204 });
-    return {} as File;
+    return {} as TFile;
   }
 
   /**
    * `GET` request handler
    */
-  get<T>(req: http.IncomingMessage): Promise<T[]> {
+  get(req: http.IncomingMessage): Promise<L[]> {
     const name = this.getName(req);
-    return this.storage.get(name) as Promise<T[]>;
+    return this.storage.get(name);
   }
 
   /**
@@ -181,7 +191,7 @@ export abstract class BaseHandler extends EventEmitter implements MethodHandler 
   /**
    * Build file url from request
    */
-  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
+  protected buildFileUrl(req: http.IncomingMessage, file: TFile): string {
     const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
     const { pathname = '', query } = url.parse(originalUrl, true);
     const path = url.format({ pathname: `${pathname}/${file.name}`, query });
