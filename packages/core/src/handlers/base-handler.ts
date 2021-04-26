@@ -2,7 +2,17 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
-import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } from '../utils';
+import {
+  ERRORS,
+  ERROR_RESPONSES,
+  getBaseUrl,
+  isUploadxError,
+  Logger,
+  pick,
+  setHeaders,
+  typeis,
+  UploadxError
+} from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -52,6 +62,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
       'storage' in config
         ? config.storage
         : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
+    this.assembleErrors();
     this.compose();
     this.log('options: %o', config);
   }
@@ -62,6 +73,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
       handler && this._registeredHandlers.set(method.toUpperCase(), handler);
     });
     this.log('Handlers', this._registeredHandlers);
+  }
+
+  assembleErrors(): void {
+    // TODO:
   }
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
@@ -75,7 +90,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     this.log(`[request]: %s`, req.method, req.url);
     this.cors.preflight(req, res);
     if (!this.storage.isReady) {
-      return this.sendError(res, ERRORS.STORAGE_ERROR);
+      return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR });
     }
     const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
@@ -99,7 +114,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
           }
           return;
         })
-        .catch((error: Error) => {
+        .catch((error: UploadxError) => {
           const errorEvent: UploadxError = Object.assign(error, {
             request: pick(req, ['headers', 'method', 'url'])
           });
@@ -159,22 +174,14 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   /**
    * Send Error to client
    */
-  sendError(
-    res: http.ServerResponse,
-    error: {
-      statusCode?: number;
-      message?: string;
-      code?: number;
-      status?: any;
-      title?: string;
-      detail?: Record<string, unknown> | string;
+  sendError(res: http.ServerResponse, error: Partial<UploadxError>): void {
+    if (isUploadxError(error)) {
+      const [statusCode, body, headers] = ERROR_RESPONSES[error.uploadxError];
+      this.send(res, { statusCode, body, headers });
+    } else {
+      const [statusCode, body, headers] = ERROR_RESPONSES[ERRORS.UNKNOWN_ERROR];
+      this.send(res, { statusCode, body, headers });
     }
-  ): void {
-    const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
-    const message = error.title || error.message;
-    const { code = statusCode, detail = message } = error;
-    const body = this.responseType === 'json' ? { message, code, detail } : message;
-    this.send(res, { statusCode, body });
   }
 
   /**
