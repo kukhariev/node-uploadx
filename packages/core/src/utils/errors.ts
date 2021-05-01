@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import type { IncomingMessage } from 'http';
 
 // eslint-disable-next-line no-shadow
@@ -17,14 +19,24 @@ export const enum ERRORS {
   STORAGE_ERROR = 'STORAGE_ERROR',
   TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS',
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-  UNSUPPORTED_MEDIA_TYPE = 'UNSUPPORTED_MEDIA_TYPE'
+  UNSUPPORTED_MEDIA_TYPE = 'UNSUPPORTED_MEDIA_TYPE',
+  UNPROCESSABLE_ENTITY = 'UNPROCESSABLE_ENTITY'
 }
 
-type ErrorResponses<T = { error: string }> = {
-  [K in ERRORS]: [statusCode: number, body?: T, headers?: Record<string, any>];
+export type ResponseTuple<T = string | Record<string, any>> = [
+  statusCode: number,
+  body?: T,
+  headers?: Record<string, any>
+];
+type DefaultErrorResponses = {
+  [K in ERRORS]: ResponseTuple;
 };
 
-export const ERROR_RESPONSES: ErrorResponses = {
+export type ErrorResponses<T = string | Record<string, any>> = {
+  [error: string]: ResponseTuple<T>;
+} & DefaultErrorResponses;
+
+export const ERROR_RESPONSES: DefaultErrorResponses = {
   BAD_REQUEST: [400, { error: 'bad request' }],
   INVALID_CONTENT_TYPE: [400, { error: 'invalid or missing content-type header' }],
   INVALID_RANGE: [400, { error: 'invalid or missing content-range header' }],
@@ -32,6 +44,7 @@ export const ERROR_RESPONSES: ErrorResponses = {
   INVALID_FILE_NAME: [400, { error: 'file name cannot be retrieved' }],
   FORBIDDEN: [403, { error: 'authenticated user is not allowed access' }],
   FILE_NOT_ALLOWED: [403, { error: 'file not allowed' }],
+  UNPROCESSABLE_ENTITY: [422, { error: 'validation failed' }],
   FILE_CONFLICT: [409, { error: 'file conflict' }],
   REQUEST_ENTITY_TOO_LARGE: [413, { error: 'request entity too large' }],
   UNSUPPORTED_MEDIA_TYPE: [415, { error: 'unsupported media type' }],
@@ -53,9 +66,6 @@ export function isUploadxError(err: unknown): err is UploadxError {
   return (err as UploadxError).uploadxError !== undefined;
 }
 
-export function fail(
-  uploadxError: ERRORS,
-  detail?: Record<string, unknown> | string
-): Promise<never> {
+export function fail(uploadxError: string, detail?: Record<string, any> | string): Promise<never> {
   return Promise.reject({ message: uploadxError, uploadxError, detail });
 }

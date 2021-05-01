@@ -1,5 +1,4 @@
 import * as express from 'express';
-import { promises } from 'fs';
 import { DiskFile, DiskStorage, OnComplete, uploadx } from 'node-uploadx';
 
 const app = express();
@@ -13,11 +12,7 @@ const auth: express.Handler = (req, res, next) => {
 app.use(auth);
 
 const onComplete: OnComplete<DiskFile> = async file => {
-  const srcpath = `upload/${file.name}`;
-  const dstpath = `files/${file.originalName}`;
-  await promises.mkdir('files', { recursive: true });
-  await promises.link(srcpath, dstpath);
-  const message = `File upload is finished, path: ${dstpath}`;
+  const message = `File upload is finished, path: ${file.name}`;
   console.log(message);
   return {
     message,
@@ -26,13 +21,19 @@ const onComplete: OnComplete<DiskFile> = async file => {
 };
 
 const storage = new DiskStorage({
-  allowMIME: { value: ['video/*'], message: 'Only Video files is supported.', statusCode: 415 },
-  maxUploadSize: { value: '1GB', message: 'File is too big.', statusCode: 413 },
+  maxUploadSize: '1GB',
   directory: 'upload',
-  onComplete
+  onComplete,
+  validation: {
+    mime: { value: ['video/*'], response: [415, { error: 'video only' }] },
+    channel: {
+      isValid: file => !!file.metadata.channel,
+      response: [403, { error: 'missing channel id' }]
+    }
+  }
 });
 
-app.use('/files', express.static('files'), uploadx({ storage }));
+app.use('/files', uploadx({ storage }));
 
 app.listen(3003, () => {
   console.log('listening on port:', 3003);

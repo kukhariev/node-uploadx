@@ -1,29 +1,26 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-import { Cache, ERRORS, fail, Logger, typeis } from '../utils';
+import {
+  Cache,
+  ErrorResponses,
+  ERROR_RESPONSES,
+  Logger,
+  typeis,
+  Validation,
+  Validator,
+  ValidatorConfig
+} from '../utils';
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
-
-type ValidatorConfig<T> = {
-  value: T;
-  message?: string;
-  statusCode?: number;
-};
-
-export type Validator = (file: File) => Required<ValidatorConfig<any>> | false;
-
-function validatorsParams<T>(params: T | ValidatorConfig<T>): ValidatorConfig<T> {
-  return typeof params === 'object' && 'value' in params ? params : { value: params };
-}
 
 export type OnComplete<T extends File> = (file: T) => any;
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
-  allowMIME?: string[] | ValidatorConfig<string[]>;
+  allowMIME?: string[];
   /** File size limit */
-  maxUploadSize?: number | string | ValidatorConfig<string | number>;
+  maxUploadSize?: number | string;
   /** Filename generator function */
   filename?: (file: T) => string;
   useRelativeLocation?: boolean;
@@ -31,6 +28,7 @@ export interface BaseStorageOptions<T extends File> {
   onComplete?: OnComplete<T>;
   /** Node http base path */
   path?: string;
+  validation?: Validation<T>;
 }
 
 const defaultOptions: Required<BaseStorageOptions<File>> = {
@@ -39,43 +37,49 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
   useRelativeLocation: false,
   onComplete: () => null,
-  path: '/files'
+  path: '/files',
+  validation: {}
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
-  validators: Set<Validator> = new Set();
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   path: string;
   isReady = false;
+  errorResponses = {} as ErrorResponses;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
   protected cache = new Cache<TFile>();
+  private validation = new Validator<TFile>(this.errorResponses);
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
+    this.maxUploadSize = bytes.parse(opts.maxUploadSize);
 
-    const mime = validatorsParams(opts.allowMIME);
-    const fileTypeValidator: Validator = file =>
-      !typeis.is(file.contentType, mime.value) && { ...ERRORS.UNSUPPORTED_MEDIA_TYPE, ...mime };
+    const size: Required<ValidatorConfig<TFile>> = {
+      value: this.maxUploadSize,
+      isValid(file) {
+        return file.size <= this.value;
+      },
+      response: ERROR_RESPONSES.REQUEST_ENTITY_TOO_LARGE
+    };
 
-    const size = validatorsParams(opts.maxUploadSize);
-    this.maxUploadSize = size.value = bytes.parse(size.value);
-    const fileSizeValidator: Validator = file =>
-      file.size > size.value && { ...ERRORS.REQUEST_ENTITY_TOO_LARGE, ...size };
-
-    this.validators.add(fileTypeValidator);
-    this.validators.add(fileSizeValidator);
+    const mime: Required<ValidatorConfig<TFile>> = {
+      value: opts.allowMIME,
+      isValid(file) {
+        return !!typeis.is(file.contentType, this.value);
+      },
+      response: ERROR_RESPONSES.UNSUPPORTED_MEDIA_TYPE
+    };
+    this.validation.add({ size, mime });
+    this.validation.add({ ...opts.validation });
   }
 
   async validate(file: TFile): Promise<any> {
-    for (const validator of this.validators) {
-      const error = validator.call(this, file);
-      if (error) return fail(error);
-    }
+    return this.validation.verify(file);
   }
 
   protected setStatus(file: File): File['status'] | undefined {

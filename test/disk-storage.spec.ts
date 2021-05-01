@@ -26,11 +26,11 @@ describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
   let mockReadable: RequestReadStream;
-
-  beforeEach(() => {
+  const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
     return storage.create({} as any, testfile);
-  });
+  };
+
   describe('initialization', () => {
     it('should set defaults', () => {
       storage = new DiskStorage();
@@ -50,12 +50,13 @@ describe('DiskStorage', () => {
     });
     it('should reject on limits', async () => {
       await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toHaveProperty(
-        'statusCode',
-        413
+        'uploadxError',
+        'VALIDATION_SIZE'
       );
     });
   });
   describe('.update()', () => {
+    beforeEach(createFile);
     it('should update metadata', async () => {
       const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
       expect(file.metadata.name).toBe('newname.mp4');
@@ -63,6 +64,7 @@ describe('DiskStorage', () => {
     });
   });
   describe('.write()', () => {
+    beforeEach(createFile);
     beforeEach(() => {
       writeStream = new FileWriteStream();
       mockReadable = new RequestReadStream();
@@ -83,13 +85,13 @@ describe('DiskStorage', () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
-      await expect(write).rejects.toHaveProperty('statusCode', 404);
+      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
     });
 
     it('should reject with 500', async () => {
       mockReadable.__mockPipeError(writeStream);
       const write = storage.write({ ...testfile, start: 0, body: mockReadable });
-      await expect(write).rejects.toHaveProperty('statusCode', 500);
+      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_ERROR');
     });
 
     it('should close file and reset bytesWritten on abort', async () => {
@@ -101,6 +103,7 @@ describe('DiskStorage', () => {
     });
   });
   describe('.get()', () => {
+    beforeEach(createFile);
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
       expect(files).toHaveLength(1);
@@ -115,6 +118,7 @@ describe('DiskStorage', () => {
   });
 
   describe('.delete()', () => {
+    beforeEach(createFile);
     it('should set status', async () => {
       const [deleted] = await storage.delete(filename);
       expect(deleted.name).toBe(filename);

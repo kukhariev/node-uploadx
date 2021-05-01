@@ -3,10 +3,10 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import {
+  ErrorResponses,
   ERRORS,
   ERROR_RESPONSES,
   getBaseUrl,
-  isUploadxError,
   Logger,
   pick,
   setHeaders,
@@ -54,6 +54,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   storage: BaseStorage<TFile, L>;
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers = new Map<string, AsyncHandler>();
+  private _errorResponses = {} as ErrorResponses;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions = {}) {
     super();
@@ -67,6 +68,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     this.log('options: %o', config);
   }
 
+  set errorResponses(value: ErrorResponses) {
+    this.assembleErrors(value);
+  }
+
   compose(): void {
     handlers.forEach(method => {
       const handler = (this as MethodHandler)[method];
@@ -75,8 +80,12 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     this.log('Handlers', this._registeredHandlers);
   }
 
-  assembleErrors(): void {
-    // TODO:
+  assembleErrors(value = {}): void {
+    this._errorResponses = {
+      ...ERROR_RESPONSES,
+      ...value,
+      ...this.storage.errorResponses
+    };
   }
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
@@ -131,7 +140,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   };
 
   // eslint-disable-next-line
-  getUserId = (req: any, res: any): string | undefined => req.user?.id || req.user?.id;
+  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id;
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
     return this.send(res, { body: file });
@@ -175,13 +184,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Partial<UploadxError>): void {
-    if (isUploadxError(error)) {
-      const [statusCode, body, headers] = ERROR_RESPONSES[error.uploadxError];
-      this.send(res, { statusCode, body, headers });
-    } else {
-      const [statusCode, body, headers] = ERROR_RESPONSES[ERRORS.UNKNOWN_ERROR];
-      this.send(res, { statusCode, body, headers });
-    }
+    const [statusCode, body, headers] = this._errorResponses[
+      error.uploadxError || ERRORS.UNKNOWN_ERROR
+    ];
+    this.send(res, { statusCode, body, headers });
   }
 
   /**
