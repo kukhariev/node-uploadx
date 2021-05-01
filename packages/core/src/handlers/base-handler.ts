@@ -2,7 +2,17 @@ import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
-import { ERRORS, getBaseUrl, Logger, pick, setHeaders, typeis, UploadxError } from '../utils';
+import {
+  ErrorResponses,
+  ERRORS,
+  ERROR_RESPONSES,
+  getBaseUrl,
+  Logger,
+  pick,
+  setHeaders,
+  typeis,
+  UploadxError
+} from '../utils';
 import { Cors } from './cors';
 
 const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
@@ -44,6 +54,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   storage: BaseStorage<TFile, L>;
   protected log = Logger.get(this.constructor.name);
   private _registeredHandlers = new Map<string, AsyncHandler>();
+  private _errorResponses = {} as ErrorResponses;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions = {}) {
     super();
@@ -52,8 +63,13 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
       'storage' in config
         ? config.storage
         : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
+    this.assembleErrors();
     this.compose();
     this.log('options: %o', config);
+  }
+
+  set errorResponses(value: ErrorResponses) {
+    this.assembleErrors(value);
   }
 
   compose(): void {
@@ -62,6 +78,14 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
       handler && this._registeredHandlers.set(method.toUpperCase(), handler);
     });
     this.log('Handlers', this._registeredHandlers);
+  }
+
+  assembleErrors(value = {}): void {
+    this._errorResponses = {
+      ...ERROR_RESPONSES,
+      ...value,
+      ...this.storage.errorResponses
+    };
   }
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
@@ -75,7 +99,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     this.log(`[request]: %s`, req.method, req.url);
     this.cors.preflight(req, res);
     if (!this.storage.isReady) {
-      return this.sendError(res, ERRORS.STORAGE_ERROR);
+      return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR });
     }
     const handler = this._registeredHandlers.get(req.method as string);
     if (handler) {
@@ -99,7 +123,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
           }
           return;
         })
-        .catch((error: Error) => {
+        .catch((error: UploadxError) => {
           const errorEvent: UploadxError = Object.assign(error, {
             request: pick(req, ['headers', 'method', 'url'])
           });
@@ -116,7 +140,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   };
 
   // eslint-disable-next-line
-  getUserId = (req: any, res: any): string | undefined => req.user?.id || req.user?.id;
+  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id;
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
     return this.send(res, { body: file });
@@ -159,22 +183,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   /**
    * Send Error to client
    */
-  sendError(
-    res: http.ServerResponse,
-    error: {
-      statusCode?: number;
-      message?: string;
-      code?: number;
-      status?: any;
-      title?: string;
-      detail?: Record<string, unknown> | string;
-    }
-  ): void {
-    const statusCode = error.statusCode || Number(error.code) || Number(error.status) || 500;
-    const message = error.title || error.message;
-    const { code = statusCode, detail = message } = error;
-    const body = this.responseType === 'json' ? { message, code, detail } : message;
-    this.send(res, { statusCode, body });
+  sendError(res: http.ServerResponse, error: Partial<UploadxError>): void {
+    const [statusCode, body, headers] = this._errorResponses[
+      error.uploadxError || ERRORS.UNKNOWN_ERROR
+    ];
+    this.send(res, { statusCode, body, headers });
   }
 
   /**
