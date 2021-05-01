@@ -19,7 +19,7 @@ describe('BaseHandler', () => {
   it('should check http method', () => {
     const res = createResponse();
     uploader.handle(createRequest({ method: 'TRACE' }), res);
-    expect(res.statusCode).toEqual(404);
+    expect(res.statusCode).toEqual(405);
   });
 
   describe('sendError', () => {

@@ -3,9 +3,9 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import {
+  ERROR_RESPONSES,
   ErrorResponses,
   ERRORS,
-  ERROR_RESPONSES,
   getBaseUrl,
   Logger,
   pick,
@@ -97,15 +97,19 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
-    this.cors.preflight(req, res);
+    const handler = this._registeredHandlers.get(req.method as string);
+    if (!handler) {
+      return this.sendError(res, { uploadxError: ERRORS.METHOD_NOT_ALLOWED });
+    }
     if (!this.storage.isReady) {
       return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR });
     }
-    const handler = this._registeredHandlers.get(req.method as string);
-    if (handler) {
-      handler
-        .call(this, req, res)
-        .then(async (file: TFile | L[]) => {
+    this.cors.preflight(req, res);
+
+    handler
+      .call(this, req, res)
+      .then(
+        async (file: TFile | L[]): Promise<void> => {
           if ('status' in file && file.status) {
             this.log('[%s]: %s', file.status, file.name);
             this.listenerCount(file.status) && this.emit(file.status, file);
@@ -122,21 +126,18 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
             next ? next() : this.send(res, { body: file });
           }
           return;
-        })
-        .catch((error: UploadxError) => {
-          const errorEvent: UploadxError = Object.assign(error, {
-            request: pick(req, ['headers', 'method', 'url'])
-          });
-          this.listenerCount('error') && this.emit('error', errorEvent);
-          this.log('[error]: %o', errorEvent);
-          if ('aborted' in req && req['aborted']) return;
-          typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
-          this.sendError(res, error);
-          return;
+        }
+      )
+      .catch((error: UploadxError) => {
+        const errorEvent: UploadxError = Object.assign(error, {
+          request: pick(req, ['headers', 'method', 'url'])
         });
-    } else {
-      this.send(res, { statusCode: 404 });
-    }
+        this.listenerCount('error') && this.emit('error', errorEvent);
+        this.log('[error]: %o', errorEvent);
+        if ('aborted' in req && req['aborted']) return;
+        typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
+        return this.sendError(res, error);
+      });
   };
 
   // eslint-disable-next-line
