@@ -78,3 +78,7 @@ export interface Metadata {
   originalName?: string;
   lastModified?: string | number;
 }
+
+export function isValidPart(part: FilePart, file: File): boolean {
+  return (part.start || 0) + (part.contentLength || 0) <= file.size;
+}

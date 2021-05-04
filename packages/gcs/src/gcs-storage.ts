@@ -13,6 +13,7 @@ import {
   FilePart,
   getHeader,
   hasContent,
+  isValidPart,
   METAFILE_EXTNAME
 } from '@uploadx/core';
 
@@ -121,6 +122,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   async write(part: FilePart): Promise<GCSFile> {
     const file = await this._getMeta(part.name);
+    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
     file.status = this.setStatus(file);
     if (file.status === 'completed') {

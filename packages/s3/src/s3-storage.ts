@@ -9,8 +9,9 @@ import {
   FileInit,
   FilePart,
   hasContent,
-  METAFILE_EXTNAME,
-  mapValues
+  isValidPart,
+  mapValues,
+  METAFILE_EXTNAME
 } from '@uploadx/core';
 import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
@@ -83,6 +84,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async write(part: FilePart): Promise<S3File> {
     const file = await this._getMeta(part.name);
+    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ||= [];
     if (hasContent(part)) {
       const partNumber = file.Parts.length + 1;
