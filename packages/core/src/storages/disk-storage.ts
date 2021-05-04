@@ -3,12 +3,13 @@ import { extname, join, relative, resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
 import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
+import { Stats } from 'fs';
 
 export class DiskFile extends File {}
 
 export interface DiskListObject {
   name: string;
-  updated: Date;
+  info: Stats;
 }
 
 export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
@@ -62,7 +63,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     const files = await getFiles(join(this.directory, prefix));
     const props = async (path: string): Promise<DiskListObject> => ({
       name: relative(this.directory, path).replace(/\\/g, '/'),
-      updated: (await fsp.stat(path)).mtime
+      info: await fsp.stat(path)
     });
     return Promise.all(
       files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path))

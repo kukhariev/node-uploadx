@@ -14,7 +14,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
     getFiles: async () => [join(directory, filename), join(directory, metafile)],
     getWriteStream: () => writeStream,
     fsp: {
-      stat: async () => ({ mtime: new Date() }),
+      stat: async () => ({ mtime: new Date(), size: 10 }),
       writeFile: async () => 0,
       readFile: async () => JSON.stringify(testfile),
       unlink: async () => null
@@ -80,20 +80,17 @@ describe('DiskStorage', () => {
       expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(0);
     });
-
     it('should reject with 404', async () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
       await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
     });
-
     it('should reject with 500', async () => {
       mockReadable.__mockPipeError(writeStream);
       const write = storage.write({ ...testfile, start: 0, body: mockReadable });
       await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_ERROR');
     });
-
     it('should close file and reset bytesWritten on abort', async () => {
       const close = jest.spyOn(writeStream, 'close');
       mockReadable.__mockAbort();
@@ -107,13 +104,13 @@ describe('DiskStorage', () => {
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
       expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      expect(files[0]).toMatchObject({ name: filename, info: { size: 10 } });
     });
 
     it('should return one file', async () => {
       const files = await storage.get(filename);
       expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      expect(files[0]).toMatchObject({ name: filename, info: { size: 10 } });
     });
   });
 
