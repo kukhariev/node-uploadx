@@ -51,6 +51,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
+      if (file.bytesWritten < 0) return fail(ERRORS.FILE_CONFLICT);
       file.status = this.setStatus(file);
       return file;
     } catch (err) {
@@ -91,17 +92,26 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return { ...file, status: 'updated' };
   }
 
-  protected _write(part: FilePart): Promise<number> {
+  protected _write(part: FilePart & File): Promise<number> {
     return new Promise((resolve, reject) => {
       const path = this._getPath(part.name);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
         file.once('error', error => reject(error));
-        part.body.once('aborted', () => {
+        const body = part.body;
+        body.once('aborted', () => {
           file.close();
           return resolve(NaN);
         });
-        part.body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
+        let start = part.start;
+        body.on('data', (chunk: { length: number }) => {
+          start += chunk.length;
+          if (start > part.size) {
+            file.close();
+            return resolve(-1);
+          }
+        });
+        body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
       } else {
         resolve(ensureFile(path));
       }

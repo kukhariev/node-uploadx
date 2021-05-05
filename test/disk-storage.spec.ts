@@ -101,6 +101,12 @@ describe('DiskStorage', () => {
       expect(+file.bytesWritten).toBeNaN();
       expect(close).toHaveBeenCalled();
     });
+
+    it('should check chunk size', async () => {
+      mockReadable.__mockSend();
+      const write = storage.write({ ...testfile, start: testfile.size - 2, body: mockReadable });
+      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_CONFLICT');
+    });
   });
   describe('.get()', () => {
     beforeEach(createFile);
