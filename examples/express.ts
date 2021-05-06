@@ -26,9 +26,9 @@ const storage = new DiskStorage({
   onComplete,
   validation: {
     mime: { value: ['video/*'], response: [415, { error: 'video only' }] },
-    channel: {
-      isValid: file => !!file.metadata.channel,
-      response: [403, { error: 'missing channel id' }]
+    mtime: {
+      isValid: file => !!file.metadata.lastModified,
+      response: [403, { error: 'missing lastModified' }]
     }
   }
 });
