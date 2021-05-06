@@ -1,7 +1,7 @@
 import * as http from 'http';
 import { extname, join, relative, resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
-import { extractOriginalName, File, FileInit, FilePart, hasContent } from './file';
+import { extractOriginalName, File, FileInit, FilePart, hasContent, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {}
@@ -48,8 +48,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
    */
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this._getMeta(part.name);
+    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
+      if (file.bytesWritten < 0) return fail(ERRORS.FILE_CONFLICT);
       file.status = this.setStatus(file);
       return file;
     } catch (err) {
@@ -90,17 +92,26 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return { ...file, status: 'updated' };
   }
 
-  protected _write(part: FilePart): Promise<number> {
+  protected _write(part: FilePart & File): Promise<number> {
     return new Promise((resolve, reject) => {
       const path = this._getPath(part.name);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
         file.once('error', error => reject(error));
-        part.body.once('aborted', () => {
+        const body = part.body;
+        body.once('aborted', () => {
           file.close();
           return resolve(NaN);
         });
-        part.body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
+        let start = part.start;
+        body.on('data', (chunk: { length: number }) => {
+          start += chunk.length;
+          if (start > part.size) {
+            file.close();
+            return resolve(-1);
+          }
+        });
+        body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
       } else {
         resolve(ensureFile(path));
       }

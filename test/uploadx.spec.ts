@@ -116,6 +116,18 @@ describe('::Uploadx', () => {
       );
     });
 
+    it('should 409 (invalid size)', async () => {
+      const res = await request(app)
+        .post(basePath)
+        .send({ ...metadata, name: 'testfileSingle.mp4', size: 5 });
+      const url = res.header['location'] as string;
+      await request(app)
+        .put(url)
+        .set('content-type', 'application/octet-stream')
+        .send(fs.readFileSync(srcpath))
+        .expect(409);
+    });
+
     it('should 404 (no id)', async () => {
       await request(app)
         .put(basePath)
