@@ -3,6 +3,7 @@ import { TestUploader } from './fixtures/uploader';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
+  TestUploader.methods = ['post', 'put', 'options'];
   beforeEach(() => (uploader = new TestUploader()));
 
   it('should implement get()', async () => {
@@ -12,13 +13,13 @@ describe('BaseHandler', () => {
   it('should check if storage not ready', () => {
     uploader.storage.isReady = false;
     const res = createResponse();
-    uploader.handle(createRequest(), res);
+    uploader.handle(createRequest({ method: 'OPTIONS' }), res);
     expect(res.statusCode).toEqual(503);
   });
 
   it('should check http method', () => {
     const res = createResponse();
-    uploader.handle(createRequest({ method: 'TRACE' }), res);
+    uploader.handle(createRequest({ method: 'GET' }), res);
     expect(res.statusCode).toEqual(405);
   });
 

@@ -15,10 +15,9 @@ import {
 } from '../utils';
 import { Cors } from './cors';
 
-const handlers = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'] as const;
 export type Headers = Record<string, string | number>;
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
-type Handlers = typeof handlers[number];
+type Handlers = 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put';
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
@@ -49,11 +48,19 @@ export type ResponseBodyType = 'text' | 'json';
 export abstract class BaseHandler<TFile extends Readonly<File>, L>
   extends EventEmitter
   implements MethodHandler {
+  /**
+   * Limiting enabled http method handlers
+   * @example
+   * Uploadx.methods = ['post', 'put', 'delete'];
+   * app.use('/upload', uploadx(opts));
+   *
+   */
+  static methods: Handlers[] = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'];
   cors: Cors;
   responseType: ResponseBodyType = 'json';
   storage: BaseStorage<TFile, L>;
+  registeredHandlers = new Map<string, AsyncHandler>();
   protected log = Logger.get(this.constructor.name);
-  private _registeredHandlers = new Map<string, AsyncHandler>();
   private _errorResponses = {} as ErrorResponses;
 
   constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions = {}) {
@@ -65,19 +72,31 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
         : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
     this.assembleErrors();
     this.compose();
+
     this.log('options: %o', config);
   }
 
-  set errorResponses(value: ErrorResponses) {
+  /**
+   *  Override error responses
+   *  @example
+   *  const uploadx = new Uploadx({ storage });
+   *  uploadx.errorResponses = {
+   *    FILE_NOT_FOUND: [404, { error: 'Not Found!' }]
+   *  }
+   * @param value
+   */
+  set errorResponses(value: Partial<ErrorResponses>) {
     this.assembleErrors(value);
   }
 
   compose(): void {
-    handlers.forEach(method => {
+    const child = <typeof BaseHandler>this.constructor;
+    (child.methods || BaseHandler.methods).forEach(method => {
       const handler = (this as MethodHandler)[method];
-      handler && this._registeredHandlers.set(method.toUpperCase(), handler);
+      handler && this.registeredHandlers.set(method.toUpperCase(), handler);
+      // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
-    this.log('Handlers', this._registeredHandlers);
+    this.log('Handlers', this.registeredHandlers);
   }
 
   assembleErrors(value = {}): void {
@@ -97,7 +116,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.log(`[request]: %s`, req.method, req.url);
-    const handler = this._registeredHandlers.get(req.method as string);
+    const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
       return this.sendError(res, { uploadxError: ERRORS.METHOD_NOT_ALLOWED });
     }
