@@ -8,7 +8,6 @@ export class DiskFile extends File {}
 
 export interface DiskListObject {
   name: string;
-  updated: Date;
 }
 
 export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
@@ -62,13 +61,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
 
   async get(prefix = ''): Promise<DiskListObject[]> {
     const files = await getFiles(join(this.directory, prefix));
-    const props = async (path: string): Promise<DiskListObject> => ({
-      name: relative(this.directory, path).replace(/\\/g, '/'),
-      updated: (await fsp.stat(path)).mtime
+    const props = (path: string): DiskListObject => ({
+      name: relative(this.directory, path).replace(/\\/g, '/')
     });
-    return Promise.all(
-      files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path))
-    );
+    return files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path));
   }
 
   async delete(name: string): Promise<DiskFile[]> {
