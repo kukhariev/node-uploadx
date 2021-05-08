@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
@@ -13,11 +13,11 @@
     "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify"
   },
   "dependencies": {
-    "@uploadx/core": "^4.3.0",
+    "@uploadx/core": "^4.4.0",
     "dotenv": "8.2.0",
     "express": "4.17.1",
     "fastify": "2.15.3",
-    "node-uploadx": "^4.3.0",
+    "node-uploadx": "^4.4.0",
     "ts-node-dev": "1.1.6"
   },
   "devDependencies": {
