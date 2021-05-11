@@ -125,9 +125,9 @@ export class S3Storage extends BaseStorage<S3File, any> {
     const params = { Bucket: this.bucket, Prefix: prefix };
     const { Contents } = await this.client.listObjectsV2(params).promise();
     if (Contents?.length) {
-      return Contents.filter(item =>
-        item.Key?.endsWith(METAFILE_EXTNAME)
-      ).map(({ Key, LastModified }) => ({ name: Key?.replace(re, ''), updated: LastModified }));
+      return Contents.filter(item => item.Key?.endsWith(METAFILE_EXTNAME)).map(
+        ({ Key, LastModified }) => ({ name: Key?.replace(re, ''), updated: LastModified })
+      );
     }
     return [];
   }

@@ -47,7 +47,8 @@ export type ResponseBodyType = 'text' | 'json';
 
 export abstract class BaseHandler<TFile extends Readonly<File>, L>
   extends EventEmitter
-  implements MethodHandler {
+  implements MethodHandler
+{
   /**
    * Limiting enabled http method handlers
    * @example
@@ -69,7 +70,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     this.storage =
       'storage' in config
         ? config.storage
-        : ((new DiskStorage(config) as unknown) as BaseStorage<TFile, L>);
+        : (new DiskStorage(config) as unknown as BaseStorage<TFile, L>);
     this.assembleErrors();
     this.compose();
 
@@ -127,26 +128,24 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
 
     handler
       .call(this, req, res)
-      .then(
-        async (file: TFile | L[]): Promise<void> => {
-          if ('status' in file && file.status) {
-            this.log('[%s]: %s', file.status, file.name);
-            this.listenerCount(file.status) && this.emit(file.status, file);
-            if (file.status === 'completed') {
-              const body = ((await this.storage.onComplete(file)) as File) || file;
-              req['_body'] = true;
-              req['body'] = body;
-              next ? next() : this.finish(req, res, body);
-            }
-            return;
-          }
-          if (req.method === 'GET') {
-            req['body'] = file;
-            next ? next() : this.send(res, { body: file });
+      .then(async (file: TFile | L[]): Promise<void> => {
+        if ('status' in file && file.status) {
+          this.log('[%s]: %s', file.status, file.name);
+          this.listenerCount(file.status) && this.emit(file.status, file);
+          if (file.status === 'completed') {
+            const body = ((await this.storage.onComplete(file)) as File) || file;
+            req['_body'] = true;
+            req['body'] = body;
+            next ? next() : this.finish(req, res, body);
           }
           return;
         }
-      )
+        if (req.method === 'GET') {
+          req['body'] = file;
+          next ? next() : this.send(res, { body: file });
+        }
+        return;
+      })
       .catch((error: UploadxError) => {
         const errorEvent: UploadxError = Object.assign(error, {
           request: pick(req, ['headers', 'method', 'url'])
@@ -204,9 +203,8 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Partial<UploadxError>): void {
-    const [statusCode, body, headers] = this._errorResponses[
-      error.uploadxError || ERRORS.UNKNOWN_ERROR
-    ];
+    const [statusCode, body, headers] =
+      this._errorResponses[error.uploadxError || ERRORS.UNKNOWN_ERROR];
     this.send(res, { statusCode, body, headers });
   }
 
