@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+import { debug } from 'debug';
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+type LoggerInstance = ((label?: any, ...data: any[]) => void) & { enabled?: boolean };
+
 export class Logger {
-  static get(namespace: string): ((...par: any[]) => void) & { enabled: boolean } {
-    return require('debug')('uploadx').extend(namespace.toLowerCase());
+  static get(namespace: string): LoggerInstance {
+    return debug('uploadx').extend(namespace.toLowerCase());
   }
 }
