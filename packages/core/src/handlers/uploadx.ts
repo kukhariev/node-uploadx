@@ -14,7 +14,7 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 /**
  * X-headers protocol implementation
  */
-export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
+export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
   static RESUME_STATUS_CODE = 308;
 
   /**
@@ -98,8 +98,8 @@ export class Uploadx<TFile extends Readonly<File>, L> extends BaseHandler<TFile,
  * @example
  * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
  */
-export function uploadx<T extends Readonly<File>, L>(
-  options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
+export function uploadx<TFile extends Readonly<File>, TList>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Uploadx(options).handle;
 }
@@ -117,6 +117,6 @@ export function uploadx<T extends Readonly<File>, L>(
   return res.json(req.body);
 });
  */
-uploadx.upload = <T extends Readonly<File>, L>(
-  options: DiskStorageOptions | { storage: BaseStorage<T, L> }
+uploadx.upload = <TFile extends Readonly<File>, TList>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> }
 ) => new Uploadx(options).upload;

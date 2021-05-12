@@ -43,6 +43,14 @@ module.exports = {
     '@typescript-eslint/member-ordering': 'warn',
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: 'typeParameter',
+        format: ['PascalCase'],
+        prefix: ['T', 'K']
+      }
+    ],
     'jest/expect-expect': ['error', { assertFunctionNames: ['expect', 'request.**.expect'] }],
     'no-empty': 'off',
     'no-irregular-whitespace': 'error',

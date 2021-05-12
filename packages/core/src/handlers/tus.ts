@@ -27,7 +27,7 @@ export function parseMetadata(encoded = ''): Metadata {
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
-export class Tus<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> {
+export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers: Headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',
@@ -129,8 +129,8 @@ export class Tus<TFile extends Readonly<File>, L> extends BaseHandler<TFile, L> 
  * @example
  * app.use('/files', tus({directory: '/tmp', maxUploadSize: '250GB'}));
  */
-export function tus<T extends File, L>(
-  options: DiskStorageOptions | { storage: BaseStorage<T, L> } = {}
+export function tus<TFile extends File, TList>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
@@ -148,6 +148,6 @@ export function tus<T extends File, L>(
   return res.sendStatus(204);
 });
  */
-tus.upload = <T extends Readonly<File>, L>(
-  options: DiskStorageOptions | { storage: BaseStorage<T, L> }
+tus.upload = <TFile extends Readonly<File>, TList>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> }
 ) => new Tus(options).upload;
