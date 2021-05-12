@@ -27,11 +27,14 @@
 /connect.lock
 /coverage/*
 /.nyc_output/
-/libpeerconnection.log
-npm-debug.log
-testem.log
-lerna-debug.log
-/typings
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # system files
 .DS_Store
@@ -39,6 +42,9 @@ Thumbs.db
 
 # environment file
 .env
+
+# TypeScript cache
+*.tsbuildinfo
 
 # temp files
 **/tmp
@@ -50,5 +56,4 @@ Thumbs.db
 
 **/package-lock.json
 
-**/tsconfig.tsbuildinfo
 
