@@ -7,7 +7,9 @@ describe('BaseHandler', () => {
   beforeEach(() => (uploader = new TestUploader()));
 
   it('should implement get()', async () => {
-    await expect(uploader.get({ url: '/files/12345' } as any)).resolves.toEqual([]);
+    const res = createResponse();
+    const req = createRequest({ url: '/files/12345' });
+    await expect(uploader.get(req, res)).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
   });
 
   it('should check if storage not ready', () => {

@@ -139,8 +139,19 @@ describe('::Uploadx', () => {
 
   describe('GET', () => {
     it('should return info array', async () => {
-      const res = await request(app).get(basePath).expect(200);
+      const res = await request(app).get(`${basePath}/${userPrefix}`).expect(200);
       expect(res.body).toHaveLength(2);
+    });
+    it('should return info array(name)', async () => {
+      const res = await request(app).get(`${basePath}?name=${userPrefix}`).expect(200);
+      expect(res.body).toHaveLength(2);
+    });
+    it('should return 404(query)', async () => {
+      await request(app).get(`${basePath}?upload_id=testfileSingle.mp4'`).expect(404);
+    });
+
+    it('should return 404(parameters)', async () => {
+      await request(app).get(`${basePath}/testfileSingle.mp4`).expect(404);
     });
   });
 

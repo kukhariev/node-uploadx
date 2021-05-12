@@ -3,9 +3,10 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import {
-  ERROR_RESPONSES,
   ErrorResponses,
   ERRORS,
+  ERROR_RESPONSES,
+  fail,
   getBaseUrl,
   Logger,
   pick,
@@ -158,12 +159,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
       });
   };
 
-  // eslint-disable-next-line
-  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id;
-
-  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send(res, { body: file });
-  }
+  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id; // eslint-disable-line
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     this.send(res, { statusCode: 204 });
@@ -173,9 +169,13 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   /**
    * `GET` request handler
    */
-  get(req: http.IncomingMessage): Promise<L[]> {
-    const name = this.getName(req);
-    return this.storage.get(name);
+  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<L[]> {
+    const userId = this.getUserId(req, res);
+    if (userId) {
+      const name = this.getName(req);
+      if (name.startsWith(userId)) return this.storage.get(name);
+    }
+    return fail(ERRORS.FILE_NOT_FOUND);
   }
 
   /**
@@ -228,5 +228,9 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
     const path = url.format({ pathname: `${pathname}/${file.name}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
+  }
+
+  protected finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
+    return this.send(res, { body: file });
   }
 }
