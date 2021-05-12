@@ -24,7 +24,7 @@ export type MethodHandler = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export interface BaseHandler<TFile extends Readonly<File>, L> extends EventEmitter {
+export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventEmitter {
   on(event: 'error', listener: (error: UploadxError) => void): this;
 
   on(event: UploadEventType, listener: (file: TFile) => void): this;
@@ -46,7 +46,7 @@ export interface SendParameters {
 
 export type ResponseBodyType = 'text' | 'json';
 
-export abstract class BaseHandler<TFile extends Readonly<File>, L>
+export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   extends EventEmitter
   implements MethodHandler
 {
@@ -60,18 +60,18 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   static methods: Handlers[] = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'];
   cors: Cors;
   responseType: ResponseBodyType = 'json';
-  storage: BaseStorage<TFile, L>;
+  storage: BaseStorage<TFile, TList>;
   registeredHandlers = new Map<string, AsyncHandler>();
   protected log = Logger.get(this.constructor.name);
   private _errorResponses = {} as ErrorResponses;
 
-  constructor(config: { storage: BaseStorage<TFile, L> } | DiskStorageOptions = {}) {
+  constructor(config: { storage: BaseStorage<TFile, TList> } | DiskStorageOptions = {}) {
     super();
     this.cors = new Cors();
     this.storage =
       'storage' in config
         ? config.storage
-        : (new DiskStorage(config) as unknown as BaseStorage<TFile, L>);
+        : (new DiskStorage(config) as unknown as BaseStorage<TFile, TList>);
     this.assembleErrors();
     this.compose();
 
@@ -129,7 +129,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
 
     handler
       .call(this, req, res)
-      .then(async (file: TFile | L[]): Promise<void> => {
+      .then(async (file: TFile | TList[]): Promise<void> => {
         if ('status' in file && file.status) {
           this.log('[%s]: %s', file.status, file.name);
           this.listenerCount(file.status) && this.emit(file.status, file);
@@ -169,7 +169,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, L>
   /**
    * `GET` request handler
    */
-  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<L[]> {
+  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<TList[]> {
     const userId = this.getUserId(req, res);
     if (userId) {
       const name = this.getName(req);
