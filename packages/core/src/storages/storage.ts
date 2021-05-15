@@ -13,6 +13,7 @@ import {
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
+const MAX_FILENAME_LENGTH = 255 - METAFILE_EXTNAME.length;
 
 export type OnComplete<T extends File> = (file: T) => any;
 
@@ -84,7 +85,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
     };
     const filename: ValidatorConfig<TFile> = {
       isValid(file) {
-        return file.name.length < 255;
+        return file.name.length < MAX_FILENAME_LENGTH;
       },
       response: ERROR_RESPONSES.INVALID_FILE_NAME
     };
