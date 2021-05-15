@@ -41,7 +41,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   onComplete: () => null,
   path: '/files',
   validation: {},
-  maxMetadataSize: '16MB'
+  maxMetadataSize: '2MB'
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
