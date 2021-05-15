@@ -29,6 +29,7 @@ export interface BaseStorageOptions<T extends File> {
   /** Node http base path */
   path?: string;
   validation?: Validation<T>;
+  maxMetadataSize?: number | string;
 }
 
 const defaultOptions: Required<BaseStorageOptions<File>> = {
@@ -38,12 +39,14 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   useRelativeLocation: false,
   onComplete: () => null,
   path: '/files',
-  validation: {}
+  validation: {},
+  maxMetadataSize: '16MB'
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
+  maxMetadataSize: number;
   path: string;
   isReady = false;
   errorResponses = {} as ErrorResponses;
@@ -58,6 +61,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
+    this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
 
     const size: Required<ValidatorConfig<TFile>> = {
       value: this.maxUploadSize,

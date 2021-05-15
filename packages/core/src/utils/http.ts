@@ -14,23 +14,27 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export function readBody(message: Readable, encoding = 'utf8', limit = 16777216): Promise<string> {
+export function readBody(message: Readable, encoding = 'utf8', limit?: number): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
     message.setEncoding(encoding);
     message.on('data', chunk => {
-      if (body.length > limit) return reject('body length limit');
+      if (limit && body.length > limit) return reject('body length limit');
       body += chunk;
     });
     message.once('end', () => resolve(body));
   });
 }
 
-export async function getJsonBody(req: http.IncomingMessage): Promise<Record<string, any>> {
-  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
+export async function getJsonBody(
+  req: http.IncomingMessage,
+  limit = 16777216
+): Promise<Record<string, any>> {
+  if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
   if ('body' in req) return req['body'];
+  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
   try {
-    const raw = await readBody(req);
+    const raw = await readBody(req, 'utf8', limit);
     return JSON.parse(raw) as Record<string, any>;
   } catch (error) {
     return Promise.reject(error);
