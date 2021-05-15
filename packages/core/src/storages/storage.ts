@@ -82,7 +82,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
       },
       response: ERROR_RESPONSES.UNSUPPORTED_MEDIA_TYPE
     };
-    this.validation.add({ size, mime });
+    const filename: ValidatorConfig<TFile> = {
+      isValid(file) {
+        return file.name.length < 255;
+      },
+      response: ERROR_RESPONSES.INVALID_FILE_NAME
+    };
+    this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });
   }
 

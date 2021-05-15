@@ -46,7 +46,7 @@ export const ERROR_RESPONSES: DefaultErrorResponses = {
   FORBIDDEN: [403, { error: 'authenticated user is not allowed access' }],
   GONE: [410, { error: 'gone' }],
   INVALID_CONTENT_TYPE: [400, { error: 'invalid or missing content-type header' }],
-  INVALID_FILE_NAME: [400, { error: 'file name cannot be retrieved' }],
+  INVALID_FILE_NAME: [400, { error: 'invalid file name or it cannot be retrieved' }],
   INVALID_FILE_SIZE: [400, { error: 'file size cannot be retrieved' }],
   INVALID_RANGE: [400, { error: 'invalid or missing content-range header' }],
   METHOD_NOT_ALLOWED: [405, { error: 'method not allowed' }],
