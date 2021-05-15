@@ -13,7 +13,7 @@ describe('::Uploadx', () => {
   let start: number;
   const basePath = '/uploadx';
   const directory = join(root, 'uploadx');
-  const opts = { ...storageOptions, directory };
+  const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
   app.use(basePath, uploadx(opts));
 
   beforeAll(() => rimraf.sync(directory));
@@ -50,6 +50,16 @@ describe('::Uploadx', () => {
       await request(app).post(basePath).send('').expect(400);
     });
 
+    it('should  limit metadata size', async () => {
+      const res = await request(app)
+        .post(basePath)
+        .set('x-upload-content-type', 'video/mp4')
+        .set('x-upload-content-length', '10')
+        .send({ name: new Array(255).join('c') })
+        .expect(400);
+      expect(res.type).toBe('application/json');
+      expect(res.header).not.toHaveProperty('location');
+    });
     it('should 201 (x-upload-content)', async () => {
       const res = await request(app)
         .post(basePath)
@@ -103,7 +113,6 @@ describe('::Uploadx', () => {
       expect(res.type).toBe('application/json');
       expect(fs.statSync(join(directory, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
     });
-
     it('should 200 (single request)', async () => {
       const res = await request(app)
         .put(files[1])
@@ -115,7 +124,6 @@ describe('::Uploadx', () => {
         metadata.size
       );
     });
-
     it('should 409 (invalid size)', async () => {
       const res = await request(app)
         .post(basePath)
