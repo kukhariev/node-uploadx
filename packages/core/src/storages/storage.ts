@@ -29,6 +29,7 @@ export interface BaseStorageOptions<T extends File> {
   /** Node http base path */
   path?: string;
   validation?: Validation<T>;
+  /** File metadata size limits */
   maxMetadataSize?: number | string;
 }
 
@@ -44,6 +45,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
+  static maxCacheMemory = '800MB';
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -52,7 +54,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
   errorResponses = {} as ErrorResponses;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
-  protected cache = new Cache<TFile>();
+  protected cache: Cache<TFile>;
   private validation = new Validator<TFile>(this.errorResponses);
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
@@ -62,6 +64,8 @@ export abstract class BaseStorage<TFile extends File, TList> {
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
+    const storage = <typeof BaseStorage>this.constructor;
+    this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
 
     const size: Required<ValidatorConfig<TFile>> = {
       value: this.maxUploadSize,
