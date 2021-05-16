@@ -13,6 +13,7 @@ import {
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
+const MAX_FILENAME_LENGTH = 255 - METAFILE_EXTNAME.length;
 
 export type OnComplete<T extends File> = (file: T) => any;
 
@@ -29,6 +30,8 @@ export interface BaseStorageOptions<T extends File> {
   /** Node http base path */
   path?: string;
   validation?: Validation<T>;
+  /** File metadata size limits */
+  maxMetadataSize?: number | string;
 }
 
 const defaultOptions: Required<BaseStorageOptions<File>> = {
@@ -38,18 +41,21 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   useRelativeLocation: false,
   onComplete: () => null,
   path: '/files',
-  validation: {}
+  validation: {},
+  maxMetadataSize: '2MB'
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
+  static maxCacheMemory = '800MB';
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
+  maxMetadataSize: number;
   path: string;
   isReady = false;
   errorResponses = {} as ErrorResponses;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
-  protected cache = new Cache<TFile>();
+  protected cache: Cache<TFile>;
   private validation = new Validator<TFile>(this.errorResponses);
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
@@ -58,6 +64,9 @@ export abstract class BaseStorage<TFile extends File, TList> {
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
+    this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
+    const storage = <typeof BaseStorage>this.constructor;
+    this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
 
     const size: Required<ValidatorConfig<TFile>> = {
       value: this.maxUploadSize,
@@ -74,7 +83,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
       },
       response: ERROR_RESPONSES.UNSUPPORTED_MEDIA_TYPE
     };
-    this.validation.add({ size, mime });
+    const filename: ValidatorConfig<TFile> = {
+      isValid(file) {
+        return file.name.length < MAX_FILENAME_LENGTH;
+      },
+      response: ERROR_RESPONSES.INVALID_FILE_NAME
+    };
+    this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });
   }
 

@@ -23,12 +23,17 @@ const onComplete: OnComplete<DiskFile> = async file => {
 const storage = new DiskStorage({
   maxUploadSize: '1GB',
   directory: 'upload',
+  maxMetadataSize: '1mb',
   onComplete,
   validation: {
     mime: { value: ['video/*'], response: [415, { error: 'video only' }] },
     mtime: {
       isValid: file => !!file.metadata.lastModified,
       response: [403, { error: 'missing lastModified' }]
+    },
+    filename: {
+      isValid: file => file.name.length < 255 && !/[^a-z0-9_.@()-]/i.test(file.name),
+      response: [400, { error: 'invalid filename' }]
     }
   }
 });

@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody } from '../utils';
-import { BaseHandler, Headers } from './base-handler';
+import { ERRORS, fail, getBaseUrl, getHeader, getMetadata } from '../utils';
+import { BaseHandler } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; total: number } {
   const parts = rangeHeader.split(/\s+|\//);
@@ -21,14 +21,16 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
    * Create File from request and send file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
+    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
+      fail(ERRORS.BAD_REQUEST, error)
+    );
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const headers: Headers = { Location: this.buildFileUrl(req, file) };
+    const headers = { Location: this.buildFileUrl(req, file) };
     this.send(res, { statusCode, headers });
     return file;
   }
@@ -36,7 +38,7 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const metadata = await getJsonBody(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
+    const metadata = await getMetadata(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
     const file = await this.storage.update(name, { metadata, name });
     this.send(res, { body: file.metadata });
     return file;
@@ -53,7 +55,7 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
     const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
     const file = await this.storage.write({ start, name, contentLength, body: req });
     if (file.status === 'part') {
-      const headers: Headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
+      const headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
       res.statusMessage = 'Resume Incomplete';
       this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
     }

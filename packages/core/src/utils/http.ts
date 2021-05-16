@@ -1,5 +1,6 @@
 import * as http from 'http';
 import { Readable } from 'stream';
+import { Metadata } from '../storages';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -14,31 +15,31 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export function readBody(message: Readable, encoding = 'utf8', limit = 16777216): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    message.setEncoding(encoding);
-    message.on('data', chunk => {
-      if (body.length > limit) return reject('body length limit');
-      body += chunk;
-    });
-    message.once('end', () => resolve(body));
-  });
+export async function readBody(
+  message: Readable,
+  encoding = 'utf8',
+  limit?: number
+): Promise<string> {
+  let body = '';
+  message.setEncoding(encoding);
+  for await (const chunk of message) {
+    body += chunk;
+    if (limit && body.length > limit) return Promise.reject('body length limit');
+  }
+  return body;
 }
 
-export async function getJsonBody(req: http.IncomingMessage): Promise<Record<string, any>> {
-  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
+export async function getMetadata(req: http.IncomingMessage, limit = 16777216): Promise<Metadata> {
+  if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
+  // Allow any type of external body parser
   if ('body' in req) return req['body'];
-  try {
-    const raw = await readBody(req);
-    return JSON.parse(raw) as Record<string, any>;
-  } catch (error) {
-    return Promise.reject(error);
-  }
+  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
+  const raw = await readBody(req, 'utf8', limit);
+  return JSON.parse(raw) as Metadata;
 }
 
 export function getHeader(req: http.IncomingMessage, name: string): string {
-  const raw = req?.headers?.[name.toLowerCase()];
+  const raw = req.headers?.[name.toLowerCase()];
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
