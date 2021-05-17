@@ -15,7 +15,9 @@ import { File, FileInit, FilePart } from './file';
 export const METAFILE_EXTNAME = '.META';
 const MAX_FILENAME_LENGTH = 255 - METAFILE_EXTNAME.length;
 
-export type OnComplete<T extends File> = (file: T) => any;
+export type OnComplete<TFile extends File, TResponseBody = any> = (
+  file: TFile
+) => Promise<TResponseBody> | TResponseBody;
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed file types */
