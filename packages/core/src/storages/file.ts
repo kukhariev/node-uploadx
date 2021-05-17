@@ -39,9 +39,9 @@ export class File implements FileInit {
 
   constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
     this.metadata = metadata;
-    this.originalName = originalName || extractOriginalName(this.metadata) || (this.id = uid());
-    this.contentType = contentType || extractMimeType(this.metadata) || 'application/octet-stream';
-    this.size = Number(size || this.metadata.size) || 0;
+    this.originalName = originalName || extractOriginalName(metadata) || (this.id = uid());
+    this.contentType = contentType || extractMimeType(metadata) || 'application/octet-stream';
+    this.size = Number(size || metadata.size) || 0;
     this.userId = userId;
     this.id ||= generateFileId(this);
   }
@@ -64,6 +64,10 @@ export function hasContent(part: Partial<FilePart>): part is HasContent {
   return typeof part.start === 'number' && part.start >= 0 && !!part.body;
 }
 
+export function isValidPart(part: FilePart, file: File): boolean {
+  return (part.start || 0) + (part.contentLength || 0) <= file.size;
+}
+
 export interface Metadata {
   [key: string]: any;
 
@@ -79,6 +83,15 @@ export interface Metadata {
   lastModified?: string | number;
 }
 
-export function isValidPart(part: FilePart, file: File): boolean {
-  return (part.start || 0) + (part.contentLength || 0) <= file.size;
+export function isMetadata(raw: unknown): raw is Metadata {
+  return typeof raw === 'object';
+}
+
+export function updateMetadata(file: File, metadata: unknown): void {
+  if (isMetadata(file.metadata) && isMetadata(metadata)) {
+    file.metadata = { ...file.metadata, ...metadata };
+    file.originalName = extractOriginalName(file.metadata) || file.originalName;
+  } else {
+    file.metadata = metadata as Metadata;
+  }
 }

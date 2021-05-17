@@ -6,7 +6,6 @@ import {
   BaseStorage,
   BaseStorageOptions,
   ERRORS,
-  extractOriginalName,
   fail,
   File,
   FileInit,
@@ -14,7 +13,8 @@ import {
   getHeader,
   hasContent,
   isValidPart,
-  METAFILE_EXTNAME
+  METAFILE_EXTNAME,
+  updateMetadata
 } from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -88,8 +88,8 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
     const file = new GCSFile(config);
-    await this.validate(file);
     file.name = this.namingFunction(file);
+    await this.validate(file);
     try {
       const existing = await this._getMeta(file.name);
       existing.bytesWritten = await this._write(existing);
@@ -156,8 +156,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   async update(name: string, { metadata }: Partial<File>): Promise<GCSFile> {
     const file = await this._getMeta(name);
-    file.metadata = { ...file.metadata, ...metadata };
-    file.originalName = extractOriginalName(file.metadata) || file.originalName;
+    updateMetadata(file, metadata);
     await this._saveMeta(file);
     return { ...file, status: 'updated' };
   }

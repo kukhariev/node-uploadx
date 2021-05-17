@@ -1,7 +1,7 @@
 import * as http from 'http';
 import { extname, join, relative, resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
-import { extractOriginalName, File, FileInit, FilePart, hasContent, isValidPart } from './file';
+import { File, FileInit, FilePart, hasContent, isValidPart, updateMetadata } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
 export class DiskFile extends File {}
@@ -82,8 +82,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
 
   async update(name: string, { metadata }: Partial<File>): Promise<DiskFile> {
     const file = await this._getMeta(name);
-    file.metadata = { ...file.metadata, ...metadata };
-    file.originalName = extractOriginalName(file.metadata) || file.originalName;
+    updateMetadata(file, metadata);
     await this._saveMeta(file);
     return { ...file, status: 'updated' };
   }
