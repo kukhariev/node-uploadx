@@ -14,6 +14,7 @@ import {
   hasContent,
   isValidPart,
   METAFILE_EXTNAME,
+  updateStatus,
   updateMetadata
 } from '@uploadx/core';
 
@@ -124,7 +125,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     const file = await this._getMeta(part.name);
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
-    file.status = this.setStatus(file);
+    updateStatus(file);
     if (file.status === 'completed') {
       file.uri = `${this.storageBaseURI}/${file.name}`;
       await this._onComplete(file);
@@ -190,7 +191,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     }
   }
 
-  protected async _saveMeta(file: GCSFile): Promise<any> {
+  protected async _saveMeta(file: GCSFile): Promise<GCSFile> {
     const name = file.name;
     await this.authClient.request({
       body: JSON.stringify(file),

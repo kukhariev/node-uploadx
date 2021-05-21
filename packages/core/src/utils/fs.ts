@@ -8,19 +8,7 @@ export async function ensureDir(dir: string): Promise<void> {
 export async function ensureFile(path: string, overwrite = false): Promise<number> {
   await fsp.mkdir(dirname(path), { recursive: true });
   await (await fsp.open(path, overwrite ? 'w' : 'a')).close();
-  const { size } = await fsp.stat(path);
-  return size;
-}
-
-/**
- * Resolve the Promise with file size or `-1` on error
- */
-export async function getFileSize(path: string): Promise<number> {
-  try {
-    return (await fsp.stat(path)).size;
-  } catch {
-    return -1;
-  }
+  return (await fsp.stat(path)).size;
 }
 
 export function getWriteStream(path: string, start: number): WriteStream {

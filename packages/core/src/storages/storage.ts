@@ -99,12 +99,6 @@ export abstract class BaseStorage<TFile extends File, TList> {
     return this.validation.verify(file);
   }
 
-  protected setStatus(file: File): File['status'] | undefined {
-    if (file.bytesWritten < file.size) return 'part';
-    if (file.bytesWritten === file.size) return 'completed';
-    return;
-  }
-
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
   abstract write(part: FilePart): Promise<TFile>;

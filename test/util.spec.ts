@@ -58,16 +58,6 @@ describe('fs', () => {
     expect(files).toHaveLength(0);
   });
 
-  it('getFileSize(file)', async () => {
-    const size = await utils.getFileSize(file);
-    expect(size).toBe(0);
-  });
-
-  it('getFileSize(not exist)', async () => {
-    const size = await utils.getFileSize('test/not exist');
-    expect(size).toBe(-1);
-  });
-
   it('getWriteStream', () => {
     const stream = getWriteStream(file, 0);
     expect(stream).toBeInstanceOf(fs.WriteStream);
