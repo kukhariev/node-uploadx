@@ -20,7 +20,7 @@ export type OnComplete<TFile extends File, TResponseBody = any> = (
 ) => Promise<TResponseBody> | TResponseBody;
 
 export interface BaseStorageOptions<T extends File> {
-  /** Allowed file types */
+  /** Allowed MIME types */
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
@@ -33,7 +33,7 @@ export interface BaseStorageOptions<T extends File> {
   path?: string;
   /** Upload validation options */
   validation?: Validation<T>;
-  /** Metadata size limits */
+  /** Metadata size limit */
   maxMetadataSize?: number | string;
 }
 

@@ -90,11 +90,13 @@ Available options are:
 | `directory`           |     `string`     |    `"files"`     | _DiskStorage upload directory_                      |
 | `bucket`              |     `string`     | `"node-uploadx"` | _S3 or GCS bucket_                                  |
 | `path`                |     `string`     |    `"/files"`    | _Node http base path_                               |
-| `allowMIME`           |    `string[]`    |    `["*\*"]`     | _Array of allowed MIME types_                       |
-| `maxUploadSize`       | `string\|number` |     `"5TB"`      | _Limit allowed file size_                           |
-| `useRelativeLocation` |    `boolean`     |     `false`      | _Generate relative upload link_                     |
-| `filename`            |    `Function`    |                  | _Filename generator function_                       |
-| `onComplete`          |    `Function`    |                  | _File upload complete callback_                     |
+| `allowMIME`           |    `string[]`    |    `["*\*"]`     | _Allowed MIME types_                                |
+| `maxUploadSize`       | `string\|number` |     `"5TB"`      | _File size limit_                                   |
+| `maxMetadataSize`     | `string\|number` |     `"4MB"`      | _Metadata size limit_                               |
+| `validation`          |     `Object`     |                  | _Upload validation options_                         |
+| `useRelativeLocation` |    `boolean`     |     `false`      | _Use relative urls_                                 |
+| `filename`            |    `Function`    |                  | _Name generator function_                           |
+| `onComplete`          |    `Function`    |                  | _On upload complete callback_                       |
 | `clientDirectUpload`  |    `boolean`     |                  | _Upload by a compatible client directly to the GCS_ |
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
