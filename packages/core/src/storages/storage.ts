@@ -24,15 +24,16 @@ export interface BaseStorageOptions<T extends File> {
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
-  /** Filename generator function */
+  /** Name generator function */
   filename?: (file: T) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
   /** Node http base path */
   path?: string;
+  /** Upload validation options */
   validation?: Validation<T>;
-  /** File metadata size limits */
+  /** Metadata size limits */
   maxMetadataSize?: number | string;
 }
 
@@ -44,7 +45,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   onComplete: () => null,
   path: '/files',
   validation: {},
-  maxMetadataSize: '2MB'
+  maxMetadataSize: '4MB'
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
