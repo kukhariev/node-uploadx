@@ -15,22 +15,25 @@ import { File, FileInit, FilePart } from './file';
 export const METAFILE_EXTNAME = '.META';
 const MAX_FILENAME_LENGTH = 255 - METAFILE_EXTNAME.length;
 
-export type OnComplete<T extends File> = (file: T) => any;
+export type OnComplete<TFile extends File, TResponseBody = any> = (
+  file: TFile
+) => Promise<TResponseBody> | TResponseBody;
 
 export interface BaseStorageOptions<T extends File> {
-  /** Allowed file types */
+  /** Allowed MIME types */
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
-  /** Filename generator function */
+  /** Name generator function */
   filename?: (file: T) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
   /** Node http base path */
   path?: string;
+  /** Upload validation options */
   validation?: Validation<T>;
-  /** File metadata size limits */
+  /** Metadata size limit */
   maxMetadataSize?: number | string;
 }
 
@@ -42,7 +45,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   onComplete: () => null,
   path: '/files',
   validation: {},
-  maxMetadataSize: '2MB'
+  maxMetadataSize: '4MB'
 };
 
 export abstract class BaseStorage<TFile extends File, TList> {
@@ -95,12 +98,6 @@ export abstract class BaseStorage<TFile extends File, TList> {
 
   async validate(file: TFile): Promise<any> {
     return this.validation.verify(file);
-  }
-
-  protected setStatus(file: File): File['status'] | undefined {
-    if (file.bytesWritten < file.size) return 'part';
-    if (file.bytesWritten === file.size) return 'completed';
-    return;
   }
 
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;

@@ -11,7 +11,12 @@ const auth: express.Handler = (req, res, next) => {
 
 app.use(auth);
 
-const onComplete: OnComplete<DiskFile> = async file => {
+type OnCompleteBody = {
+  message: string;
+  id: string;
+};
+
+const onComplete: OnComplete<DiskFile, OnCompleteBody> = file => {
   const message = `File upload is finished, path: ${file.name}`;
   console.log(message);
   return {

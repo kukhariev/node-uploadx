@@ -3,7 +3,6 @@ import {
   BaseStorage,
   BaseStorageOptions,
   ERRORS,
-  extractOriginalName,
   fail,
   File,
   FileInit,
@@ -11,7 +10,9 @@ import {
   hasContent,
   isValidPart,
   mapValues,
-  METAFILE_EXTNAME
+  METAFILE_EXTNAME,
+  updateMetadata,
+  updateStatus
 } from '@uploadx/core';
 import { config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
@@ -55,8 +56,8 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
     const file = new S3File(config);
-    await this.validate(file);
     file.name = this.namingFunction(file);
+    await this.validate(file);
     try {
       const existing = await this._getMeta(file.name);
       if (existing.bytesWritten >= 0) {
@@ -102,7 +103,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
       file.bytesWritten = +(part.contentLength || 0);
       this.cache.set(file.name, file);
     }
-    file.status = this.setStatus(file);
+    updateStatus(file);
     if (file.status === 'completed') {
       const [completed] = await this._onComplete(file);
       file.uri = completed.Location;
@@ -134,8 +135,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
     const file = await this._getMeta(name);
-    file.metadata = { ...file.metadata, ...metadata };
-    file.originalName = extractOriginalName(file.metadata) || file.originalName;
+    updateMetadata(file, metadata);
     await this._saveMeta(file);
     return { ...file, status: 'updated' };
   }
