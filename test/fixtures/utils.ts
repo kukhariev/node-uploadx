@@ -1,2 +1,5 @@
 import * as rimraf from 'rimraf';
-export const rm = (dir: string): void => rimraf.sync(dir);
+
+export function cleanup(directory: string): Promise<any> {
+  return new Promise(resolve => rimraf(directory, resolve));
+}

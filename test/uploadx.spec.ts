@@ -6,7 +6,7 @@ import { uploadx } from '@uploadx/core';
 import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
-import rimraf = require('rimraf');
+import { cleanup } from './fixtures/utils';
 
 describe('::Uploadx', () => {
   const files: string[] = [];
@@ -16,8 +16,8 @@ describe('::Uploadx', () => {
   const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
   app.use(basePath, uploadx(opts));
 
-  beforeAll(() => rimraf.sync(directory));
-  afterAll(() => rimraf.sync(directory));
+  beforeAll(() => cleanup(directory));
+  afterAll(() => cleanup(directory));
 
   test('wrapper', () => {
     expect(uploadx()).toBeInstanceOf(Function);
