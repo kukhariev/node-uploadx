@@ -213,7 +213,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    */
   getName(req: http.IncomingMessage & { originalUrl?: string }): string {
     const { pathname = '' } = url.parse(req.url as string);
-    const path = req['originalUrl']
+    const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
     return path.startsWith('/') ? '' : decodeURI(path);
@@ -222,9 +222,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   /**
    * Build file url from request
    */
-  protected buildFileUrl(req: http.IncomingMessage, file: TFile): string {
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { pathname = '', query } = url.parse(originalUrl, true);
+  protected buildFileUrl(
+    req: http.IncomingMessage & { originalUrl?: string },
+    file: TFile
+  ): string {
+    const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
     const path = url.format({ pathname: `${pathname}/${file.name}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;

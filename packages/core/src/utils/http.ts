@@ -29,10 +29,12 @@ export async function readBody(
   return body;
 }
 
-export async function getMetadata(req: http.IncomingMessage, limit = 16777216): Promise<Metadata> {
+export async function getMetadata(
+  req: http.IncomingMessage & { body?: Metadata },
+  limit = 16777216
+): Promise<Metadata> {
   if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
-  // Allow any type of external body parser
-  if ('body' in req) return req['body'];
+  if (req.body) return req.body;
   if (!typeis(req, ['json'])) return Promise.reject('content-type error');
   const raw = await readBody(req, 'utf8', limit);
   return JSON.parse(raw) as Metadata;

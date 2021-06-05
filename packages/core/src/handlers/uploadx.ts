@@ -83,15 +83,17 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
   /**
    * Build file url from request
    */
-  protected buildFileUrl(req: http.IncomingMessage, file: File): string {
-    if ('GCSUploadURI' in file && file['GCSUploadURI']) return file['GCSUploadURI'];
+  protected buildFileUrl(
+    req: http.IncomingMessage & { originalUrl?: string },
+    file: File & { GCSUploadURI?: string }
+  ): string {
+    if (file.GCSUploadURI) return file.GCSUploadURI;
 
-    const originalUrl = 'originalUrl' in req ? req['originalUrl'] : req.url || '';
-    const { query, pathname } = url.parse(originalUrl, true);
+    const { query, pathname } = url.parse(req.originalUrl || (req.url as string), true);
     query.upload_id = file.name;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return baseUrl ? `${baseUrl}${path}` : `${path}`;
+    return `${baseUrl}${path}`;
   }
 }
 
