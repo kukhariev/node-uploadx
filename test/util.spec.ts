@@ -4,7 +4,7 @@ import { join } from 'path';
 import * as utils from '../packages/core/src/utils';
 import { getWriteStream } from '../packages/core/src/utils';
 import { root } from './fixtures';
-import rimraf = require('rimraf');
+import { cleanup } from './fixtures/utils';
 
 describe('fs', () => {
   const directory = join(root, 'fs-test');
@@ -12,8 +12,8 @@ describe('fs', () => {
   const file = `${deep}/3/file.ext`;
   const file2 = `${deep}/3/fi  le.ext.META`;
 
-  beforeAll(() => rimraf.sync(directory));
-  afterAll(() => rimraf.sync(directory));
+  beforeAll(() => cleanup(directory));
+  afterAll(() => cleanup(directory));
 
   it('ensureDir(dir)', async () => {
     await utils.ensureDir(deep);

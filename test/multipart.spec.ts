@@ -5,7 +5,7 @@ import { multipart } from '../packages/core/src';
 import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
-import rimraf = require('rimraf');
+import { cleanup } from './fixtures/utils';
 
 describe('::Multipart', () => {
   let res: request.Response;
@@ -15,8 +15,8 @@ describe('::Multipart', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, multipart(opts));
 
-  beforeAll(() => rimraf.sync(directory));
-  afterAll(() => rimraf.sync(directory));
+  beforeAll(() => cleanup(directory));
+  afterAll(() => cleanup(directory));
 
   test('wrapper', () => {
     expect(multipart()).toBeInstanceOf(Function);
