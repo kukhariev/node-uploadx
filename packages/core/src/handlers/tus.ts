@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
+import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers, SendParameters } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -80,9 +80,7 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
       const headers: Headers = {
         'Upload-Offset': `${file.bytesWritten}`
       };
-      // add 'Upload-Metadata' on complete?
-      setHeaders(res, headers);
-      file.status === 'part' && this.send(res, { statusCode: 204 });
+      file.status === 'part' && this.send(res, { statusCode: 204, headers });
     }
     return file;
   }
@@ -115,7 +113,11 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
   }
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send(res, { statusCode: 204 });
+    const headers: Headers = {
+      'Upload-Offset': `${file.bytesWritten}`,
+      'Upload-Metadata': serializeMetadata(file.metadata)
+    };
+    return this.send(res, { statusCode: 204, headers });
   }
 
   send(res: http.ServerResponse, { statusCode, headers = {}, body }: SendParameters): void {
