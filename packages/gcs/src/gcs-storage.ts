@@ -97,14 +97,14 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
   }
 
   normalizeError(error: ClientError): HttpError {
-    const status = +error.code || 500;
+    const statusCode = +error.code || 500;
     if (error.config) {
       return {
         message: error.message,
-        code: error.code,
-        statusCode: status,
+        code: `GCS${statusCode}`,
+        statusCode,
         name: error.name,
-        retryable: status >= 499
+        retryable: statusCode >= 499
       };
     }
     return super.normalizeError(error);
@@ -209,7 +209,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
       const message = await res.text();
       return Promise.reject({
         message,
-        code: `${res.status}`,
+        code: `GCS${res.status}`,
         config: { uri },
         name: 'FetchError'
       });

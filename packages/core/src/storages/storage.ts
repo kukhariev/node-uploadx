@@ -103,11 +103,10 @@ export abstract class BaseStorage<TFile extends File, TList> {
 
   normalizeError(error: Error): HttpError {
     return {
-      message: error.message,
+      message: 'Internal Server Error',
       statusCode: 500,
       code: 'InternalServerError',
-      name: error.name,
-      retryable: true
+      name: 'ServerError'
     };
   }
 

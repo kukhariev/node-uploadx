@@ -8,11 +8,10 @@ import {
   ERRORS,
   fail,
   getBaseUrl,
-  HttpError,
+  httpErrorToTuple,
   isUploadxError,
   Logger,
   pick,
-  ResponseTuple,
   setHeaders,
   typeis,
   UploadxError
@@ -66,7 +65,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   storage: BaseStorage<TFile, TList>;
   registeredHandlers = new Map<string, AsyncHandler>();
   protected log = Logger.get(this.constructor.name);
-  private _errorResponses = {} as ErrorResponses;
+  protected _errorResponses = ERROR_RESPONSES;
 
   constructor(config: { storage: BaseStorage<TFile, TList> } | DiskStorageOptions = {}) {
     super();
@@ -104,11 +103,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
     this.log('Handlers', this.registeredHandlers);
   }
 
-  assembleErrors(value = {}): void {
+  assembleErrors(customErrors = {}): void {
     this._errorResponses = {
-      ...ERROR_RESPONSES,
-      ...value,
-      ...this.storage.errorResponses
+      ...this._errorResponses,
+      ...this.storage.errorResponses,
+      ...customErrors
     };
   }
 
@@ -206,14 +205,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const [statusCode, body, headers] = isUploadxError(error)
-      ? this._errorResponses[error.uploadxError || ERRORS.UNKNOWN_ERROR]
-      : this.buildErrorResponse(this.storage.normalizeError(error));
-    this.send(res, { statusCode, body, headers });
-  }
-
-  buildErrorResponse(error: HttpError): ResponseTuple {
-    return [error.statusCode, error, {}];
+    const [statusCode, errorBody, headers = {}] = isUploadxError(error)
+      ? this._errorResponses[error.uploadxError]
+      : httpErrorToTuple(this.storage.normalizeError(error));
+    this.send(res, { statusCode, body: { error: errorBody }, headers });
   }
 
   /**
