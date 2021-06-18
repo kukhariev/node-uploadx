@@ -40,7 +40,7 @@ export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventE
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
-export interface SendParameters<T = Record<string, any> | string> {
+export interface UploadxResponse<T = Record<string, any> | string> {
   statusCode?: number;
   headers?: Headers;
   body?: T;
@@ -185,7 +185,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    */
   send(
     res: http.ServerResponse,
-    { statusCode = 200, headers = {}, body = '' }: SendParameters
+    { statusCode = 200, headers = {}, body = '' }: UploadxResponse
   ): void {
     let data: string;
     if (typeof body !== 'string') {
@@ -205,10 +205,17 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const [statusCode, errorBody, headers = {}] = isUploadxError(error)
+    const [statusCode, body, headers = {}] = isUploadxError(error)
       ? this._errorResponses[error.uploadxError]
       : httpErrorToTuple(this.storage.normalizeError(error));
-    this.send(res, { statusCode, body: { error: errorBody }, headers });
+    this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
+  }
+
+  /**
+   * Adjusting the error response
+   */
+  formatErrorResponse({ statusCode, body, headers }: UploadxResponse): UploadxResponse {
+    return { statusCode, body: { error: body }, headers };
   }
 
   /**
