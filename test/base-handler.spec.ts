@@ -30,7 +30,7 @@ describe('BaseHandler', () => {
       uploader = new TestUploader();
     });
 
-    it('should send Error (as string)', () => {
+    it.skip('should send Error (as string)', () => {
       uploader.responseType = 'text';
       const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');
@@ -42,7 +42,7 @@ describe('BaseHandler', () => {
       });
     });
 
-    it('should send Error (as json)', () => {
+    it.skip('should send Error (as json)', () => {
       uploader.responseType = 'json';
       const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');

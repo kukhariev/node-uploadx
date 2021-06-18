@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { extname, join, relative, resolve as pathResolve } from 'path';
-import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream } from '../utils';
+import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream, HttpError } from '../utils';
 import {
   File,
   FileInit,
@@ -38,6 +38,19 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this.isReady = true;
+  }
+
+  normalizeError(error: Error & { code?: string }): HttpError {
+    if (error.code) {
+      return {
+        message: error.message,
+        code: error.code,
+        statusCode: 500,
+        retryable: true,
+        name: error.name
+      };
+    }
+    return super.normalizeError(error);
   }
 
   /**

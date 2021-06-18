@@ -1,7 +1,3 @@
-import { AbortController } from 'abort-controller';
-import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
-import * as http from 'http';
-import request from 'node-fetch';
 import {
   BaseStorage,
   BaseStorageOptions,
@@ -12,11 +8,22 @@ import {
   FilePart,
   getHeader,
   hasContent,
+  HttpError,
   isValidPart,
   METAFILE_EXTNAME,
-  updateStatus,
-  updateMetadata
+  updateMetadata,
+  updateStatus
 } from '@uploadx/core';
+import { AbortController } from 'abort-controller';
+import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
+import * as http from 'http';
+import request from 'node-fetch';
+
+export interface ClientError extends Error {
+  code: string;
+  response?: Record<string, any>;
+  config: Record<string, any>;
+}
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -82,9 +89,25 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     this.authClient = new GoogleAuth(config);
     this._checkBucket(bucketName)
       .then(() => (this.isReady = true))
-      .catch((err: Error & { code: number }) => {
-        throw new Error(`Bucket code: ${err.code}`);
+      .catch((err: ClientError) => {
+        // eslint-disable-next-line no-console
+        console.error('error open bucket: %o', err);
+        process.exit(1);
       });
+  }
+
+  normalizeError(error: ClientError): HttpError {
+    const status = +error.code || 500;
+    if (error.config) {
+      return {
+        message: error.message,
+        code: error.code,
+        statusCode: status,
+        name: error.name,
+        retryable: status >= 499
+      };
+    }
+    return super.normalizeError(error);
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
@@ -184,7 +207,12 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
         return size;
       }
       const message = await res.text();
-      return Promise.reject({ message, code: res.status });
+      return Promise.reject({
+        message,
+        code: `${res.status}`,
+        config: { uri },
+        name: 'FetchError'
+      });
     } catch (err) {
       this.log(uri, err);
       return NaN;
