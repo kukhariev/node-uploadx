@@ -1,10 +1,10 @@
 import { createRequest, createResponse } from 'node-mocks-http';
-import { TestUploader } from './fixtures/uploader';
+import { testStorage, TestUploader } from './fixtures/uploader';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
   TestUploader.methods = ['post', 'put', 'options'];
-  beforeEach(() => (uploader = new TestUploader()));
+  beforeEach(() => (uploader = new TestUploader({ storage: testStorage })));
 
   it('should implement get()', async () => {
     const res = createResponse();
@@ -27,22 +27,10 @@ describe('BaseHandler', () => {
 
   describe('sendError', () => {
     beforeEach(() => {
-      uploader = new TestUploader();
+      uploader = new TestUploader({ storage: testStorage });
     });
 
-    it.skip('should send Error (as string)', () => {
-      uploader.responseType = 'text';
-      const res = createResponse();
-      const sendSpy = jest.spyOn(uploader, 'send');
-      const err = new Error('Error Message');
-      uploader.sendError(res, err);
-      expect(sendSpy).toHaveBeenCalledWith(res, {
-        statusCode: 500,
-        body: { error: 'something went wrong receiving the file' }
-      });
-    });
-
-    it.skip('should send Error (as json)', () => {
+    it('should send Error', () => {
       uploader.responseType = 'json';
       const res = createResponse();
       const sendSpy = jest.spyOn(uploader, 'send');
@@ -50,7 +38,14 @@ describe('BaseHandler', () => {
       uploader.sendError(res, err);
       expect(sendSpy).toHaveBeenCalledWith(res, {
         statusCode: 500,
-        body: { error: 'something went wrong receiving the file' }
+        body: {
+          error: {
+            message: 'Internal Server Error',
+            code: 'InternalServerError',
+            name: 'ServerError'
+          }
+        },
+        headers: {}
       });
     });
   });

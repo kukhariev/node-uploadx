@@ -38,24 +38,24 @@ export type ErrorResponses<T = string | Record<string, any>> = {
 } & DefaultErrorResponses;
 
 export const ERROR_RESPONSES: DefaultErrorResponses = {
-  BAD_REQUEST: [400, { error: 'bad request' }],
-  FILE_CONFLICT: [409, { error: 'file conflict' }],
-  FILE_ERROR: [500, { error: 'something went wrong writing the file' }],
-  FILE_NOT_ALLOWED: [403, { error: 'file not allowed' }],
-  FILE_NOT_FOUND: [404, { error: 'not found' }],
-  FORBIDDEN: [403, { error: 'authenticated user is not allowed access' }],
-  GONE: [410, { error: 'gone' }],
-  INVALID_CONTENT_TYPE: [400, { error: 'invalid or missing content-type header' }],
-  INVALID_FILE_NAME: [400, { error: 'invalid file name or it cannot be retrieved' }],
-  INVALID_FILE_SIZE: [400, { error: 'file size cannot be retrieved' }],
-  INVALID_RANGE: [400, { error: 'invalid or missing content-range header' }],
-  METHOD_NOT_ALLOWED: [405, { error: 'method not allowed' }],
-  REQUEST_ENTITY_TOO_LARGE: [413, { error: 'request entity too large' }],
-  STORAGE_ERROR: [503, { error: 'storage error' }],
-  TOO_MANY_REQUESTS: [429, { error: 'too many requests' }],
-  UNKNOWN_ERROR: [500, { error: 'something went wrong receiving the file' }],
-  UNPROCESSABLE_ENTITY: [422, { error: 'validation failed' }],
-  UNSUPPORTED_MEDIA_TYPE: [415, { error: 'unsupported media type' }]
+  BAD_REQUEST: [400, { message: 'Bad request' }],
+  FILE_CONFLICT: [409, { message: 'File conflict' }],
+  FILE_ERROR: [500, { message: 'Something went wrong writing the file' }],
+  FILE_NOT_ALLOWED: [403, { message: 'File not allowed' }],
+  FILE_NOT_FOUND: [404, { message: 'Not found' }],
+  FORBIDDEN: [403, { message: 'Authenticated user is not allowed access' }],
+  GONE: [410, { message: 'Gone' }],
+  INVALID_CONTENT_TYPE: [400, { message: 'Invalid or missing "content-type" header' }],
+  INVALID_FILE_NAME: [400, { message: 'Invalid file name or it cannot be retrieved' }],
+  INVALID_FILE_SIZE: [400, { message: 'File size cannot be retrieved' }],
+  INVALID_RANGE: [400, { message: 'Invalid or missing content-range header' }],
+  METHOD_NOT_ALLOWED: [405, { message: 'Method not allowed' }],
+  REQUEST_ENTITY_TOO_LARGE: [413, { message: 'Request entity too large' }],
+  STORAGE_ERROR: [503, { message: 'Storage error' }],
+  TOO_MANY_REQUESTS: [429, { message: 'Too many requests' }],
+  UNKNOWN_ERROR: [500, { message: 'Something went wrong receiving the file' }],
+  UNPROCESSABLE_ENTITY: [422, { message: 'Validation failed' }],
+  UNSUPPORTED_MEDIA_TYPE: [415, { message: 'Unsupported media type' }]
 };
 
 export class UploadxError extends Error {
@@ -72,10 +72,27 @@ export function fail(uploadxError: string, detail?: Record<string, any> | string
   return Promise.reject({ message: uploadxError, uploadxError, detail });
 }
 
+export function httpErrorToTuple(error: HttpError): ResponseTuple {
+  const { statusCode, headers, ...body } = error;
+  return [statusCode, body, headers];
+}
+
+export function responseTupleToHttpError([
+  statusCode,
+  message
+]: ResponseTuple<string>): Partial<HttpError> {
+  return {
+    statusCode,
+    message
+  };
+}
+
 export interface HttpError {
   statusCode: number;
   message: string;
   code: string;
   name: string;
   retryable?: boolean;
+  headers?: Record<string, any>;
+  detail?: Record<string, any> | string;
 }
