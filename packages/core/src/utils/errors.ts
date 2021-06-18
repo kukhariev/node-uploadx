@@ -34,7 +34,7 @@ type DefaultErrorResponses = {
 };
 
 export type ErrorResponses<T = string | Record<string, any>> = {
-  [error: string]: ResponseTuple<T>;
+  [code: string]: ResponseTuple<T>;
 } & DefaultErrorResponses;
 
 export const ERROR_RESPONSES: DefaultErrorResponses = {
@@ -61,7 +61,7 @@ export const ERROR_RESPONSES: DefaultErrorResponses = {
 export class UploadxError extends Error {
   uploadxError: ERRORS = ERRORS.UNKNOWN_ERROR;
   request?: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
-  detail?: string | Record<string, unknown>;
+  detail?: string | Record<string, any>;
 }
 
 export function isUploadxError(err: unknown): err is UploadxError {
@@ -70,4 +70,12 @@ export function isUploadxError(err: unknown): err is UploadxError {
 
 export function fail(uploadxError: string, detail?: Record<string, any> | string): Promise<never> {
   return Promise.reject({ message: uploadxError, uploadxError, detail });
+}
+
+export interface HttpError {
+  statusCode: number;
+  message: string;
+  code: string;
+  name: string;
+  retryable?: boolean;
 }

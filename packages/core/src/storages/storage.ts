@@ -2,8 +2,9 @@ import * as bytes from 'bytes';
 import * as http from 'http';
 import {
   Cache,
-  ErrorResponses,
   ERROR_RESPONSES,
+  ErrorResponses,
+  HttpError,
   Logger,
   typeis,
   Validation,
@@ -98,6 +99,16 @@ export abstract class BaseStorage<TFile extends File, TList> {
 
   async validate(file: TFile): Promise<any> {
     return this.validation.verify(file);
+  }
+
+  normalizeError(error: Error): HttpError {
+    return {
+      message: error.message,
+      statusCode: 500,
+      code: 'InternalServerError',
+      name: error.name,
+      retryable: true
+    };
   }
 
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;

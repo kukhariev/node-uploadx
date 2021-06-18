@@ -3,13 +3,16 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import {
+  ERROR_RESPONSES,
   ErrorResponses,
   ERRORS,
-  ERROR_RESPONSES,
   fail,
   getBaseUrl,
+  HttpError,
+  isUploadxError,
   Logger,
   pick,
+  ResponseTuple,
   setHeaders,
   typeis,
   UploadxError
@@ -38,10 +41,10 @@ export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventE
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
-export interface SendParameters {
+export interface SendParameters<T = Record<string, any> | string> {
   statusCode?: number;
   headers?: Headers;
-  body?: Record<string, any> | string;
+  body?: T;
 }
 
 export type ResponseBodyType = 'text' | 'json';
@@ -120,10 +123,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
     this.log(`[request]: %s`, req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
-      return this.sendError(res, { uploadxError: ERRORS.METHOD_NOT_ALLOWED });
+      return this.sendError(res, { uploadxError: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
     }
     if (!this.storage.isReady) {
-      return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR });
+      return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR } as UploadxError);
     }
     this.cors.preflight(req, res);
 
@@ -147,11 +150,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
         }
         return;
       })
-      .catch((error: UploadxError) => {
-        const errorEvent: UploadxError = Object.assign(error, {
+      .catch((error: Error) => {
+        const errorEvent = Object.assign(error, {
           request: pick(req, ['headers', 'method', 'url'])
         });
-        this.listenerCount('error') && this.emit('error', errorEvent);
+        this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
         this.log('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
         typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
@@ -202,10 +205,15 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   /**
    * Send Error to client
    */
-  sendError(res: http.ServerResponse, error: Partial<UploadxError>): void {
-    const [statusCode, body, headers] =
-      this._errorResponses[error.uploadxError || ERRORS.UNKNOWN_ERROR];
+  sendError(res: http.ServerResponse, error: Error): void {
+    const [statusCode, body, headers] = isUploadxError(error)
+      ? this._errorResponses[error.uploadxError || ERRORS.UNKNOWN_ERROR]
+      : this.buildErrorResponse(this.storage.normalizeError(error));
     this.send(res, { statusCode, body, headers });
+  }
+
+  buildErrorResponse(error: HttpError): ResponseTuple {
+    return [error.statusCode, error, {}];
   }
 
   /**

@@ -38,7 +38,9 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const metadata = await getMetadata(req).catch(error => fail(ERRORS.BAD_REQUEST, error));
+    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
+      fail(ERRORS.BAD_REQUEST, error)
+    );
     const file = await this.storage.update(name, { metadata, name });
     this.send(res, { body: file.metadata });
     return file;

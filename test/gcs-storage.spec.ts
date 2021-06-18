@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { AbortSignal } from 'abort-controller';
-import { createReadStream } from 'fs';
 import { FilePart } from '@uploadx/core';
 import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '@uploadx/gcs';
+import { AbortSignal } from 'abort-controller';
+import { createReadStream } from 'fs';
+import { IncomingMessage } from 'http';
+import fetch from 'node-fetch';
 import { storageOptions } from './fixtures';
 import { request } from './fixtures/gcs';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
-import fetch from 'node-fetch';
-import { IncomingMessage } from 'http';
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');

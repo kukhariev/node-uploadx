@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, setHeaders, typeis } from '../utils';
+import { ERRORS, fail, getHeader, typeis } from '../utils';
 import { BaseHandler, Headers, SendParameters } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -28,8 +28,11 @@ export function parseMetadata(encoded = ''): Metadata {
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
 export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
+  /**
+   *
+   */
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const headers: Headers = {
+    const headers = {
       'Tus-Extension': 'creation,creation-with-upload,termination',
       'Tus-Version': TUS_RESUMABLE,
       'Tus-Max-Size': this.storage.maxUploadSize
@@ -39,7 +42,7 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
   }
 
   /**
-   * Create File from request and send file url to client
+   * Create file and send file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadataHeader = getHeader(req, 'upload-metadata');
@@ -48,9 +51,8 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
-    const headers: Headers = {
-      Location: this.buildFileUrl(req, file)
-    };
+    const headers: Headers = { Location: this.buildFileUrl(req, file) };
+    // 'creation-with-upload' block
     if (typeis(req, ['application/offset+octet-stream'])) {
       getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
       const contentLength = +getHeader(req, 'content-length');
@@ -63,13 +65,11 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
   }
 
   /**
-   * Write chunk to file or/and return chunk offset
+   * Write chunk to file
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) {
-      return fail(ERRORS.FILE_NOT_FOUND);
-    }
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
     metadata && (await this.storage.update(name, { metadata, name }));
@@ -80,20 +80,19 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
       const headers: Headers = {
         'Upload-Offset': `${file.bytesWritten}`
       };
-      // add 'Upload-Metadata' on complete?
-      setHeaders(res, headers);
-      file.status === 'part' && this.send(res, { statusCode: 204 });
+      file.status === 'part' && this.send(res, { statusCode: 204, headers });
     }
     return file;
   }
 
+  /**
+   * Return chunk offset
+   */
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) {
-      return fail(ERRORS.FILE_NOT_FOUND);
-    }
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const file = await this.storage.write({ name: name });
-    const headers: Headers = {
+    const headers = {
       'Upload-Offset': `${file.bytesWritten}`,
       'Upload-Metadata': serializeMetadata(file.metadata)
     };
@@ -102,20 +101,22 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
   }
 
   /**
-   * Delete upload by id
+   * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
-    if (!name) {
-      return fail(ERRORS.FILE_NOT_FOUND);
-    }
+    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const [file] = await this.storage.delete(name);
     this.send(res, { statusCode: 204 });
     return file;
   }
 
   finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send(res, { statusCode: 204 });
+    const headers: Headers = {
+      'Upload-Offset': `${file.bytesWritten}`,
+      'Upload-Metadata': serializeMetadata(file.metadata)
+    };
+    return this.send(res, { statusCode: 204, headers });
   }
 
   send(res: http.ServerResponse, { statusCode, headers = {}, body }: SendParameters): void {

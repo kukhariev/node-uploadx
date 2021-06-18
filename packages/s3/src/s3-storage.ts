@@ -8,13 +8,14 @@ import {
   FileInit,
   FilePart,
   hasContent,
+  HttpError,
   isValidPart,
   mapValues,
   METAFILE_EXTNAME,
   updateMetadata,
   updateStatus
 } from '@uploadx/core';
-import { config as AWSConfig, S3 } from 'aws-sdk';
+import { AWSError, config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -52,6 +53,19 @@ export class S3Storage extends BaseStorage<S3File, any> {
     keyFile && AWSConfig.loadFromPath(keyFile);
     this.client = new S3(config);
     this._checkBucket();
+  }
+
+  normalizeError(error: AWSError): HttpError {
+    if (error.statusCode || error.time) {
+      return {
+        message: error.message,
+        code: error.code,
+        statusCode: error.statusCode || 500,
+        retryable: error.retryable,
+        name: error.name
+      };
+    }
+    return super.normalizeError(error);
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
