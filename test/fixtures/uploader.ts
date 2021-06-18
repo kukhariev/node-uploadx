@@ -27,7 +27,7 @@ class TestStorage extends BaseStorage<File, any> {
     throw new Error('Method not implemented.');
   }
 
-  get = (url: any) => Promise.resolve([]);
+  get = (_url: any): Promise<any> => Promise.resolve([]);
 }
 
 export const testStorage = new TestStorage();

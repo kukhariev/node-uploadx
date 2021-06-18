@@ -1,7 +1,7 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
 import { ERRORS, fail, getHeader, typeis } from '../utils';
-import { BaseHandler, Headers, SendParameters } from './base-handler';
+import { BaseHandler, Headers, UploadxResponse } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
 
@@ -119,7 +119,7 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
     return this.send(res, { statusCode: 204, headers });
   }
 
-  send(res: http.ServerResponse, { statusCode, headers = {}, body }: SendParameters): void {
+  send(res: http.ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {
     headers['Tus-Resumable'] = TUS_RESUMABLE;
     super.send(res, { statusCode, headers, body });
   }
