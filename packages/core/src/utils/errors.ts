@@ -4,24 +4,24 @@ import type { IncomingMessage } from 'http';
 
 // eslint-disable-next-line no-shadow
 export const enum ERRORS {
-  BAD_REQUEST = 'BAD_REQUEST',
-  FILE_CONFLICT = 'FILE_CONFLICT',
-  FILE_ERROR = 'FILE_ERROR',
-  FILE_NOT_ALLOWED = 'FILE_NOT_ALLOWED',
-  FILE_NOT_FOUND = 'FILE_NOT_FOUND',
-  FORBIDDEN = 'FORBIDDEN',
-  GONE = 'GONE',
-  INVALID_CONTENT_TYPE = 'INVALID_CONTENT_TYPE',
-  INVALID_FILE_NAME = 'INVALID_FILE_NAME',
-  INVALID_FILE_SIZE = 'INVALID_FILE_SIZE',
-  INVALID_RANGE = 'INVALID_RANGE',
-  METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED',
-  REQUEST_ENTITY_TOO_LARGE = 'REQUEST_ENTITY_TOO_LARGE',
-  STORAGE_ERROR = 'STORAGE_ERROR',
-  TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-  UNPROCESSABLE_ENTITY = 'UNPROCESSABLE_ENTITY',
-  UNSUPPORTED_MEDIA_TYPE = 'UNSUPPORTED_MEDIA_TYPE'
+  BAD_REQUEST = 'BadRequest',
+  FILE_CONFLICT = 'FileConflict',
+  FILE_ERROR = 'FileError',
+  FILE_NOT_ALLOWED = 'FileNotAllowed',
+  FILE_NOT_FOUND = 'FileNotFound',
+  FORBIDDEN = 'Forbidden',
+  GONE = 'Gone',
+  INVALID_CONTENT_TYPE = 'InvalidContentType',
+  INVALID_FILE_NAME = 'InvalidFileName',
+  INVALID_FILE_SIZE = 'InvalidFileSize',
+  INVALID_RANGE = 'InvalidRange',
+  METHOD_NOT_ALLOWED = 'MethodNotAllowed',
+  REQUEST_ENTITY_TOO_LARGE = 'RequestEntityTooLarge',
+  STORAGE_ERROR = 'StorageError',
+  TOO_MANY_REQUESTS = 'TooManyRequests',
+  UNKNOWN_ERROR = 'UnknownError',
+  UNPROCESSABLE_ENTITY = 'UnprocessableEntity',
+  UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType'
 }
 
 export type ResponseTuple<T = string | Record<string, any>> = [
@@ -29,70 +29,76 @@ export type ResponseTuple<T = string | Record<string, any>> = [
   body?: T,
   headers?: Record<string, any>
 ];
-type DefaultErrorResponses = {
-  [K in ERRORS]: ResponseTuple;
+export type ErrorResponses<T extends string = string> = {
+  [K in T]: ResponseTuple<Partial<HttpErrorBody>>;
 };
 
-export type ErrorResponses<T = string | Record<string, any>> = {
-  [code: string]: ResponseTuple<T>;
-} & DefaultErrorResponses;
-
-export const ERROR_RESPONSES: DefaultErrorResponses = {
-  BAD_REQUEST: [400, { message: 'Bad request' }],
-  FILE_CONFLICT: [409, { message: 'File conflict' }],
-  FILE_ERROR: [500, { message: 'Something went wrong writing the file' }],
-  FILE_NOT_ALLOWED: [403, { message: 'File not allowed' }],
-  FILE_NOT_FOUND: [404, { message: 'Not found' }],
-  FORBIDDEN: [403, { message: 'Authenticated user is not allowed access' }],
-  GONE: [410, { message: 'Gone' }],
-  INVALID_CONTENT_TYPE: [400, { message: 'Invalid or missing "content-type" header' }],
-  INVALID_FILE_NAME: [400, { message: 'Invalid file name or it cannot be retrieved' }],
-  INVALID_FILE_SIZE: [400, { message: 'File size cannot be retrieved' }],
-  INVALID_RANGE: [400, { message: 'Invalid or missing content-range header' }],
-  METHOD_NOT_ALLOWED: [405, { message: 'Method not allowed' }],
-  REQUEST_ENTITY_TOO_LARGE: [413, { message: 'Request entity too large' }],
-  STORAGE_ERROR: [503, { message: 'Storage error' }],
-  TOO_MANY_REQUESTS: [429, { message: 'Too many requests' }],
-  UNKNOWN_ERROR: [500, { message: 'Something went wrong receiving the file' }],
-  UNPROCESSABLE_ENTITY: [422, { message: 'Validation failed' }],
-  UNSUPPORTED_MEDIA_TYPE: [415, { message: 'Unsupported media type' }]
+export const ERROR_RESPONSES: ErrorResponses<ERRORS> = {
+  BadRequest: [400, { message: 'Bad request' }],
+  FileConflict: [409, { message: 'File conflict' }],
+  FileError: [500, { message: 'Something went wrong writing the file' }],
+  FileNotAllowed: [403, { message: 'File not allowed' }],
+  FileNotFound: [404, { message: 'Not found' }],
+  Forbidden: [403, { message: 'Authenticated user is not allowed access' }],
+  Gone: [410, { message: 'Gone' }],
+  InvalidContentType: [400, { message: 'Invalid or missing "content-type" header' }],
+  InvalidFileName: [400, { message: 'Invalid file name or it cannot be retrieved' }],
+  InvalidFileSize: [400, { message: 'File size cannot be retrieved' }],
+  InvalidRange: [400, { message: 'Invalid or missing content-range header' }],
+  MethodNotAllowed: [405, { message: 'Method not allowed' }],
+  RequestEntityTooLarge: [413, { message: 'Request entity too large' }],
+  StorageError: [503, { message: 'Storage error' }],
+  TooManyRequests: [429, { message: 'Too many requests' }],
+  UnknownError: [500, { message: 'Something went wrong receiving the file' }],
+  UnprocessableEntity: [422, { message: 'Validation failed' }],
+  UnsupportedMediaType: [415, { message: 'Unsupported media type' }]
 };
+
+export class ErrorMap {
+  static get errorMap(): ErrorResponses<ERRORS> {
+    const errMap = {} as ErrorResponses;
+    (Object.keys(ErrorMap._errorMap) as ERRORS[]).forEach(code => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ErrorMap._errorMap[code][1]!.code = code;
+      errMap[code] = ErrorMap._errorMap[code];
+    });
+    return errMap;
+  }
+
+  private static _errorMap = ERROR_RESPONSES;
+}
 
 export class UploadxError extends Error {
-  uploadxError: ERRORS = ERRORS.UNKNOWN_ERROR;
+  uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
   request?: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
   detail?: string | Record<string, any>;
 }
 
 export function isUploadxError(err: unknown): err is UploadxError {
-  return (err as UploadxError).uploadxError !== undefined;
+  return !!(err as UploadxError).uploadxErrorCode;
 }
 
-export function fail(uploadxError: string, detail?: Record<string, any> | string): Promise<never> {
-  return Promise.reject({ message: uploadxError, uploadxError, detail });
+export function fail(
+  uploadxErrorCode: string,
+  detail?: Record<string, any> | string
+): Promise<never> {
+  return Promise.reject({ message: uploadxErrorCode, uploadxErrorCode, detail });
 }
 
-export function httpErrorToTuple(error: HttpError): ResponseTuple {
+export function httpErrorToTuple(error: HttpError): ResponseTuple<HttpErrorBody> {
   const { statusCode, headers, ...body } = error;
   return [statusCode, body, headers];
 }
 
-export function responseTupleToHttpError([
-  statusCode,
-  message
-]: ResponseTuple<string>): Partial<HttpError> {
-  return {
-    statusCode,
-    message
-  };
-}
-
-export interface HttpError {
-  statusCode: number;
+interface HttpErrorBody {
   message: string;
   code: string;
-  name: string;
+  name?: string;
   retryable?: boolean;
-  headers?: Record<string, any>;
   detail?: Record<string, any> | string;
+}
+
+export interface HttpError extends HttpErrorBody {
+  statusCode: number;
+  headers?: Record<string, any>;
 }
