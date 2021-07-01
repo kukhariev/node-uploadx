@@ -14,7 +14,10 @@ describe('Validator', () => {
         isValid: p => p.prop > 20
       }
     });
-    await expect(validation.verify(obj)).rejects.toHaveProperty('uploadxError', 'VALIDATION_FIRST');
+    await expect(validation.verify(obj)).rejects.toHaveProperty(
+      'uploadxErrorCode',
+      'ValidationErrorFirst'
+    );
   });
   it('async isValid', async () => {
     const obj = { prop: 10 };
@@ -23,7 +26,10 @@ describe('Validator', () => {
         isValid: p => Promise.resolve(p.prop > 20)
       }
     });
-    await expect(validation.verify(obj)).rejects.toHaveProperty('uploadxError', 'VALIDATION_FIRST');
+    await expect(validation.verify(obj)).rejects.toHaveProperty(
+      'uploadxErrorCode',
+      'ValidationErrorFirst'
+    );
   });
   it('custom response', async () => {
     const obj = { prop: 10 };
@@ -33,8 +39,11 @@ describe('Validator', () => {
         response: [400, 'error']
       }
     });
-    expect(errorResponses).toHaveProperty('VALIDATION_FIRST');
-    await expect(validation.verify(obj)).rejects.toHaveProperty('uploadxError', 'VALIDATION_FIRST');
+    expect(errorResponses).toHaveProperty('ValidationErrorFirst');
+    await expect(validation.verify(obj)).rejects.toHaveProperty(
+      'uploadxErrorCode',
+      'ValidationErrorFirst'
+    );
   });
 
   it('throw missing isValid', () => {

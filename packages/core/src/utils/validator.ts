@@ -5,7 +5,7 @@ export interface ValidatorConfig<T> {
   isValid?: (t: T) => boolean | Promise<boolean>;
   response?: ResponseTuple<any>;
 }
-
+const capitalize = (s: string): string => s && s[0].toUpperCase() + s.slice(1);
 export type Validation<T> = Record<string, ValidatorConfig<T>>;
 
 export class Validator<T> {
@@ -15,14 +15,14 @@ export class Validator<T> {
 
   add(config: Validation<T>): void {
     for (const [key, validator] of Object.entries(config)) {
-      const code = `${this.prefix}${key}`;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      validator.response && (this.errorResponses[code] = validator.response);
-      const entry = (this._validators[code] = { ...this._validators[code], ...validator });
-      if (typeof entry.isValid !== 'function') {
+      const code = `${this.prefix}${capitalize(key)}`;
+      validator.response &&
+        (this.errorResponses[code] = validator.response as ErrorResponses[string]);
+      this._validators[code] = { ...this._validators[code], ...validator };
+      if (typeof this._validators[code].isValid !== 'function') {
         throw new Error('Validation config "isValid" is missing or it is not a function!');
       }
-      if (!entry.response) {
+      if (!this._validators[code].response) {
         this._validators[code].response = ERROR_RESPONSES.UnprocessableEntity;
       }
     }

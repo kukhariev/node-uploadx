@@ -68,7 +68,7 @@ describe('GCStorage', () => {
       mockAuthRequest.mockResolvedValue({});
       await expect(
         storage.update(filename, { metadata: { name: 'newname.mp4' } })
-      ).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
+      ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
   describe('.get()', () => {

@@ -50,8 +50,8 @@ describe('DiskStorage', () => {
     });
     it('should reject on limits', async () => {
       await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toHaveProperty(
-        'uploadxError',
-        'VALIDATION_SIZE'
+        'uploadxErrorCode',
+        'ValidationErrorSize'
       );
     });
   });
@@ -85,13 +85,13 @@ describe('DiskStorage', () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
-      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
+      await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
 
     it('should reject with 500', async () => {
       mockReadable.__mockPipeError(writeStream);
       const write = storage.write({ ...testfile, start: 0, body: mockReadable });
-      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_ERROR');
+      await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileError');
     });
 
     it('should close file and reset bytesWritten on abort', async () => {
@@ -105,7 +105,7 @@ describe('DiskStorage', () => {
     it('should check chunk size', async () => {
       mockReadable.__mockSend();
       const write = storage.write({ ...testfile, start: testfile.size - 2, body: mockReadable });
-      await expect(write).rejects.toHaveProperty('uploadxError', 'FILE_CONFLICT');
+      await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
   });
   describe('.get()', () => {

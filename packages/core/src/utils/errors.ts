@@ -58,8 +58,7 @@ export class ErrorMap {
   static get errorMap(): ErrorResponses<ERRORS> {
     const errMap = {} as ErrorResponses;
     (Object.keys(ErrorMap._errorMap) as ERRORS[]).forEach(code => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ErrorMap._errorMap[code][1]!.code = code;
+      (ErrorMap._errorMap[code][1] ||= {}).code = code;
       errMap[code] = ErrorMap._errorMap[code];
     });
     return errMap;
