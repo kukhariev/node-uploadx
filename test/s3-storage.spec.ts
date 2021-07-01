@@ -127,7 +127,7 @@ describe('S3Storage', () => {
       }));
       await expect(
         storage.update(filename, { metadata: { name: 'newname.mp4' } } as any)
-      ).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
+      ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
   describe('.get()', () => {
