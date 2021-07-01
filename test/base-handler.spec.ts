@@ -9,7 +9,7 @@ describe('BaseHandler', () => {
   it('should implement get()', async () => {
     const res = createResponse();
     const req = createRequest({ url: '/files/12345' });
-    await expect(uploader.get(req, res)).rejects.toHaveProperty('uploadxError', 'FILE_NOT_FOUND');
+    await expect(uploader.get(req, res)).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
   });
 
   it('should check if storage not ready', () => {

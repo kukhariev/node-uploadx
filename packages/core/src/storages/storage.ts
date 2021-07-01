@@ -77,7 +77,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return file.size <= this.value;
       },
-      response: ERROR_RESPONSES.REQUEST_ENTITY_TOO_LARGE
+      response: ERROR_RESPONSES.RequestEntityTooLarge
     };
 
     const mime: Required<ValidatorConfig<TFile>> = {
@@ -85,13 +85,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return !!typeis.is(file.contentType, this.value);
       },
-      response: ERROR_RESPONSES.UNSUPPORTED_MEDIA_TYPE
+      response: ERROR_RESPONSES.UnsupportedMediaType
     };
     const filename: ValidatorConfig<TFile> = {
       isValid(file) {
         return file.name.length < MAX_FILENAME_LENGTH;
       },
-      response: ERROR_RESPONSES.INVALID_FILE_NAME
+      response: ERROR_RESPONSES.InvalidFileName
     };
     this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });

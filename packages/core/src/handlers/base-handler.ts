@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
 import {
-  ERROR_RESPONSES,
+  ErrorMap,
   ErrorResponses,
   ERRORS,
   fail,
@@ -65,7 +65,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   storage: BaseStorage<TFile, TList>;
   registeredHandlers = new Map<string, AsyncHandler>();
   protected log = Logger.get(this.constructor.name);
-  protected _errorResponses = ERROR_RESPONSES;
+  protected _errorResponses = {} as ErrorResponses;
 
   constructor(config: { storage: BaseStorage<TFile, TList> } | DiskStorageOptions = {}) {
     super();
@@ -105,6 +105,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
 
   assembleErrors(customErrors = {}): void {
     this._errorResponses = {
+      ...ErrorMap.errorMap,
       ...this._errorResponses,
       ...this.storage.errorResponses,
       ...customErrors
@@ -122,10 +123,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
     this.log(`[request]: %s`, req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
-      return this.sendError(res, { uploadxError: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
+      return this.sendError(res, { uploadxErrorCode: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
     }
     if (!this.storage.isReady) {
-      return this.sendError(res, { uploadxError: ERRORS.STORAGE_ERROR } as UploadxError);
+      return this.sendError(res, { uploadxErrorCode: ERRORS.STORAGE_ERROR } as UploadxError);
     }
     this.cors.preflight(req, res);
 
@@ -206,7 +207,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    */
   sendError(res: http.ServerResponse, error: Error): void {
     const [statusCode, body, headers = {}] = isUploadxError(error)
-      ? this._errorResponses[error.uploadxError]
+      ? this._errorResponses[error.uploadxErrorCode]
       : httpErrorToTuple(this.storage.normalizeError(error));
     this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
   }
