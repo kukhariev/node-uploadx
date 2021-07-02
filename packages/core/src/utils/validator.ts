@@ -1,4 +1,4 @@
-import { ErrorResponses, ERROR_RESPONSES, fail, ResponseTuple } from './errors';
+import { ErrorMap, ErrorResponses, fail, ResponseTuple } from './errors';
 
 export interface ValidatorConfig<T> {
   value?: any;
@@ -23,7 +23,7 @@ export class Validator<T> {
         throw new Error('Validation config "isValid" is missing or it is not a function!');
       }
       if (!this._validators[code].response) {
-        this._validators[code].response = ERROR_RESPONSES.UnprocessableEntity;
+        this._validators[code].response = ErrorMap.responses.UnprocessableEntity;
       }
     }
   }

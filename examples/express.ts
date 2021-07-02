@@ -37,7 +37,7 @@ const storage = new DiskStorage({
       response: [403, { error: 'missing lastModified' }]
     },
     filename: {
-      isValid: file => file.name.length < 255 && !/[^a-z0-9_.@()-]/i.test(file.name),
+      isValid: file => file.name.length < 255 && /^[a-z0-9_.@()-]+$/i.test(file.originalName),
       response: [400, { error: 'invalid filename' }]
     }
   }
@@ -45,6 +45,6 @@ const storage = new DiskStorage({
 
 app.use('/files', uploadx({ storage }));
 
-app.listen(3003, () => {
-  console.log('listening on port:', 3003);
+app.listen(3002, () => {
+  console.log('listening on port:', 3002);
 });
