@@ -1,9 +1,7 @@
-// noinspection JSUnusedGlobalSymbols
-
 import type { IncomingMessage } from 'http';
 
 // eslint-disable-next-line no-shadow
-export const enum ERRORS {
+export enum ERRORS {
   BAD_REQUEST = 'BadRequest',
   FILE_CONFLICT = 'FileConflict',
   FILE_ERROR = 'FileError',
@@ -33,7 +31,7 @@ export type ErrorResponses<T extends string = string> = {
   [K in T]: ResponseTuple<Partial<HttpErrorBody>>;
 };
 
-export const ERROR_RESPONSES: ErrorResponses<ERRORS> = {
+const DEFAULT_ERROR_RESPONSES: ErrorResponses<ERRORS> = {
   BadRequest: [400, { message: 'Bad request' }],
   FileConflict: [409, { message: 'File conflict' }],
   FileError: [500, { message: 'Something went wrong writing the file' }],
@@ -54,17 +52,20 @@ export const ERROR_RESPONSES: ErrorResponses<ERRORS> = {
   UnsupportedMediaType: [415, { message: 'Unsupported media type' }]
 };
 
-export class ErrorMap {
-  static get errorMap(): ErrorResponses<ERRORS> {
-    const errMap = {} as ErrorResponses;
-    (Object.keys(ErrorMap._errorMap) as ERRORS[]).forEach(code => {
-      (ErrorMap._errorMap[code][1] ||= {}).code = code;
-      errMap[code] = ErrorMap._errorMap[code];
-    });
-    return errMap;
-  }
+function buildDefaultErrorMap(): ErrorResponses<ERRORS> {
+  const map = {} as ErrorResponses<ERRORS>;
+  (Object.keys(DEFAULT_ERROR_RESPONSES) as ERRORS[]).forEach(code => {
+    map[code] = [...DEFAULT_ERROR_RESPONSES[code]];
+    (map[code][1] ||= {}).code = code;
+  });
+  return map;
+}
 
-  private static _errorMap = ERROR_RESPONSES;
+export class ErrorMap {
+  static responses = {} as ErrorResponses;
+  static init(): void {
+    ErrorMap.responses = buildDefaultErrorMap();
+  }
 }
 
 export class UploadxError extends Error {

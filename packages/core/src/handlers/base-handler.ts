@@ -85,7 +85,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    *  @example
    *  const uploadx = new Uploadx({ storage });
    *  uploadx.errorResponses = {
-   *    FILE_NOT_FOUND: [404, { error: 'Not Found!' }]
+   *    FileNotFound: [404, { error: 'Not Found!' }]
    *  }
    * @param value
    */
@@ -105,7 +105,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
 
   assembleErrors(customErrors = {}): void {
     this._errorResponses = {
-      ...ErrorMap.errorMap,
+      ...ErrorMap.responses,
       ...this._errorResponses,
       ...this.storage.errorResponses,
       ...customErrors

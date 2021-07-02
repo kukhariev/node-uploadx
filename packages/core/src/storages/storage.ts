@@ -2,7 +2,7 @@ import * as bytes from 'bytes';
 import * as http from 'http';
 import {
   Cache,
-  ERROR_RESPONSES,
+  ErrorMap,
   ErrorResponses,
   HttpError,
   Logger,
@@ -63,6 +63,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
   private validation = new Validator<TFile>(this.errorResponses);
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
+    ErrorMap.init();
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
@@ -77,7 +78,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return file.size <= this.value;
       },
-      response: ERROR_RESPONSES.RequestEntityTooLarge
+      response: ErrorMap.responses.RequestEntityTooLarge
     };
 
     const mime: Required<ValidatorConfig<TFile>> = {
@@ -85,13 +86,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return !!typeis.is(file.contentType, this.value);
       },
-      response: ERROR_RESPONSES.UnsupportedMediaType
+      response: ErrorMap.responses.UnsupportedMediaType
     };
     const filename: ValidatorConfig<TFile> = {
       isValid(file) {
         return file.name.length < MAX_FILENAME_LENGTH;
       },
-      response: ERROR_RESPONSES.InvalidFileName
+      response: ErrorMap.responses.InvalidFileName
     };
     this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });
