@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import type { IncomingMessage } from 'http';
 
 // eslint-disable-next-line no-shadow
@@ -31,42 +33,37 @@ export type ErrorResponses<T extends string = string> = {
   [K in T]: ResponseTuple<Partial<HttpErrorBody>>;
 };
 
-const DEFAULT_ERROR_RESPONSES: ErrorResponses<ERRORS> = {
-  BadRequest: [400, { message: 'Bad request' }],
-  FileConflict: [409, { message: 'File conflict' }],
-  FileError: [500, { message: 'Something went wrong writing the file' }],
-  FileNotAllowed: [403, { message: 'File not allowed' }],
-  FileNotFound: [404, { message: 'Not found' }],
-  Forbidden: [403, { message: 'Authenticated user is not allowed access' }],
-  Gone: [410, { message: 'Gone' }],
-  InvalidContentType: [400, { message: 'Invalid or missing "content-type" header' }],
-  InvalidFileName: [400, { message: 'Invalid file name or it cannot be retrieved' }],
-  InvalidFileSize: [400, { message: 'File size cannot be retrieved' }],
-  InvalidRange: [400, { message: 'Invalid or missing content-range header' }],
-  MethodNotAllowed: [405, { message: 'Method not allowed' }],
-  RequestEntityTooLarge: [413, { message: 'Request entity too large' }],
-  StorageError: [503, { message: 'Storage error' }],
-  TooManyRequests: [429, { message: 'Too many requests' }],
-  UnknownError: [500, { message: 'Something went wrong receiving the file' }],
-  UnprocessableEntity: [422, { message: 'Validation failed' }],
-  UnsupportedMediaType: [415, { message: 'Unsupported media type' }]
-};
+class E_ {
+  @E_._buildErrorBody
+  static errors = {
+    BadRequest: [400, 'Bad request'],
+    FileConflict: [409, 'File conflict'],
+    FileError: [500, 'Something went wrong writing the file'],
+    FileNotAllowed: [403, 'File not allowed'],
+    FileNotFound: [404, 'Not found'],
+    Forbidden: [403, 'Authenticated user is not allowed access'],
+    Gone: [410, 'Gone'],
+    InvalidContentType: [400, 'Invalid or missing "content-type" header'],
+    InvalidFileName: [400, 'Invalid file name or it cannot be retrieved'],
+    InvalidFileSize: [400, 'File size cannot be retrieved'],
+    InvalidRange: [400, 'Invalid or missing content-range header'],
+    MethodNotAllowed: [405, 'Method not allowed'],
+    RequestEntityTooLarge: [413, 'Request entity too large'],
+    StorageError: [503, 'Storage error'],
+    TooManyRequests: [429, 'Too many requests'],
+    UnknownError: [500, 'Something went wrong receiving the file'],
+    UnprocessableEntity: [422, 'Validation failed'],
+    UnsupportedMediaType: [415, 'Unsupported media type']
+  } as ErrorResponses<ERRORS>;
 
-function buildDefaultErrorMap(): ErrorResponses<ERRORS> {
-  const map = {} as ErrorResponses<ERRORS>;
-  (Object.keys(DEFAULT_ERROR_RESPONSES) as ERRORS[]).forEach(code => {
-    map[code] = [...DEFAULT_ERROR_RESPONSES[code]];
-    (map[code][1] ||= {}).code = code;
-  });
-  return map;
+  static _buildErrorBody = (target: typeof E_, _: string): void => {
+    (Object.keys(target.errors) as ERRORS[]).forEach(code => {
+      const message = target.errors[code][1] as string;
+      target.errors[code][1] = { code, message };
+    });
+  };
 }
-
-export class ErrorMap {
-  static responses = {} as ErrorResponses;
-  static init(): void {
-    ErrorMap.responses = buildDefaultErrorMap();
-  }
-}
+export const ErrorMap = E_.errors;
 
 export class UploadxError extends Error {
   uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
