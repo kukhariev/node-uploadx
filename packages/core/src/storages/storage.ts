@@ -63,7 +63,6 @@ export abstract class BaseStorage<TFile extends File, TList> {
   private validation = new Validator<TFile>(this.errorResponses);
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
-    ErrorMap.init();
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
@@ -78,7 +77,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return file.size <= this.value;
       },
-      response: ErrorMap.responses.RequestEntityTooLarge
+      response: ErrorMap.RequestEntityTooLarge
     };
 
     const mime: Required<ValidatorConfig<TFile>> = {
@@ -86,13 +85,13 @@ export abstract class BaseStorage<TFile extends File, TList> {
       isValid(file) {
         return !!typeis.is(file.contentType, this.value);
       },
-      response: ErrorMap.responses.UnsupportedMediaType
+      response: ErrorMap.UnsupportedMediaType
     };
     const filename: ValidatorConfig<TFile> = {
       isValid(file) {
         return file.name.length < MAX_FILENAME_LENGTH;
       },
-      response: ErrorMap.responses.InvalidFileName
+      response: ErrorMap.InvalidFileName
     };
     this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });

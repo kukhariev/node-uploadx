@@ -23,7 +23,7 @@ export class Validator<T> {
         throw new Error('Validation config "isValid" is missing or it is not a function!');
       }
       if (!this._validators[code].response) {
-        this._validators[code].response = ErrorMap.responses.UnprocessableEntity;
+        this._validators[code].response = ErrorMap.UnprocessableEntity;
       }
     }
   }

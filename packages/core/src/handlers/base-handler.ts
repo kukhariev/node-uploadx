@@ -105,7 +105,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
 
   assembleErrors(customErrors = {}): void {
     this._errorResponses = {
-      ...ErrorMap.responses,
+      ...ErrorMap,
       ...this._errorResponses,
       ...this.storage.errorResponses,
       ...customErrors
