@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { DiskFile, DiskStorage, OnComplete, uploadx } from 'node-uploadx';
+import { DiskFile, DiskStorage, OnComplete, uploadx, UploadxResponse } from 'node-uploadx';
 
 const app = express();
 
@@ -16,12 +16,14 @@ type OnCompleteBody = {
   id: string;
 };
 
-const onComplete: OnComplete<DiskFile, OnCompleteBody> = file => {
+const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file => {
   const message = `File upload is finished, path: ${file.name}`;
   console.log(message);
   return {
+    statusCode: 200,
     message,
-    id: file.id
+    id: file.id,
+    headers: { ETag: file.id }
   };
 };
 
@@ -31,14 +33,14 @@ const storage = new DiskStorage({
   maxMetadataSize: '1mb',
   onComplete,
   validation: {
-    mime: { value: ['video/*'], response: [415, { error: 'video only' }] },
+    mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
     mtime: {
       isValid: file => !!file.metadata.lastModified,
-      response: [403, { error: 'missing lastModified' }]
+      response: [403, { message: 'missing lastModified' }]
     },
     filename: {
       isValid: file => file.name.length < 255 && /^[a-z0-9_.@()-]+$/i.test(file.originalName),
-      response: [400, { error: 'invalid filename' }]
+      response: [400, { message: 'invalid filename' }]
     }
   }
 });
