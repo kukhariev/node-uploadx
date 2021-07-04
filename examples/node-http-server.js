@@ -28,4 +28,4 @@ const server = createServer((req, res) => {
   }
 });
 
-server.listen(3003, () => console.log('listening on port:', 3003));
+server.listen(3002, () => console.log('listening on port:', 3002));

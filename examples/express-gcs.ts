@@ -13,6 +13,6 @@ storage.onComplete = ({ uri, id }) => {
 
 app.use('/files', uploadx({ storage }));
 
-app.listen(3003, () => {
-  console.log('listening on port:', 3003);
+app.listen(3002, () => {
+  console.log('listening on port:', 3002);
 });

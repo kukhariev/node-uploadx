@@ -18,6 +18,6 @@ app.use('/files', multipart(opts));
 
 app.use('/upload/files', uploadx(opts));
 
-app.listen(3003, () => {
-  console.log('listening on port:', 3003);
+app.listen(3002, () => {
+  console.log('listening on port:', 3002);
 });

@@ -11,4 +11,4 @@ const storage = new S3Storage({ bucket: 'node-uploadx', onComplete });
 
 app.use('/files', tus({ storage }));
 
-app.listen(3003, () => console.log('Listening on port:', 3003));
+app.listen(3002, () => console.log('Listening on port:', 3002));
