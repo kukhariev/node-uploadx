@@ -111,12 +111,19 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
     return file;
   }
 
-  finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    const headers: Headers = {
-      'Upload-Offset': `${file.bytesWritten}`,
-      'Upload-Metadata': serializeMetadata(file.metadata)
-    };
-    return this.send(res, { statusCode: 204, headers });
+  finish(
+    req: http.IncomingMessage & { body: File },
+    res: http.ServerResponse,
+    response: UploadxResponse
+  ): void {
+    if (!response.statusCode || response.statusCode < 300) {
+      response.headers = {
+        ...response.headers,
+        'Upload-Offset': `${req.body.size}`,
+        'Upload-Metadata': serializeMetadata(req.body.metadata)
+      };
+    }
+    return super.finish(req, res, response);
   }
 
   send(res: http.ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {

@@ -21,4 +21,4 @@ app.use('/files', express.static(dir), tus.upload(opts), async (req, res) => {
   return res.sendStatus(204);
 });
 
-app.listen(3003, () => console.log('listening on port:', 3003));
+app.listen(3002, () => console.log('listening on port:', 3002));

@@ -12,7 +12,7 @@ uploadx.on('completed', ({ name, originalName }) =>
 
 fastify.use('/upload/files', uploadx.handle);
 
-fastify.listen(3003, (err, address) => {
+fastify.listen(3002, (err, address) => {
   if (err) throw err;
   fastify.log.info(`server listening on ${address}`);
 });
