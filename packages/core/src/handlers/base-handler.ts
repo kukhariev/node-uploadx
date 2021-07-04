@@ -85,7 +85,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    *  @example
    *  const uploadx = new Uploadx({ storage });
    *  uploadx.errorResponses = {
-   *    FileNotFound: [404, { error: 'Not Found!' }]
+   *    FileNotFound: [404, { message: 'Not Found!' }]
    *  }
    * @param value
    */
@@ -137,10 +137,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
           this.log('[%s]: %s', file.status, file.name);
           this.listenerCount(file.status) && this.emit(file.status, file);
           if (file.status === 'completed') {
-            const body = ((await this.storage.onComplete(file)) as File) || file;
             req['_body'] = true;
-            req['body'] = body;
-            next ? next() : this.finish(req, res, body);
+            req['body'] = file;
+            const completed = (await this.storage.onComplete(file)) as UploadxResponse;
+            next ? next() : this.finish(req as any, res, completed || file);
           }
           return;
         }
@@ -243,7 +243,12 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
     return `${baseUrl}${path}`;
   }
 
-  protected finish(req: http.IncomingMessage, res: http.ServerResponse, file: File): void {
-    return this.send(res, { body: file });
+  protected finish(
+    req: http.IncomingMessage & { body: File },
+    res: http.ServerResponse,
+    response: UploadxResponse
+  ): void {
+    const { statusCode, headers, ...body } = response;
+    return this.send(res, { statusCode, body, headers });
   }
 }

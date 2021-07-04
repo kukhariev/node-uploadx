@@ -54,7 +54,7 @@ describe('::Tus', () => {
         .expect('upload-offset', '0');
     });
 
-    it('should 204', async () => {
+    it('should 200', async () => {
       await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
@@ -62,7 +62,7 @@ describe('::Tus', () => {
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
         .send(fs.readFileSync(srcpath))
-        .expect(204)
+        .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', metadata.size.toString());
     });
