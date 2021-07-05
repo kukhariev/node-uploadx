@@ -1,6 +1,6 @@
 {
   "name": "@uploadx/gcs",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "description": "Uploadx GCS module",
   "keywords": [
     "resumable",
@@ -40,7 +40,7 @@
     "@types/node-fetch": "2.5.10"
   },
   "peerDependencies": {
-    "@uploadx/core": "^4.4.0"
+    "@uploadx/core": "^4.4.1"
   },
   "publishConfig": {
     "access": "public"
