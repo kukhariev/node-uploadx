@@ -10,10 +10,12 @@
     "node": "tsnd -r tsconfig-paths/register -r dotenv/config node-http-server",
     "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
-    "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify"
+    "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify",
+    "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling"
   },
   "dependencies": {
     "@uploadx/core": "^4.4.1",
+    "cp-file": "9.1.0",
     "dotenv": "10.0.0",
     "express": "4.17.1",
     "fastify": "2.15.3",
