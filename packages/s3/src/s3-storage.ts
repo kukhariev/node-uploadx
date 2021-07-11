@@ -99,6 +99,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
 
   async write(part: FilePart): Promise<S3File> {
     const file = await this._getMeta(part.name);
+    if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ||= [];
     if (hasContent(part)) {
@@ -118,7 +119,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
       this.cache.set(file.name, file);
     }
     updateStatus(file);
-    if (file.status === 'completed') {
+    if (file.status === ('completed' as any)) {
       const [completed] = await this._onComplete(file);
       file.uri = completed.Location;
     }
