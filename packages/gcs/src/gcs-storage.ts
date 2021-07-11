@@ -146,10 +146,11 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
 
   async write(part: FilePart): Promise<GCSFile> {
     const file = await this._getMeta(part.name);
+    if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
     updateStatus(file);
-    if (file.status === 'completed') {
+    if (file.status === ('completed' as any)) {
       file.uri = `${this.storageBaseURI}/${file.name}`;
       await this._onComplete(file);
     }
