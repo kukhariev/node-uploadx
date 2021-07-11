@@ -96,7 +96,7 @@ export function updateMetadata(file: File, metadata: unknown): void {
   }
 }
 
-export function updateStatus(file: File): File {
+export function isCompleted(file: File): boolean {
   file.status = file.bytesWritten === file.size ? 'completed' : 'part';
-  return file;
+  return file.status === 'completed';
 }

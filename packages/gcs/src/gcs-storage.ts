@@ -12,7 +12,7 @@ import {
   isValidPart,
   METAFILE_EXTNAME,
   updateMetadata,
-  updateStatus
+  isCompleted
 } from '@uploadx/core';
 import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
@@ -149,8 +149,7 @@ export class GCStorage extends BaseStorage<GCSFile, CGSObject> {
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
-    updateStatus(file);
-    if (file.status === ('completed' as any)) {
+    if (isCompleted(file)) {
       file.uri = `${this.storageBaseURI}/${file.name}`;
       await this._onComplete(file);
     }

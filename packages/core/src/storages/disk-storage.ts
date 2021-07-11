@@ -8,7 +8,7 @@ import {
   hasContent,
   isValidPart,
   updateMetadata,
-  updateStatus
+  isCompleted
 } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
@@ -75,8 +75,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
-      updateStatus(file);
-      if (file.status === ('completed' as any)) {
+      if (isCompleted(file)) {
         await this._saveMeta(file);
       }
       return file;

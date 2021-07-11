@@ -13,7 +13,7 @@ import {
   mapValues,
   METAFILE_EXTNAME,
   updateMetadata,
-  updateStatus
+  isCompleted
 } from '@uploadx/core';
 import { AWSError, config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
@@ -118,8 +118,7 @@ export class S3Storage extends BaseStorage<S3File, any> {
       file.bytesWritten = +(part.contentLength || 0);
       this.cache.set(file.name, file);
     }
-    updateStatus(file);
-    if (file.status === ('completed' as any)) {
+    if (isCompleted(file)) {
       const [completed] = await this._onComplete(file);
       file.uri = completed.Location;
     }
