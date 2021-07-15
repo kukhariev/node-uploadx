@@ -1,4 +1,5 @@
-import { ErrorMap, ErrorResponses, fail, ResponseTuple } from './errors';
+import { ErrorMap, ErrorResponses, fail } from './errors';
+import { ResponseTuple } from './http';
 
 export interface ValidatorConfig<T> {
   value?: any;

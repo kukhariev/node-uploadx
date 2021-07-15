@@ -8,17 +8,18 @@ import {
   ERRORS,
   fail,
   getBaseUrl,
-  httpErrorToTuple,
   isUploadxError,
   Logger,
   pick,
+  ResponseBodyType,
+  responseToTuple,
   setHeaders,
   typeis,
-  UploadxError
+  UploadxError,
+  UploadxResponse
 } from '../utils';
 import { Cors } from './cors';
 
-export type Headers = Record<string, string | number>;
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
 type Handlers = 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put';
 export type MethodHandler = {
@@ -39,14 +40,6 @@ export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventE
 
   emit(event: 'error', evt: UploadxError): boolean;
 }
-
-export interface UploadxResponse<T = Record<string, any> | string> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
-
-export type ResponseBodyType = 'text' | 'json';
 
 export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   extends EventEmitter
@@ -208,7 +201,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   sendError(res: http.ServerResponse, error: Error): void {
     const [statusCode, body, headers = {}] = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
-      : httpErrorToTuple(this.storage.normalizeError(error));
+      : responseToTuple(this.storage.normalizeError(error));
     this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
   }
 

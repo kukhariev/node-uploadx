@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { IncomingMessage } from 'http';
+import { ResponseTuple, UploadxResponse } from './http';
 
 // eslint-disable-next-line no-shadow
 export enum ERRORS {
@@ -24,11 +25,6 @@ export enum ERRORS {
   UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType'
 }
 
-export type ResponseTuple<T = string | Record<string, any>> = [
-  statusCode: number,
-  body?: T,
-  headers?: Record<string, any>
-];
 export type ErrorResponses<T extends string = string> = {
   [K in T]: ResponseTuple<Partial<HttpErrorBody>>;
 };
@@ -82,11 +78,6 @@ export function fail(
   return Promise.reject({ message: uploadxErrorCode, uploadxErrorCode, detail });
 }
 
-export function httpErrorToTuple(error: HttpError): ResponseTuple<HttpErrorBody> {
-  const { statusCode, headers, ...body } = error;
-  return [statusCode, body, headers];
-}
-
 interface HttpErrorBody {
   message: string;
   code: string;
@@ -95,7 +86,4 @@ interface HttpErrorBody {
   detail?: Record<string, any> | string;
 }
 
-export interface HttpError extends HttpErrorBody {
-  statusCode: number;
-  headers?: Record<string, any>;
-}
+export type HttpError = UploadxResponse<HttpErrorBody>;
