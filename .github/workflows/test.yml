@@ -25,6 +25,8 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.node }}-node-modules-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies
         run: yarn install --prefer-offline --frozen-lockfile
+        env:
+          CI: true
       - name: Lint
         run: npm run lint
       - name: Test

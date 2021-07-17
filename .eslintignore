@@ -1,6 +1,9 @@
 dist/
 scripts/
 lib/
+upload/
+uploads/
+files/
 tmp/
 temp/
 node_modules/
