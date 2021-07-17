@@ -77,8 +77,17 @@ export type ResponseBody = string | Record<string, any>;
 export type ResponseBodyType = 'text' | 'json';
 export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
 
-export function responseToTuple<T>(response: UploadxResponse<T>): ResponseTuple {
+export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
+  if (Array.isArray(response)) return response;
   const { statusCode = 200, headers, ...rest } = response;
   const body = response.body ? response.body : rest;
-  return [statusCode, body, headers];
+  return [statusCode, body, headers || {}];
+}
+
+export function tupleToResponse<T>(
+  response: ResponseTuple<T> | UploadxResponse<T>
+): UploadxResponse {
+  if (!Array.isArray(response)) return response;
+  const [statusCode, body, headers] = response;
+  return { statusCode, body, headers };
 }

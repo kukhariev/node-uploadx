@@ -86,4 +86,4 @@ interface HttpErrorBody {
   detail?: Record<string, any> | string;
 }
 
-export type HttpError = UploadxResponse<HttpErrorBody>;
+export type HttpError<T = HttpErrorBody> = UploadxResponse<T> & { statusCode: number };

@@ -1,4 +1,4 @@
-import { Validator } from '@uploadx/core';
+import { Validator } from '../packages/core/src/utils/validator';
 
 describe('Validator', () => {
   type TestObj = { prop: number };
@@ -40,9 +40,26 @@ describe('Validator', () => {
       }
     });
     expect(errorResponses).toHaveProperty('ValidationErrorFirst');
+    expect(errorResponses['ValidationErrorFirst']).toEqual([400, 'error']);
     await expect(validation.verify(obj)).rejects.toHaveProperty(
       'uploadxErrorCode',
       'ValidationErrorFirst'
+    );
+  });
+
+  it('custom response 2', async () => {
+    const obj = { prop: 10 };
+    validation.add({
+      second: {
+        isValid: p => p.prop > 20,
+        response: { statusCode: 400, body: 'error' }
+      }
+    });
+    expect(errorResponses).toHaveProperty('ValidationErrorSecond');
+    expect(errorResponses['ValidationErrorSecond']).toEqual([400, 'error', {}]);
+    await expect(validation.verify(obj)).rejects.toHaveProperty(
+      'uploadxErrorCode',
+      'ValidationErrorSecond'
     );
   });
 
