@@ -4,9 +4,11 @@ describe('Validator', () => {
   type TestObj = { prop: number };
   const errorResponses = {} as Record<string, any>;
   let validation: Validator<TestObj>;
+
   beforeEach(() => {
     validation = new Validator<TestObj>(errorResponses as any);
   });
+
   it('simple', async () => {
     const obj = { prop: 10 };
     validation.add({
@@ -19,6 +21,7 @@ describe('Validator', () => {
       'ValidationErrorFirst'
     );
   });
+
   it('async isValid', async () => {
     const obj = { prop: 10 };
     validation.add({
@@ -31,6 +34,7 @@ describe('Validator', () => {
       'ValidationErrorFirst'
     );
   });
+
   it('custom response', async () => {
     const obj = { prop: 10 };
     validation.add({

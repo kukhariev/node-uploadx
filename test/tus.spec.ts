@@ -16,12 +16,14 @@ describe('::Tus', () => {
   app.use(basePath, tus(opts));
 
   beforeAll(() => cleanup(directory));
+
   afterAll(() => cleanup(directory));
 
   describe('express middleware', () => {
     it('default storage', () => {
       expect(tus()).toBeInstanceOf(Function);
     });
+
     it('custom storage', () => {
       const storage = {} as BaseStorage<any, any>;
       expect(tus({ storage })).toBeInstanceOf(Function);

@@ -6,6 +6,7 @@ describe('CORS', () => {
   let cors: Cors;
   let req: Request;
   let res: Response;
+
   describe('Actual Request', () => {
     beforeEach(() => {
       cors = new Cors();
@@ -24,8 +25,10 @@ describe('CORS', () => {
       expect(res.header('Access-Control-Allow-Origin')).toBeUndefined();
     });
   });
+
   describe('Preflight Request', () => {
     cors = new Cors();
+
     beforeEach(() => {
       req = httpMocks.createRequest({ url: 'https://example.com/upload', method: 'OPTIONS' });
       res = httpMocks.createResponse();

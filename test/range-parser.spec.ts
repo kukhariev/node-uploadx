@@ -1,4 +1,5 @@
 import { rangeParser } from '../packages/core/src';
+
 describe('Content-Range parser', () => {
   it('should parse `resume` ranges', () => {
     const samples = [undefined, '', 'bytes */*', 'bytes */7777777', 'bytes --1/*'];

@@ -16,6 +16,7 @@ describe('::Multipart', () => {
   app.use(basePath, multipart(opts));
 
   beforeAll(() => cleanup(directory));
+
   afterAll(() => cleanup(directory));
 
   test('wrapper', () => {

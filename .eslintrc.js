@@ -20,9 +20,10 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:promise/recommended',
-    'plugin:prettier/recommended'
+    'plugin:prettier/recommended',
+    'plugin:jest-formatting/recommended'
   ],
-  plugins: ['@typescript-eslint', 'prettier', 'promise'],
+  plugins: ['@typescript-eslint', 'prettier', 'promise', 'jest-formatting'],
   rules: {
     'prettier/prettier': 'warn',
     '@typescript-eslint/adjacent-overload-signatures': 'error',

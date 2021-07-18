@@ -4,6 +4,7 @@ import { testStorage, TestUploader } from './fixtures/uploader';
 describe('BaseHandler', () => {
   let uploader: TestUploader;
   TestUploader.methods = ['post', 'put', 'options'];
+
   beforeEach(() => (uploader = new TestUploader({ storage: testStorage })));
 
   it('should implement get()', async () => {
