@@ -86,6 +86,7 @@ describe('S3Storage', () => {
 
   let file: S3File;
   let storage: S3Storage;
+
   beforeEach(async () => {
     storage = new S3Storage(options);
     file = {
@@ -94,6 +95,7 @@ describe('S3Storage', () => {
       Parts: []
     };
   });
+
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
       mockHeadObject.mockImplementationOnce(() => ({
@@ -111,6 +113,7 @@ describe('S3Storage', () => {
       });
     });
   });
+
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
@@ -130,6 +133,7 @@ describe('S3Storage', () => {
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
+
   describe('.get()', () => {
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
@@ -138,6 +142,7 @@ describe('S3Storage', () => {
       expect(files[0]).toMatchObject({ name: filename });
     });
   });
+
   describe('.write()', () => {
     it('should request api and set status and bytesWritten', async () => {
       const part: FilePart = {
@@ -161,6 +166,7 @@ describe('S3Storage', () => {
       expect(res.bytesWritten).toBe(0);
     });
   });
+
   describe('delete()', () => {
     it('should set status', async () => {
       const [deleted] = await storage.delete(filename);

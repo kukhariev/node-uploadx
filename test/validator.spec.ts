@@ -3,9 +3,11 @@ import { Validator } from '../packages/core/src/utils/validator';
 describe('Validator', () => {
   type TestObj = { prop: number };
   let validation: Validator<TestObj>;
+
   beforeEach(() => {
     validation = new Validator<TestObj>();
   });
+
   it('simple', async () => {
     const obj = { prop: 10 };
     validation.add({
@@ -20,6 +22,7 @@ describe('Validator', () => {
       statusCode: 422
     });
   });
+
   it('async isValid', async () => {
     const obj = { prop: 10 };
     validation.add({
@@ -34,6 +37,7 @@ describe('Validator', () => {
       statusCode: 422
     });
   });
+
   it('custom response', async () => {
     const obj = { prop: 10 };
     validation.add({

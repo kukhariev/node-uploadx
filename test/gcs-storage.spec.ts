@@ -55,6 +55,7 @@ describe('GCStorage', () => {
       await expect(storage.create(req, testfile)).rejects.toEqual(errorObject);
     });
   });
+
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(_fileResponse());
@@ -71,6 +72,7 @@ describe('GCStorage', () => {
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
+
   describe('.get()', () => {
     it('should return all user files', async () => {
       const list = {
@@ -83,6 +85,7 @@ describe('GCStorage', () => {
       expect(files[0]).toMatchObject({ name: filename });
     });
   });
+
   describe('.write()', () => {
     it('should request api and set status and bytesWritten', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
@@ -126,6 +129,7 @@ describe('GCStorage', () => {
       expect(res.bytesWritten).toEqual(6);
     });
   });
+
   describe('.delete()', () => {
     it('should set status', async () => {
       mockAuthRequest.mockResolvedValue({ data: { ...testfile, uri } });
@@ -145,6 +149,7 @@ describe('Range utils', () => {
   ])('getRangeEnd(%s) === %i', (str, expected) => {
     expect(getRangeEnd(str)).toBe(expected);
   });
+
   const body = true;
 
   it.each([

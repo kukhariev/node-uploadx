@@ -37,17 +37,20 @@ describe('DiskStorage', () => {
       expect(storage.isReady).toBe(true);
       expect(storage.directory).toBe('files');
     });
+
     it('should set directory', () => {
       storage = new DiskStorage(options);
       expect(storage.directory).toBe(directory);
     });
   });
+
   describe('.create()', () => {
     it('should set status', async () => {
       const { status, bytesWritten } = await storage.create({} as any, testfile);
       expect(bytesWritten).toBe(0);
       expect(status).toBe('created');
     });
+
     it('should reject on limits', async () => {
       await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toMatchObject({
         code: 'RequestEntityTooLarge',
@@ -57,26 +60,32 @@ describe('DiskStorage', () => {
       });
     });
   });
+
   describe('.update()', () => {
     beforeEach(createFile);
+
     it('should update metadata', async () => {
       const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
     });
   });
+
   describe('.write()', () => {
     beforeEach(createFile);
+
     beforeEach(() => {
       writeStream = new FileWriteStream();
       mockReadable = new RequestReadStream();
     });
+
     it('should set status and bytesWritten', async () => {
       mockReadable.__mockSend();
       const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
       expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(5);
     });
+
     it('should set status and bytesWritten (resume)', async () => {
       const file = await storage.write({ ...testfile });
       expect(file.status).toBe('part');
@@ -110,8 +119,10 @@ describe('DiskStorage', () => {
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
   });
+
   describe('.get()', () => {
     beforeEach(createFile);
+
     it('should return all user files', async () => {
       const files = await storage.get(testfile.userId);
       expect(files).toHaveLength(1);
@@ -127,11 +138,13 @@ describe('DiskStorage', () => {
 
   describe('.delete()', () => {
     beforeEach(createFile);
+
     it('should set status', async () => {
       const [deleted] = await storage.delete(filename);
       expect(deleted.name).toBe(filename);
       expect(deleted.status).toBe('deleted');
     });
+
     it('should ignore not found', async () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce('notfound');

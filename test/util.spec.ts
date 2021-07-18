@@ -13,6 +13,7 @@ describe('fs', () => {
   const file2 = `${deep}/3/fi  le.ext.META`;
 
   beforeAll(() => cleanup(directory));
+
   afterAll(() => cleanup(directory));
 
   it('ensureDir(dir)', async () => {

@@ -17,6 +17,7 @@ describe('::Uploadx', () => {
   app.use(basePath, uploadx(opts));
 
   beforeAll(() => cleanup(directory));
+
   afterAll(() => cleanup(directory));
 
   test('wrapper', () => {
@@ -60,6 +61,7 @@ describe('::Uploadx', () => {
       expect(res.type).toBe('application/json');
       expect(res.header).not.toHaveProperty('location');
     });
+
     it('should 201 (x-upload-content)', async () => {
       const res = await request(app)
         .post(basePath)
@@ -113,6 +115,7 @@ describe('::Uploadx', () => {
       expect(res.type).toBe('application/json');
       expect(fs.statSync(join(directory, userPrefix, 'testfile.mp4')).size).toBe(metadata.size);
     });
+
     it('should 200 (single request)', async () => {
       const res = await request(app)
         .put(files[1])
@@ -124,6 +127,7 @@ describe('::Uploadx', () => {
         metadata.size
       );
     });
+
     it('should 409 (invalid size)', async () => {
       const res = await request(app)
         .post(basePath)
@@ -150,10 +154,12 @@ describe('::Uploadx', () => {
       const res = await request(app).get(`${basePath}/${userPrefix}`).expect(200);
       expect(res.body).toHaveLength(2);
     });
+
     it('should return info array(name)', async () => {
       const res = await request(app).get(`${basePath}?name=${userPrefix}`).expect(200);
       expect(res.body).toHaveLength(2);
     });
+
     it('should return 404(query)', async () => {
       await request(app).get(`${basePath}?upload_id=testfileSingle.mp4'`).expect(404);
     });
