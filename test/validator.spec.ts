@@ -40,7 +40,11 @@ describe('Validator', () => {
       }
     });
     expect(errorResponses).toHaveProperty('ValidationErrorFirst');
-    expect(errorResponses['ValidationErrorFirst']).toEqual([400, 'error']);
+    expect(errorResponses['ValidationErrorFirst']).toEqual({
+      body: 'error',
+      headers: undefined,
+      statusCode: 400
+    });
     await expect(validation.verify(obj)).rejects.toHaveProperty(
       'uploadxErrorCode',
       'ValidationErrorFirst'
@@ -56,7 +60,7 @@ describe('Validator', () => {
       }
     });
     expect(errorResponses).toHaveProperty('ValidationErrorSecond');
-    expect(errorResponses['ValidationErrorSecond']).toEqual([400, 'error', {}]);
+    expect(errorResponses['ValidationErrorSecond']).toEqual({ body: 'error', statusCode: 400 });
     await expect(validation.verify(obj)).rejects.toHaveProperty(
       'uploadxErrorCode',
       'ValidationErrorSecond'

@@ -12,7 +12,6 @@ import {
   Logger,
   pick,
   ResponseBodyType,
-  responseToTuple,
   setHeaders,
   typeis,
   UploadxError,
@@ -199,9 +198,9 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const [statusCode, body, headers = {}] = isUploadxError(error)
+    const { statusCode, headers, ...body } = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
-      : responseToTuple(this.storage.normalizeError(error));
+      : this.storage.normalizeError(error);
     this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
   }
 

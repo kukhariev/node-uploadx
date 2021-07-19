@@ -1,5 +1,5 @@
 import { ErrorMap, ErrorResponses, fail, HttpError } from './errors';
-import { responseToTuple, ResponseTuple } from './http';
+import { ResponseTuple, tupleToResponse } from './http';
 
 export interface ValidatorConfig<T> {
   value?: any;
@@ -18,7 +18,7 @@ export class Validator<T> {
     for (const [key, validator] of Object.entries(config)) {
       const code = `${this.prefix}${capitalize(key)}`;
       validator.response &&
-        (this.errorResponses[code] = responseToTuple(validator.response) as ErrorResponses[string]);
+        (this.errorResponses[code] = tupleToResponse(validator.response) as ErrorResponses[string]);
       this._validators[code] = { ...this._validators[code], ...validator };
       if (typeof this._validators[code].isValid !== 'function') {
         throw new Error('Validation config "isValid" is missing or it is not a function!');
@@ -32,6 +32,7 @@ export class Validator<T> {
   async verify(t: T): Promise<void | never> {
     for (const [errorCode, validator] of Object.entries(this._validators)) {
       if (validator.isValid && !(await validator.isValid(t))) {
+        // TODO: Refactor to dynamic errors
         return fail(errorCode);
       }
     }
