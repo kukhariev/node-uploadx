@@ -9,6 +9,7 @@ import {
   fail,
   getBaseUrl,
   isUploadxError,
+  isValidationError,
   Logger,
   pick,
   ResponseBodyType,
@@ -143,9 +144,8 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
         return;
       })
       .catch((error: Error) => {
-        const errorEvent = Object.assign(error, {
-          request: pick(req, ['headers', 'method', 'url'])
-        });
+        const err = pick(error, Object.keys(error) as (keyof Error)[]);
+        const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
         this.log('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
@@ -198,9 +198,13 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const { statusCode, headers, ...body } = isUploadxError(error)
+    const response = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
-      : this.storage.normalizeError(error);
+      : !isValidationError(error)
+      ? this.storage.normalizeError(error)
+      : error;
+    const { statusCode = 200, headers, ...rest } = response;
+    const body = response.body ? response.body : rest;
     this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
   }
 

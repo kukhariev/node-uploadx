@@ -60,7 +60,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
   protected cache: Cache<TFile>;
-  private validation = new Validator<TFile>(this.errorResponses);
+  private validation = new Validator<TFile>();
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
