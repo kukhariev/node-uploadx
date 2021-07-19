@@ -49,10 +49,12 @@ describe('DiskStorage', () => {
       expect(status).toBe('created');
     });
     it('should reject on limits', async () => {
-      await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toHaveProperty(
-        'uploadxErrorCode',
-        'ValidationErrorSize'
-      );
+      await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toMatchObject({
+        code: 'RequestEntityTooLarge',
+        message: 'Request entity too large',
+        name: 'ValidationError',
+        statusCode: 413
+      });
     });
   });
   describe('.update()', () => {
