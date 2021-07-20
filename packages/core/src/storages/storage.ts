@@ -14,7 +14,6 @@ import {
 import { File, FileInit, FilePart } from './file';
 
 export const METAFILE_EXTNAME = '.META';
-const MAX_FILENAME_LENGTH = 255 - METAFILE_EXTNAME.length;
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -51,6 +50,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
 
 export abstract class BaseStorage<TFile extends File, TList> {
   static maxCacheMemory = '800MB';
+  maxFilenameLength = 255 - METAFILE_EXTNAME.length;
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -88,8 +88,9 @@ export abstract class BaseStorage<TFile extends File, TList> {
       response: ErrorMap.UnsupportedMediaType
     };
     const filename: ValidatorConfig<TFile> = {
+      value: this.maxFilenameLength,
       isValid(file) {
-        return file.name.length < MAX_FILENAME_LENGTH;
+        return file.name.length < this.value;
       },
       response: ErrorMap.InvalidFileName
     };
