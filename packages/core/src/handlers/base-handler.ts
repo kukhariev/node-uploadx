@@ -144,7 +144,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
         return;
       })
       .catch((error: Error) => {
-        const err = pick(error, Object.keys(error) as (keyof Error)[]);
+        const err = pick(error, [
+          'name',
+          ...(Object.getOwnPropertyNames(error) as (keyof Error)[])
+        ]);
         const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
         this.log('[error]: %o', errorEvent);
