@@ -38,6 +38,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
     this.isReady = true;
+    this.maxFilenameLength = 255 - pathResolve(this.directory, METAFILE_EXTNAME).length;
   }
 
   normalizeError(error: Error & { code?: string }): HttpError {
@@ -46,7 +47,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
         message: error.message,
         code: error.code,
         statusCode: 500,
-        retryable: true,
         name: error.name
       };
     }

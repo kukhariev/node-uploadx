@@ -45,7 +45,7 @@ describe('BaseHandler', () => {
             name: 'ServerError'
           }
         },
-        headers: {}
+        headers: undefined
       });
     });
   });

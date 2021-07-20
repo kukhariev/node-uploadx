@@ -1,6 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
 import type { IncomingMessage } from 'http';
+import { UploadxResponse } from './http';
 
 // eslint-disable-next-line no-shadow
 export enum ERRORS {
@@ -24,18 +25,14 @@ export enum ERRORS {
   UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType'
 }
 
-export type ResponseTuple<T = string | Record<string, any>> = [
-  statusCode: number,
-  body?: T,
-  headers?: Record<string, any>
-];
 export type ErrorResponses<T extends string = string> = {
-  [K in T]: ResponseTuple<Partial<HttpErrorBody>>;
+  [K in T]: HttpError;
 };
 
 class E_ {
+  static errors: ErrorResponses = {};
   @E_._buildErrorBody
-  static errors = {
+  private static _errors: Record<string, [number, string]> = {
     BadRequest: [400, 'Bad request'],
     FileConflict: [409, 'File conflict'],
     FileError: [500, 'Something went wrong writing the file'],
@@ -54,12 +51,12 @@ class E_ {
     UnknownError: [500, 'Something went wrong receiving the file'],
     UnprocessableEntity: [422, 'Validation failed'],
     UnsupportedMediaType: [415, 'Unsupported media type']
-  } as ErrorResponses<ERRORS>;
+  };
 
   static _buildErrorBody = (target: typeof E_, _: string): void => {
-    (Object.keys(target.errors) as ERRORS[]).forEach(code => {
-      const message = target.errors[code][1] as string;
-      target.errors[code][1] = { code, message };
+    (Object.keys(target._errors) as ERRORS[]).forEach(code => {
+      const [statusCode, message] = target._errors[code];
+      target.errors[code] = { code, message, statusCode };
     });
   };
 }
@@ -82,20 +79,15 @@ export function fail(
   return Promise.reject({ message: uploadxErrorCode, uploadxErrorCode, detail });
 }
 
-export function httpErrorToTuple(error: HttpError): ResponseTuple<HttpErrorBody> {
-  const { statusCode, headers, ...body } = error;
-  return [statusCode, body, headers];
-}
-
 interface HttpErrorBody {
   message: string;
   code: string;
+  uploadxErrorCode?: string;
   name?: string;
   retryable?: boolean;
   detail?: Record<string, any> | string;
 }
 
-export interface HttpError extends HttpErrorBody {
+export interface HttpError<T = HttpErrorBody> extends UploadxResponse<T> {
   statusCode: number;
-  headers?: Record<string, any>;
 }

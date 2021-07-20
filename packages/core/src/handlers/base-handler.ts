@@ -8,17 +8,18 @@ import {
   ERRORS,
   fail,
   getBaseUrl,
-  httpErrorToTuple,
   isUploadxError,
+  isValidationError,
   Logger,
   pick,
+  ResponseBodyType,
   setHeaders,
   typeis,
-  UploadxError
+  UploadxError,
+  UploadxResponse
 } from '../utils';
 import { Cors } from './cors';
 
-export type Headers = Record<string, string | number>;
 export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
 type Handlers = 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put';
 export type MethodHandler = {
@@ -39,14 +40,6 @@ export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventE
 
   emit(event: 'error', evt: UploadxError): boolean;
 }
-
-export interface UploadxResponse<T = Record<string, any> | string> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
-
-export type ResponseBodyType = 'text' | 'json';
 
 export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   extends EventEmitter
@@ -151,9 +144,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
         return;
       })
       .catch((error: Error) => {
-        const errorEvent = Object.assign(error, {
-          request: pick(req, ['headers', 'method', 'url'])
-        });
+        const err = pick(error, [
+          'name',
+          ...(Object.getOwnPropertyNames(error) as (keyof Error)[])
+        ]);
+        const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
         this.log('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
@@ -206,9 +201,13 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const [statusCode, body, headers = {}] = isUploadxError(error)
+    const response = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
-      : httpErrorToTuple(this.storage.normalizeError(error));
+      : !isValidationError(error)
+      ? this.storage.normalizeError(error)
+      : error;
+    const { statusCode = 200, headers, ...rest } = response;
+    const body = response.body ? response.body : rest;
     this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
   }
 

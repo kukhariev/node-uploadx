@@ -65,3 +65,29 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   if (!proto) return `//${host}`;
   return `${proto}://${host}`;
 }
+
+export type Headers = Record<string, string | number>;
+
+export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
+  statusCode?: number;
+  headers?: Headers;
+  body?: T;
+}
+export type ResponseBody = string | Record<string, any>;
+export type ResponseBodyType = 'text' | 'json';
+export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
+
+export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
+  if (Array.isArray(response)) return response;
+  const { statusCode = 200, headers, ...rest } = response;
+  const body = response.body ? response.body : rest;
+  return [statusCode, body, headers || {}];
+}
+
+export function tupleToResponse<T>(
+  response: ResponseTuple<T> | UploadxResponse<T>
+): UploadxResponse {
+  if (!Array.isArray(response)) return response;
+  const [statusCode, body, headers] = response;
+  return { statusCode, body, headers };
+}

@@ -1,7 +1,7 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, typeis } from '../utils';
-import { BaseHandler, Headers, UploadxResponse } from './base-handler';
+import { ERRORS, fail, getHeader, Headers, typeis, UploadxResponse } from '../utils';
+import { BaseHandler } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
 
