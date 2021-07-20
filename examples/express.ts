@@ -28,19 +28,24 @@ const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file =
 };
 
 const storage = new DiskStorage({
-  maxUploadSize: '1GB',
   directory: 'upload',
   maxMetadataSize: '1mb',
   onComplete,
   validation: {
     mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
+    size: {
+      value: 500_000,
+      isValid(file) {
+        this.response = [
+          412,
+          { message: `The file size(${file.size}) is larger than ${this.value as number} bytes` }
+        ];
+        return file.size <= this.value;
+      }
+    },
     mtime: {
       isValid: file => !!file.metadata.lastModified,
-      response: [403, { message: 'missing lastModified' }]
-    },
-    filename: {
-      isValid: file => file.name.length < 255 && /^[a-z0-9_.@()-]+$/i.test(file.originalName),
-      response: [400, { message: 'invalid filename' }]
+      response: [403, { message: 'Missing `lastModified` property' }]
     }
   }
 });
