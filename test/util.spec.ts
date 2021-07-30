@@ -2,71 +2,81 @@ import * as fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../packages/core/src/utils';
-import { getWriteStream } from '../packages/core/src/utils';
 import { root } from './fixtures';
 import { cleanup } from './fixtures/utils';
 
 describe('fs', () => {
-  const directory = join(root, 'fs-test');
-  const deep = `${directory}/1/2`;
-  const file = `${deep}/3/file.ext`;
-  const file2 = `${deep}/3/fi  le.ext.META`;
+  const dir = join(root, 'fs-test', '1', '2');
+  const filepath = join(dir, '3', `file.ext`);
+  const filepath2 = join(dir, '3', `fi  le.ext.META`);
 
-  beforeAll(() => cleanup(directory));
+  beforeAll(() => cleanup(dir));
 
-  afterAll(() => cleanup(directory));
+  // afterEach(() => cleanup(root));
 
   it('ensureDir(dir)', async () => {
-    await utils.ensureDir(deep);
-    expect(fs.existsSync(deep)).toBe(true);
+    await utils.ensureDir(dir);
+    expect(fs.existsSync(dir)).toBe(true);
   });
 
   it('ensureFile(file)', async () => {
-    const size = await utils.ensureFile(file);
-    expect(fs.existsSync(file)).toBe(true);
-    expect(size).toBe(0);
-  });
-
-  it('ensureFile(file2)', async () => {
-    const size = await utils.ensureFile(file2);
-    expect(fs.existsSync(file2)).toBe(true);
+    const size = await utils.ensureFile(filepath);
+    expect(fs.existsSync(filepath)).toBe(true);
     expect(size).toBe(0);
   });
 
   it('ensureFile(file, overwrite)', async () => {
-    const size = await utils.ensureFile(file, true);
-    expect(fs.existsSync(file)).toBe(true);
+    const size = await utils.ensureFile(filepath, true);
+    expect(fs.existsSync(filepath)).toBe(true);
     expect(size).toBe(0);
   });
 
-  it('getFiles(file)', async () => {
-    const files = await utils.getFiles(file);
-    expect(files).toHaveLength(1);
+  it('getFiles(full path)', async () => {
+    await utils.ensureFile(filepath);
+    await utils.ensureFile(filepath2);
+    await expect(utils.getFiles(filepath)).resolves.toHaveLength(1);
+    await expect(utils.getFiles(filepath2)).resolves.toHaveLength(1);
+  });
+
+  it('getFiles(prefix)', async () => {
+    await utils.ensureFile(filepath);
+    await utils.ensureFile(filepath2);
+    await expect(utils.getFiles('files/fs-')).resolves.toHaveLength(2);
+    await expect(utils.getFiles('files\\fs-')).resolves.toHaveLength(2);
+    await expect(utils.getFiles('files\fs-')).resolves.toHaveLength(0);
+    await expect(utils.getFiles('files/fs_')).resolves.toHaveLength(0);
   });
 
   it('getFiles(directory)', async () => {
-    const files = await utils.getFiles(directory);
-    expect(files).toHaveLength(2);
+    await utils.ensureFile(filepath);
+    await utils.ensureFile(filepath2);
+    await expect(utils.getFiles(root)).resolves.toHaveLength(2);
   });
 
   it('getFiles(deep directory)', async () => {
-    const files = await utils.getFiles(deep);
-    expect(files).toHaveLength(2);
+    await utils.ensureFile(filepath);
+    await utils.ensureFile(filepath2);
+    await expect(utils.getFiles(dir)).resolves.toHaveLength(2);
   });
 
-  it('getFiles(not exist)', async () => {
-    const files = await utils.getFiles('test/not exist');
-    expect(files).toHaveLength(0);
+  it('getFiles(not existing)', async () => {
+    await utils.ensureFile(filepath);
+    await expect(utils.getFiles('not exist')).resolves.toHaveLength(0);
   });
 
-  it('getWriteStream', () => {
-    const stream = getWriteStream(file, 0);
+  it('getWriteStream(path, 0)', async () => {
+    await utils.ensureFile(filepath);
+    const stream = utils.getWriteStream(filepath, 0);
     expect(stream).toBeInstanceOf(fs.WriteStream);
     stream.close();
   });
 
-  it('getWriteStream (throw)', () => {
-    expect(() => getWriteStream('', NaN)).toThrow();
+  it('getWriteStream(path, NaN)', () => {
+    expect(() => utils.getWriteStream('', NaN)).toThrow();
+  });
+
+  it('getWriteStream(not exist , 0)', () => {
+    expect(() => utils.getWriteStream('', 0)).toThrow();
   });
 });
 
@@ -95,20 +105,17 @@ describe('http', () => {
   });
 
   it('getHeader(not exist)', () => {
-    const res = utils.getHeader(req, 'not exist');
-    expect(res).toBe('');
+    expect(utils.getHeader(req, 'not exist')).toBe('');
   });
 
   it('getHeader(single)', () => {
     req.headers = { head: 'value' };
-    const res = utils.getHeader(req, 'head');
-    expect(res).toBe('value');
+    expect(utils.getHeader(req, 'head')).toBe('value');
   });
 
   it('getHeader(multiple)', () => {
     req.headers = { head: ['value1', 'value2'] };
-    const res = utils.getHeader(req, 'head');
-    expect(res).toBe('value1');
+    expect(utils.getHeader(req, 'head')).toBe('value1');
   });
 
   it('getBaseUrl(no-host)', () => {

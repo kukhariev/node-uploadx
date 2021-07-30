@@ -6,9 +6,9 @@ import {
   FileInit,
   FilePart,
   hasContent,
+  isCompleted,
   isValidPart,
-  updateMetadata,
-  isCompleted
+  updateMetadata
 } from './file';
 import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
 
@@ -41,15 +41,7 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     this.maxFilenameLength = 255 - pathResolve(this.directory, METAFILE_EXTNAME).length;
   }
 
-  normalizeError(error: Error & { code?: string }): HttpError {
-    if (error.code) {
-      return {
-        message: error.message,
-        code: error.code,
-        statusCode: 500,
-        name: error.name
-      };
-    }
+  normalizeError(error: Error): HttpError {
     return super.normalizeError(error);
   }
 
