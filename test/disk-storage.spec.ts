@@ -1,4 +1,4 @@
-import { join } from 'path';
+import { posix } from 'path';
 import { DiskStorage, fsp } from '../packages/core/src';
 import { storageOptions } from './fixtures';
 import { FileWriteStream, RequestReadStream } from './fixtures/streams';
@@ -11,7 +11,7 @@ jest.mock('../packages/core/src/utils/cache');
 jest.mock('../packages/core/src/utils/fs', () => {
   return {
     ensureFile: async () => 0,
-    getFiles: async () => [join(directory, filename), join(directory, metafile)],
+    getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafile)],
     getWriteStream: () => writeStream,
     fsp: {
       stat: async () => ({ mtime: new Date() }),
