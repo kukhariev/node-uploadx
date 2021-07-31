@@ -60,7 +60,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
   protected cache: Cache<TFile>;
-  private validation = new Validator<TFile>();
+  protected validation = new Validator<TFile>();
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
     const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
@@ -104,20 +104,35 @@ export abstract class BaseStorage<TFile extends File, TList> {
 
   normalizeError(error: Error): HttpError {
     return {
-      message: 'Internal Server Error',
+      message: 'Generic Uploadx Error',
       statusCode: 500,
-      code: 'InternalServerError',
-      name: 'ServerError'
+      code: 'GenericUploadxError'
     };
   }
 
+  /**
+   * Add upload to storage
+   */
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
+  /**
+   * Write chunks
+   */
   abstract write(part: FilePart): Promise<TFile>;
 
+  /**
+   * Delete files whose path starts with the specified prefix
+   * @param prefix
+   */
   abstract delete(prefix: string): Promise<TFile[]>;
-
+  /**
+   * Returns files whose path starts with the specified prefix
+   * @param prefix If not specified returns all files
+   */
   abstract get(prefix?: string): Promise<TList[]>;
 
+  /**
+   * Update upload metadata
+   */
   abstract update(name: string, file: Partial<File>): Promise<TFile>;
 }
