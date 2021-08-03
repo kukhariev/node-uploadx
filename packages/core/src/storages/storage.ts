@@ -102,6 +102,18 @@ export abstract class BaseStorage<TFile extends File, TList> {
     return this.validation.verify(file);
   }
 
+  lock<T = unknown>(name: string, token: T): void {
+    const file = this.cache.get(name);
+    if (file) {
+      file.lockedBy = token;
+      this.cache.set(file.name, file);
+    }
+  }
+
+  unlock(name: string): void {
+    this.lock(name, null);
+  }
+
   normalizeError(error: Error): HttpError {
     return {
       message: 'Internal Server Error',
