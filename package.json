@@ -36,7 +36,7 @@
     "test:watch": "jest --watchAll"
   },
   "devDependencies": {
-    "@types/express": "4.17.12",
+    "@types/express": "4.17.13",
     "@types/jest": "26.0.23",
     "@types/node": "10.17.60",
     "@types/rimraf": "3.0.0",
