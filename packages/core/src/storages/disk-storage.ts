@@ -45,9 +45,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return super.normalizeError(error);
   }
 
-  /**
-   * Add file to storage
-   */
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file);
@@ -57,9 +54,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return file;
   }
 
-  /**
-   * Write chunks
-   */
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this._getMeta(part.name);
     if (file.status === 'completed') return file;
@@ -84,6 +78,9 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path));
   }
 
+  /**
+   * @todo delete by prefix
+   */
   async delete(name: string): Promise<DiskFile[]> {
     const file = await this._getMeta(name).catch(() => null);
     if (file) {
@@ -94,7 +91,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     return [{ name } as DiskFile];
   }
 
-  async update(name: string, { metadata }: Partial<File>): Promise<DiskFile> {
+  /**
+   *@todo Metadata size limit
+   */
+  async update(name: string, { metadata }: Partial<DiskFile>): Promise<DiskFile> {
     const file = await this._getMeta(name);
     updateMetadata(file, metadata);
     await this._saveMeta(file);

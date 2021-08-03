@@ -41,9 +41,8 @@ describe('BaseHandler', () => {
         statusCode: 500,
         body: {
           error: {
-            message: 'Internal Server Error',
-            code: 'InternalServerError',
-            name: 'ServerError'
+            message: 'Generic Uploadx Error',
+            code: 'GenericUploadxError'
           }
         },
         headers: undefined
