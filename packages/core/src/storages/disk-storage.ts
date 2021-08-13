@@ -18,10 +18,6 @@ const INVALID_OFFSET = -1;
 
 export class DiskFile extends File {}
 
-export interface DiskListObject {
-  name: string;
-}
-
 export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Uploads directory
@@ -33,7 +29,7 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
 /**
  * Local Disk Storage
  */
-export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
+export class DiskStorage extends BaseStorage<DiskFile> {
   directory: string;
   meta: MetaStorage<DiskFile>;
 
@@ -76,10 +72,6 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);
     }
-  }
-
-  async get(prefix = ''): Promise<DiskListObject[]> {
-    return this.meta.list(prefix);
   }
 
   /**

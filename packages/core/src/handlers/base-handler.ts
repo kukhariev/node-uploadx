@@ -1,7 +1,14 @@
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage, DiskStorage, DiskStorageOptions, File, UploadEventType } from '../storages';
+import {
+  BaseStorage,
+  DiskStorage,
+  DiskStorageOptions,
+  File,
+  UploadList,
+  UploadEventType
+} from '../storages';
 import {
   ErrorMap,
   ErrorResponses,
@@ -27,7 +34,7 @@ export type MethodHandler = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventEmitter {
+export interface BaseHandler<TFile extends Readonly<File>> extends EventEmitter {
   on(event: 'error', listener: (error: UploadxError) => void): this;
 
   on(event: UploadEventType, listener: (file: TFile) => void): this;
@@ -41,7 +48,7 @@ export interface BaseHandler<TFile extends Readonly<File>, TList> extends EventE
   emit(event: 'error', evt: UploadxError): boolean;
 }
 
-export abstract class BaseHandler<TFile extends Readonly<File>, TList>
+export abstract class BaseHandler<TFile extends Readonly<File>>
   extends EventEmitter
   implements MethodHandler
 {
@@ -55,18 +62,18 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   static methods: Handlers[] = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'];
   cors: Cors;
   responseType: ResponseBodyType = 'json';
-  storage: BaseStorage<TFile, TList>;
+  storage: BaseStorage<TFile>;
   registeredHandlers = new Map<string, AsyncHandler>();
   protected log = Logger.get(this.constructor.name);
   protected _errorResponses = {} as ErrorResponses;
 
-  constructor(config: { storage: BaseStorage<TFile, TList> } | DiskStorageOptions = {}) {
+  constructor(config: { storage: BaseStorage<TFile> } | DiskStorageOptions = {}) {
     super();
     this.cors = new Cors();
     this.storage =
       'storage' in config
         ? config.storage
-        : (new DiskStorage(config) as unknown as BaseStorage<TFile, TList>);
+        : (new DiskStorage(config) as unknown as BaseStorage<TFile>);
     this.assembleErrors();
     this.compose();
 
@@ -125,7 +132,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
 
     handler
       .call(this, req, res)
-      .then(async (file: TFile | TList[]): Promise<void> => {
+      .then(async (file: TFile | UploadList): Promise<void> => {
         if ('status' in file && file.status) {
           this.log('[%s]: %s', file.status, file.name);
           this.listenerCount(file.status) && this.emit(file.status, file);
@@ -167,7 +174,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>, TList>
   /**
    * `GET` request handler
    */
-  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<TList[]> {
+  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<UploadList> {
     const userId = this.getUserId(req, res);
     if (userId) {
       const name = this.getName(req);

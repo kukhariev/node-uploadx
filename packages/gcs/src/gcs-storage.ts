@@ -11,7 +11,6 @@ import {
   HttpError,
   isCompleted,
   isValidPart,
-  ListObject,
   LocalMetaStorage,
   MetaStorage,
   updateMetadata
@@ -63,12 +62,10 @@ export class GCSFile extends File {
   uri = '';
 }
 
-type CGSListObject = ListObject;
-
 /**
  * Google cloud storage based backend.
  */
-export class GCStorage extends BaseStorage<GCSFile, CGSListObject> {
+export class GCStorage extends BaseStorage<GCSFile> {
   authClient: GoogleAuth;
   storageBaseURI: string;
   uploadBaseURI: string;
@@ -164,10 +161,6 @@ export class GCStorage extends BaseStorage<GCSFile, CGSListObject> {
       return [{ ...file }];
     }
     return [{ name } as GCSFile];
-  }
-
-  async get(prefix = ''): Promise<CGSListObject[]> {
-    return this.meta.list(prefix);
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<GCSFile> {

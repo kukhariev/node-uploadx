@@ -8,9 +8,9 @@ import {
   MetaStorage
 } from '../../packages/core/src';
 
-export class TestUploader extends BaseHandler<File, File[]> {}
+export class TestUploader extends BaseHandler<File> {}
 
-class TestStorage extends BaseStorage<File, any> {
+class TestStorage extends BaseStorage<File> {
   meta = new MetaStorage<File>();
   path = '/files';
   isReady = true;
@@ -35,7 +35,7 @@ class TestStorage extends BaseStorage<File, any> {
     throw new Error('Method not implemented.');
   }
 
-  get = (_url: any): Promise<any> => Promise.resolve([]);
+  get = (_url: any): Promise<any> => Promise.resolve({ uploads: [] });
 }
 
 export const testStorage = new TestStorage();

@@ -1,4 +1,4 @@
-import { File, ListObject, MetaStorage } from '@uploadx/core';
+import { File, UploadList, MetaStorage } from '@uploadx/core';
 import { config as AWSConfig, S3 } from 'aws-sdk';
 
 const BUCKET_NAME = 'node-uploadx';
@@ -54,7 +54,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     return file;
   }
 
-  async list(prefix: string): Promise<ListObject[]> {
+  async list(prefix: string): Promise<UploadList> {
     const params: S3.ListObjectsV2Request = {
       Bucket: this.bucket,
       Prefix: prefix,
@@ -62,11 +62,13 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     };
     const response = await this.client.listObjectsV2(params).promise();
     if (response.Contents?.length) {
-      return response.Contents.map(({ Key, LastModified }) => ({
-        name: Key?.slice(this.prefix.length, -this.suffix.length) || '',
-        updated: LastModified
-      }));
+      return {
+        items: response.Contents.map(({ Key, LastModified }) => ({
+          name: Key?.slice(this.prefix.length, -this.suffix.length) || '',
+          updated: LastModified
+        }))
+      };
     }
-    return [];
+    return { items: [] };
   }
 }

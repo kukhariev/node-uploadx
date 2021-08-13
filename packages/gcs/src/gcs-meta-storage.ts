@@ -1,4 +1,4 @@
-import { File, ListObject, MetaStorage } from '@uploadx/core';
+import { File, UploadList, MetaStorage } from '@uploadx/core';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
 
@@ -56,18 +56,17 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
     return data;
   }
 
-  async list(prefix: string): Promise<ListObject[]> {
+  async list(prefix: string): Promise<UploadList> {
     const baseURL = this.storageBaseURI;
     const url = '/';
     const options = { baseURL, url, params: { prefix: encodeURIComponent(prefix) } };
     const { data } = await this.authClient.request<{
       items: { name: string; updated: Date; metadata: T }[];
     }>(options);
-    return (
-      data.items
+    return {
+      items: data.items
         .filter(item => item.name.endsWith(this.suffix))
-        //.map(({ name, metadata = {} as T, updated }) => ({ ...metadata, name, updated }));
         .map(({ name, updated }) => ({ name: this.getNameFromPath(name), updated }))
-    );
+    };
   }
 }

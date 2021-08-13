@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { fsp, getFiles } from '../utils';
 import { File } from './file';
-import { ListObject, MetaStorage, MetaStorageOptions } from './meta-storage';
+import { UploadList, MetaStorage, MetaStorageOptions } from './meta-storage';
 import { tmpdir } from 'os';
 
 interface LocalMetaStorageOptions extends MetaStorageOptions {
@@ -42,13 +42,13 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     return;
   }
 
-  async list(prefix = ''): Promise<ListObject[]> {
-    const list = [];
+  async list(prefix = ''): Promise<UploadList> {
+    const uploads = [];
     const files = await getFiles(`${this.directory}/${this.prefix + prefix}`);
     for (const name of files) {
       name.endsWith(this.suffix) &&
-        list.push({ name: this.getNameFromPath(name), updated: (await fsp.stat(name)).mtime });
+        uploads.push({ name: this.getNameFromPath(name), updated: (await fsp.stat(name)).mtime });
     }
-    return list;
+    return { items: uploads };
   }
 }

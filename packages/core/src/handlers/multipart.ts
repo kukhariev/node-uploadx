@@ -12,7 +12,7 @@ interface MultipartyPart extends multiparty.Part {
   };
 }
 
-export class Multipart<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
+export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
@@ -66,8 +66,8 @@ export class Multipart<TFile extends Readonly<File>, TList> extends BaseHandler<
 /**
  * Basic express wrapper
  */
-export function multipart<TFile extends Readonly<File>, TList>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> } = {}
+export function multipart<TFile extends Readonly<File>>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }

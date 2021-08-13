@@ -25,7 +25,7 @@ describe('::Tus', () => {
     });
 
     it('custom storage', () => {
-      const storage = {} as BaseStorage<any, any>;
+      const storage = {} as BaseStorage<any>;
       expect(tus({ storage })).toBeInstanceOf(Function);
     });
   });

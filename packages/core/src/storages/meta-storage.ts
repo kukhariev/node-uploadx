@@ -1,6 +1,8 @@
-export interface ListObject {
-  name: string;
-  updated?: Date | number | string;
+export interface UploadList {
+  items: {
+    name: string;
+    updated?: Date | number | string;
+  }[];
 }
 export interface MetaStorageOptions {
   prefix?: string;
@@ -26,8 +28,8 @@ export class MetaStorage<T> {
     return Promise.reject();
   }
 
-  async list(prefix: string): Promise<ListObject[]> {
-    return Promise.reject();
+  async list(prefix: string): Promise<UploadList> {
+    return { items: [] };
   }
 }
 

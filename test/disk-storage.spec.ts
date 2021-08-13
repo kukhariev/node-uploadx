@@ -125,15 +125,15 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should return all user files', async () => {
-      const files = await storage.get(testfile.userId);
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(testfile.userId);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
 
     it('should return one file', async () => {
-      const files = await storage.get(filename);
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(filename);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
   });
 

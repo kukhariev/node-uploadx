@@ -27,7 +27,7 @@ export function parseMetadata(encoded = ''): Metadata {
  * tus resumable upload protocol
  * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
  */
-export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
+export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   /**
    *
    */
@@ -137,8 +137,8 @@ export class Tus<TFile extends Readonly<File>, TList> extends BaseHandler<TFile,
  * @example
  * app.use('/files', tus({directory: '/tmp', maxUploadSize: '250GB'}));
  */
-export function tus<TFile extends File, TList>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> } = {}
+export function tus<TFile extends File>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
@@ -156,6 +156,6 @@ export function tus<TFile extends File, TList>(
   return res.sendStatus(204);
 });
  */
-tus.upload = <TFile extends Readonly<File>, TList>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> }
+tus.upload = <TFile extends Readonly<File>>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> }
 ) => new Tus(options).upload;

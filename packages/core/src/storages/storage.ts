@@ -14,7 +14,7 @@ import {
   ValidatorConfig
 } from '../utils';
 import { File, FileInit, FilePart } from './file';
-import { METAFILE_EXTNAME, MetaStorage, MetaStorageOptions } from './meta-storage';
+import { UploadList, METAFILE_EXTNAME, MetaStorage, MetaStorageOptions } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -52,7 +52,7 @@ const defaultOptions = {
   maxMetadataSize: '4MB'
 };
 
-export abstract class BaseStorage<TFile extends File, TList> {
+export abstract class BaseStorage<TFile extends File> {
   static maxCacheMemory = '800MB';
   maxFilenameLength = 255 - METAFILE_EXTNAME.length;
   onComplete: (file: TFile) => Promise<any> | any;
@@ -138,6 +138,10 @@ export abstract class BaseStorage<TFile extends File, TList> {
     return fail(ERRORS.FILE_NOT_FOUND);
   }
 
+  async get(prefix = ''): Promise<UploadList> {
+    return this.meta.list(prefix);
+  }
+
   /**
    * Add an upload to storage
    */
@@ -153,12 +157,6 @@ export abstract class BaseStorage<TFile extends File, TList> {
    * @param prefix
    */
   abstract delete(prefix: string): Promise<TFile[]>;
-
-  /**
-   * Returns files whose path starts with the specified prefix
-   * @param prefix If not specified returns all files
-   */
-  abstract get(prefix?: string): Promise<TList[]>;
 
   /**
    * Update upload metadata

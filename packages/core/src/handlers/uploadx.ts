@@ -14,11 +14,11 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 /**
  * X-headers protocol implementation
  */
-export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TFile, TList> {
+export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   static RESUME_STATUS_CODE = 308;
 
   /**
-   * Create File from request and send file url to client
+   * Create File from request and send a file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
@@ -47,7 +47,7 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
   }
 
   /**
-   * Write chunk to file or/and return chunk offset
+   * Write a chunk to file or/and return chunk offset
    */
   async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
@@ -104,8 +104,8 @@ export class Uploadx<TFile extends Readonly<File>, TList> extends BaseHandler<TF
  * @example
  * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
  */
-export function uploadx<TFile extends Readonly<File>, TList>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> } = {}
+export function uploadx<TFile extends Readonly<File>>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Uploadx(options).handle;
 }
@@ -123,6 +123,6 @@ export function uploadx<TFile extends Readonly<File>, TList>(
   return res.json(req.body);
 });
  */
-uploadx.upload = <TFile extends Readonly<File>, TList>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile, TList> }
+uploadx.upload = <TFile extends Readonly<File>>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> }
 ) => new Uploadx(options).upload;

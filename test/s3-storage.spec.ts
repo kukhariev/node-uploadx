@@ -5,7 +5,7 @@ import { S3File, S3Storage } from '../packages/s3/src';
 import { FilePart } from '../packages/core/src';
 import { storageOptions } from './fixtures';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
-import { S3StorageOptions } from '@uploadx/s3';
+import { S3StorageOptions } from '../packages/s3/src';
 
 jest.mock('../packages/core/src/utils/cache');
 const mockHeadBucket = jest.fn();
@@ -134,10 +134,10 @@ describe('S3Storage', () => {
 
   describe('.get()', () => {
     it('should return all user files', async () => {
-      const files = await storage.get(testfile.userId);
-      expect(files).toEqual(expect.any(Array));
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(testfile.userId);
+      expect(items).toEqual(expect.any(Array));
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
   });
 

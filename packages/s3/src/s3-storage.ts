@@ -39,12 +39,7 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
     keyFile?: string;
   };
 
-export interface S3ListObject {
-  name?: string;
-  updated?: any;
-}
-
-export class S3Storage extends BaseStorage<S3File, S3ListObject> {
+export class S3Storage extends BaseStorage<S3File> {
   bucket: string;
   client: S3;
   meta: MetaStorage<S3File>;
@@ -147,10 +142,6 @@ export class S3Storage extends BaseStorage<S3File, S3ListObject> {
       return [{ ...file }];
     }
     return [{ name } as S3File];
-  }
-
-  async get(prefix = ''): Promise<S3ListObject[]> {
-    return this.meta.list(prefix);
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
