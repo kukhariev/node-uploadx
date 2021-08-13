@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { FilePart } from '@uploadx/core';
-import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '@uploadx/gcs';
+import { buildContentRange, GCSFile, GCStorage, GCStorageOptions, getRangeEnd } from '@uploadx/gcs';
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
@@ -30,7 +30,7 @@ describe('GCStorage', () => {
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
-    storage = new GCStorage({ ...storageOptions });
+    storage = new GCStorage({ ...(storageOptions as GCStorageOptions) });
     file = _fileResponse().data;
   });
 

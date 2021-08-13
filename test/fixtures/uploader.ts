@@ -1,9 +1,17 @@
 import { IncomingMessage } from 'http';
-import { BaseHandler, BaseStorage, File, FileInit, FilePart } from '../../packages/core/src';
+import {
+  BaseHandler,
+  BaseStorage,
+  File,
+  FileInit,
+  FilePart,
+  MetaStorage
+} from '../../packages/core/src';
 
 export class TestUploader extends BaseHandler<File, File[]> {}
 
 class TestStorage extends BaseStorage<File, any> {
+  meta = new MetaStorage<File>();
   path = '/files';
   isReady = true;
 

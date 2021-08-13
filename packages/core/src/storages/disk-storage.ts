@@ -1,6 +1,6 @@
 import * as http from 'http';
-import { extname, join, relative, resolve as pathResolve } from 'path';
-import { ensureFile, ERRORS, fail, fsp, getFiles, getWriteStream, HttpError } from '../utils';
+import { resolve as pathResolve } from 'path';
+import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
 import {
   File,
   FileInit,
@@ -10,7 +10,9 @@ import {
   isValidPart,
   updateMetadata
 } from './file';
-import { BaseStorage, BaseStorageOptions, METAFILE_EXTNAME } from './storage';
+import { BaseStorage, BaseStorageOptions } from './storage';
+import { METAFILE_EXTNAME, MetaStorage } from './meta-storage';
+import { LocalMetaStorage } from './local-meta-storage';
 
 const INVALID_OFFSET = -1;
 
@@ -33,10 +35,14 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
  */
 export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   directory: string;
+  meta: MetaStorage<DiskFile>;
 
   constructor(public config: DiskStorageOptions = {}) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
+    this.meta = config.metaStorage
+      ? config.metaStorage
+      : new LocalMetaStorage({ metaStoragePath: config.metaStoragePath ?? this.directory });
     this.isReady = true;
     this.maxFilenameLength = 255 - pathResolve(this.directory, METAFILE_EXTNAME).length;
   }
@@ -49,20 +55,22 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file);
     await this.validate(file);
-    await this._saveMeta(file);
+    const path = this.getFilePath(file.name);
+    file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
+    await this.saveMetaFile(file);
     file.status = 'created';
     return file;
   }
 
   async write(part: FilePart): Promise<DiskFile> {
-    const file = await this._getMeta(part.name);
+    const file = await this.getMetaFile(part.name);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       if (isCompleted(file)) {
-        await this._saveMeta(file);
+        await this.saveMetaFile(file);
       }
       return file;
     } catch (err) {
@@ -71,21 +79,17 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
   }
 
   async get(prefix = ''): Promise<DiskListObject[]> {
-    const files = await getFiles(join(this.directory, prefix));
-    const props = (path: string): DiskListObject => ({
-      name: relative(this.directory, path).replace(/\\/g, '/')
-    });
-    return files.filter(name => extname(name) !== METAFILE_EXTNAME).map(path => props(path));
+    return this.meta.list(prefix);
   }
 
   /**
    * @todo delete by prefix
    */
   async delete(name: string): Promise<DiskFile[]> {
-    const file = await this._getMeta(name).catch(() => null);
+    const file = await this.getMetaFile(name).catch(() => null);
     if (file) {
-      await fsp.unlink(this._getPath(name)).catch(() => null);
-      await this._deleteMeta(name);
+      await fsp.unlink(this.getFilePath(name)).catch(() => null);
+      await this.deleteMetaFile(name);
       return [{ ...file, status: 'deleted' }];
     }
     return [{ name } as DiskFile];
@@ -95,15 +99,19 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
    *@todo Metadata size limit
    */
   async update(name: string, { metadata }: Partial<DiskFile>): Promise<DiskFile> {
-    const file = await this._getMeta(name);
+    const file = await this.getMetaFile(name);
     updateMetadata(file, metadata);
-    await this._saveMeta(file);
+    await this.saveMetaFile(file);
     return { ...file, status: 'updated' };
+  }
+
+  getFilePath(name: string): string {
+    return pathResolve(this.directory, name);
   }
 
   protected _write(part: FilePart & File): Promise<number> {
     return new Promise((resolve, reject) => {
-      const path = this._getPath(part.name);
+      const path = this.getFilePath(part.name);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
         file.once('error', error => reject(error));
@@ -125,39 +133,5 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
         resolve(ensureFile(path));
       }
     });
-  }
-
-  protected async _saveMeta(file: DiskFile): Promise<DiskFile> {
-    const path = this._getPath(file.name);
-    file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
-    await fsp.writeFile(this._getMetaPath(file.name), JSON.stringify(file, null, 2));
-    this.cache.set(file.name, file);
-    return file;
-  }
-
-  protected async _deleteMeta(name: string): Promise<void> {
-    this.cache.delete(name);
-    await fsp.unlink(this._getMetaPath(name));
-    return;
-  }
-
-  protected async _getMeta(name: string): Promise<DiskFile> {
-    let file = this.cache.get(name);
-    if (file) return file;
-    try {
-      const json = await fsp.readFile(this._getMetaPath(name), { encoding: 'utf8' });
-      file = JSON.parse(json) as DiskFile;
-      this.cache.set(name, file);
-      return file;
-    } catch {}
-    return fail(ERRORS.FILE_NOT_FOUND);
-  }
-
-  protected _getPath(name: string): string {
-    return pathResolve(this.directory, name);
-  }
-
-  protected _getMetaPath(name: string): string {
-    return this._getPath(name) + METAFILE_EXTNAME;
   }
 }

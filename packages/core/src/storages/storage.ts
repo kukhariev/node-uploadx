@@ -4,6 +4,8 @@ import {
   Cache,
   ErrorMap,
   ErrorResponses,
+  ERRORS,
+  fail,
   HttpError,
   Logger,
   typeis,
@@ -12,8 +14,7 @@ import {
   ValidatorConfig
 } from '../utils';
 import { File, FileInit, FilePart } from './file';
-
-export const METAFILE_EXTNAME = '.META';
+import { METAFILE_EXTNAME, MetaStorage, MetaStorageOptions } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -35,9 +36,12 @@ export interface BaseStorageOptions<T extends File> {
   validation?: Validation<T>;
   /** Metadata size limit */
   maxMetadataSize?: number | string;
+  metaStorage?: MetaStorage<T>;
+  metaStoragePath?: string;
+  metaStorageConfig?: MetaStorageOptions;
 }
 
-const defaultOptions: Required<BaseStorageOptions<File>> = {
+const defaultOptions = {
   allowMIME: ['*/*'],
   maxUploadSize: '5TB',
   filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
@@ -57,13 +61,14 @@ export abstract class BaseStorage<TFile extends File, TList> {
   path: string;
   isReady = false;
   errorResponses = {} as ErrorResponses;
+  cache: Cache<TFile>;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
-  protected cache: Cache<TFile>;
   protected validation = new Validator<TFile>();
+  abstract meta: MetaStorage<TFile>;
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
-    const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
+    const opts = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
@@ -110,8 +115,31 @@ export abstract class BaseStorage<TFile extends File, TList> {
     };
   }
 
+  async saveMetaFile(file: TFile): Promise<TFile> {
+    this.cache.set(file.name, file);
+    await this.meta.set(file.name, file);
+    return file;
+  }
+
+  async deleteMetaFile(name: string): Promise<void> {
+    this.cache.delete(name);
+    await this.meta.remove(name);
+    return;
+  }
+
+  async getMetaFile(name: string): Promise<TFile> {
+    let file = this.cache.get(name);
+    if (file) return file;
+    try {
+      file = await this.meta.get(name);
+      this.cache.set(file.name, file);
+      return file;
+    } catch {}
+    return fail(ERRORS.FILE_NOT_FOUND);
+  }
+
   /**
-   * Add upload to storage
+   * Add an upload to storage
    */
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
@@ -125,6 +153,7 @@ export abstract class BaseStorage<TFile extends File, TList> {
    * @param prefix
    */
   abstract delete(prefix: string): Promise<TFile[]>;
+
   /**
    * Returns files whose path starts with the specified prefix
    * @param prefix If not specified returns all files
