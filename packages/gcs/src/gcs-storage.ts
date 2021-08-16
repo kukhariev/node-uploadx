@@ -109,7 +109,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     file.name = this.namingFunction(file);
     await this.validate(file);
     try {
-      const existing = await this.getMetaFile(file.name);
+      const existing = await this.getMeta(file.name);
       existing.bytesWritten = await this._write(existing);
       return existing;
     } catch {}
@@ -133,13 +133,13 @@ export class GCStorage extends BaseStorage<GCSFile> {
       file.status = 'created';
       return file;
     }
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     file.status = 'created';
     return file;
   }
 
   async write(part: FilePart): Promise<GCSFile> {
-    const file = await this.getMetaFile(part.name);
+    const file = await this.getMeta(part.name);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
@@ -151,12 +151,12 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   async delete(name: string): Promise<GCSFile[]> {
-    const file = await this.getMetaFile(name).catch(() => null);
+    const file = await this.getMeta(name).catch(() => null);
     if (file?.uri) {
       file.status = 'deleted';
       await Promise.all([
         this.authClient.request({ method: 'DELETE' as const, url: file.uri, validateStatus }),
-        this.deleteMetaFile(file.name)
+        this.deleteMeta(file.name)
       ]);
       return [{ ...file }];
     }
@@ -164,9 +164,9 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<GCSFile> {
-    const file = await this.getMetaFile(name);
+    const file = await this.getMeta(name);
     updateMetadata(file, metadata);
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     return { ...file, status: 'updated' };
   }
 
@@ -205,7 +205,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   private _onComplete = (file: GCSFile): Promise<any> => {
-    return this.deleteMetaFile(file.name);
+    return this.deleteMeta(file.name);
   };
 
   private _checkBucket(bucketName: string): void {

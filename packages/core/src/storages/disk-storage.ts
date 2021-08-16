@@ -53,20 +53,20 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     await this.validate(file);
     const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     file.status = 'created';
     return file;
   }
 
   async write(part: FilePart): Promise<DiskFile> {
-    const file = await this.getMetaFile(part.name);
+    const file = await this.getMeta(part.name);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       if (isCompleted(file)) {
-        await this.saveMetaFile(file);
+        await this.saveMeta(file);
       }
       return file;
     } catch (err) {
@@ -75,28 +75,33 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   }
 
   /**
+   * @inheritdoc
    * @todo delete by prefix
    */
   async delete(name: string): Promise<DiskFile[]> {
-    const file = await this.getMetaFile(name).catch(() => null);
+    const file = await this.getMeta(name).catch(() => null);
     if (file) {
       await fsp.unlink(this.getFilePath(name)).catch(() => null);
-      await this.deleteMetaFile(name);
+      await this.deleteMeta(name);
       return [{ ...file, status: 'deleted' }];
     }
     return [{ name } as DiskFile];
   }
 
   /**
-   *@todo Metadata size limit
+   * @inheritdoc
+   * @todo Metadata size limit
    */
   async update(name: string, { metadata }: Partial<DiskFile>): Promise<DiskFile> {
-    const file = await this.getMetaFile(name);
+    const file = await this.getMeta(name);
     updateMetadata(file, metadata);
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     return { ...file, status: 'updated' };
   }
 
+  /**
+   * Returns an absolute path of the uploaded file
+   */
   getFilePath(name: string): string {
     return pathResolve(this.directory, name);
   }

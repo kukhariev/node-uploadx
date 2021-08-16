@@ -25,14 +25,22 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   getMetaName = (name: string): string => this.prefix + name + this.suffix;
 
+  /**
+   * Returns metafile url
+   * @param name upload name
+   */
   getMetaPath(name: string): string {
     return `${this.storageBaseURI}/${this.getMetaName(name)}`;
   }
 
+  /**
+   * Returns upload name from metafile url
+   * @internal
+   */
   getNameFromPath = (metaFilePath: string): string =>
     metaFilePath.slice(`${this.prefix}`.length, -this.suffix.length);
 
-  async set(name: string, file: T): Promise<T> {
+  async save(name: string, file: T): Promise<T> {
     //TODO: use JSON API multipart POST?
     await this.authClient.request({
       body: JSON.stringify(file),
@@ -44,7 +52,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
     return file;
   }
 
-  async remove(name: string): Promise<void> {
+  async delete(name: string): Promise<void> {
     const url = this.getMetaPath(name);
     await this.authClient.request({ method: 'DELETE', url });
     return;

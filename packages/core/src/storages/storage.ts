@@ -115,19 +115,26 @@ export abstract class BaseStorage<TFile extends File> {
     };
   }
 
-  async saveMetaFile(file: TFile): Promise<TFile> {
+  /**
+   * Save upload metadata
+   */
+  async saveMeta(file: TFile): Promise<TFile> {
     this.cache.set(file.name, file);
-    await this.meta.set(file.name, file);
-    return file;
+    return this.meta.save(file.name, file);
   }
 
-  async deleteMetaFile(name: string): Promise<void> {
+  /**
+   * Deletes an upload metadata
+   */
+  async deleteMeta(name: string): Promise<void> {
     this.cache.delete(name);
-    await this.meta.remove(name);
-    return;
+    return this.meta.delete(name);
   }
 
-  async getMetaFile(name: string): Promise<TFile> {
+  /**
+   * Retrieves upload metadata
+   */
+  async getMeta(name: string): Promise<TFile> {
     let file = this.cache.get(name);
     if (file) return file;
     try {
@@ -139,6 +146,13 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   async get(prefix = ''): Promise<UploadList> {
+    return this.meta.list(prefix);
+  }
+
+  /**
+   * Retrieves a list of uploads whose names begin with the prefix
+   */
+  async list(prefix = ''): Promise<UploadList> {
     return this.meta.list(prefix);
   }
 

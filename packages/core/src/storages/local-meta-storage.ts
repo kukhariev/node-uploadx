@@ -5,12 +5,21 @@ import { UploadList, MetaStorage, MetaStorageOptions } from './meta-storage';
 import { tmpdir } from 'os';
 
 interface LocalMetaStorageOptions extends MetaStorageOptions {
+  /**
+   * Where the upload metadata should be stored
+   */
   directory?: string;
+  /**
+   * Where the upload metadata should be stored
+   */
   metaStoragePath?: string;
 }
 
+/**
+ * Stores upload metafiles on local disk
+ */
 export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
-  public directory = '';
+  readonly directory: string;
 
   constructor(readonly config?: LocalMetaStorageOptions) {
     super();
@@ -22,12 +31,20 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
       join(tmpdir(), 'uploadx_meta');
   }
 
+  /**
+   * Returns metafile path
+   * @param name upload name
+   */
   getMetaPath = (name: string): string => `${this.directory}/${this.prefix + name + this.suffix}`;
 
+  /**
+   * Returns upload name from metafile path
+   * @internal
+   */
   getNameFromPath = (metaFilePath: string): string =>
     metaFilePath.slice(`${this.directory}/${this.prefix}`.length, -this.suffix.length);
 
-  async set(name: string, file: T): Promise<T> {
+  async save(name: string, file: T): Promise<T> {
     await fsp.writeFile(this.getMetaPath(file.name), JSON.stringify(file, null, 2));
     return file;
   }
@@ -37,7 +54,7 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     return JSON.parse(json) as T;
   }
 
-  async remove(name: string): Promise<void> {
+  async delete(name: string): Promise<void> {
     await fsp.unlink(this.getMetaPath(name));
     return;
   }

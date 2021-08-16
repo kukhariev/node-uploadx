@@ -35,7 +35,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     return Promise.reject();
   }
 
-  async remove(name: string): Promise<void> {
+  async delete(name: string): Promise<void> {
     const params = { Bucket: this.bucket, Key: this.getMetaName(name) };
     await this.client
       .deleteObject(params)
@@ -43,7 +43,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
       .catch(() => null);
   }
 
-  async set(name: string, file: T): Promise<T> {
+  async save(name: string, file: T): Promise<T> {
     const metadata = encodeURIComponent(JSON.stringify(file));
     const params = {
       Bucket: this.bucket,

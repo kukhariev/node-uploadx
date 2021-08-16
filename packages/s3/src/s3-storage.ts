@@ -77,7 +77,7 @@ export class S3Storage extends BaseStorage<S3File> {
     file.name = this.namingFunction(file);
     await this.validate(file);
     try {
-      const existing = await this.getMetaFile(file.name);
+      const existing = await this.getMeta(file.name);
       if (existing.bytesWritten >= 0) {
         return existing;
       }
@@ -96,13 +96,13 @@ export class S3Storage extends BaseStorage<S3File> {
     }
     file.UploadId = UploadId;
     file.bytesWritten = 0;
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     file.status = 'created';
     return file;
   }
 
   async write(part: FilePart): Promise<S3File> {
-    const file = await this.getMetaFile(part.name);
+    const file = await this.getMeta(part.name);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ||= await this._getParts(file);
@@ -135,24 +135,24 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async delete(name: string): Promise<S3File[]> {
-    const file = await this.getMetaFile(name).catch(() => null);
+    const file = await this.getMeta(name).catch(() => null);
     if (file) {
       file.status = 'deleted';
-      await Promise.all([this.deleteMetaFile(file.name), this._abortMultipartUpload(file)]);
+      await Promise.all([this.deleteMeta(file.name), this._abortMultipartUpload(file)]);
       return [{ ...file }];
     }
     return [{ name } as S3File];
   }
 
   async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
-    const file = await this.getMetaFile(name);
+    const file = await this.getMeta(name);
     updateMetadata(file, metadata);
-    await this.saveMetaFile(file);
+    await this.saveMeta(file);
     return { ...file, status: 'updated' };
   }
 
   protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {
-    return Promise.all([this._complete(file), this.deleteMetaFile(file.name)]);
+    return Promise.all([this._complete(file), this.deleteMeta(file.name)]);
   };
 
   private async _getParts(file: S3File): Promise<S3.Parts> {

@@ -4,10 +4,14 @@ export interface UploadList {
     updated?: Date | number | string;
   }[];
 }
+
 export interface MetaStorageOptions {
   prefix?: string;
   suffix?: string;
 }
+/**
+ * Stores upload metadata
+ */
 export class MetaStorage<T> {
   prefix = '';
   suffix = METAFILE_EXTNAME;
@@ -16,21 +20,35 @@ export class MetaStorage<T> {
     this.suffix = config?.suffix ?? METAFILE_EXTNAME;
   }
 
-  async set(name: string, file: T): Promise<T> {
+  /**
+   * Saves upload metadata
+   */
+  async save(name: string, file: T): Promise<T> {
     return file;
   }
 
-  async remove(name: string): Promise<void> {
+  /**
+   * Deletes an upload metadata
+   */
+  async delete(name: string): Promise<void> {
     return;
   }
 
+  /**
+   * Retrieves upload metadata
+   */
   async get(name: string): Promise<T> {
     return Promise.reject();
   }
 
-  async list(prefix: string): Promise<UploadList> {
+  /**
+   * Retrieves a list of uploads whose names begin with the prefix
+   */
+  async list(prefix = ''): Promise<UploadList> {
     return { items: [] };
   }
 }
-
+/**
+ *
+ */
 export const METAFILE_EXTNAME = '.META';
