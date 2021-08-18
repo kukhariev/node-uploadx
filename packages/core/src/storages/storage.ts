@@ -13,8 +13,8 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart } from './file';
-import { UploadList, METAFILE_EXTNAME, MetaStorage } from './meta-storage';
+import { File, FileInit, FilePart, updateMetadata } from './file';
+import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -156,6 +156,17 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
+   * Update user-provided metadata
+   * @todo Metadata size limit
+   */
+  async update(name: string, { metadata }: Partial<File>): Promise<TFile> {
+    const file = await this.getMeta(name);
+    updateMetadata(file, metadata);
+    await this.saveMeta(file);
+    return { ...file, status: 'updated' };
+  }
+
+  /**
    * Add an upload to storage
    */
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
@@ -169,9 +180,4 @@ export abstract class BaseStorage<TFile extends File> {
    * Delete files whose path starts with the specified prefix
    */
   abstract delete(prefix: string): Promise<TFile[]>;
-
-  /**
-   * Update upload metadata
-   */
-  abstract update(name: string, file: Partial<File>): Promise<TFile>;
 }

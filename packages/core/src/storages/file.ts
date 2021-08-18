@@ -68,6 +68,7 @@ export function isValidPart(part: FilePart, file: File): boolean {
   return (part.start || 0) + (part.contentLength || 0) <= file.size;
 }
 
+/** User-provided metadata */
 export interface Metadata {
   [key: string]: any;
 

@@ -15,8 +15,7 @@ import {
   LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
-  MetaStorage,
-  updateMetadata
+  MetaStorage
 } from '@uploadx/core';
 import { AWSError, config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
@@ -147,13 +146,6 @@ export class S3Storage extends BaseStorage<S3File> {
       return [{ ...file }];
     }
     return [{ name } as S3File];
-  }
-
-  async update(name: string, { metadata }: Partial<File>): Promise<S3File> {
-    const file = await this.getMeta(name);
-    updateMetadata(file, metadata);
-    await this.saveMeta(file);
-    return { ...file, status: 'updated' };
   }
 
   protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {

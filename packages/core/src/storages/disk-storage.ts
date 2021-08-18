@@ -1,15 +1,7 @@
 import * as http from 'http';
 import { resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
-import {
-  File,
-  FileInit,
-  FilePart,
-  hasContent,
-  isCompleted,
-  isValidPart,
-  updateMetadata
-} from './file';
+import { File, FileInit, FilePart, hasContent, isCompleted, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { METAFILE_EXTNAME, MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
@@ -90,17 +82,6 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       return [{ ...file, status: 'deleted' }];
     }
     return [{ name } as DiskFile];
-  }
-
-  /**
-   * @inheritdoc
-   * @todo Metadata size limit
-   */
-  async update(name: string, { metadata }: Partial<DiskFile>): Promise<DiskFile> {
-    const file = await this.getMeta(name);
-    updateMetadata(file, metadata);
-    await this.saveMeta(file);
-    return { ...file, status: 'updated' };
   }
 
   /**
