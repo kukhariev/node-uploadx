@@ -1,12 +1,10 @@
-import { File, UploadList, MetaStorage } from '@uploadx/core';
+import { File, UploadList, MetaStorage, MetaStorageOptions } from '@uploadx/core';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
 
-export type GCSMetaStorageOptions = GoogleAuthOptions & {
+export interface GCSMetaStorageOptions extends GoogleAuthOptions, MetaStorageOptions {
   bucket?: string;
-  prefix?: string;
-  suffix?: string;
-};
+}
 
 export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   authClient: GoogleAuth;

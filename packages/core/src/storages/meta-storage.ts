@@ -1,5 +1,7 @@
+/** @experimental */
 export interface UploadList {
   items: {
+    /** upload name */
     name: string;
     updated?: Date | number | string;
   }[];
@@ -9,13 +11,14 @@ export interface MetaStorageOptions {
   prefix?: string;
   suffix?: string;
 }
+
 /**
  * Stores upload metadata
  */
 export class MetaStorage<T> {
   prefix = '';
   suffix = METAFILE_EXTNAME;
-  constructor(readonly config?: MetaStorageOptions) {
+  constructor(config?: MetaStorageOptions) {
     this.prefix = config?.prefix ?? '';
     this.suffix = config?.suffix ?? METAFILE_EXTNAME;
   }

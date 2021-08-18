@@ -57,7 +57,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
    * @example
    * Uploadx.methods = ['post', 'put', 'delete'];
    * app.use('/upload', uploadx(opts));
-   *
    */
   static methods: Handlers[] = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'];
   cors: Cors;
@@ -87,7 +86,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
    *  uploadx.errorResponses = {
    *    FileNotFound: [404, { message: 'Not Found!' }]
    *  }
-   * @param value
    */
   set errorResponses(value: Partial<ErrorResponses>) {
     this.assembleErrors(value);

@@ -1,13 +1,11 @@
-import { File, UploadList, MetaStorage } from '@uploadx/core';
+import { File, UploadList, MetaStorage, MetaStorageOptions } from '@uploadx/core';
 import { config as AWSConfig, S3 } from 'aws-sdk';
 
 const BUCKET_NAME = 'node-uploadx';
-export type S3MetaStorageOptions = S3.ClientConfiguration & {
+export interface S3MetaStorageOptions extends S3.ClientConfiguration, MetaStorageOptions {
   bucket?: string;
   keyFile?: string;
-  prefix?: string;
-  suffix?: string;
-};
+}
 
 export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   bucket: string;

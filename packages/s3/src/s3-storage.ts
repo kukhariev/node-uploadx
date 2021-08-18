@@ -13,13 +13,14 @@ import {
   isCompleted,
   isValidPart,
   LocalMetaStorage,
+  LocalMetaStorageOptions,
   mapValues,
   MetaStorage,
   updateMetadata
 } from '@uploadx/core';
 import { AWSError, config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
-import { S3MetaStorage } from './s3-meta-storage';
+import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
 const BUCKET_NAME = 'node-uploadx';
 
@@ -37,6 +38,7 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      */
     bucket?: string;
     keyFile?: string;
+    metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
   };
 
 export class S3Storage extends BaseStorage<S3File> {
@@ -50,12 +52,15 @@ export class S3Storage extends BaseStorage<S3File> {
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
     keyFile && AWSConfig.loadFromPath(keyFile);
     this.client = new S3(config);
-    this.meta = config.metaStorage
-      ? config.metaStorage
-      : (this.meta =
-          typeof config.metaStoragePath === 'string'
-            ? new LocalMetaStorage({ directory: config.metaStoragePath })
-            : new S3MetaStorage(config));
+    if (config.metaStorage) {
+      this.meta = config.metaStorage;
+    } else {
+      const metaConfig = { ...config, ...(config.metaStorageConfig || {}) };
+      this.meta =
+        'directory' in metaConfig
+          ? new LocalMetaStorage(metaConfig)
+          : new S3MetaStorage(metaConfig);
+    }
     this._checkBucket();
   }
 

@@ -14,7 +14,7 @@ import {
   ValidatorConfig
 } from '../utils';
 import { File, FileInit, FilePart } from './file';
-import { UploadList, METAFILE_EXTNAME, MetaStorage, MetaStorageOptions } from './meta-storage';
+import { UploadList, METAFILE_EXTNAME, MetaStorage } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -34,11 +34,10 @@ export interface BaseStorageOptions<T extends File> {
   path?: string;
   /** Upload validation options */
   validation?: Validation<T>;
-  /** Metadata size limit */
+  /** Limiting the size of custom metadata */
   maxMetadataSize?: number | string;
+  /** Provide custom meta storage  */
   metaStorage?: MetaStorage<T>;
-  metaStoragePath?: string;
-  metaStorageConfig?: MetaStorageOptions;
 }
 
 const defaultOptions = {
@@ -116,7 +115,7 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Save upload metadata
+   * Saves upload metadata
    */
   async saveMeta(file: TFile): Promise<TFile> {
     this.cache.set(file.name, file);
@@ -168,7 +167,6 @@ export abstract class BaseStorage<TFile extends File> {
 
   /**
    * Delete files whose path starts with the specified prefix
-   * @param prefix
    */
   abstract delete(prefix: string): Promise<TFile[]>;
 

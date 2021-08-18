@@ -12,7 +12,7 @@ import {
 } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { METAFILE_EXTNAME, MetaStorage } from './meta-storage';
-import { LocalMetaStorage } from './local-meta-storage';
+import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
 
 const INVALID_OFFSET = -1;
 
@@ -24,6 +24,7 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
    * @defaultValue './files'
    */
   directory?: string;
+  metaStorageConfig?: LocalMetaStorageOptions;
 };
 
 /**
@@ -36,9 +37,12 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   constructor(public config: DiskStorageOptions = {}) {
     super(config);
     this.directory = config.directory || this.path.replace(/^\//, '');
-    this.meta = config.metaStorage
-      ? config.metaStorage
-      : new LocalMetaStorage({ metaStoragePath: config.metaStoragePath ?? this.directory });
+    if (config.metaStorage) {
+      this.meta = config.metaStorage;
+    } else {
+      const metaConfig = { ...config, ...(config.metaStorageConfig || {}) };
+      this.meta = new LocalMetaStorage(metaConfig);
+    }
     this.isReady = true;
     this.maxFilenameLength = 255 - pathResolve(this.directory, METAFILE_EXTNAME).length;
   }

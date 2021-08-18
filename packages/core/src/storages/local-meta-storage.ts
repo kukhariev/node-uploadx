@@ -1,18 +1,14 @@
 import { join } from 'path';
 import { fsp, getFiles } from '../utils';
 import { File } from './file';
-import { UploadList, MetaStorage, MetaStorageOptions } from './meta-storage';
+import { MetaStorage, MetaStorageOptions, UploadList } from './meta-storage';
 import { tmpdir } from 'os';
 
-interface LocalMetaStorageOptions extends MetaStorageOptions {
+export interface LocalMetaStorageOptions extends MetaStorageOptions {
   /**
    * Where the upload metadata should be stored
    */
   directory?: string;
-  /**
-   * Where the upload metadata should be stored
-   */
-  metaStoragePath?: string;
 }
 
 /**
@@ -21,19 +17,15 @@ interface LocalMetaStorageOptions extends MetaStorageOptions {
 export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
   readonly directory: string;
 
-  constructor(readonly config?: LocalMetaStorageOptions) {
-    super();
-
+  constructor(config?: LocalMetaStorageOptions) {
+    super(config);
     this.directory =
-      config?.metaStoragePath ||
-      process.env.UPLOADX_META_DIR ||
-      config?.directory ||
-      join(tmpdir(), 'uploadx_meta');
+      process.env.UPLOADX_META_DIR || config?.directory || join(tmpdir(), 'uploadx_meta');
   }
 
   /**
    * Returns metafile path
-   * @param name upload name
+   * @param name - upload name
    */
   getMetaPath = (name: string): string => `${this.directory}/${this.prefix + name + this.suffix}`;
 

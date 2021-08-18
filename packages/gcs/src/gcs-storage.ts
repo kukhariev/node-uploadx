@@ -12,6 +12,7 @@ import {
   isCompleted,
   isValidPart,
   LocalMetaStorage,
+  LocalMetaStorageOptions,
   MetaStorage,
   updateMetadata
 } from '@uploadx/core';
@@ -20,7 +21,7 @@ import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
 import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
-import { GCSMetaStorage } from './gcs-meta-storage';
+import { GCSMetaStorage, GCSMetaStorageOptions } from './gcs-meta-storage';
 
 export interface ClientError extends Error {
   code: string;
@@ -45,17 +46,17 @@ export function buildContentRange(part: FilePart & GCSFile): string {
 const validateStatus = (code: number): boolean =>
   (code >= 200 && code < 300) || code === 308 || code === 499;
 
-export type GCStorageOptions = BaseStorageOptions<GCSFile> &
-  GoogleAuthOptions & {
-    /**
-     * Google Cloud Storage bucket
-     */
-    bucket?: string;
-    /**
-     * Force compatible client upload directly to GCS
-     */
-    clientDirectUpload?: boolean;
-  };
+export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAuthOptions {
+  /**
+   * Google Cloud Storage bucket
+   */
+  bucket?: string;
+  /**
+   * Force compatible client upload directly to GCS
+   */
+  clientDirectUpload?: boolean;
+  metaStorageConfig?: LocalMetaStorageOptions | GCSMetaStorageOptions;
+}
 
 export class GCSFile extends File {
   GCSUploadURI?: string;
@@ -76,10 +77,11 @@ export class GCStorage extends BaseStorage<GCSFile> {
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
+      const metaConfig = { ...config, ...(config.metaStorageConfig || {}) };
       this.meta =
-        typeof config.metaStoragePath === 'string'
-          ? new LocalMetaStorage({ directory: config.metaStoragePath })
-          : new GCSMetaStorage(config);
+        'directory' in metaConfig
+          ? new LocalMetaStorage(metaConfig)
+          : new GCSMetaStorage(metaConfig);
     }
     config.scopes ||= authScopes;
     config.keyFile ||= process.env.GCS_KEYFILE;
