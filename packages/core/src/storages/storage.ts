@@ -150,6 +150,7 @@ export abstract class BaseStorage<TFile extends File> {
 
   /**
    * Retrieves a list of uploads whose names begin with the prefix
+   * @experimental
    */
   async list(prefix = ''): Promise<UploadList> {
     return this.meta.list(prefix);
@@ -157,6 +158,7 @@ export abstract class BaseStorage<TFile extends File> {
 
   /**
    * Update user-provided metadata
+   * @experimental
    * @todo Metadata size limit
    */
   async update(name: string, { metadata }: Partial<File>): Promise<TFile> {

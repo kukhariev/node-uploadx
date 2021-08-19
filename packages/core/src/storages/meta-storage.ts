@@ -46,12 +46,13 @@ export class MetaStorage<T> {
 
   /**
    * Retrieves a list of uploads whose names begin with the prefix
+   * @experimental
    */
   async list(prefix = ''): Promise<UploadList> {
     return { items: [] };
   }
 }
 /**
- *
+ * @deprecated
  */
 export const METAFILE_EXTNAME = '.META';
