@@ -55,18 +55,22 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   async list(prefix: string): Promise<UploadList> {
     const params: S3.ListObjectsV2Request = {
       Bucket: this.bucket,
-      Prefix: prefix,
-      Delimiter: this.suffix
+      Prefix: prefix
+      // Delimiter: this.suffix
     };
+    const items = [];
     const response = await this.client.listObjectsV2(params).promise();
     if (response.Contents?.length) {
-      return {
-        items: response.Contents.map(({ Key, LastModified }) => ({
-          name: Key?.slice(this.prefix.length, -this.suffix.length) || '',
-          updated: LastModified
-        }))
-      };
+      for (const { Key, LastModified } of response.Contents) {
+        Key &&
+          LastModified &&
+          Key.endsWith(this.suffix) &&
+          items.push({
+            name: Key?.slice(this.prefix.length, -this.suffix.length),
+            created: LastModified
+          });
+      }
     }
-    return { items: [] };
+    return { items };
   }
 }

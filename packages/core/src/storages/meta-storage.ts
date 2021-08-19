@@ -3,7 +3,7 @@ export interface UploadList {
   items: {
     /** upload name */
     name: string;
-    updated?: Date | number | string;
+    created: Date;
   }[];
 }
 

@@ -67,12 +67,15 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
     const url = '/';
     const options = { baseURL, url, params: { prefix: encodeURIComponent(prefix) } };
     const { data } = await this.authClient.request<{
-      items: { name: string; updated: Date; metadata: T }[];
+      items: { name: string; timeCreated: string; metadata?: T }[];
     }>(options);
     return {
       items: data.items
         .filter(item => item.name.endsWith(this.suffix))
-        .map(({ name, updated }) => ({ name: this.getNameFromPath(name), updated }))
+        .map(({ name, timeCreated }) => ({
+          name: this.getNameFromPath(name),
+          created: new Date(timeCreated)
+        }))
     };
   }
 }

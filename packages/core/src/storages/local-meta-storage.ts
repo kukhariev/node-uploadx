@@ -56,7 +56,10 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     const files = await getFiles(`${this.directory}/${this.prefix + prefix}`);
     for (const name of files) {
       name.endsWith(this.suffix) &&
-        uploads.push({ name: this.getNameFromPath(name), updated: (await fsp.stat(name)).mtime });
+        uploads.push({
+          name: this.getNameFromPath(name),
+          created: (await fsp.stat(name)).ctime
+        });
     }
     return { items: uploads };
   }
