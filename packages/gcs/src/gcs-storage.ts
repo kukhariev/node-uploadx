@@ -54,6 +54,21 @@ export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAut
    * Force compatible client upload directly to GCS
    */
   clientDirectUpload?: boolean;
+  /**
+   * Configure metafiles storage
+   * @example
+   * // use local metafiles
+   * const storage = new GCStorage({
+   *   bucket: 'uploads',
+   *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+   * })
+   * @example
+   * // use a separate bucket for metafiles
+   * const storage = new GCStorage({
+   *   bucket: 'uploads',
+   *   metaStorageConfig: { bucket: 'upload-metafiles' }
+   * })
+   */
   metaStorageConfig?: LocalMetaStorageOptions | GCSMetaStorageOptions;
 }
 

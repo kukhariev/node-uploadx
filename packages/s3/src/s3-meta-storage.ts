@@ -17,7 +17,6 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
     keyFile && AWSConfig.loadFromPath(keyFile);
     this.client = new S3(config);
-    this.prefix = config?.prefix ?? '';
   }
 
   getMetaName(name: string): string {

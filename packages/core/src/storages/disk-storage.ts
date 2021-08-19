@@ -16,6 +16,14 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
    * @defaultValue './files'
    */
   directory?: string;
+  /**
+   * Configuring metafile storage on the local disk
+   * @example
+   * const storage = new DiskStorage({
+   *   directory: 'upload',
+   *   metaStorageConfig: { directory: '/tmp/upload-metafiles', prefix: '.' }
+   * })
+   */
   metaStorageConfig?: LocalMetaStorageOptions;
 };
 

@@ -12,7 +12,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   uploadBaseURI: string;
 
   constructor(readonly config: GCSMetaStorageOptions = {}) {
-    super();
+    super(config);
     config.scopes ||= authScopes;
     config.keyFile ||= process.env.GCS_KEYFILE;
     const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;

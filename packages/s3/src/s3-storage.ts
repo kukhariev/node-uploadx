@@ -37,6 +37,21 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      */
     bucket?: string;
     keyFile?: string;
+    /**
+     * Configure metafiles storage
+     * @example
+     * // use local metafiles
+     * const storage = new S3Storage({
+     *   bucket: 'uploads',
+     *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+     * })
+     * @example
+     * // use a separate bucket for metafiles
+     * const storage = new S3Storage({
+     *   bucket: 'uploads',
+     *   metaStorageConfig: { bucket: 'upload-metafiles' }
+     * })
+     */
     metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
   };
 
