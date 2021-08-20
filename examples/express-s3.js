@@ -7,7 +7,22 @@ function onComplete(file) {
   console.log('File upload complete: ', file);
 }
 
-const storage = new S3Storage({ bucket: 'node-uploadx', onComplete });
+// const storage = new S3Storage({
+//   bucket: <YOUR_BUCKET>,
+//   endpoint: <YOUR_ENDPOINT>,
+//   region: <YOUR_REGION>,
+//   credentials: {
+//     accessKeyId: <YOUR_ACCESS_KEY_ID>,
+//     secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
+//   },
+//   metaStorageConfig: { directory: 'upload' }
+// });
+
+// The credentials are loaded from a shared credentials file
+const storage = new S3Storage({
+  bucket: 'node-uploadx',
+  onComplete
+});
 
 app.use('/files', tus({ storage }));
 

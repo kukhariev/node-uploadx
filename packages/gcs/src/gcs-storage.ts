@@ -79,6 +79,16 @@ export class GCSFile extends File {
 
 /**
  * Google cloud storage based backend.
+ * @example
+    const storage = new GCStorage({
+      bucket: <YOUR_BUCKET>,
+      keyFile: <PATH_TO_KEY_FILE>,
+      metaStorage: new MetaStorage(),
+      clientDirectUpload: true,
+      maxUploadSize: '15GB',
+      allowMIME: ['video/*', 'image/*'],
+      filename: file => file.originalName
+    });
  */
 export class GCStorage extends BaseStorage<GCSFile> {
   authClient: GoogleAuth;

@@ -32,10 +32,13 @@ export class S3File extends File {
 export type S3StorageOptions = BaseStorageOptions<S3File> &
   S3.ClientConfiguration & {
     /**
-     * AWS S3 bucket
+     * S3 bucket
      * @defaultValue 'node-uploadx'
      */
     bucket?: string;
+    /**
+     * Load configuration and credentials from the specified file
+     */
     keyFile?: string;
     /**
      * Configure metafiles storage
@@ -55,6 +58,20 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
     metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
   };
 
+/**
+ * S3 storage based backend.
+ * @example
+   const storage = new S3Storage({
+    bucket: <YOUR_BUCKET>,
+    endpoint: <YOUR_ENDPOINT>,
+    region: <YOUR_REGION>,
+    credentials: {
+      accessKeyId: <YOUR_ACCESS_KEY_ID>,
+      secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
+    },
+    metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+  });
+ */
 export class S3Storage extends BaseStorage<S3File> {
   bucket: string;
   client: S3;
