@@ -19,8 +19,11 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   constructor(config?: LocalMetaStorageOptions) {
     super(config);
-    this.directory =
-      process.env.UPLOADX_META_DIR || config?.directory || join(tmpdir(), 'uploadx_meta');
+    this.directory = (
+      process.env.UPLOADX_META_DIR ||
+      config?.directory ||
+      join(tmpdir(), 'uploadx_meta')
+    ).replace(/\\/g, '/');
   }
 
   /**
