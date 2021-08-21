@@ -5,6 +5,7 @@ import { S3File, S3Storage } from '../packages/s3/src';
 import { FilePart } from '../packages/core/src';
 import { storageOptions } from './fixtures';
 import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
+import { S3StorageOptions } from '../packages/s3/src';
 
 jest.mock('../packages/core/src/utils/cache');
 const mockHeadBucket = jest.fn();
@@ -21,10 +22,7 @@ const mockPutObject = jest.fn(() => ({
 const mockListObjectsV2 = jest.fn(() => ({
   promise() {
     return Promise.resolve<S3.ListObjectsV2Output>({
-      Contents: [
-        { Key: 'already.uploaded', LastModified: new Date() },
-        { Key: metafile, LastModified: new Date() }
-      ]
+      Contents: [{ Key: metafile, LastModified: new Date() }]
     });
   }
 }));
@@ -81,7 +79,7 @@ jest.mock('aws-sdk', () => ({
 }));
 
 describe('S3Storage', () => {
-  const options = { ...storageOptions };
+  const options = { ...(storageOptions as S3StorageOptions) };
   testfile.name = filename;
 
   let file: S3File;
@@ -136,10 +134,10 @@ describe('S3Storage', () => {
 
   describe('.get()', () => {
     it('should return all user files', async () => {
-      const files = await storage.get(testfile.userId);
-      expect(files).toEqual(expect.any(Array));
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(testfile.userId);
+      expect(items).toEqual(expect.any(Array));
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
   });
 

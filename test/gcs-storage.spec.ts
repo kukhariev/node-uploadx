@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { FilePart } from '@uploadx/core';
-import { buildContentRange, GCSFile, GCStorage, getRangeEnd } from '@uploadx/gcs';
+import { FilePart } from '../packages/core/src';
+import {
+  buildContentRange,
+  GCSFile,
+  GCStorage,
+  GCStorageOptions,
+  getRangeEnd
+} from '../packages/gcs/src';
 import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
@@ -30,7 +36,7 @@ describe('GCStorage', () => {
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
-    storage = new GCStorage({ ...storageOptions });
+    storage = new GCStorage({ ...(storageOptions as GCStorageOptions) });
     file = _fileResponse().data;
   });
 
@@ -79,10 +85,10 @@ describe('GCStorage', () => {
         data: { items: [{ name: metafile }] }
       };
       mockAuthRequest.mockResolvedValue(list);
-      const files = await storage.get(testfile.userId);
-      expect(files).toEqual(expect.any(Array));
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(testfile.userId);
+      expect(items).toEqual(expect.any(Array));
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
   });
 

@@ -4,6 +4,8 @@ import {
   Cache,
   ErrorMap,
   ErrorResponses,
+  ERRORS,
+  fail,
   HttpError,
   Logger,
   typeis,
@@ -11,9 +13,8 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart } from './file';
-
-export const METAFILE_EXTNAME = '.META';
+import { File, FileInit, FilePart, updateMetadata } from './file';
+import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -33,11 +34,13 @@ export interface BaseStorageOptions<T extends File> {
   path?: string;
   /** Upload validation options */
   validation?: Validation<T>;
-  /** Metadata size limit */
+  /** Limiting the size of custom metadata */
   maxMetadataSize?: number | string;
+  /** Provide custom meta storage  */
+  metaStorage?: MetaStorage<T>;
 }
 
-const defaultOptions: Required<BaseStorageOptions<File>> = {
+const defaultOptions = {
   allowMIME: ['*/*'],
   maxUploadSize: '5TB',
   filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
@@ -48,7 +51,7 @@ const defaultOptions: Required<BaseStorageOptions<File>> = {
   maxMetadataSize: '4MB'
 };
 
-export abstract class BaseStorage<TFile extends File, TList> {
+export abstract class BaseStorage<TFile extends File> {
   static maxCacheMemory = '800MB';
   maxFilenameLength = 255 - METAFILE_EXTNAME.length;
   onComplete: (file: TFile) => Promise<any> | any;
@@ -57,13 +60,14 @@ export abstract class BaseStorage<TFile extends File, TList> {
   path: string;
   isReady = false;
   errorResponses = {} as ErrorResponses;
+  cache: Cache<TFile>;
   protected log = Logger.get(`store:${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
-  protected cache: Cache<TFile>;
   protected validation = new Validator<TFile>();
+  abstract meta: MetaStorage<TFile>;
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
-    const opts: Required<BaseStorageOptions<TFile>> = { ...defaultOptions, ...config };
+    const opts = { ...defaultOptions, ...config };
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
@@ -111,7 +115,61 @@ export abstract class BaseStorage<TFile extends File, TList> {
   }
 
   /**
-   * Add upload to storage
+   * Saves upload metadata
+   */
+  async saveMeta(file: TFile): Promise<TFile> {
+    this.cache.set(file.name, file);
+    return this.meta.save(file.name, file);
+  }
+
+  /**
+   * Deletes an upload metadata
+   */
+  async deleteMeta(name: string): Promise<void> {
+    this.cache.delete(name);
+    return this.meta.delete(name);
+  }
+
+  /**
+   * Retrieves upload metadata
+   */
+  async getMeta(name: string): Promise<TFile> {
+    let file = this.cache.get(name);
+    if (file) return file;
+    try {
+      file = await this.meta.get(name);
+      this.cache.set(file.name, file);
+      return file;
+    } catch {}
+    return fail(ERRORS.FILE_NOT_FOUND);
+  }
+
+  async get(prefix = ''): Promise<UploadList> {
+    return this.meta.list(prefix);
+  }
+
+  /**
+   * Retrieves a list of uploads whose names begin with the prefix
+   * @experimental
+   */
+  async list(prefix = ''): Promise<UploadList> {
+    return this.meta.list(prefix);
+  }
+
+  /**
+   * Update user-provided metadata
+   * @experimental
+   * @todo Metadata size limit
+   */
+  async update(name: string, { metadata }: Partial<File>): Promise<TFile> {
+    const file = await this.getMeta(name);
+    updateMetadata(file, metadata);
+    await this.saveMeta(file);
+    return { ...file, status: 'updated' };
+  }
+
+  /**
+   * Add an upload to storage
    */
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
@@ -122,17 +180,6 @@ export abstract class BaseStorage<TFile extends File, TList> {
 
   /**
    * Delete files whose path starts with the specified prefix
-   * @param prefix
    */
   abstract delete(prefix: string): Promise<TFile[]>;
-  /**
-   * Returns files whose path starts with the specified prefix
-   * @param prefix If not specified returns all files
-   */
-  abstract get(prefix?: string): Promise<TList[]>;
-
-  /**
-   * Update upload metadata
-   */
-  abstract update(name: string, file: Partial<File>): Promise<TFile>;
 }

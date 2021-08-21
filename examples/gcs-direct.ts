@@ -1,12 +1,17 @@
+import { MetaStorage, Uploadx } from '@uploadx/core';
+import { GCStorage } from '@uploadx/gcs';
 import { createServer } from 'http';
 import { parse } from 'url';
-import { GCStorage, Uploadx } from 'node-uploadx';
 
+// Don't forget to set GCS_BUCKET and GCS_KEYFILE environment variables
 const storage = new GCStorage({
   clientDirectUpload: true,
   maxUploadSize: '15GB',
-  allowMIME: ['video/*', 'image/*']
+  allowMIME: ['video/*', 'image/*'],
+  filename: file => file.originalName,
+  metaStorage: new MetaStorage()
 });
+
 const uploads = new Uploadx({ storage });
 uploads.on('created', file =>
   console.log('google upload link sent to client: ', file.GCSUploadURI)
@@ -14,7 +19,7 @@ uploads.on('created', file =>
 
 createServer((req, res) => {
   const { pathname } = parse(req.url || '');
-  if (pathname === '/upload/files') {
+  if (pathname === '/upload') {
     uploads.handle(req, res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plan' });

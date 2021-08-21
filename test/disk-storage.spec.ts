@@ -7,7 +7,6 @@ import { filename, metafile, testfile } from './fixtures/testfile';
 const directory = 'ds-test';
 let writeStream: FileWriteStream;
 
-jest.mock('../packages/core/src/utils/cache');
 jest.mock('../packages/core/src/utils/fs', () => {
   return {
     ensureFile: async () => 0,
@@ -45,6 +44,8 @@ describe('DiskStorage', () => {
   });
 
   describe('.create()', () => {
+    beforeEach(() => (storage = new DiskStorage(options)));
+
     it('should set status', async () => {
       const { status, bytesWritten } = await storage.create({} as any, testfile);
       expect(bytesWritten).toBe(0);
@@ -72,11 +73,10 @@ describe('DiskStorage', () => {
   });
 
   describe('.write()', () => {
-    beforeEach(createFile);
-
     beforeEach(() => {
       writeStream = new FileWriteStream();
       mockReadable = new RequestReadStream();
+      return createFile();
     });
 
     it('should set status and bytesWritten', async () => {
@@ -93,6 +93,7 @@ describe('DiskStorage', () => {
     });
 
     it('should reject with 404', async () => {
+      storage.cache.delete(testfile.name);
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
@@ -124,15 +125,15 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should return all user files', async () => {
-      const files = await storage.get(testfile.userId);
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(testfile.userId);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
 
     it('should return one file', async () => {
-      const files = await storage.get(filename);
-      expect(files).toHaveLength(1);
-      expect(files[0]).toMatchObject({ name: filename });
+      const { items } = await storage.get(filename);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ name: filename });
     });
   });
 

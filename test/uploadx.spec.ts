@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx } from '@uploadx/core';
+import { uploadx } from '../packages/core/src';
 import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -51,7 +51,7 @@ describe('::Uploadx', () => {
       await request(app).post(basePath).send('').expect(400);
     });
 
-    it('should  limit metadata size', async () => {
+    it('should limit metadata size', async () => {
       const res = await request(app)
         .post(basePath)
         .set('x-upload-content-type', 'video/mp4')
@@ -152,12 +152,12 @@ describe('::Uploadx', () => {
   describe('GET', () => {
     it('should return info array', async () => {
       const res = await request(app).get(`${basePath}/${userPrefix}`).expect(200);
-      expect(res.body).toHaveLength(2);
+      expect(res.body.items).toHaveLength(2);
     });
 
     it('should return info array(name)', async () => {
       const res = await request(app).get(`${basePath}?name=${userPrefix}`).expect(200);
-      expect(res.body).toHaveLength(2);
+      expect(res.body.items).toHaveLength(2);
     });
 
     it('should return 404(query)', async () => {
