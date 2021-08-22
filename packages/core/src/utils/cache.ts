@@ -1,29 +1,34 @@
+/**
+ * LRU Cache Implementation
+ */
 export class Cache<T> {
-  private _map: Map<string, T> = new Map() as Map<string, T>;
+  private _map = new Map<string, [value: T, expiresAt: number]>();
 
-  constructor(public limit = 100) {}
-
-  private get _head(): string {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this._map.keys().next().value;
-  }
+  /**
+   *
+   * @param maxEntries The maximum number of entries before the cache starts flushing out the old items
+   * @param maxAge The maximum life of a cached items in seconds
+   */
+  constructor(public maxEntries = 500, public maxAge = 300) {}
 
   get(key: string): T | undefined {
-    const item = this._map.get(key);
-    if (item) {
+    const [value, expiresAt] = this._map.get(key) || [];
+    if (value) {
       this._map.delete(key);
-      this._map.set(key, item);
+      const now = Date.now();
+      if (expiresAt && now > expiresAt) return;
+      this._map.set(key, [value, now + this.maxAge * 1000]);
     }
-    return item;
+    return value;
   }
 
   delete(key: string): boolean {
     return this._map.delete(key);
   }
 
-  set(key: string, val: T): void {
+  set(key: string, value: T): void {
     if (this._map.has(key)) this._map.delete(key);
-    else if (this._map.size === this.limit) this._map.delete(this._head);
-    this._map.set(key, val);
+    else if (this._map.size === this.maxEntries) this._map.delete(this._map.keys().next().value);
+    this._map.set(key, [value, Date.now() + this.maxAge * 1000]);
   }
 }
