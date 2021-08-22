@@ -6,10 +6,10 @@ export class Cache<T> {
 
   /**
    *
-   * @param limit The maximum number of entries before the cache starts flushing out the old items
-   * @param ttl The maximum life of a cached items in milliseconds
+   * @param maxEntries The maximum number of entries before the cache starts flushing out the old items
+   * @param maxAge The maximum life of a cached items in seconds
    */
-  constructor(public limit = 500, public ttl = 300_000) {}
+  constructor(public maxEntries = 500, public maxAge = 300) {}
 
   get(key: string): T | undefined {
     const [value, expiresAt] = this._map.get(key) || [];
@@ -17,7 +17,7 @@ export class Cache<T> {
       this._map.delete(key);
       const now = Date.now();
       if (expiresAt && now > expiresAt) return;
-      this._map.set(key, [value, now + this.ttl]);
+      this._map.set(key, [value, now + this.maxAge * 1000]);
     }
     return value;
   }
@@ -28,7 +28,7 @@ export class Cache<T> {
 
   set(key: string, value: T): void {
     if (this._map.has(key)) this._map.delete(key);
-    else if (this._map.size === this.limit) this._map.delete(this._map.keys().next().value);
-    this._map.set(key, [value, Date.now() + this.ttl]);
+    else if (this._map.size === this.maxEntries) this._map.delete(this._map.keys().next().value);
+    this._map.set(key, [value, Date.now() + this.maxAge * 1000]);
   }
 }

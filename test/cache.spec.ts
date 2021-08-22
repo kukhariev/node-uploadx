@@ -4,7 +4,7 @@ describe('Cache', () => {
   let cache: Cache<any>;
 
   beforeEach(() => {
-    cache = new Cache(5, 500);
+    cache = new Cache(5, 60);
     for (let i = 0; i < 10; i++) {
       cache.set(`key-${i}`, i);
     }
@@ -18,7 +18,7 @@ describe('Cache', () => {
 
   it('should expire', async () => {
     jest.useFakeTimers();
-    jest.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(100_000);
     expect(cache.get(`key-9`)).toBeUndefined();
     expect(cache['_map'].size).toBe(4);
   });
