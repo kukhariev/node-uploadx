@@ -22,8 +22,7 @@ const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file =
   return {
     statusCode: 200,
     message,
-    id: file.id,
-    headers: { ETag: file.id }
+    id: file.id
   };
 };
 
@@ -34,11 +33,15 @@ const storage = new DiskStorage({
   validation: {
     mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
     size: {
-      value: 500_000,
+      value: 500_000_000,
       isValid(file) {
         this.response = [
           412,
-          { message: `The file size(${file.size}) is larger than ${this.value as number} bytes` }
+          {
+            message: `File size(${file.size}) exceeds maximum permitted size of ${
+              this.value as number
+            } bytes`
+          }
         ];
         return file.size <= this.value;
       }
