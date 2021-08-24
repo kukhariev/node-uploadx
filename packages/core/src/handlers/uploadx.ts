@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getMetadata } from '../utils';
+import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers } from '../utils';
 import { BaseHandler } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; total: number } {
@@ -12,7 +12,7 @@ export function rangeParser(rangeHeader = ''): { start: number; total: number } 
 }
 
 /**
- * X-headers protocol implementation
+ * [X-headers protocol implementation](https://github.com/kukhariev/node-uploadx/blob/master/proto.md#requests-overview)
  */
 export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   static RESUME_STATUS_CODE = 308;
@@ -31,6 +31,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const file = await this.storage.create(req, config);
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
     const headers = { Location: this.buildFileUrl(req, file) };
+    this.setExpiresHeader(file, headers);
     this.send(res, { statusCode, headers });
     return file;
   }
@@ -42,7 +43,9 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
       fail(ERRORS.BAD_REQUEST, error)
     );
     const file = await this.storage.update(name, { metadata, name });
-    this.send(res, { body: file.metadata });
+    const headers = { Location: this.buildFileUrl(req, file) };
+    this.setExpiresHeader(file, headers);
+    this.send(res, { body: file.metadata, headers });
     return file;
   }
 
@@ -56,8 +59,10 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const contentLength = +getHeader(req, 'content-length');
     const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
     const file = await this.storage.write({ start, name, contentLength, body: req });
+    const headers: Headers = {};
+    this.setExpiresHeader(file, headers);
     if (file.status === 'part') {
-      const headers = { Range: `bytes=0-${file.bytesWritten - 1}` };
+      headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
       res.statusMessage = 'Resume Incomplete';
       this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
     }
@@ -80,6 +85,13 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     if (query.name) return query.name as string;
     if (query.upload_id) return query.upload_id as string;
     return super.getName(req);
+  }
+
+  /**
+   * @experimental
+   */
+  setExpiresHeader(file: File, headers: Headers): void {
+    if (file.expiredAt) headers['X-Upload-Expires'] = new Date(file.expiredAt).toISOString();
   }
 
   /**
@@ -113,15 +125,15 @@ export function uploadx<TFile extends Readonly<File>>(
 /**
  * Express wrapper
  *
- * - express ***should*** respond to the client when the upload is complete and handle errors and GET requests
+ * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
  * app.use('/files', uploadx.upload({ storage }), (req, res, next) => {
-  if (req.method === 'GET') {
-    return res.sendStatus(404);
-  }
-  console.log('File upload complete: ', req.body.name);
-  return res.json(req.body);
-});
+ *  if (req.method === 'GET') {
+ *    return res.sendStatus(404);
+ *  }
+ *  console.log('File upload complete: ', req.body.name);
+ *  return res.json(req.body);
+ * });
  */
 uploadx.upload = <TFile extends Readonly<File>>(
   options: DiskStorageOptions | { storage: BaseStorage<TFile> }
