@@ -1,10 +1,13 @@
+import { Timestamped } from './file';
+/** @experimental */
+interface UploadListEntry extends Timestamped {
+  /** upload name */
+  name: string;
+}
+
 /** @experimental */
 export interface UploadList {
-  items: {
-    /** upload name */
-    name: string;
-    created: Date;
-  }[];
+  items: UploadListEntry[];
 }
 
 export interface MetaStorageOptions {

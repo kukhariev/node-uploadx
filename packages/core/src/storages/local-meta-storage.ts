@@ -61,7 +61,7 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
       name.endsWith(this.suffix) &&
         uploads.push({
           name: this.getNameFromPath(name),
-          created: (await fsp.stat(name)).ctime
+          createdAt: (await fsp.stat(name)).ctime
         });
     }
     return { items: uploads };

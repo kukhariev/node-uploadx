@@ -13,7 +13,7 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart, updateMetadata } from './file';
+import { File, FileInit, FilePart, isExpired, setExpirationTime, updateMetadata } from './file';
 import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
@@ -38,6 +38,7 @@ export interface BaseStorageOptions<T extends File> {
   maxMetadataSize?: number | string;
   /** Provide custom meta storage  */
   metaStorage?: MetaStorage<T>;
+  expiration?: { maxAge: number; deleteIfExpired?: boolean };
 }
 
 const defaultOptions = {
@@ -118,6 +119,7 @@ export abstract class BaseStorage<TFile extends File> {
    * Saves upload metadata
    */
   async saveMeta(file: TFile): Promise<TFile> {
+    this.updateTimestamps(file);
     this.cache.set(file.name, file);
     return this.meta.save(file.name, file);
   }
@@ -135,13 +137,39 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async getMeta(name: string): Promise<TFile> {
     let file = this.cache.get(name);
-    if (file) return file;
-    try {
-      file = await this.meta.get(name);
-      this.cache.set(file.name, file);
-      return file;
-    } catch {}
-    return fail(ERRORS.FILE_NOT_FOUND);
+    if (!file) {
+      try {
+        file = await this.meta.get(name);
+        this.cache.set(file.name, file);
+      } catch {
+        return fail(ERRORS.FILE_NOT_FOUND);
+      }
+    }
+    return this.checkIfExpired(file);
+  }
+
+
+  checkIfExpired(file: TFile): Promise<TFile> {
+    if (this.config.expiration?.deleteIfExpired && isExpired(file)) {
+      this.delete(file.name).catch(() => null);
+      return fail(ERRORS.GONE);
+    }
+    return Promise.resolve(file);
+  }
+
+  async purgeExpired(maxAgeSeconds?: number, prefix?: string): Promise<TFile[]> {
+    const purged = [];
+    const maxAgeMs = (maxAgeSeconds || this.config.expiration?.maxAge || 0) * 1000;
+    if (maxAgeMs) {
+      const { items } = await this.list(prefix);
+      const expiredArray = items.map(item => setExpirationTime(item, maxAgeMs)).filter(isExpired);
+      for (const { name } of expiredArray) {
+        const [deleted] = await this.delete(name);
+        purged.push(deleted);
+      }
+    }
+
+    return purged;
   }
 
   async get(prefix = ''): Promise<UploadList> {
@@ -166,6 +194,15 @@ export abstract class BaseStorage<TFile extends File> {
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };
+  }
+
+  private updateTimestamps(file: TFile): TFile {
+    file.createdAt ??= new Date().toISOString();
+    const maxAge = (this.config.expiration?.maxAge || 0) * 1000;
+    if (maxAge) {
+      file.expiredAt ??= new Date(maxAge + +new Date(file.createdAt)).toISOString();
+    }
+    return file;
   }
 
   /**

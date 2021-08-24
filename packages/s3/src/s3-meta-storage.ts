@@ -66,7 +66,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
           Key.endsWith(this.suffix) &&
           items.push({
             name: Key?.slice(this.prefix.length, -this.suffix.length),
-            created: LastModified
+            createdAt: LastModified
           });
       }
     }

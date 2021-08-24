@@ -1,6 +1,23 @@
 import { Readable } from 'stream';
 import { md5, uid } from '../utils';
 
+export class Timestamped {
+  expiredAt?: string | Date | number;
+  createdAt?: string | Date | number;
+}
+
+export function setExpirationTime<T extends Timestamped>(item: T, maxAgeMs: number): T {
+  if (item.createdAt) {
+    item.expiredAt ??= new Date(maxAgeMs + +new Date(item.createdAt)).toISOString();
+  }
+  return item;
+}
+
+export function isExpired(file: Timestamped): boolean {
+  if (!file.expiredAt) return false;
+  return Date.now() > +new Date(file.expiredAt);
+}
+
 export function extractOriginalName(meta: Metadata): string | undefined {
   return meta.name || meta.title || meta.originalName || meta.filename;
 }
@@ -26,7 +43,7 @@ export interface FileInit {
 
 export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part' | 'updated';
 
-export class File implements FileInit {
+export class File implements FileInit, Timestamped {
   bytesWritten = NaN;
   contentType;
   originalName;
@@ -36,6 +53,8 @@ export class File implements FileInit {
   size;
   status?: UploadEventType;
   userId?;
+  expiredAt?: string | Date | number;
+  createdAt?: string | Date | number;
 
   constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
     this.metadata = metadata;
