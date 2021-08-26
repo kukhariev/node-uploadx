@@ -1,8 +1,9 @@
-import { Timestamped } from './file';
 /** @experimental */
-interface UploadListEntry extends Timestamped {
+interface UploadListEntry {
   /** upload name */
   name: string;
+  createdAt: string | Date | number;
+  expiredAt?: string | Date | number;
 }
 
 /** @experimental */

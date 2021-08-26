@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
+import duration from 'parse-duration';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
   const result = {} as Pick<T, K>;
@@ -35,4 +36,18 @@ export function mapValues<T>(
     result[key] = func(object[key]);
   }
   return result;
+}
+
+export function isNumber(x?: unknown): x is number {
+  return x === Number(x);
+}
+
+/**
+ * convert a human-readable duration to ms
+ * @param value
+ */
+export function toMilliseconds(value: string | number | undefined): number | null {
+  if (isNumber(value)) return value;
+  if (!value) return null;
+  return duration(value);
 }

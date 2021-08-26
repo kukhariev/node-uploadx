@@ -1,5 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
+
 import {
   Cache,
   ErrorMap,
@@ -8,17 +9,29 @@ import {
   fail,
   HttpError,
   Logger,
+  toMilliseconds,
   typeis,
   Validation,
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart, isExpired, setExpirationTime, updateMetadata } from './file';
+import { File, FileInit, FilePart, isExpired, updateMetadata } from './file';
 import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
 ) => Promise<TResponseBody> | TResponseBody;
+
+interface ExpirationOptions {
+  /**
+   * Age of the upload, after which it is considered expired and can be deleted
+   */
+  maxAge: number | string;
+  /**
+   * Send `410 Gone` if the client tries to resume an expired upload
+   */
+  errorIfExpired?: boolean;
+}
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed MIME types */
@@ -38,7 +51,7 @@ export interface BaseStorageOptions<T extends File> {
   maxMetadataSize?: number | string;
   /** Provide custom meta storage  */
   metaStorage?: MetaStorage<T>;
-  expiration?: { maxAge: number; deleteIfExpired?: boolean };
+  expiration?: ExpirationOptions;
 }
 
 const defaultOptions = {
@@ -148,22 +161,26 @@ export abstract class BaseStorage<TFile extends File> {
     return this.checkIfExpired(file);
   }
 
-
   checkIfExpired(file: TFile): Promise<TFile> {
-    if (this.config.expiration?.deleteIfExpired && isExpired(file)) {
-      this.delete(file.name).catch(() => null);
-      return fail(ERRORS.GONE);
-    }
-    return Promise.resolve(file);
+    return this.config.expiration?.errorIfExpired && isExpired(file)
+      ? fail(ERRORS.GONE)
+      : Promise.resolve(file);
   }
 
-  async purgeExpired(maxAgeSeconds?: number, prefix?: string): Promise<TFile[]> {
+  /**
+   * Searches for and purges expired uploads
+   * @param maxAge Remove uploads older than a specified age
+   * @param prefix Filter uploads
+   */
+  async purgeExpired(maxAge?: number | string, prefix?: string): Promise<TFile[]> {
     const purged = [];
-    const maxAgeMs = (maxAgeSeconds || this.config.expiration?.maxAge || 0) * 1000;
+    const maxAgeMs = toMilliseconds(maxAge || this.config.expiration?.maxAge);
     if (maxAgeMs) {
-      const { items } = await this.list(prefix);
-      const expiredArray = items.map(item => setExpirationTime(item, maxAgeMs)).filter(isExpired);
-      for (const { name } of expiredArray) {
+      const before = Date.now() - maxAgeMs;
+      const entries = (await this.list(prefix)).items.filter(
+        item => +new Date(item.createdAt) < before
+      );
+      for (const { name } of entries) {
         const [deleted] = await this.delete(name);
         purged.push(deleted);
       }
@@ -198,9 +215,9 @@ export abstract class BaseStorage<TFile extends File> {
 
   private updateTimestamps(file: TFile): TFile {
     file.createdAt ??= new Date().toISOString();
-    const maxAge = (this.config.expiration?.maxAge || 0) * 1000;
-    if (maxAge) {
-      file.expiredAt ??= new Date(maxAge + +new Date(file.createdAt)).toISOString();
+    const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
+    if (maxAgeMs) {
+      file.expiredAt = new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
     }
     return file;
   }
