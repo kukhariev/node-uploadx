@@ -17,6 +17,7 @@ import {
 } from '../utils';
 import { File, FileInit, FilePart, isExpired, updateMetadata } from './file';
 import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
+import { setInterval } from 'timers';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
@@ -31,6 +32,10 @@ interface ExpirationOptions {
    * Send `410 Gone` if the client tries to resume an expired upload
    */
   errorIfExpired?: boolean;
+  /**
+   * Auto purging interval for expired uploads
+   */
+  purgeInterval?: number | string;
 }
 
 export interface BaseStorageOptions<T extends File> {
@@ -89,6 +94,11 @@ export abstract class BaseStorage<TFile extends File> {
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
     const storage = <typeof BaseStorage>this.constructor;
     this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
+
+    const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
+    if (purgeInterval) {
+      this.startAutoPurge(purgeInterval);
+    }
 
     const size: Required<ValidatorConfig<TFile>> = {
       value: this.maxUploadSize,
@@ -158,11 +168,12 @@ export abstract class BaseStorage<TFile extends File> {
         return fail(ERRORS.FILE_NOT_FOUND);
       }
     }
-    return this.checkIfExpired(file);
+    return file;
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
-    return this.config.expiration?.errorIfExpired && isExpired(file)
+    return (this.config.expiration?.errorIfExpired || this.config.expiration?.purgeInterval) &&
+      isExpired(file)
       ? fail(ERRORS.GONE)
       : Promise.resolve(file);
   }
@@ -185,7 +196,6 @@ export abstract class BaseStorage<TFile extends File> {
         purged.push(deleted);
       }
     }
-
     return purged;
   }
 
@@ -213,7 +223,12 @@ export abstract class BaseStorage<TFile extends File> {
     return { ...file, status: 'updated' };
   }
 
-  private updateTimestamps(file: TFile): TFile {
+  protected startAutoPurge(purgeInterval: number): void {
+    // TODO: add logging
+    setInterval(() => void Promise.all([this.purgeExpired()]).catch(() => null), purgeInterval);
+  }
+
+  protected updateTimestamps(file: TFile): TFile {
     file.createdAt ??= new Date().toISOString();
     const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
     if (maxAgeMs) {
