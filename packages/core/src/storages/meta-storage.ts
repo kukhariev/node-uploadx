@@ -9,6 +9,7 @@ interface UploadListEntry {
 /** @experimental */
 export interface UploadList {
   items: UploadListEntry[];
+  prefix?: string;
 }
 
 export interface MetaStorageOptions {

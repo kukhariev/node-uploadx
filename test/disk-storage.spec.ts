@@ -159,12 +159,12 @@ describe('DiskStorage', () => {
     });
   });
 
-  describe('.purgeExpired()', () => {
+  describe('.purge()', () => {
     beforeEach(createFile);
 
     it('should delete file', async () => {
-      const deleted = await storage.purgeExpired(5);
-      expect(deleted).toHaveLength(1);
+      const list = await storage.purge(5);
+      expect(list.items).toHaveLength(1);
     });
   });
 });

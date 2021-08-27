@@ -1,4 +1,4 @@
-import { DiskStorageOptions, multipart, uploadx } from '@uploadx/core';
+import { DiskStorageOptions, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
 const app = express();
@@ -6,15 +6,14 @@ const app = express();
 const opts: DiskStorageOptions = {
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
+  expiration: { maxAge: '1h', purgeInterval: '10min' },
   onComplete: file => {
     console.log('File upload complete: ', file);
-    return file.status;
+    return file;
   }
 };
 
 app.use('/files', express.static('files'));
-
-app.use('/files', multipart(opts));
 
 app.use('/upload/files', uploadx(opts));
 
