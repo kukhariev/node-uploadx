@@ -10,9 +10,9 @@ describe('fs', () => {
   const filepath = join(dir, '3', `file.ext`);
   const filepath2 = join(dir, '3', `fi  le.ext.META`);
 
-  beforeAll(() => cleanup(dir));
+  beforeAll(() => cleanup(root));
 
-  // afterEach(() => cleanup(root));
+  afterEach(() => cleanup(root));
 
   it('ensureDir(dir)', async () => {
     await utils.ensureDir(dir);

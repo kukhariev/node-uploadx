@@ -21,6 +21,8 @@ function onComplete(file) {
 // The credentials are loaded from a shared credentials file
 const storage = new S3Storage({
   bucket: 'node-uploadx',
+  region: 'eu-west-3',
+  expiration: { maxAge: '1h', purgeInterval: '15min' },
   onComplete
 });
 
