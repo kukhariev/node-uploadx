@@ -1,22 +1,31 @@
-import { File, UploadList, MetaStorage, MetaStorageOptions } from '@uploadx/core';
-import { config as AWSConfig, S3 } from 'aws-sdk';
+import {
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+  S3ClientConfig
+} from '@aws-sdk/client-s3';
+import { fromIni } from '@aws-sdk/credential-providers';
+import { File, MetaStorage, MetaStorageOptions, UploadList } from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
-export interface S3MetaStorageOptions extends S3.ClientConfiguration, MetaStorageOptions {
-  bucket?: string;
-  keyFile?: string;
-}
+export type S3MetaStorageOptions = S3ClientConfig &
+  MetaStorageOptions & {
+    bucket?: string;
+    keyFile?: string;
+  };
 
 export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   bucket: string;
-  client: S3;
+  client: S3Client;
 
-  constructor(readonly config: S3MetaStorageOptions) {
+  constructor(public config: S3MetaStorageOptions) {
     super(config);
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
-    keyFile && AWSConfig.loadFromPath(keyFile);
-    this.client = new S3(config);
+    keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
+    this.client = new S3Client(config);
   }
 
   getMetaName(name: string): string {
@@ -25,7 +34,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
 
   async get(name: string): Promise<T> {
     const params = { Bucket: this.bucket, Key: this.getMetaName(name) };
-    const { Metadata } = await this.client.headObject(params).promise();
+    const { Metadata } = await this.client.send(new HeadObjectCommand(params));
     if (Metadata) {
       return JSON.parse(decodeURIComponent(Metadata.metadata)) as T;
     }
@@ -34,10 +43,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
 
   async delete(name: string): Promise<void> {
     const params = { Bucket: this.bucket, Key: this.getMetaName(name) };
-    await this.client
-      .deleteObject(params)
-      .promise()
-      .catch(() => null);
+    await this.client.send(new DeleteObjectCommand(params));
   }
 
   async save(name: string, file: T): Promise<T> {
@@ -47,18 +53,17 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
       Key: this.getMetaName(name),
       Metadata: { metadata }
     };
-    await this.client.putObject(params).promise();
+    await this.client.send(new PutObjectCommand(params));
     return file;
   }
 
   async list(prefix: string): Promise<UploadList> {
-    const params: S3.ListObjectsV2Request = {
+    const params = {
       Bucket: this.bucket,
       Prefix: prefix
-      // Delimiter: this.suffix
     };
     const items = [];
-    const response = await this.client.listObjectsV2(params).promise();
+    const response = await this.client.send(new ListObjectsV2Command(params));
     if (response.Contents?.length) {
       for (const { Key, LastModified } of response.Contents) {
         Key &&
@@ -70,6 +75,6 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
           });
       }
     }
-    return { items };
+    return { items, prefix };
   }
 }

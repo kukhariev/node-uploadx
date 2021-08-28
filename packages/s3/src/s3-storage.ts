@@ -1,5 +1,19 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CompleteMultipartUploadOutput,
+  CreateMultipartUploadCommand,
+  CreateMultipartUploadRequest,
+  HeadBucketCommand,
+  ListMultipartUploadsCommand,
+  ListPartsCommand,
+  Part,
+  S3Client,
+  S3ClientConfig,
+  UploadPartCommand,
+  UploadPartRequest
+} from '@aws-sdk/client-s3';
+import { fromIni } from '@aws-sdk/credential-providers';
 import {
   BaseStorage,
   BaseStorageOptions,
@@ -17,28 +31,25 @@ import {
   mapValues,
   MetaStorage
 } from '@uploadx/core';
-import { AWSError, config as AWSConfig, S3 } from 'aws-sdk';
 import * as http from 'http';
+import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
 const BUCKET_NAME = 'node-uploadx';
 
 export class S3File extends File {
-  Parts: S3.Parts = [];
+  Parts?: Part[];
   UploadId = '';
   uri?: string;
 }
 
 export type S3StorageOptions = BaseStorageOptions<S3File> &
-  S3.ClientConfiguration & {
+  S3ClientConfig & {
     /**
      * S3 bucket
      * @defaultValue 'node-uploadx'
      */
     bucket?: string;
-    /**
-     * Load configuration and credentials from the specified file
-     */
     keyFile?: string;
     /**
      * Configure metafiles storage
@@ -46,12 +57,14 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * // use local metafiles
      * const storage = new S3Storage({
      *   bucket: 'uploads',
+     *   region: 'eu-west-3',
      *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
      * })
      * @example
      * // use a separate bucket for metafiles
      * const storage = new S3Storage({
      *   bucket: 'uploads',
+     *   region: 'eu-west-3',
      *   metaStorageConfig: { bucket: 'upload-metafiles' }
      * })
      */
@@ -74,15 +87,15 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
  */
 export class S3Storage extends BaseStorage<S3File> {
   bucket: string;
-  client: S3;
+  client: S3Client;
   meta: MetaStorage<S3File>;
 
   constructor(public config: S3StorageOptions) {
     super(config);
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
-    keyFile && AWSConfig.loadFromPath(keyFile);
-    this.client = new S3(config);
+    keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
+    this.client = new S3Client(config);
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
@@ -96,12 +109,11 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   normalizeError(error: AWSError): HttpError {
-    if (error.statusCode || error.time) {
+    if (error.$metadata) {
       return {
         message: error.message,
-        code: error.code,
-        statusCode: error.statusCode || 500,
-        retryable: error.retryable,
+        code: error.Code || error.name,
+        statusCode: error.$metadata.httpStatusCode || 500,
         name: error.name
       };
     }
@@ -119,14 +131,13 @@ export class S3Storage extends BaseStorage<S3File> {
       }
     } catch {}
 
-    const params: S3.CreateMultipartUploadRequest = {
+    const params: CreateMultipartUploadRequest = {
       Bucket: this.bucket,
       Key: file.name,
       ContentType: file.contentType,
       Metadata: mapValues(file.metadata, encodeURI)
     };
-
-    const { UploadId } = await this.client.createMultipartUpload(params).promise();
+    const { UploadId } = await this.client.send(new CreateMultipartUploadCommand(params));
     if (!UploadId) {
       return fail(ERRORS.FILE_ERROR, 's3 create multipart upload error');
     }
@@ -142,15 +153,15 @@ export class S3Storage extends BaseStorage<S3File> {
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
-    file.Parts ||= await this._getParts(file);
+
+    file.Parts ??= await this._getParts(file);
     file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce(
       (prev, next) => prev + next,
       0
     );
-    this.cache.set(file.name, file);
     if (hasContent(part)) {
       const partNumber = file.Parts.length + 1;
-      const params: S3.UploadPartRequest = {
+      const params: UploadPartRequest = {
         Bucket: this.bucket,
         Key: file.name,
         UploadId: file.UploadId,
@@ -158,14 +169,15 @@ export class S3Storage extends BaseStorage<S3File> {
         Body: part.body,
         ContentLength: part.contentLength || 0
       };
-      const { ETag } = await this.client.uploadPart(params).promise();
-      const uploadPart: S3.Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
+      const { ETag } = await this.client.send(new UploadPartCommand(params));
+      const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
       file.Parts = [...file.Parts, uploadPart];
-      file.bytesWritten = +(part.contentLength || 0);
-      this.cache.set(file.name, file);
+      file.bytesWritten += part.contentLength || 0;
     }
+    this.cache.set(file.name, file);
     if (isCompleted(file)) {
       const [completed] = await this._onComplete(file);
+      delete file.Parts;
       file.uri = completed.Location;
     }
     return file;
@@ -181,42 +193,42 @@ export class S3Storage extends BaseStorage<S3File> {
     return [{ name } as S3File];
   }
 
-  protected _onComplete = (file: S3File): Promise<[S3.CompleteMultipartUploadOutput, any]> => {
+  protected _onComplete = (file: S3File): Promise<[CompleteMultipartUploadOutput, any]> => {
     return Promise.all([this._complete(file), this.deleteMeta(file.name)]);
   };
 
-  private async _getParts(file: S3File): Promise<S3.Parts> {
+  private async _getParts(file: S3File): Promise<Part[]> {
     const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
-    const { Parts = [] } = await this.client.listParts(params).promise();
+    const { Parts = [] } = await this.client.send(new ListPartsCommand(params));
     return Parts;
   }
 
-  private _complete(file: S3File): Promise<S3.CompleteMultipartUploadOutput> {
+  private _complete(file: S3File): Promise<CompleteMultipartUploadOutput> {
     const params = {
       Bucket: this.bucket,
       Key: file.name,
       UploadId: file.UploadId,
       MultipartUpload: {
-        Parts: file.Parts.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
+        Parts: file.Parts?.map(({ ETag, PartNumber }) => ({ ETag, PartNumber }))
       }
     };
-    return this.client.completeMultipartUpload(params).promise();
+    return this.client.send(new CompleteMultipartUploadCommand(params));
   }
 
   private async _abortMultipartUpload(file: S3File): Promise<any> {
     if (file.status === 'completed') return;
     try {
       const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
-      await this.client.abortMultipartUpload(params).promise();
+      await this.client.send(new AbortMultipartUploadCommand(params));
     } catch (err) {
       this.log('_abortMultipartUploadError: ', err);
     }
   }
 
   private _checkBucket(): void {
-    this.client.headBucket({ Bucket: this.bucket }, err => {
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError, data) => {
       if (err) {
-        throw new Error(`Bucket code: ${err.code}`);
+        throw err;
       }
       this.isReady = true;
       this.log.enabled && this._listMultipartUploads();
@@ -224,7 +236,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   private _listMultipartUploads(): void {
-    this.client.listMultipartUploads({ Bucket: this.bucket }, (err, data) => {
+    this.client.send(new ListMultipartUploadsCommand({ Bucket: this.bucket }), (err, data) => {
       err && this.log('Incomplete Uploads fetch error:', err);
       data && this.log('Incomplete Uploads: ', data.Uploads?.length);
     });
