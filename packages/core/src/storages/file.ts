@@ -1,6 +1,11 @@
 import { Readable } from 'stream';
 import { md5, uid } from '../utils';
 
+export function isExpired(file: File): boolean {
+  if (!file.expiredAt) return false;
+  return Date.now() > +new Date(file.expiredAt);
+}
+
 export function extractOriginalName(meta: Metadata): string | undefined {
   return meta.name || meta.title || meta.originalName || meta.filename;
 }
@@ -36,6 +41,8 @@ export class File implements FileInit {
   size;
   status?: UploadEventType;
   userId?;
+  expiredAt?: string | Date | number;
+  createdAt?: string | Date | number;
 
   constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
     this.metadata = metadata;

@@ -1,10 +1,15 @@
 /** @experimental */
+interface UploadListEntry {
+  /** upload name */
+  name: string;
+  createdAt: string | Date | number;
+  expiredAt?: string | Date | number;
+}
+
+/** @experimental */
 export interface UploadList {
-  items: {
-    /** upload name */
-    name: string;
-    created: Date;
-  }[];
+  items: UploadListEntry[];
+  prefix?: string;
 }
 
 export interface MetaStorageOptions {

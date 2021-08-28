@@ -74,7 +74,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
         .filter(item => item.name.endsWith(this.suffix))
         .map(({ name, timeCreated }) => ({
           name: this.getNameFromPath(name),
-          created: new Date(timeCreated)
+          createdAt: new Date(timeCreated)
         }))
     };
   }

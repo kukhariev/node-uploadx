@@ -85,21 +85,22 @@ Please navigate to the [examples](examples) for more.
 
 Some available options: :
 
-| option                |         type         |  default value   | description                                         |
-| :-------------------- | :------------------: | :--------------: | --------------------------------------------------- |
-| `directory`           |       `string`       |    `"files"`     | _DiskStorage upload directory_                      |
-| `bucket`              |       `string`       | `"node-uploadx"` | _S3 or GCS bucket_                                  |
-| `path`                |       `string`       |    `"/files"`    | _Node http base path_                               |
-| `allowMIME`           |      `string[]`      |    `["*\*"]`     | _Allowed MIME types_                                |
-| `maxUploadSize`       |   `string\|number`   |     `"5TB"`      | _File size limit_                                   |
-| `metaStorage`         |    `MetaStorage`     |                  | _Provide custom meta storage_                       |
-| `metaStorageConfig`   | `MetaStorageOptions` |                  | _Configure metafiles storage_                       |
-| `maxMetadataSize`     |   `string\|number`   |     `"4MB"`      | _Metadata size limit_                               |
-| `validation`          |     `Validation`     |                  | _Upload validation options_                         |
-| `useRelativeLocation` |      `boolean`       |     `false`      | _Use relative urls_                                 |
-| `filename`            |      `Function`      |                  | _Name generator function_                           |
-| `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                       |
-| `clientDirectUpload`  |      `boolean`       |                  | _Upload by a compatible client directly to the GCS_ |
+| option                |         type         |  default value   | description                                                  |
+| :-------------------- | :------------------: | :--------------: | ------------------------------------------------------------ |
+| `directory`           |       `string`       |    `"files"`     | _DiskStorage upload directory_                               |
+| `bucket`              |       `string`       | `"node-uploadx"` | _S3 or GCS bucket_                                           |
+| `path`                |       `string`       |    `"/files"`    | _Node http base path_                                        |
+| `allowMIME`           |      `string[]`      |    `["*\*"]`     | _Allowed MIME types_                                         |
+| `maxUploadSize`       |   `string\|number`   |     `"5TB"`      | _File size limit_                                            |
+| `metaStorage`         |    `MetaStorage`     |                  | _Provide custom meta storage_                                |
+| `metaStorageConfig`   | `MetaStorageOptions` |                  | _Configure metafiles storage_                                |
+| `maxMetadataSize`     |   `string\|number`   |     `"4MB"`      | _Metadata size limit_                                        |
+| `validation`          |     `Validation`     |                  | _Upload validation options_                                  |
+| `useRelativeLocation` |      `boolean`       |     `false`      | _Use relative urls_                                          |
+| `filename`            |      `Function`      |                  | _Name generator function_                                    |
+| `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
+| `clientDirectUpload`  |      `boolean`       |                  | _Upload by a compatible client directly to the GCS_          |
+| `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 

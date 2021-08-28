@@ -166,6 +166,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
   async write(part: FilePart): Promise<GCSFile> {
     const file = await this.getMeta(part.name);
+    await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });

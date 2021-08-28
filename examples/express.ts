@@ -31,10 +31,11 @@ const storage = new DiskStorage({
   directory: 'upload',
   maxMetadataSize: '1mb',
   onComplete,
+  expiration: { maxAge: '1h', purgeInterval: '10min' },
   validation: {
     mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
     size: {
-      value: 500_000,
+      value: 500_000_000,
       isValid(file) {
         this.response = [
           412,

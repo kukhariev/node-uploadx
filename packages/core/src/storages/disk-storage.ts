@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as http from 'http';
 import { resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
@@ -64,6 +65,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this.getMeta(part.name);
+    await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {

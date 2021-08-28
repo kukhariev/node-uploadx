@@ -139,6 +139,7 @@ export class S3Storage extends BaseStorage<S3File> {
 
   async write(part: FilePart): Promise<S3File> {
     const file = await this.getMeta(part.name);
+    await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ||= await this._getParts(file);

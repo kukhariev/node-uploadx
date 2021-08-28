@@ -1,5 +1,6 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
+
 import {
   Cache,
   ErrorMap,
@@ -8,17 +9,36 @@ import {
   fail,
   HttpError,
   Logger,
+  toMilliseconds,
   typeis,
   Validation,
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart, updateMetadata } from './file';
+import { File, FileInit, FilePart, isExpired, updateMetadata } from './file';
 import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
+import { setInterval } from 'timers';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
 ) => Promise<TResponseBody> | TResponseBody;
+
+export type PurgeList = UploadList & { maxAgeMs: number };
+
+export interface ExpirationOptions {
+  /**
+   * Age of the upload, after which it is considered expired and can be deleted
+   */
+  maxAge: number | string;
+  /**
+   * Send `410 Gone` if the client tries to resume an expired upload
+   */
+  errorIfExpired?: boolean;
+  /**
+   * Auto purging interval for expired uploads
+   */
+  purgeInterval?: number | string;
+}
 
 export interface BaseStorageOptions<T extends File> {
   /** Allowed MIME types */
@@ -38,6 +58,19 @@ export interface BaseStorageOptions<T extends File> {
   maxMetadataSize?: number | string;
   /** Provide custom meta storage  */
   metaStorage?: MetaStorage<T>;
+  /**
+   * Automatic cleaning of abandoned and completed uploads
+   * @example
+   app.use(
+     '/upload',
+     uploadx.upload({
+      directory: 'upload',
+      expiration: { maxAge: '6h', purgeInterval: '30min' },
+      onComplete
+    })
+   );
+   */
+  expiration?: ExpirationOptions;
 }
 
 const defaultOptions = {
@@ -61,7 +94,7 @@ export abstract class BaseStorage<TFile extends File> {
   isReady = false;
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
-  protected log = Logger.get(`store:${this.constructor.name}`);
+  protected log = Logger.get(`${this.constructor.name}`);
   protected namingFunction: (file: TFile) => string;
   protected validation = new Validator<TFile>();
   abstract meta: MetaStorage<TFile>;
@@ -75,6 +108,11 @@ export abstract class BaseStorage<TFile extends File> {
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
     const storage = <typeof BaseStorage>this.constructor;
     this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
+
+    const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
+    if (purgeInterval) {
+      this.startAutoPurge(purgeInterval);
+    }
 
     const size: Required<ValidatorConfig<TFile>> = {
       value: this.maxUploadSize,
@@ -118,6 +156,7 @@ export abstract class BaseStorage<TFile extends File> {
    * Saves upload metadata
    */
   async saveMeta(file: TFile): Promise<TFile> {
+    this.updateTimestamps(file);
     this.cache.set(file.name, file);
     return this.meta.save(file.name, file);
   }
@@ -135,13 +174,44 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async getMeta(name: string): Promise<TFile> {
     let file = this.cache.get(name);
-    if (file) return file;
-    try {
-      file = await this.meta.get(name);
-      this.cache.set(file.name, file);
-      return file;
-    } catch {}
-    return fail(ERRORS.FILE_NOT_FOUND);
+    if (!file) {
+      try {
+        file = await this.meta.get(name);
+        this.cache.set(file.name, file);
+      } catch {
+        return fail(ERRORS.FILE_NOT_FOUND);
+      }
+    }
+    return file;
+  }
+
+  checkIfExpired(file: TFile): Promise<TFile> {
+    return (this.config.expiration?.errorIfExpired || this.config.expiration?.purgeInterval) &&
+      isExpired(file)
+      ? fail(ERRORS.GONE)
+      : Promise.resolve(file);
+  }
+
+  /**
+   * Searches for and purges expired uploads
+   * @param maxAge Remove uploads older than a specified age
+   * @param prefix Filter uploads
+   */
+  async purge(maxAge?: number | string, prefix?: string): Promise<PurgeList> {
+    const maxAgeMs = toMilliseconds(maxAge || this.config.expiration?.maxAge);
+    const purged = { items: [], maxAgeMs, prefix } as PurgeList;
+    if (maxAgeMs) {
+      const before = Date.now() - maxAgeMs;
+      const entries = (await this.list(prefix)).items.filter(
+        item => +new Date(item.createdAt) < before
+      );
+      for (const { name, createdAt } of entries) {
+        const [deleted] = await this.delete(name);
+        purged.items.push({ ...deleted, createdAt });
+      }
+    }
+    purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
+    return purged;
   }
 
   async get(prefix = ''): Promise<UploadList> {
@@ -166,6 +236,20 @@ export abstract class BaseStorage<TFile extends File> {
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };
+  }
+
+  protected startAutoPurge(purgeInterval: number): void {
+    if (purgeInterval >= 2147483647) throw Error('“purgeInterval” must be less than 2147483647 ms');
+    setInterval(() => void this.purge().catch(this.log), purgeInterval);
+  }
+
+  protected updateTimestamps(file: TFile): TFile {
+    file.createdAt ??= new Date().toISOString();
+    const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
+    if (maxAgeMs) {
+      file.expiredAt = new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
+    }
+    return file;
   }
 
   /**

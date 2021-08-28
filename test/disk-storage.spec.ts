@@ -8,12 +8,16 @@ const directory = 'ds-test';
 let writeStream: FileWriteStream;
 
 jest.mock('../packages/core/src/utils/fs', () => {
+  const timestamp = Date.now() - 10000;
   return {
     ensureFile: async () => 0,
     getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafile)],
     getWriteStream: () => writeStream,
     fsp: {
-      stat: async () => ({ mtime: new Date() }),
+      stat: async () => ({
+        mtime: timestamp,
+        ctime: timestamp
+      }),
       writeFile: async () => 0,
       readFile: async () => JSON.stringify(testfile),
       unlink: async () => null
@@ -121,17 +125,17 @@ describe('DiskStorage', () => {
     });
   });
 
-  describe('.get()', () => {
+  describe('.list()', () => {
     beforeEach(createFile);
 
     it('should return all user files', async () => {
-      const { items } = await storage.get(testfile.userId);
+      const { items } = await storage.list(testfile.userId);
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ name: filename });
     });
 
     it('should return one file', async () => {
-      const { items } = await storage.get(filename);
+      const { items } = await storage.list(filename);
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ name: filename });
     });
@@ -152,6 +156,15 @@ describe('DiskStorage', () => {
       const [deleted] = await storage.delete('notfound');
       expect(deleted.name).toBe('notfound');
       expect(deleted.status).toBeUndefined();
+    });
+  });
+
+  describe('.purge()', () => {
+    beforeEach(createFile);
+
+    it('should delete file', async () => {
+      const list = await storage.purge(5);
+      expect(list.items).toHaveLength(1);
     });
   });
 });

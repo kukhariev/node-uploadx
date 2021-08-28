@@ -24,16 +24,21 @@ export function parseMetadata(encoded = ''): Metadata {
 }
 
 /**
- * tus resumable upload protocol
- * @link https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md
+ * [tus resumable upload protocol](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md)
  */
 export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
+  get extension(): string[] {
+    const _extensions = ['creation', 'creation-with-upload', 'termination'];
+    if (this.storage.config.expiration) _extensions.push('expiration');
+    return _extensions;
+  }
+
   /**
-   *
+   *  Sends current server configuration
    */
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers = {
-      'Tus-Extension': 'creation,creation-with-upload,termination',
+      'Tus-Extension': this.extension.toString(),
       'Tus-Version': TUS_RESUMABLE,
       'Tus-Max-Size': this.storage.maxUploadSize
     };
@@ -42,7 +47,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   }
 
   /**
-   * Create file and send file url to client
+   * Create a file and send url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const metadataHeader = getHeader(req, 'upload-metadata');
@@ -52,6 +57,9 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
     const headers: Headers = { Location: this.buildFileUrl(req, file) };
+    if (file.expiredAt) {
+      headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
+    }
     // 'creation-with-upload' block
     if (typeis(req, ['application/offset+octet-stream'])) {
       getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
@@ -65,7 +73,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   }
 
   /**
-   * Write chunk to file
+   * Write a chunk to file
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
@@ -80,6 +88,9 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
       const headers: Headers = {
         'Upload-Offset': `${file.bytesWritten}`
       };
+      if (file.expiredAt) {
+        headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
+      }
       file.status === 'part' && this.send(res, { statusCode: 204, headers });
     }
     return file;
@@ -146,7 +157,7 @@ export function tus<TFile extends File>(
 /**
  * Express wrapper
  *
- * - express ***should*** respond to the client when the upload is complete and handle errors and GET requests
+ * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
  * app.use('/files', tus.upload({ storage }), (req, res, next) => {
   if (req.method === 'GET') {
