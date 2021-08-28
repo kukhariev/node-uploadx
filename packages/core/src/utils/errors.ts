@@ -65,17 +65,14 @@ export const ErrorMap = E_.errors;
 export class UploadxError extends Error {
   uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
   request?: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
-  detail?: string | Record<string, any>;
+  detail?: unknown;
 }
 
 export function isUploadxError(err: unknown): err is UploadxError {
   return !!(err as UploadxError).uploadxErrorCode;
 }
 
-export function fail(
-  uploadxErrorCode: string,
-  detail?: Record<string, any> | string
-): Promise<never> {
+export function fail(uploadxErrorCode: string, detail?: unknown): Promise<never> {
   return Promise.reject({ message: uploadxErrorCode, uploadxErrorCode, detail });
 }
 
