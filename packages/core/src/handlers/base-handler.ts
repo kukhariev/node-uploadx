@@ -6,8 +6,8 @@ import {
   DiskStorage,
   DiskStorageOptions,
   File,
-  UploadList,
-  UploadEventType
+  UploadEventType,
+  UploadList
 } from '../storages';
 import {
   ErrorMap,
@@ -21,7 +21,6 @@ import {
   pick,
   ResponseBodyType,
   setHeaders,
-  typeis,
   UploadxError,
   UploadxResponse
 } from '../utils';
@@ -118,6 +117,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     next?: () => void
   ): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
+    this.cors.preflight(req, res);
     this.log(`[request]: %s`, req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
@@ -126,7 +126,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     if (!this.storage.isReady) {
       return this.sendError(res, { uploadxErrorCode: ERRORS.STORAGE_ERROR } as UploadxError);
     }
-    this.cors.preflight(req, res);
 
     handler
       .call(this, req, res)
@@ -157,7 +156,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
         this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
         this.log('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
-        typeis.hasBody(req) > 1e6 && res.setHeader('Connection', 'close');
         return this.sendError(res, error);
       });
   };

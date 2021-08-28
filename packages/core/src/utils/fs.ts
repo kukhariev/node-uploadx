@@ -52,7 +52,10 @@ export function getFiles(prefix: string): Promise<string[]> {
         return path.startsWith(prefix_) ? (dirent.isDirectory() ? _getFiles(path) : path) : null;
       })
     );
-    return Array.prototype.concat(...files).filter(Boolean) as string[];
+    return Array.prototype
+      .concat(...files)
+      .filter(Boolean)
+      .sort() as string[];
   };
   return _getFiles(prefix_);
 }

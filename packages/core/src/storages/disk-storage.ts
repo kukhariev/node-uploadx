@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import * as http from 'http';
 import { resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
