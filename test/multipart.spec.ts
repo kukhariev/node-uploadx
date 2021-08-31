@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 import * as request from 'supertest';
-import { multipart } from '../packages/core/src';
+import { multipart, DiskStorageOptions } from '../packages/core/src';
 import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -12,7 +12,7 @@ describe('::Multipart', () => {
   const files: string[] = [];
   const basePath = '/multipart';
   const directory = join(root, 'multipart');
-  const opts = { ...storageOptions, directory };
+  const opts = { ...storageOptions, directory } as DiskStorageOptions;
   app.use(basePath, multipart(opts));
 
   beforeAll(() => cleanup(directory));

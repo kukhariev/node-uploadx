@@ -2,7 +2,13 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { BaseStorage, serializeMetadata, tus, TUS_RESUMABLE } from '@uploadx/core';
+import {
+  BaseStorage,
+  DiskStorageOptions,
+  serializeMetadata,
+  tus,
+  TUS_RESUMABLE
+} from '@uploadx/core';
 import { root, storageOptions } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -12,7 +18,7 @@ describe('::Tus', () => {
   let uri: string;
   const basePath = '/tus';
   const directory = join(root, 'tus');
-  const opts = { ...storageOptions, directory };
+  const opts = { ...storageOptions, directory } as DiskStorageOptions;
   app.use(basePath, tus(opts));
 
   beforeAll(() => cleanup(directory));

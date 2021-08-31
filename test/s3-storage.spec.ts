@@ -36,7 +36,7 @@ describe('S3Storage', () => {
       ...testfile,
       UploadId: '123456789',
       Parts: []
-    };
+    } as unknown as S3File;
   });
 
   describe('.create()', () => {

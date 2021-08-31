@@ -1,12 +1,44 @@
-import { createWriteStream, promises as fsp, WriteStream } from 'fs';
+import { createHash, HexBase64Latin1Encoding } from 'crypto';
+import { createReadStream, createWriteStream, promises as fsp, WriteStream } from 'fs';
 import { dirname, posix } from 'path';
 
+function isError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error;
+}
+
+export function fileChecksum(
+  filePath: string,
+  algorithm: 'sha1' | 'md5' = 'md5',
+  encoding: HexBase64Latin1Encoding = 'hex'
+): Promise<string> {
+  return new Promise(resolve => {
+    const hash = createHash(algorithm);
+    createReadStream(filePath)
+      .on('data', data => hash.update(data))
+      .on('end', () => resolve(hash.digest(encoding)));
+  });
+}
+
+export async function copy(src: string, dest: string): Promise<void> {
+  return fsp.copyFile(src, dest);
+}
+
+export async function move(src: string, dest: string): Promise<void> {
+  try {
+    await fsp.rename(src, dest);
+  } catch (e) {
+    if (isError(e) && e.code === 'EXDEV') {
+      await copy(src, dest);
+      await fsp.unlink(src);
+    }
+  }
+}
 /**
  * Ensures that the directory exists
  * @param dir
  */
-export async function ensureDir(dir: string): Promise<void> {
-  await fsp.mkdir(dir, { recursive: true });
+export function ensureDir(dir: string): Promise<void> {
+  return fsp.mkdir(dir, { recursive: true });
 }
 
 /**

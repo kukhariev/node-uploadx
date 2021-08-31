@@ -1,5 +1,5 @@
 import { posix } from 'path';
-import { DiskStorage, fsp } from '../packages/core/src';
+import { DiskStorage, DiskStorageOptions, fsp } from '../packages/core/src';
 import { storageOptions } from './fixtures';
 import { FileWriteStream, RequestReadStream } from './fixtures/streams';
 import { filename, metafile, testfile } from './fixtures/testfile';
@@ -26,7 +26,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
 });
 
 describe('DiskStorage', () => {
-  const options = { ...storageOptions, directory };
+  const options = { ...storageOptions, directory } as DiskStorageOptions;
   let storage: DiskStorage;
   let mockReadable: RequestReadStream;
   const createFile = (): Promise<any> => {

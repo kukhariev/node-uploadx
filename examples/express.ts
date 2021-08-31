@@ -1,57 +1,27 @@
 import * as express from 'express';
-import { DiskFile, DiskStorage, OnComplete, uploadx, UploadxResponse } from 'node-uploadx';
+import { DiskFile, uploadx } from 'node-uploadx';
+import { join } from 'path';
 
 const app = express();
 
-const auth: express.Handler = (req, res, next) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  (req as any)['user'] = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
-  next();
+const onComplete: express.RequestHandler = async (req, res, next) => {
+  const file = req.body as DiskFile;
+  await file.lock(() => res.status(423).json({ message: 'processing' }));
+  const sha1 = await file.hash('sha1');
+  await file.move(join('upload', file.originalName));
+  await file.lock(() => res.json({ ...file, sha1 }));
+  await file.delete();
+  return res.json({ ...file, sha1 });
 };
 
-app.use(auth);
-
-type OnCompleteBody = {
-  message: string;
-  id: string;
-};
-
-const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file => {
-  const message = `File upload is finished, path: ${file.name}`;
-  console.log(message);
-  return {
-    statusCode: 200,
-    message,
-    id: file.id,
-    headers: { ETag: file.id }
-  };
-};
-
-const storage = new DiskStorage({
-  directory: 'upload',
-  maxMetadataSize: '1mb',
-  onComplete,
-  expiration: { maxAge: '1h', purgeInterval: '10min' },
-  validation: {
-    mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
-    size: {
-      value: 500_000_000,
-      isValid(file) {
-        this.response = [
-          412,
-          { message: `The file size(${file.size}) is larger than ${this.value as number} bytes` }
-        ];
-        return file.size <= this.value;
-      }
-    },
-    mtime: {
-      isValid: file => !!file.metadata.lastModified,
-      response: [403, { message: 'Missing `lastModified` property' }]
-    }
-  }
-});
-
-app.use('/files', uploadx({ storage }));
+app.all(
+  '/files',
+  uploadx.upload({
+    directory: 'upload',
+    expiration: { maxAge: '12h', purgeInterval: '1h' }
+  }),
+  onComplete
+);
 
 app.listen(3002, () => {
   console.log('listening on port:', 3002);

@@ -37,10 +37,14 @@ import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
 const BUCKET_NAME = 'node-uploadx';
 
-export class S3File extends File {
+export interface S3File extends File {
   Parts?: Part[];
-  UploadId = '';
+  UploadId?: string;
   uri?: string;
+  lock: (lockFn: () => any) => Promise<any>;
+  move: (dest: any) => Promise<any>;
+  copy: (dest: any) => Promise<any>;
+  delete: () => Promise<any>;
 }
 
 export type S3StorageOptions = BaseStorageOptions<S3File> &
@@ -121,7 +125,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
-    const file = new S3File(config);
+    const file = new File(config) as S3File;
     file.name = this.namingFunction(file);
     await this.validate(file);
     try {
@@ -226,7 +230,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   private _checkBucket(): void {
-    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError, data) => {
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError) => {
       if (err) {
         throw err;
       }
