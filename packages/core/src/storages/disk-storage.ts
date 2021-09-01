@@ -18,7 +18,6 @@ import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage'
 const INVALID_OFFSET = -1;
 
 export interface DiskFile extends File {
-  lock: (lockFn: () => any) => Promise<any>;
   move: (dest: string) => Promise<any>;
   copy: (dest: string) => Promise<any>;
   delete: () => Promise<any>;
@@ -68,7 +67,10 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   buildCompletedFile(file: DiskFile): DiskFile {
     const completed = { ...file };
-    completed.lock = async lockFn => Promise.resolve('TODO:');
+    completed.lock = async lockFn => {
+      completed.lockedBy = lockFn;
+      return Promise.resolve(completed.lockedBy);
+    };
     completed.delete = () => this.delete(file.name);
     completed.hash = (algorithm?: 'sha1' | 'md5', encoding?: 'hex' | 'base64') =>
       fileChecksum(this.getFilePath(file.name), algorithm, encoding);
@@ -91,8 +93,9 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this.getMeta(part.name);
-    await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
+    if (file.lockedBy) return file;
+    await this.checkIfExpired(file);
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
