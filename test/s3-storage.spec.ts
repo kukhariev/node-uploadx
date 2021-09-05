@@ -3,6 +3,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 
 import {
   CompleteMultipartUploadCommand,
+  CopyObjectCommand,
   CreateMultipartUploadCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
@@ -125,6 +126,30 @@ describe('S3Storage', () => {
       s3Mock.on(DeleteObjectCommand).resolves({});
       const [deleted] = await storage.delete(filename);
       expect(deleted.status).toBe('deleted');
+    });
+  });
+
+  describe('copy()', () => {
+    it('relative', async () => {
+      s3Mock.resetHistory();
+      s3Mock.on(CopyObjectCommand).resolves({});
+      await storage.copy('name', 'new name');
+      expect(s3Mock.call(0).args[0].input).toStrictEqual({
+        Bucket: 'node-uploadx',
+        CopySource: 'node-uploadx/name',
+        Key: 'new name'
+      });
+    });
+
+    it('absolute', async () => {
+      s3Mock.resetHistory();
+      s3Mock.on(CopyObjectCommand).resolves({});
+      await storage.copy('name', '/otherBucket/new name');
+      expect(s3Mock.call(0).args[0].input).toStrictEqual({
+        Bucket: 'otherBucket',
+        CopySource: 'node-uploadx/name',
+        Key: 'new name'
+      });
     });
   });
 });

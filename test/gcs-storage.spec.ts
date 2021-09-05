@@ -30,13 +30,13 @@ describe('GCStorage', () => {
   let storage: GCStorage;
   let file: GCSFile;
   const uri = 'http://api.com?upload_id=123456789';
-  const _fileResponse = (): { data: GCSFile } => ({ data: { ...testfile, uri } });
+  const _fileResponse = (): { data: GCSFile } => ({ data: { ...testfile, uri } as GCSFile });
   const _createResponse = (): any => ({ headers: { location: uri } });
   const req = { headers: { origin: 'http://api.com' } } as IncomingMessage;
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
-    storage = new GCStorage({ ...(storageOptions as GCStorageOptions) });
+    storage = new GCStorage({ ...(storageOptions as GCStorageOptions), bucket: 'test' });
     file = _fileResponse().data;
   });
 
@@ -79,13 +79,13 @@ describe('GCStorage', () => {
     });
   });
 
-  describe('.get()', () => {
+  describe('.list()', () => {
     it('should return all user files', async () => {
       const list = {
         data: { items: [{ name: metafile }] }
       };
       mockAuthRequest.mockResolvedValue(list);
-      const { items } = await storage.get(testfile.userId);
+      const { items } = await storage.list(testfile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ name: filename });
@@ -142,6 +142,32 @@ describe('GCStorage', () => {
       const [deleted] = await storage.delete(filename);
       expect(deleted.name).toBe(filename);
       expect(deleted.status).toBe('deleted');
+    });
+  });
+
+  describe('.copy()', () => {
+    it('relative', async () => {
+      mockAuthRequest.mockResolvedValue({ data: { done: true } });
+      await storage.copy(filename, 'files/новое имя.txt');
+      expect(mockAuthRequest).toHaveBeenCalledWith({
+        body: '',
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        url:
+          'https://storage.googleapis.com/storage/v1/b/test/o/userId/testfile.mp4/rewriteTo/b/test/o/userId/' +
+          'files/%D0%BD%D0%BE%D0%B2%D0%BE%D0%B5%20%D0%B8%D0%BC%D1%8F.txt'
+      });
+    });
+
+    it('absolute', async () => {
+      mockAuthRequest.mockResolvedValue({ data: { done: true } });
+      await storage.copy(filename, '/new/name.txt');
+      expect(mockAuthRequest).toHaveBeenCalledWith({
+        body: '',
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        url: 'https://storage.googleapis.com/storage/v1/b/test/o/userId/testfile.mp4/rewriteTo/b/new/o/name.txt'
+      });
     });
   });
 });

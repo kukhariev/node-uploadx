@@ -21,6 +21,7 @@ import * as http from 'http';
 import request from 'node-fetch';
 import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
 import { GCSMetaStorage, GCSMetaStorageOptions } from './gcs-meta-storage';
+import { resolve } from 'url';
 
 export interface ClientError extends Error {
   code: string;
@@ -72,9 +73,13 @@ export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAut
   metaStorageConfig?: LocalMetaStorageOptions | GCSMetaStorageOptions;
 }
 
-export class GCSFile extends File {
+export interface GCSFile extends File {
   GCSUploadURI?: string;
-  uri = '';
+  uri: string;
+  move: (dest: string) => Promise<Record<string, string>>;
+  copy: (dest: string) => Promise<Record<string, string>>;
+  get: () => Promise<Record<string, string>>;
+  delete: () => Promise<any>;
 }
 
 /**
@@ -95,6 +100,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   storageBaseURI: string;
   uploadBaseURI: string;
   meta: MetaStorage<GCSFile>;
+  private readonly bucket: string;
 
   constructor(public config: GCStorageOptions = {}) {
     super(config);
@@ -109,11 +115,11 @@ export class GCStorage extends BaseStorage<GCSFile> {
     }
     config.scopes ||= authScopes;
     config.keyFile ||= process.env.GCS_KEYFILE;
-    const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
-    this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
-    this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
+    this.bucket = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
+    this.storageBaseURI = [storageAPI, this.bucket, 'o'].join('/');
+    this.uploadBaseURI = [uploadAPI, this.bucket, 'o'].join('/');
     this.authClient = new GoogleAuth(config);
-    this._checkBucket(bucketName);
+    this._checkBucket();
   }
 
   normalizeError(error: ClientError): HttpError {
@@ -131,7 +137,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
-    const file = new GCSFile(config);
+    const file = new File(config) as GCSFile;
     file.name = this.namingFunction(file);
     await this.validate(file);
     try {
@@ -173,6 +179,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     if (isCompleted(file)) {
       file.uri = `${this.storageBaseURI}/${file.name}`;
       await this._onComplete(file);
+      return this.buildCompletedFile(file);
     }
     return file;
   }
@@ -188,6 +195,61 @@ export class GCStorage extends BaseStorage<GCSFile> {
       return [{ ...file }];
     }
     return [{ name } as GCSFile];
+  }
+
+  async copy(name: string, dest: string): Promise<Record<string, string>> {
+    type CopyProgress = {
+      rewriteToken?: string;
+      kind: string;
+      objectSize: number;
+      totalBytesRewritten: number;
+      done: boolean;
+      resource: Record<string, any>;
+    };
+    const newPath = resolve(`/${this.bucket}/${name}`, encodeURI(dest));
+    const [, bucket, ...pathSegments] = newPath.split('/');
+    const filename = pathSegments.join('/');
+    const url = `${this.storageBaseURI}/${name}/rewriteTo/b/${bucket}/o/${filename}`;
+    let progress = {} as CopyProgress;
+    const opts = {
+      body: '',
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST' as const,
+      url
+    };
+    do {
+      opts.body = progress.rewriteToken
+        ? JSON.stringify({ rewriteToken: progress.rewriteToken })
+        : '';
+      progress = (await this.authClient.request<CopyProgress>(opts)).data;
+    } while (progress.rewriteToken);
+    return progress.resource;
+  }
+
+  async move(name: string, dest: string): Promise<Record<string, string>> {
+    const resource = await this.copy(name, dest);
+    const url = `${this.storageBaseURI}/${name}`;
+    await this.authClient.request({ method: 'DELETE' as const, url });
+    return resource;
+  }
+
+  async _get(name: string): Promise<Record<string, string>> {
+    const url = `${this.storageBaseURI}/${name}`;
+    return (await this.authClient.request<Record<string, string>>({ url })).data;
+  }
+
+  buildCompletedFile(file: GCSFile): GCSFile {
+    const completed = { ...file };
+    completed.lock = async lockFn => {
+      completed.lockedBy = lockFn;
+      return Promise.resolve(completed.lockedBy);
+    };
+    completed.get = () => this._get(file.name);
+    completed.delete = () => this.delete(file.name);
+    completed.copy = async (dest: string) => this.copy(file.name, dest);
+    completed.move = async (dest: string) => this.move(file.name, dest);
+
+    return completed;
   }
 
   protected async _write(part: FilePart & GCSFile): Promise<number> {
@@ -228,9 +290,9 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return this.deleteMeta(file.name);
   };
 
-  private _checkBucket(bucketName: string): void {
+  private _checkBucket(): void {
     this.authClient
-      .request({ url: `${storageAPI}/${bucketName}` })
+      .request({ url: this.storageBaseURI })
       .then(() => (this.isReady = true))
       .catch((err: ClientError) => {
         // eslint-disable-next-line no-console
