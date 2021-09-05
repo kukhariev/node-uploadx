@@ -16,6 +16,7 @@ import {
   fail,
   getBaseUrl,
   isUploadxError,
+  isUploadxResponse,
   isValidationError,
   Logger,
   pick,
@@ -133,6 +134,14 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
         if ('status' in file && file.status) {
           this.log('[%s]: %s', file.status, file.name);
           this.listenerCount(file.status) && this.emit(file.status, file);
+          if (file.lockedBy) {
+            const lockResponse =
+              file.lockedBy instanceof Function
+                ? ((await file.lockedBy()) as UploadxResponse)
+                : file.lockedBy;
+            if (lockResponse && isUploadxResponse(lockResponse)) this.send(res, lockResponse);
+            return;
+          }
           if (file.status === 'completed') {
             req['_body'] = true;
             req['body'] = file;

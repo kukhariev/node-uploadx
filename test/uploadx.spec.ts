@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx } from '../packages/core/src';
+import { uploadx, DiskStorageOptions } from '../packages/core/src';
 import { root, storageOptions, userPrefix } from './fixtures';
 import { app } from './fixtures/app';
 import { metadata, srcpath } from './fixtures/testfile';
@@ -13,7 +13,7 @@ describe('::Uploadx', () => {
   let start: number;
   const basePath = '/uploadx';
   const directory = join(root, 'uploadx');
-  const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
+  const opts = { ...storageOptions, directory, maxMetadataSize: 250 } as DiskStorageOptions;
   app.use(basePath, uploadx(opts));
 
   beforeAll(() => cleanup(directory));

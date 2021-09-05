@@ -1,6 +1,15 @@
 import * as http from 'http';
 import { resolve as pathResolve } from 'path';
-import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
+import {
+  ensureFile,
+  ERRORS,
+  fail,
+  fileChecksum,
+  fsp,
+  getWriteStream,
+  HttpError,
+  move
+} from '../utils';
 import { File, FileInit, FilePart, hasContent, isCompleted, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { METAFILE_EXTNAME, MetaStorage } from './meta-storage';
@@ -8,7 +17,12 @@ import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage'
 
 const INVALID_OFFSET = -1;
 
-export class DiskFile extends File {}
+export interface DiskFile extends File {
+  move: (dest: string) => Promise<any>;
+  copy: (dest: string) => Promise<any>;
+  delete: () => Promise<any>;
+  hash: (algorithm?: 'sha1' | 'md5', encoding?: 'hex' | 'base64') => Promise<string>;
+}
 
 export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
@@ -51,8 +65,19 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     return super.normalizeError(error);
   }
 
+  buildCompletedFile(file: DiskFile): DiskFile {
+    const completed = { ...file };
+    completed.lock = token => (completed.lockedBy = token);
+    completed.delete = () => this.delete(file.name);
+    completed.hash = (algorithm?: 'sha1' | 'md5', encoding?: 'hex' | 'base64') =>
+      fileChecksum(this.getFilePath(file.name), algorithm, encoding);
+    completed.copy = async (dest: string) => fsp.copyFile(this.getFilePath(file.name), dest);
+    completed.move = async (dest: string) => move(this.getFilePath(file.name), dest);
+    return completed;
+  }
+
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
-    const file = new DiskFile(fileInit);
+    const file = new File(fileInit) as DiskFile;
     file.name = this.namingFunction(file);
     await this.validate(file);
     const path = this.getFilePath(file.name);
@@ -64,14 +89,16 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this.getMeta(part.name);
-    await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
+    if (file.lockedBy) return file;
+    await this.checkIfExpired(file);
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       if (isCompleted(file)) {
         await this.saveMeta(file);
+        return this.buildCompletedFile(file);
       }
       return file;
     } catch (err) {

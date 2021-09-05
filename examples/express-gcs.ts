@@ -5,10 +5,10 @@ const app = express();
 
 const storage = new GCStorage({ maxUploadSize: '1GB' });
 
-storage.onComplete = ({ uri, id }) => {
-  console.log(`File upload complete, storage path: ${uri}`);
-  // send gcs link to client
-  return { id, link: uri };
+storage.onComplete = async file => {
+  const info = await file.get().catch(console.error);
+  console.log(info);
+  return file.move(file.originalName).catch(console.error);
 };
 
 app.use('/files', uploadx({ storage }));

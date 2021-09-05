@@ -2,8 +2,13 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CompleteMultipartUploadOutput,
+  CopyObjectCommand,
+  CopyObjectCommandInput,
+  CopyObjectCommandOutput,
   CreateMultipartUploadCommand,
   CreateMultipartUploadRequest,
+  DeleteObjectCommand,
+  DeleteObjectCommandInput,
   HeadBucketCommand,
   ListMultipartUploadsCommand,
   ListPartsCommand,
@@ -34,13 +39,18 @@ import {
 import * as http from 'http';
 import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
+import { resolve } from 'url';
 
 const BUCKET_NAME = 'node-uploadx';
 
-export class S3File extends File {
+export interface S3File extends File {
   Parts?: Part[];
-  UploadId = '';
+  UploadId?: string;
   uri?: string;
+  move: (dest: string) => Promise<Record<string, any>>;
+  copy: (dest: string) => Promise<Record<string, any>>;
+  get: () => Promise<Record<string, any>>;
+  delete: () => Promise<any>;
 }
 
 export type S3StorageOptions = BaseStorageOptions<S3File> &
@@ -121,7 +131,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
-    const file = new S3File(config);
+    const file = new File(config) as S3File;
     file.name = this.namingFunction(file);
     await this.validate(file);
     try {
@@ -179,6 +189,7 @@ export class S3Storage extends BaseStorage<S3File> {
       const [completed] = await this._onComplete(file);
       delete file.Parts;
       file.uri = completed.Location;
+      return this.buildCompletedFile(file);
     }
     return file;
   }
@@ -191,6 +202,31 @@ export class S3Storage extends BaseStorage<S3File> {
       return [{ ...file }];
     }
     return [{ name } as S3File];
+  }
+
+  async copy(name: string, dest: string): Promise<CopyObjectCommandOutput> {
+    const CopySource = `${this.bucket}/${name}`;
+    const newPath = decodeURI(resolve(`/${CopySource}`, dest)); // path.resolve?
+    const [, Bucket, ...pathSegments] = newPath.split('/');
+    const Key = pathSegments.join('/');
+    const params: CopyObjectCommandInput = { Bucket, Key, CopySource };
+    return this.client.send(new CopyObjectCommand(params));
+  }
+
+  async move(name: string, dest: string): Promise<CopyObjectCommandOutput> {
+    const copyOut = await this.copy(name, dest);
+    const params: DeleteObjectCommandInput = { Bucket: this.bucket, Key: name };
+    await this.client.send(new DeleteObjectCommand(params));
+    return copyOut;
+  }
+
+  buildCompletedFile(file: S3File): S3File {
+    const completed = { ...file };
+    completed.lock = token => (completed.lockedBy = token);
+    completed.delete = () => this.delete(file.name);
+    completed.copy = async (dest: string) => this.copy(file.name, dest);
+    completed.move = async (dest: string) => this.move(file.name, dest);
+    return completed;
   }
 
   protected _onComplete = (file: S3File): Promise<[CompleteMultipartUploadOutput, any]> => {
@@ -226,7 +262,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   private _checkBucket(): void {
-    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError, data) => {
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError) => {
       if (err) {
         throw err;
       }
