@@ -1,6 +1,7 @@
 import * as http from 'http';
 import { Readable } from 'stream';
 import { Metadata } from '../storages';
+import { isNumber } from './primitives';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -73,6 +74,11 @@ export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
   headers?: Headers;
   body?: T;
 }
+
+export function isUploadxResponse(value: unknown): value is UploadxResponse {
+  return !!(typeof value === 'object' && isNumber((value as UploadxResponse).statusCode));
+}
+
 export type ResponseBody = string | Record<string, any>;
 export type ResponseBodyType = 'text' | 'json';
 export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];

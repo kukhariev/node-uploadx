@@ -240,15 +240,11 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
   buildCompletedFile(file: GCSFile): GCSFile {
     const completed = { ...file };
-    completed.lock = async lockFn => {
-      completed.lockedBy = lockFn;
-      return Promise.resolve(completed.lockedBy);
-    };
+    completed.lock = token => (completed.lockedBy = token);
     completed.get = () => this._get(file.name);
     completed.delete = () => this.delete(file.name);
     completed.copy = async (dest: string) => this.copy(file.name, dest);
     completed.move = async (dest: string) => this.move(file.name, dest);
-
     return completed;
   }
 

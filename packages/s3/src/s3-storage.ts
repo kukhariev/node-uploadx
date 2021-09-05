@@ -222,14 +222,10 @@ export class S3Storage extends BaseStorage<S3File> {
 
   buildCompletedFile(file: S3File): S3File {
     const completed = { ...file };
-    completed.lock = async lockFn => {
-      completed.lockedBy = lockFn;
-      return Promise.resolve(completed.lockedBy);
-    };
+    completed.lock = token => (completed.lockedBy = token);
     completed.delete = () => this.delete(file.name);
     completed.copy = async (dest: string) => this.copy(file.name, dest);
     completed.move = async (dest: string) => this.move(file.name, dest);
-
     return completed;
   }
 

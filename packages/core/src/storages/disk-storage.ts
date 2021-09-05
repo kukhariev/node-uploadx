@@ -67,16 +67,12 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   buildCompletedFile(file: DiskFile): DiskFile {
     const completed = { ...file };
-    completed.lock = async lockFn => {
-      completed.lockedBy = lockFn;
-      return Promise.resolve(completed.lockedBy);
-    };
+    completed.lock = token => (completed.lockedBy = token);
     completed.delete = () => this.delete(file.name);
     completed.hash = (algorithm?: 'sha1' | 'md5', encoding?: 'hex' | 'base64') =>
       fileChecksum(this.getFilePath(file.name), algorithm, encoding);
     completed.copy = async (dest: string) => fsp.copyFile(this.getFilePath(file.name), dest);
     completed.move = async (dest: string) => move(this.getFilePath(file.name), dest);
-
     return completed;
   }
 
