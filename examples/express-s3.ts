@@ -1,11 +1,8 @@
-const express = require('express');
-const { tus, S3Storage } = require('node-uploadx');
+import * as express from 'express';
+import { uploadx } from '@uploadx/core';
+import { S3Storage } from '@uploadx/s3';
 
 const app = express();
-
-function onComplete(file) {
-  console.log('File upload complete: ', file);
-}
 
 // const storage = new S3Storage({
 //   bucket: <YOUR_BUCKET>,
@@ -23,9 +20,9 @@ const storage = new S3Storage({
   bucket: 'node-uploadx',
   region: 'eu-west-3',
   expiration: { maxAge: '1h', purgeInterval: '15min' },
-  onComplete
+  onComplete: file => console.log('File upload complete: ', file)
 });
 
-app.use('/files', tus({ storage }));
+app.use('/files', uploadx({ storage }));
 
 app.listen(3002, () => console.log('Listening on port:', 3002));
