@@ -91,7 +91,7 @@ describe('Validator', () => {
     await expect(validation.verify(obj)).rejects.toMatchObject({
       body: 'prop: 10 less value: 20',
       code: 'ValidationErrorCustom',
-      // headers: undefined, FIXME
+      //FIXME:  headers: undefined,
       name: 'ValidationError',
       statusCode: 400
     });

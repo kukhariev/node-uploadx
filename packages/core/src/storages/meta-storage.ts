@@ -1,3 +1,5 @@
+import { FileName } from './file';
+
 /** @experimental */
 interface UploadListEntry {
   /** upload name */
@@ -21,11 +23,13 @@ export interface MetaStorageOptions {
  * Stores upload metadata
  */
 export class MetaStorage<T> {
-  prefix = '';
-  suffix = METAFILE_EXTNAME;
+  prefix = '.';
+  suffix = '.';
   constructor(config?: MetaStorageOptions) {
-    this.prefix = config?.prefix ?? '';
-    this.suffix = config?.suffix ?? METAFILE_EXTNAME;
+    this.prefix = config?.prefix || '';
+    this.suffix = config?.suffix || METAFILE_EXTNAME;
+    this.prefix && FileName.INVALID_PREFIXES.push(this.prefix);
+    this.suffix && FileName.INVALID_SUFFIXES.push(this.suffix);
   }
 
   /**
