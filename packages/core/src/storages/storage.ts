@@ -15,8 +15,8 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FilePart, isExpired, updateMetadata } from './file';
-import { METAFILE_EXTNAME, MetaStorage, UploadList } from './meta-storage';
+import { File, FileInit, FileName, FilePart, isExpired, updateMetadata } from './file';
+import { MetaStorage, UploadList } from './meta-storage';
 import { setInterval } from 'timers';
 
 export type OnComplete<TFile extends File, TResponseBody = any> = (
@@ -86,7 +86,6 @@ const defaultOptions = {
 
 export abstract class BaseStorage<TFile extends File> {
   static maxCacheMemory = '800MB';
-  maxFilenameLength = 255 - METAFILE_EXTNAME.length;
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -130,9 +129,8 @@ export abstract class BaseStorage<TFile extends File> {
       response: ErrorMap.UnsupportedMediaType
     };
     const filename: ValidatorConfig<TFile> = {
-      value: this.maxFilenameLength,
       isValid(file) {
-        return file.name.length < this.value;
+        return FileName.isValid(file.name) && FileName.isValid(file.originalName);
       },
       response: ErrorMap.InvalidFileName
     };

@@ -3,7 +3,7 @@ import { resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
 import { File, FileInit, FilePart, hasContent, isCompleted, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
-import { METAFILE_EXTNAME, MetaStorage } from './meta-storage';
+import { MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
 
 const INVALID_OFFSET = -1;
@@ -44,7 +44,6 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       this.meta = new LocalMetaStorage(metaConfig);
     }
     this.isReady = true;
-    this.maxFilenameLength = 255 - pathResolve(this.directory, METAFILE_EXTNAME).length;
   }
 
   normalizeError(error: Error): HttpError {

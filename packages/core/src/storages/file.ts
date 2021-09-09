@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
 import { md5, uid } from '../utils';
+import { isAbsolute } from 'path';
 
 export function isExpired(file: File): boolean {
   if (!file.expiredAt) return false;
@@ -107,4 +108,29 @@ export function updateMetadata(file: File, metadata: unknown): void {
 export function isCompleted(file: File): boolean {
   file.status = file.bytesWritten === file.size ? 'completed' : 'part';
   return file.status === 'completed';
+}
+
+export class FileName {
+  static INVALID_CHARS: any[] = ['"', '*', ':', '<', '>', '?', '\\', '|', 0x7f, 0o000, '../'];
+  static INVALID_PREFIXES: any[] = [];
+  static INVALID_SUFFIXES: any[] = [];
+  static MAX_LENGTH = 255;
+  static MIN_LENGTH = 3;
+  static isValid(name: string): boolean {
+    if (
+      !name ||
+      name.length < FileName.MIN_LENGTH ||
+      name.length > FileName.MAX_LENGTH ||
+      isAbsolute(name)
+    ) {
+      return false;
+    } else {
+      const upperCase = name.toUpperCase();
+      return !(
+        FileName.INVALID_CHARS.filter(Boolean).some(chars => upperCase.includes(chars as string)) ||
+        FileName.INVALID_PREFIXES.filter(Boolean).some(chars => upperCase.startsWith(chars)) ||
+        FileName.INVALID_SUFFIXES.filter(Boolean).some(chars => upperCase.endsWith(chars))
+      );
+    }
+  }
 }

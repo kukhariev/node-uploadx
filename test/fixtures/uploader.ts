@@ -10,7 +10,7 @@ import {
 
 export class TestUploader extends BaseHandler<File> {}
 
-class TestStorage extends BaseStorage<File> {
+export class TestStorage extends BaseStorage<File> {
   meta = new MetaStorage<File>();
   path = '/files';
   isReady = true;
@@ -35,7 +35,8 @@ class TestStorage extends BaseStorage<File> {
     throw new Error('Method not implemented.');
   }
 
-  get = (_url: any): Promise<any> => Promise.resolve({ uploads: [] });
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  list = (_url: any): Promise<any> => Promise.resolve({ uploads: [] });
 }
 
 export const testStorage = new TestStorage();
