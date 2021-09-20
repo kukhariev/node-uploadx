@@ -10,6 +10,7 @@ jobs:
         node:
           - 10.x
           - 14.x
+          - 16.x
         os:
           - ubuntu-latest
           - windows-latest
@@ -28,8 +29,8 @@ jobs:
         env:
           CI: true
       - name: Lint
-        run: npm run lint
+        run: yarn lint
       - name: Test
-        run: npm test
+        run: yarn test
         env:
           CI: true
