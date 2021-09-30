@@ -1,4 +1,4 @@
-import { LocalMetaStorage } from '@uploadx/core';
+import { LocalMetaStorage } from '../packages/core/src';
 import * as path from 'path';
 
 describe('LocalMetaStorage', () => {

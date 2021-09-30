@@ -8,19 +8,15 @@ import {
   HeadObjectCommand,
   ListObjectsV2Command,
   ListPartsCommand,
-  // PutObjectCommand,
   S3Client,
   UploadPartCommand
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
-import { S3File, S3Storage } from '../packages/s3/src';
+import { S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
 import { FilePart } from '../packages/core/src';
-import { storageOptions } from './fixtures';
-import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
-import { S3StorageOptions } from '../packages/s3/src';
+import { filename, metafilename, srcpath, storageOptions, testfile } from './shared';
 
 const s3Mock = mockClient(S3Client);
-jest.mock('../packages/core/src/utils/cache');
 
 describe('S3Storage', () => {
   const options = { ...(storageOptions as S3StorageOptions) };
@@ -74,7 +70,7 @@ describe('S3Storage', () => {
   describe('.list()', () => {
     it('should return all user files', async () => {
       s3Mock.on(ListObjectsV2Command).resolves({
-        Contents: [{ Key: metafile, LastModified: new Date() }]
+        Contents: [{ Key: metafilename, LastModified: new Date() }]
       });
       const { items } = await storage.list(testfile.userId);
       expect(items).toEqual(expect.any(Array));

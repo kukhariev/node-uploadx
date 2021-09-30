@@ -48,7 +48,7 @@ class E_ {
     RequestEntityTooLarge: [413, 'Request entity too large'],
     StorageError: [503, 'Storage error'],
     TooManyRequests: [429, 'Too many requests'],
-    UnknownError: [500, 'Something went wrong receiving the file'],
+    UnknownError: [500, 'Something went wrong'],
     UnprocessableEntity: [422, 'Validation failed'],
     UnsupportedMediaType: [415, 'Unsupported media type']
   };
@@ -72,8 +72,13 @@ export function isUploadxError(err: unknown): err is UploadxError {
   return !!(err as UploadxError).uploadxErrorCode;
 }
 
-export function fail(uploadxErrorCode: string, detail?: unknown): Promise<never> {
-  return Promise.reject({ message: uploadxErrorCode, uploadxErrorCode, detail });
+export function fail(uploadxErrorCode: string, detail: unknown = ''): Promise<never> {
+  return Promise.reject({
+    name: 'UploadxError',
+    message: uploadxErrorCode,
+    uploadxErrorCode,
+    detail
+  });
 }
 
 interface HttpErrorBody {

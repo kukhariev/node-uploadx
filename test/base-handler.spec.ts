@@ -1,5 +1,5 @@
 import { createRequest, createResponse } from 'node-mocks-http';
-import { testStorage, TestUploader } from './fixtures/uploader';
+import { testStorage, TestUploader } from './shared';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;

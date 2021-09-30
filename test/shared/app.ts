@@ -1,9 +1,11 @@
 /* eslint-disable no-console */
 import * as express from 'express';
-import { userPrefix } from '.';
+import { userPrefix } from './config';
+
 interface ExtendedRequest extends express.Request {
   [key: string]: any;
 }
+
 const app = express();
 app.use((req: ExtendedRequest, res, next) => {
   req['user'] = { id: userPrefix };

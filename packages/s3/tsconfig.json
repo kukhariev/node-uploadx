@@ -6,5 +6,6 @@
     "outDir": "./lib"
   },
   "references": [{ "path": "../core" }],
-  "include": ["src/**/*.ts"]
+  "include": ["./src/**/*"],
+  "exclude": ["*.spec.ts", "*.test.ts"]
 }

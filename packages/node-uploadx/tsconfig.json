@@ -6,5 +6,6 @@
     "outDir": "./lib"
   },
   "references": [{ "path": "../core" }, { "path": "../gcs" }, { "path": "../s3" }],
-  "include": ["src/**/*"]
+  "include": ["./src/**/*"],
+  "exclude": ["*.spec.ts", "*.test.ts"]
 }

@@ -1,4 +1,4 @@
-import { Cache } from '@uploadx/core';
+import { Cache } from '../packages/core/src';
 
 describe('Cache', () => {
   let cache: Cache<any>;
