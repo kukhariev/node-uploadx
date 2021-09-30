@@ -1,4 +1,4 @@
-import { Validator } from '../packages/core/src/utils/validator';
+import { Validator } from '../packages/core/src';
 
 describe('Validator', () => {
   type TestObj = { prop: number };

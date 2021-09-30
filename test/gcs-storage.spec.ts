@@ -11,9 +11,7 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
-import { storageOptions } from './fixtures';
-import { request } from './fixtures/gcs';
-import { filename, metafile, srcpath, testfile } from './fixtures/testfile';
+import { filename, metafilename, request, srcpath, storageOptions, testfile } from './shared';
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');
@@ -23,8 +21,6 @@ const mockAuthRequest = jest.fn();
 jest.mock('google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
-
-jest.mock('../packages/core/src/utils/cache');
 
 describe('GCStorage', () => {
   let storage: GCStorage;
@@ -82,7 +78,7 @@ describe('GCStorage', () => {
   describe('.get()', () => {
     it('should return all user files', async () => {
       const list = {
-        data: { items: [{ name: metafile }] }
+        data: { items: [{ name: metafilename }] }
       };
       mockAuthRequest.mockResolvedValue(list);
       const { items } = await storage.get(testfile.userId);

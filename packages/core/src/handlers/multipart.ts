@@ -72,5 +72,5 @@ export function multipart<TFile extends Readonly<File>>(
   return new Multipart(options).handle;
 }
 
-multipart.upload = (options: DiskStorageOptions | { storage: any }) =>
+multipart.upload = (options: DiskStorageOptions | { storage: any } = {}) =>
   new Multipart(options).upload;

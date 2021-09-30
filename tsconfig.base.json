@@ -25,7 +25,8 @@
       "@uploadx/core": ["packages/core/src"],
       "@uploadx/gcs": ["packages/gcs/src"],
       "@uploadx/s3": ["packages/s3/src"],
-      "node-uploadx": ["packages/node-uploadx/src"]
+      "node-uploadx": ["packages/node-uploadx/src"],
+      "@test/shared": ["test/shared"]
     }
   },
   "exclude": ["node_modules", "lib"]

@@ -1,5 +1,4 @@
-import { TestStorage } from './fixtures/uploader';
-import { testfile } from './fixtures/testfile';
+import { testfile, TestStorage } from './shared';
 
 describe('BaseStorage', () => {
   let storage;

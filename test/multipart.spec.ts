@@ -2,22 +2,26 @@
 import { join } from 'path';
 import * as request from 'supertest';
 import { multipart } from '../packages/core/src';
-import { root, storageOptions } from './fixtures';
-import { app } from './fixtures/app';
-import { metadata, srcpath } from './fixtures/testfile';
-import { cleanup } from './fixtures/utils';
+import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
 
 describe('::Multipart', () => {
   let res: request.Response;
-  const files: string[] = [];
+  let uri = '';
   const basePath = '/multipart';
-  const directory = join(root, 'multipart');
+  const directory = join(uploadRoot, 'multipart');
   const opts = { ...storageOptions, directory };
   app.use(basePath, multipart(opts));
 
-  beforeAll(() => cleanup(directory));
+  function create(): request.Test {
+    return request(app)
+      .post(basePath)
+      .set('Content-Type', 'multipart/formdata')
+      .attach('file', srcpath, metadata.name);
+  }
 
-  afterAll(() => cleanup(directory));
+  beforeAll(async () => cleanup(directory));
+
+  afterAll(async () => cleanup(directory));
 
   test('wrapper', () => {
     expect(multipart()).toBeInstanceOf(Function);
@@ -28,12 +32,12 @@ describe('::Multipart', () => {
       res = await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
-        .field('custom', 'customfield')
-        .attach('file', srcpath, 'customfield')
+        .field('custom', 'customField')
+        .attach('file', srcpath, metadata.name)
         .expect(200);
       expect(res.body.size).toBeDefined();
-      expect(res.header['location']).toBeDefined();
-      files.push(res.header.location);
+      uri = res.header['location'] as string;
+      expect(uri).toContain('multi');
     });
 
     it('should support json metadata', async () => {
@@ -52,7 +56,7 @@ describe('::Multipart', () => {
       await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
-        .attach('file', 'package.json', metadata.name)
+        .attach('file', 'package.json', 'package.json')
         .expect(403)
         .catch(() => null);
     });
@@ -66,7 +70,8 @@ describe('::Multipart', () => {
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      res = await request(app).delete(files[0]).expect(204);
+      uri ||= (await create()).header.location;
+      res = await request(app).delete(uri).expect(204);
     });
 
     it('should 404', async () => {

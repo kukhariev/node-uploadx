@@ -1,4 +1,4 @@
-import { FileName } from '../packages/core/src/storages/';
+import { FileName } from '../packages/core/src';
 
 describe('File', () => {
   describe('FileName', () => {

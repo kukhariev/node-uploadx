@@ -168,5 +168,5 @@ export function tus<TFile extends File>(
 });
  */
 tus.upload = <TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> }
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
 ) => new Tus(options).upload;

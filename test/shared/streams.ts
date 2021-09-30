@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { PassThrough } from 'stream';
+
 export class FileWriteStream extends PassThrough {
   get bytesWritten(): number {
     return super.readableLength;
@@ -9,9 +10,11 @@ export class FileWriteStream extends PassThrough {
     return;
   }
 }
+
 export class RequestReadStream extends PassThrough {
   __delay = 100;
   __mockdata = '12345';
+
   __mockSend(data?: any): void {
     setTimeout(() => {
       this.emit('data', data ?? this.__mockdata);

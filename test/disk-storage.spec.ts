@@ -1,18 +1,23 @@
 import { posix } from 'path';
 import { DiskStorage, fsp } from '../packages/core/src';
-import { storageOptions } from './fixtures';
-import { FileWriteStream, RequestReadStream } from './fixtures/streams';
-import { filename, metafile, testfile } from './fixtures/testfile';
+import {
+  filename,
+  FileWriteStream,
+  metafilename,
+  RequestReadStream,
+  storageOptions,
+  testfile
+} from './shared';
 
 const directory = 'ds-test';
-let writeStream: FileWriteStream;
+let fileWriteStream: FileWriteStream;
 
 jest.mock('../packages/core/src/utils/fs', () => {
   const timestamp = Date.now() - 10000;
   return {
     ensureFile: async () => 0,
-    getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafile)],
-    getWriteStream: () => writeStream,
+    getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafilename)],
+    getWriteStream: () => fileWriteStream,
     fsp: {
       stat: async () => ({
         mtime: timestamp,
@@ -28,7 +33,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
 describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
-  let mockReadable: RequestReadStream;
+  let readStream: RequestReadStream;
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
     return storage.create({} as any, testfile);
@@ -78,14 +83,14 @@ describe('DiskStorage', () => {
 
   describe('.write()', () => {
     beforeEach(() => {
-      writeStream = new FileWriteStream();
-      mockReadable = new RequestReadStream();
+      fileWriteStream = new FileWriteStream();
+      readStream = new RequestReadStream();
       return createFile();
     });
 
     it('should set status and bytesWritten', async () => {
-      mockReadable.__mockSend();
-      const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
+      readStream.__mockSend();
+      const file = await storage.write({ ...testfile, start: 0, body: readStream });
       expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(5);
     });
@@ -105,22 +110,22 @@ describe('DiskStorage', () => {
     });
 
     it('should reject with 500', async () => {
-      mockReadable.__mockPipeError(writeStream);
-      const write = storage.write({ ...testfile, start: 0, body: mockReadable });
+      readStream.__mockPipeError(fileWriteStream);
+      const write = storage.write({ ...testfile, start: 0, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileError');
     });
 
     it('should close file and reset bytesWritten on abort', async () => {
-      const close = jest.spyOn(writeStream, 'close');
-      mockReadable.__mockAbort();
-      const file = await storage.write({ ...testfile, start: 0, body: mockReadable });
+      const close = jest.spyOn(fileWriteStream, 'close');
+      readStream.__mockAbort();
+      const file = await storage.write({ ...testfile, start: 0, body: readStream });
       expect(+file.bytesWritten).toBeNaN();
       expect(close).toHaveBeenCalled();
     });
 
     it('should check chunk size', async () => {
-      mockReadable.__mockSend();
-      const write = storage.write({ ...testfile, start: testfile.size - 2, body: mockReadable });
+      readStream.__mockSend();
+      const write = storage.write({ ...testfile, start: testfile.size - 2, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
   });
