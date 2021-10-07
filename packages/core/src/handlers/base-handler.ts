@@ -232,7 +232,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
    * Get id from request
    */
   getName(req: http.IncomingMessage & { originalUrl?: string }): string {
-    const { pathname = '' } = url.parse(req.url as string);
+    const pathname = url.parse(req.url as string).pathname || '';
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
@@ -247,7 +247,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     file: TFile
   ): string {
     const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
-    const path = url.format({ pathname: `${pathname}/${file.name}`, query });
+    const path = url.format({ pathname: `${pathname as string}/${file.name}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
   }

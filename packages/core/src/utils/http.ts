@@ -16,7 +16,7 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
 
 export async function readBody(
   message: Readable,
-  encoding = 'utf8',
+  encoding = 'utf8' as BufferEncoding,
   limit?: number
 ): Promise<string> {
   let body = '';
