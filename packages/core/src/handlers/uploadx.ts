@@ -24,6 +24,8 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
       fail(ERRORS.BAD_REQUEST, error)
     );
+    const { query } = url.parse(decodeURI(req.url || ''), true);
+    Object.assign(metadata, query);
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
@@ -42,6 +44,8 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
       fail(ERRORS.BAD_REQUEST, error)
     );
+    const { query } = url.parse(decodeURI(req.url || ''), true);
+    Object.assign(metadata, query);
     const file = await this.storage.update(name, { metadata, name });
     const headers = { Location: this.buildFileUrl(req, file) };
     this.setExpiresHeader(file, headers);
@@ -82,9 +86,9 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 
   getName(req: http.IncomingMessage): string {
     const { query } = url.parse(decodeURI(req.url || ''), true);
+    if (query.upload_id) return query.upload_id as string;
     if (query.name) return query.name as string;
     if (query.prefix) return query.prefix as string;
-    if (query.upload_id) return query.upload_id as string;
     return super.getName(req);
   }
 
