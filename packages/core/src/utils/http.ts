@@ -1,6 +1,5 @@
 import * as http from 'http';
 import { Readable } from 'stream';
-import { Metadata } from '../storages';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -30,14 +29,14 @@ export async function readBody(
 }
 
 export async function getMetadata(
-  req: http.IncomingMessage & { body?: Metadata },
+  req: http.IncomingMessage & { body?: Record<any, any> },
   limit = 16777216
-): Promise<Metadata> {
+): Promise<Record<any, any>> {
   if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
-  if (req.body) return req.body;
-  if (!typeis(req, ['json'])) return Promise.reject('content-type error');
+  if (!typeis(req, ['json'])) return {};
+  if (req.body) return { ...req.body };
   const raw = await readBody(req, 'utf8', limit);
-  return JSON.parse(raw) as Metadata;
+  return { ...JSON.parse(raw) } as Record<any, any>;
 }
 
 export function getHeader(req: http.IncomingMessage, name: string): string {
@@ -52,7 +51,7 @@ export function setHeaders(
   const exposeHeaders = Object.keys(headers).toString();
   exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
   for (const [key, value] of Object.entries(headers)) {
-    ['location'].includes(key.toLowerCase())
+    ['location', 'link'].includes(key.toLowerCase())
       ? res.setHeader(key, encodeURI(value.toString()))
       : res.setHeader(key, value.toString());
   }
