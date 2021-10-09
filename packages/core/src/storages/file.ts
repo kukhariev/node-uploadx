@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { md5, uid } from '../utils';
+import { isRecord, md5, uid } from '../utils';
 import { isAbsolute } from 'path';
 
 export function isExpired(file: File): boolean {
@@ -93,7 +93,7 @@ export interface Metadata {
 }
 
 export function isMetadata(raw: unknown): raw is Metadata {
-  return typeof raw === 'object';
+  return isRecord(raw);
 }
 
 export function updateMetadata(file: File, metadata: unknown): void {

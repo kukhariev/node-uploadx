@@ -42,6 +42,11 @@ export function isNumber(x?: unknown): x is number {
   return x === Number(x);
 }
 
+export function isRecord(x: unknown): x is Record<any, any> {
+  // return Object.prototype.toString.call(x) === '[object Object]';
+  return x !== null && typeof x === 'object' && !Array.isArray(x);
+}
+
 /**
  * convert a human-readable duration to ms
  * @param value

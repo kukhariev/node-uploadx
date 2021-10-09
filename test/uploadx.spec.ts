@@ -45,10 +45,6 @@ describe('::Uploadx', () => {
       expect(res.header).not.toHaveProperty('location');
     });
 
-    it('should 400 (bad request)', async () => {
-      await request(app).post(basePath).send('').expect(400);
-    });
-
     it('should check metadata size', async () => {
       const res = await create({ ...file1, custom: new Array(255).join('c') }).expect(400);
       expect(res.type).toBe('application/json');
@@ -61,7 +57,7 @@ describe('::Uploadx', () => {
       expect(res.header).not.toHaveProperty('location');
     });
 
-    it('should 201 (x-upload-content)', async () => {
+    it('should 201 (x-headers)', async () => {
       const res = await create(file1).expect(201);
       uri1 = res.header.location as string;
       expect(uri1).toBeDefined();
@@ -71,6 +67,10 @@ describe('::Uploadx', () => {
       const res = await request(app).post(basePath).send(file2).expect(201);
       uri2 = res.header.location as string;
       expect(uri2).toBeDefined();
+    });
+
+    it('should 201 (query)', async () => {
+      await request(app).post(basePath).send('').query(file1).expect(201);
     });
   });
 
