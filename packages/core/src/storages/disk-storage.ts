@@ -53,6 +53,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file);
+    file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
     await this.validate(file);
     const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
@@ -65,6 +66,10 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     const file = await this.getMeta(part.name);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
+    if (part.size && part.size < file.size) {
+      file.size = part.size;
+      await this.saveMeta(file);
+    }
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
