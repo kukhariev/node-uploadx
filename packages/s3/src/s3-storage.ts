@@ -122,7 +122,7 @@ export class S3Storage extends BaseStorage<S3File> {
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
     const file = new S3File(config);
-    file.name = this.namingFunction(file);
+    file.name = this.namingFunction(file, req);
     await this.validate(file);
     try {
       const existing = await this.getMeta(file.name);

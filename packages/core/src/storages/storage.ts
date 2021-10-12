@@ -46,7 +46,7 @@ export interface BaseStorageOptions<T extends File> {
   /** File size limit */
   maxUploadSize?: number | string;
   /** Name generator function */
-  filename?: (file: T) => string;
+  filename?: (file: T, req: any) => string;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
@@ -94,7 +94,7 @@ export abstract class BaseStorage<TFile extends File> {
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   protected log = Logger.get(`${this.constructor.name}`);
-  protected namingFunction: (file: TFile) => string;
+  protected namingFunction: (file: TFile, req: any) => string;
   protected validation = new Validator<TFile>();
   abstract meta: MetaStorage<TFile>;
 

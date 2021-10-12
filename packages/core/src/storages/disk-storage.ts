@@ -52,7 +52,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
-    file.name = this.namingFunction(file);
+    file.name = this.namingFunction(file, req);
     await this.validate(file);
     const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
