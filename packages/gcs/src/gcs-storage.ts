@@ -132,7 +132,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
     const file = new GCSFile(config);
-    file.name = this.namingFunction(file);
+    file.name = this.namingFunction(file, req);
     await this.validate(file);
     try {
       const existing = await this.getMeta(file.name);
