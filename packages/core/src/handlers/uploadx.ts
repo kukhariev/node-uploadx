@@ -4,11 +4,11 @@ import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers } from '../utils';
 import { BaseHandler } from './base-handler';
 
-export function rangeParser(rangeHeader = ''): { start: number; total: number } {
+export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const parts = rangeHeader.split(/\s+|\//);
-  const total = parseInt(parts[2]);
+  const size = parseInt(parts[2]);
   const start = parseInt(parts[1]);
-  return { start, total };
+  return { start, size };
 }
 
 /**
@@ -61,8 +61,8 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
-    const { start } = contentRange ? rangeParser(contentRange) : { start: 0 };
-    const file = await this.storage.write({ start, name, contentLength, body: req });
+    const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
+    const file = await this.storage.write({ name, body: req, start, contentLength, size });
     const headers: Headers = {};
     this.setExpiresHeader(file, headers);
     if (file.status === 'part') {

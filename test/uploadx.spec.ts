@@ -129,6 +129,23 @@ describe('::Uploadx', () => {
     it('should 404 (no id)', async () => {
       await request(app).put(basePath).send(fs.readFileSync(srcpath)).expect(404);
     });
+
+    it('should stream', async () => {
+      let res = await request(app).post(basePath).send({ name: 'stream' });
+      const streamUri = res.header.location as string;
+      await request(app)
+        .put(streamUri)
+        .redirects(0)
+        .set('content-range', `bytes 0-5/*`)
+        .send('012345');
+      res = await request(app)
+        .put(streamUri)
+        .redirects(0)
+        .set('content-range', `bytes 6-9/10`)
+        .send('6789');
+      expect(res.status).toBe(200);
+      expect(res.body.size).toBe(10);
+    });
   });
 
   describe('GET', () => {
@@ -136,14 +153,14 @@ describe('::Uploadx', () => {
       uri1 ||= (await create(file1)).header.location;
       uri2 ||= (await create(file2)).header.location;
       const res = await request(app).get(`${basePath}/${userPrefix}`).expect(200);
-      expect(res.body.items).toHaveLength(2);
+      expect(res.body.items.length).toBeGreaterThan(2);
     });
 
-    it('should return info array(name)', async () => {
+    it('should return info array(prefix)', async () => {
       uri1 ||= (await create(file1)).header.location;
       uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).get(`${basePath}?name=${userPrefix}`).expect(200);
-      expect(res.body.items).toHaveLength(2);
+      const res = await request(app).get(`${basePath}?prefix=${userPrefix}`).expect(200);
+      expect(res.body.items.length).toBeGreaterThan(2);
     });
 
     it('should return 404(query)', async () => {

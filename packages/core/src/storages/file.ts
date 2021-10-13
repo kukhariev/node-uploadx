@@ -49,7 +49,7 @@ export class File implements FileInit {
     this.metadata = metadata;
     this.originalName = originalName || extractOriginalName(metadata) || (this.id = uid());
     this.contentType = contentType || extractMimeType(metadata) || 'application/octet-stream';
-    this.size = Number(size || metadata.size) || 0;
+    this.size = Number(size || metadata.size);
     this.userId = userId;
     this.id ||= generateFileId(this);
   }
