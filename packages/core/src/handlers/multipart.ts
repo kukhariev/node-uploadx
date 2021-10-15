@@ -1,7 +1,6 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
-import { BaseStorage, File, FileInit } from '../storages';
-import { DiskStorageOptions } from '../storages';
+import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
 import { ERRORS, fail, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
@@ -65,12 +64,25 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
 
 /**
  * Basic express wrapper
+ * @example
+ * app.use('/files', multipart({directory: '/tmp', maxUploadSize: '250GB'}));
  */
 export function multipart<TFile extends Readonly<File>>(
   options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }
-
-multipart.upload = (options: DiskStorageOptions | { storage: any } = {}) =>
-  new Multipart(options).upload;
+/**
+ * Express wrapper
+ *
+ * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
+ * @example
+ * app.use('/files', multipart.upload({ storage }), (req, res, next) => {
+ *   if (req.method === 'GET') return res.sendStatus(404);
+ *   console.log('File upload complete: ', req.body.name);
+ *   return res.sendStatus(200);
+ * });
+ */
+multipart.upload = <TFile extends Readonly<File>>(
+  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
+) => new Multipart(options).upload;

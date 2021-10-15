@@ -72,6 +72,7 @@ export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
   headers?: Headers;
   body?: T;
 }
+
 export type ResponseBody = string | Record<string, any>;
 export type ResponseBodyType = 'text' | 'json';
 export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];

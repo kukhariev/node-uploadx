@@ -159,13 +159,11 @@ export function tus<TFile extends File>(
  *
  * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
- * app.use('/files', tus.upload({ storage }), (req, res, next) => {
-  if (req.method === 'GET') {
-    return res.sendStatus(404);
-  }
-  console.log('File upload complete: ', req.body.name);
-  return res.sendStatus(204);
-});
+ * app.all('/files', tus.upload({ storage }), (req, res, next) => {
+ *   if (req.method === 'GET') return res.sendStatus(404);
+ *   console.log('File upload complete: ', req.body.name);
+ *   return res.sendStatus(204);
+ * });
  */
 tus.upload = <TFile extends Readonly<File>>(
   options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
