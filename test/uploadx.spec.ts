@@ -28,10 +28,6 @@ describe('::Uploadx', () => {
 
   afterAll(async () => cleanup(directory));
 
-  test('wrapper', () => {
-    expect(uploadx()).toBeInstanceOf(Function);
-  });
-
   describe('POST', () => {
     it('should 413 (size limit)', async () => {
       const res = await create({ ...file1, size: 10e10 }).expect(413);

@@ -16,6 +16,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
   const timestamp = Date.now() - 10000;
   return {
     ensureFile: async () => 0,
+    accessCheck: (dir: string, cb: () => void) => cb(),
     getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafilename)],
     getWriteStream: () => fileWriteStream,
     fsp: {
@@ -42,7 +43,6 @@ describe('DiskStorage', () => {
   describe('initialization', () => {
     it('should set defaults', () => {
       storage = new DiskStorage();
-      expect(storage.isReady).toBe(true);
       expect(storage.directory).toBe('files');
     });
 

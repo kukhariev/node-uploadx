@@ -90,7 +90,7 @@ export abstract class BaseStorage<TFile extends File> {
   maxUploadSize: number;
   maxMetadataSize: number;
   path: string;
-  isReady = false;
+  isReady = true;
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   protected log = Logger.get(`${this.constructor.name}`);

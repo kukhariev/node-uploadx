@@ -1,5 +1,6 @@
 import { createWriteStream, promises as fsp, WriteStream } from 'fs';
-import { dirname, posix } from 'path';
+import { dirname, join, posix } from 'path';
+import { callbackify } from 'util';
 
 /**
  * Ensures that the directory exists
@@ -20,6 +21,14 @@ export async function ensureFile(path: string, overwrite = false): Promise<numbe
   await (await fsp.open(path, overwrite ? 'w' : 'a')).close();
   return (await fsp.stat(path)).size;
 }
+
+export async function accessCheckAsync(dir: string): Promise<void> {
+  const path = join(dir, '.accessCheck');
+  await ensureFile(path, true);
+  await fsp.unlink(path).catch(() => null);
+}
+
+export const accessCheck = callbackify(accessCheckAsync);
 
 /**
  * Returns file WriteStream for data appending.
