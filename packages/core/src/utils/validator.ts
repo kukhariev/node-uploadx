@@ -6,6 +6,7 @@ export interface ValidatorConfig<T> {
   isValid?: (t: T) => boolean | Promise<boolean>;
   response?: ResponseTuple<any> | HttpError<any>;
 }
+
 const capitalize = (s: string): string => s && s[0].toUpperCase() + s.slice(1);
 export type Validation<T> = Record<string, ValidatorConfig<T>>;
 
@@ -16,6 +17,7 @@ export interface ValidationError extends HttpError {
 export function isValidationError(error: unknown): error is ValidationError {
   return (error as ValidationError).name === 'ValidationError';
 }
+
 export class Validator<T> {
   private _validators: Record<string, Required<ValidatorConfig<T>>> = {};
 

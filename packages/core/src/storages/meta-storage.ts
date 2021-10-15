@@ -25,6 +25,7 @@ export interface MetaStorageOptions {
 export class MetaStorage<T> {
   prefix = '.';
   suffix = '.';
+
   constructor(config?: MetaStorageOptions) {
     this.prefix = config?.prefix || '';
     this.suffix = config?.suffix || METAFILE_EXTNAME;
@@ -61,6 +62,7 @@ export class MetaStorage<T> {
     return { items: [] };
   }
 }
+
 /**
  * @deprecated
  */

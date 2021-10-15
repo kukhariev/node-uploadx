@@ -60,6 +60,7 @@ class E_ {
     });
   };
 }
+
 export const ErrorMap = E_.errors;
 
 export class UploadxError extends Error {
