@@ -1,5 +1,5 @@
 import * as http from 'http';
-import { resolve as pathResolve } from 'path';
+import { join, resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
 import { File, FileInit, FilePart, hasContent, isCompleted, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
@@ -43,7 +43,11 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       const metaConfig = { ...config, ...(config.metaStorageConfig || {}) };
       this.meta = new LocalMetaStorage(metaConfig);
     }
-    this.isReady = true;
+    this.accessCheck().catch(err => {
+      this.isReady = false;
+      // eslint-disable-next-line no-console
+      console.error('ERROR: Could not write to directory: %o', err);
+    });
   }
 
   normalizeError(error: Error): HttpError {
@@ -52,7 +56,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
-    file.name = this.namingFunction(file, req)
+    file.name = this.namingFunction(file, req);
     file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
     await this.validate(file);
     const path = this.getFilePath(file.name);
@@ -128,5 +132,11 @@ export class DiskStorage extends BaseStorage<DiskFile> {
         resolve(ensureFile(path));
       }
     });
+  }
+
+  private async accessCheck(): Promise<void> {
+    const path = join(this.directory, '.writeTest');
+    await ensureFile(path, true);
+    await fsp.unlink(path).catch(() => null);
   }
 }

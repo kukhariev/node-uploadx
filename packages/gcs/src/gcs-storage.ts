@@ -91,6 +91,7 @@ export class GCSFile extends File {
     });
  */
 export class GCStorage extends BaseStorage<GCSFile> {
+  bucket: string;
   authClient: GoogleAuth;
   storageBaseURI: string;
   uploadBaseURI: string;
@@ -109,11 +110,16 @@ export class GCStorage extends BaseStorage<GCSFile> {
     }
     config.scopes ||= authScopes;
     config.keyFile ||= process.env.GCS_KEYFILE;
-    const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
-    this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
-    this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
+    this.bucket = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
+    this.storageBaseURI = [storageAPI, this.bucket, 'o'].join('/');
+    this.uploadBaseURI = [uploadAPI, this.bucket, 'o'].join('/');
     this.authClient = new GoogleAuth(config);
-    this._checkBucket(bucketName);
+
+    this.accessCheck().catch((err: ClientError) => {
+      this.isReady = false;
+      // eslint-disable-next-line no-console
+      console.error('ERROR: Unable to open bucket: %o', err);
+    });
   }
 
   normalizeError(error: ClientError): HttpError {
@@ -228,14 +234,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return this.deleteMeta(file.name);
   };
 
-  private _checkBucket(bucketName: string): void {
-    this.authClient
-      .request({ url: `${storageAPI}/${bucketName}` })
-      .then(() => (this.isReady = true))
-      .catch((err: ClientError) => {
-        // eslint-disable-next-line no-console
-        console.error('error open bucket: %o', err);
-        process.exit(1);
-      });
+  private accessCheck(): Promise<any> {
+    return this.authClient.request({ url: `${storageAPI}/${this.bucket}` });
   }
 }

@@ -5,7 +5,6 @@ import {
   CreateMultipartUploadCommand,
   CreateMultipartUploadRequest,
   HeadBucketCommand,
-  ListMultipartUploadsCommand,
   ListPartsCommand,
   Part,
   S3Client,
@@ -105,7 +104,11 @@ export class S3Storage extends BaseStorage<S3File> {
           ? new LocalMetaStorage(metaConfig)
           : new S3MetaStorage(metaConfig);
     }
-    this._checkBucket();
+    this.accessCheck().catch((err: AWSError) => {
+      this.isReady = false;
+      // eslint-disable-next-line no-console
+      console.error('ERROR: Unable to open bucket: %o', err);
+    });
   }
 
   normalizeError(error: AWSError): HttpError {
@@ -225,20 +228,7 @@ export class S3Storage extends BaseStorage<S3File> {
     }
   }
 
-  private _checkBucket(): void {
-    this.client.send(new HeadBucketCommand({ Bucket: this.bucket }), (err: AWSError, data) => {
-      if (err) {
-        throw err;
-      }
-      this.isReady = true;
-      this.log.enabled && this._listMultipartUploads();
-    });
-  }
-
-  private _listMultipartUploads(): void {
-    this.client.send(new ListMultipartUploadsCommand({ Bucket: this.bucket }), (err, data) => {
-      err && this.log('Incomplete Uploads fetch error:', err);
-      data && this.log('Incomplete Uploads: ', data.Uploads?.length);
-    });
+  private async accessCheck(): Promise<any> {
+    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 }

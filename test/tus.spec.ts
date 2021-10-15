@@ -2,13 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import {
-  BaseStorage,
-  parseMetadata,
-  serializeMetadata,
-  tus,
-  TUS_RESUMABLE
-} from '../packages/core/src';
+import { parseMetadata, serializeMetadata, tus, TUS_RESUMABLE } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
 
 describe('::Tus', () => {
@@ -29,21 +23,6 @@ describe('::Tus', () => {
   beforeAll(async () => cleanup(directory));
 
   afterAll(async () => cleanup(directory));
-
-  describe('express middleware', () => {
-    it('default storage', () => {
-      expect(tus()).toBeInstanceOf(Function);
-    });
-
-    it('custom storage', () => {
-      const storage = {} as BaseStorage<any>;
-      expect(tus({ storage })).toBeInstanceOf(Function);
-    });
-
-    it('tus.upload()', () => {
-      expect(tus.upload()).toBeInstanceOf(Function);
-    });
-  });
 
   describe('POST', () => {
     it('should 201', async () => {
