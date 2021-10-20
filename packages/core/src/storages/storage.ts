@@ -45,6 +45,7 @@ export interface BaseStorageOptions<T extends File> {
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
+  userIdentifier?: (req: any) => string;
   /** Name generator function */
   filename?: (file: T, req: any) => string;
   useRelativeLocation?: boolean;
@@ -85,7 +86,6 @@ const defaultOptions = {
 };
 
 export abstract class BaseStorage<TFile extends File> {
-  static maxCacheMemory = '800MB';
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -105,8 +105,7 @@ export abstract class BaseStorage<TFile extends File> {
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
-    const storage = <typeof BaseStorage>this.constructor;
-    this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
+    this.cache = new Cache();
 
     const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
     if (purgeInterval) {
@@ -212,8 +211,17 @@ export abstract class BaseStorage<TFile extends File> {
     return purged;
   }
 
-  async get(prefix = ''): Promise<UploadList> {
-    return this.meta.list(prefix);
+  async get(req: http.IncomingMessage, prefix = ''): Promise<UploadList> {
+    const user = this.config.userIdentifier && this.config.userIdentifier(req);
+    if (!user) return fail(ERRORS.FILE_NOT_FOUND);
+    const uploadList: UploadList = { items: [], prefix };
+    const list = await this.list(prefix);
+    for (const item of list.items) {
+      const { createdAt, expiredAt, name, size, userId } = await this.getMeta(item.name);
+      user === userId &&
+        uploadList.items.push({ createdAt, expiredAt, name, size, userId } as Required<File>);
+    }
+    return uploadList;
   }
 
   /**

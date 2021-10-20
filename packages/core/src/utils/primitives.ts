@@ -7,6 +7,12 @@ export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> =
   return result;
 };
 
+export const omit = <T, K extends keyof T>(key: K, obj: T): Omit<T, K> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [key]: _, ...rest } = obj;
+  return rest;
+};
+
 export const uid = (): string => randomBytes(16).toString('hex');
 
 export function md5(str: string): string {

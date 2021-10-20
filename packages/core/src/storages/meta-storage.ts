@@ -6,6 +6,8 @@ interface UploadListEntry {
   name: string;
   createdAt: string | Date | number;
   expiredAt?: string | Date | number;
+  userId?: string;
+  size?: number;
 }
 
 /** @experimental */

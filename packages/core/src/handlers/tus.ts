@@ -53,7 +53,6 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = parseMetadata(metadataHeader);
     const config: FileInit = { metadata };
-    config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
     const headers: Headers = { Location: this.buildFileUrl(req, file) };

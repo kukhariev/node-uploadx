@@ -13,7 +13,6 @@ import {
   ErrorMap,
   ErrorResponses,
   ERRORS,
-  fail,
   getBaseUrl,
   isUploadxError,
   isValidationError,
@@ -160,8 +159,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
       });
   };
 
-  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id; // eslint-disable-line
-
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     this.send(res, { statusCode: 204 });
     return {} as TFile;
@@ -171,12 +168,8 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
    * `GET` request handler
    */
   get(req: http.IncomingMessage, res: http.ServerResponse): Promise<UploadList> {
-    const userId = this.getUserId(req, res);
-    if (userId) {
-      const name = this.getName(req);
-      if (name.startsWith(userId)) return this.storage.get(name);
-    }
-    return fail(ERRORS.FILE_NOT_FOUND);
+    const name = this.getName(req);
+    return this.storage.get(req, name);
   }
 
   /**

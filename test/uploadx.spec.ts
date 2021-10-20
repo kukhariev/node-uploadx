@@ -158,18 +158,6 @@ describe('::Uploadx', () => {
       const res = await request(app).get(`${basePath}?prefix=${userPrefix}`).expect(200);
       expect(res.body.items.length).toBeGreaterThan(2);
     });
-
-    it('should return 404(query)', async () => {
-      uri1 ||= (await create(file1)).header.location;
-      uri2 ||= (await create(file2)).header.location;
-      await request(app).get(`${basePath}?upload_id=testfileSingle.mp4'`).expect(404);
-    });
-
-    it('should return 404(parameters)', async () => {
-      uri1 ||= (await create(file1)).header.location;
-      uri2 ||= (await create(file2)).header.location;
-      await request(app).get(`${basePath}/testfileSingle.mp4`).expect(404);
-    });
   });
 
   describe('DELETE', () => {

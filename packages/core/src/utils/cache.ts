@@ -9,7 +9,7 @@ export class Cache<T> {
    * @param maxEntries The maximum number of entries before the cache starts flushing out the old items
    * @param maxAge The maximum life of a cached items in seconds
    */
-  constructor(public maxEntries = 500, public maxAge = 300) {}
+  constructor(public maxEntries = 1000, public maxAge = 300) {}
 
   get(key: string): T | undefined {
     const [value, expiresAt] = this._map.get(key) || [];
@@ -30,5 +30,9 @@ export class Cache<T> {
     if (this._map.has(key)) this._map.delete(key);
     else if (this._map.size === this.maxEntries) this._map.delete(this._map.keys().next().value);
     this._map.set(key, [value, Date.now() + this.maxAge * 1000]);
+  }
+
+  list(prefix = ''): string[] {
+    return Array.from(this._map.keys()).filter(k => k.startsWith(prefix));
   }
 }

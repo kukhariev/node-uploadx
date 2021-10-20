@@ -27,7 +27,6 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const { query } = url.parse(decodeURI(req.url || ''), true);
     Object.assign(metadata, query);
     const config: FileInit = { metadata };
-    config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);

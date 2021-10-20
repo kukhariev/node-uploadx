@@ -81,7 +81,7 @@ describe('GCStorage', () => {
         data: { items: [{ name: metafilename }] }
       };
       mockAuthRequest.mockResolvedValue(list);
-      const { items } = await storage.get(testfile.userId);
+      const { items } = await storage.get({ user: { id: testfile.userId } } as any);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ name: filename });
