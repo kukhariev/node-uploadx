@@ -20,7 +20,7 @@ uploads.on('updated', file => console.log(' metadata updated: ', file));
 
 const server = createServer((req, res) => {
   const { pathname } = parse(req.url || '');
-  if (pathname === '/upload/files') {
+  if (pathname === '/files') {
     uploads.handle(req, res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plan' });

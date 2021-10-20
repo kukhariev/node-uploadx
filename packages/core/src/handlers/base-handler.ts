@@ -32,19 +32,25 @@ export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
 
+type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
+
+type UploadEvent<TFile extends Readonly<File>> = TFile & ReqEvent;
+
+type UploadErrorEvent = UploadxError & ReqEvent;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface BaseHandler<TFile extends Readonly<File>> extends EventEmitter {
-  on(event: 'error', listener: (error: UploadxError) => void): this;
+  on(event: 'error', listener: (error: UploadErrorEvent) => void): this;
 
-  on(event: UploadEventType, listener: (file: TFile) => void): this;
+  on(event: UploadEventType, listener: (payload: UploadEvent<TFile>) => void): this;
 
-  off(event: UploadEventType, listener: (file: TFile) => void): this;
+  off(event: UploadEventType, listener: (payload: UploadEvent<TFile>) => void): this;
 
-  off(event: 'error', listener: (error: UploadxError) => void): this;
+  off(event: 'error', listener: (error: UploadErrorEvent) => void): this;
 
-  emit(event: UploadEventType, evt: TFile): boolean;
+  emit(event: UploadEventType, payload: UploadEvent<TFile>): boolean;
 
-  emit(event: 'error', evt: UploadxError): boolean;
+  emit(event: 'error', error: UploadErrorEvent): boolean;
 }
 
 export abstract class BaseHandler<TFile extends Readonly<File>>
@@ -132,7 +138,8 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
       .then(async (file: TFile | UploadList): Promise<void> => {
         if ('status' in file && file.status) {
           this.log('[%s]: %s', file.status, file.name);
-          this.listenerCount(file.status) && this.emit(file.status, file);
+          this.listenerCount(file.status) &&
+            this.emit(file.status, { ...file, request: pick(req, ['headers', 'method', 'url']) });
           if (file.status === 'completed') {
             req['_body'] = true;
             req['body'] = file;
@@ -151,9 +158,9 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
         const err = pick(error, [
           'name',
           ...(Object.getOwnPropertyNames(error) as (keyof Error)[])
-        ]);
+        ]) as UploadxError;
         const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
-        this.listenerCount('error') && this.emit('error', errorEvent as UploadxError);
+        this.listenerCount('error') && this.emit('error', errorEvent);
         this.log('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
         return this.sendError(res, error);

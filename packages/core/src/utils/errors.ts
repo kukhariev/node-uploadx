@@ -1,6 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-import type { IncomingMessage } from 'http';
 import { UploadxResponse } from './http';
 
 // eslint-disable-next-line no-shadow
@@ -65,7 +64,6 @@ export const ErrorMap = E_.errors;
 
 export class UploadxError extends Error {
   uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
-  request?: Pick<IncomingMessage, 'url' | 'headers' | 'method'> | undefined;
   detail?: unknown;
 }
 
