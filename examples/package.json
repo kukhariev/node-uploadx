@@ -9,7 +9,7 @@
     "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
-    "node": "tsnd -r tsconfig-paths/register -r dotenv/config node-http-server",
+    "node": "tsnd node-http-server",
     "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
     "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation"

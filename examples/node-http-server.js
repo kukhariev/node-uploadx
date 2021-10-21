@@ -12,9 +12,9 @@ const storage = new DiskStorage({
 const uploads = new Uploadx({ storage });
 
 uploads.on('error', error => console.error('error: ', error));
-uploads.on('created', ({ name }) => console.log('created: ', name));
-uploads.on('part', ({ name }) => console.log('part: ', name));
-uploads.on('deleted', ({ name }) => console.log('deleted: ', name));
+uploads.on('created', ({ originalName }) => console.log('created: ', originalName));
+uploads.on('part', ({ originalName }) => console.log('part: ', originalName));
+uploads.on('deleted', ({ originalName }) => console.log('deleted: ', originalName));
 uploads.on('completed', file => console.log('completed: ', file));
 uploads.on('updated', file => console.log(' metadata updated: ', file));
 
