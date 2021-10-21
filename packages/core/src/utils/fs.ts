@@ -50,7 +50,7 @@ export function getFiles(prefix: string): Promise<string[]> {
   const prefix_ = prefix.replace(/\\/g, '/');
   const _getFiles = async (current: string): Promise<string[]> => {
     try {
-      if ((await fsp.stat(current)).isFile()) return [current];
+      if ((await fsp.stat(current)).isFile()) return _getFiles(dirname(current));
     } catch {
       return _getFiles(dirname(current));
     }
