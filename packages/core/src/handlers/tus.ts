@@ -67,7 +67,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
       headers['Upload-Offset'] = file.bytesWritten;
     }
-    const statusCode = file.bytesWritten === file.size || file.bytesWritten === 0 ? 201 : 200;
+    const statusCode = file.bytesWritten > 0 ? 200 : 201;
     this.send(res, { statusCode, headers });
     return file;
   }
