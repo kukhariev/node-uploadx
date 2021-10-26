@@ -31,9 +31,10 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);
-    const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    const headers = { Location: this.buildFileUrl(req, file) };
+    const headers: Headers = { Location: this.buildFileUrl(req, file) };
+    file.bytesWritten > 0 && (headers['Range'] = `bytes=0-${file.bytesWritten - 1}`);
     this.setExpiresHeader(file, headers);
+    const statusCode = file.bytesWritten > 0 ? 200 : 201;
     this.send(res, { statusCode, headers });
     return file;
   }
