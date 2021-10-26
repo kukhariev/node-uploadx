@@ -77,7 +77,7 @@ export interface BaseStorageOptions<T extends File> {
 const defaultOptions = {
   allowMIME: ['*/*'],
   maxUploadSize: '5TB',
-  filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
+  filename: ({ id }: File): string => id,
   useRelativeLocation: false,
   onComplete: () => null,
   path: '/files',
@@ -212,7 +212,7 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   async get(req: http.IncomingMessage, prefix = ''): Promise<UploadList> {
-    const user = this.config.userIdentifier && this.config.userIdentifier(req);
+    const user = this.getUserIdentifier(req);
     if (!user) return fail(ERRORS.FILE_NOT_FOUND);
     const uploadList: UploadList = { items: [], prefix };
     const list = await this.list(prefix);
@@ -256,6 +256,10 @@ export abstract class BaseStorage<TFile extends File> {
       file.expiredAt = new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
     }
     return file;
+  }
+
+  protected getUserIdentifier(req: http.IncomingMessage): string {
+    return this.config.userIdentifier instanceof Function ? this.config.userIdentifier(req) : '';
   }
 
   /**

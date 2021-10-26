@@ -39,7 +39,7 @@ describe('S3Storage', () => {
     it('should request api and set status and uri', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
-      file = await storage.create({} as any, testfile);
+      file = await storage.create({ user: { id: 'userId' } } as any, testfile);
       expect(file.name).toEqual(filename);
       expect(file.status).toBe('created');
       expect(file).toMatchObject({

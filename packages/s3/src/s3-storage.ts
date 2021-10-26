@@ -124,7 +124,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
-    config.userId = this.config.userIdentifier && this.config.userIdentifier(req);
+    config.userId = this.getUserIdentifier(req);
     const file = new S3File(config);
     file.name = this.namingFunction(file, req);
     await this.validate(file);

@@ -1,4 +1,4 @@
-import { File, UploadList, MetaStorage, MetaStorageOptions } from '@uploadx/core';
+import { File, MetaStorage, MetaStorageOptions, UploadList } from '@uploadx/core';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
 

@@ -137,7 +137,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
-    config.userId = this.config.userIdentifier && this.config.userIdentifier(req);
+    config.userId = this.getUserIdentifier(req);
     const file = new GCSFile(config);
     file.name = this.namingFunction(file, req);
     await this.validate(file);
