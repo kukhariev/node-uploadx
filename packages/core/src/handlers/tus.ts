@@ -39,7 +39,6 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers = {
       'Tus-Extension': this.extension.toString(),
-      'Tus-Version': TUS_RESUMABLE,
       'Tus-Max-Size': this.storage.maxUploadSize
     };
     this.send(res, { statusCode: 204, headers });
@@ -86,7 +85,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const file = await this.storage.write({ start, name, body: req, contentLength });
     if (file.status) {
       const headers: Headers = {
-        'Upload-Offset': `${file.bytesWritten}`
+        'Upload-Offset': file.bytesWritten
       };
       if (file.expiredAt) {
         headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
@@ -104,7 +103,8 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const file = await this.storage.write({ name: name });
     const headers = {
-      'Upload-Offset': `${file.bytesWritten}`,
+      'Upload-Offset': file.bytesWritten,
+      'Upload-Length': file.size,
       'Upload-Metadata': serializeMetadata(file.metadata)
     };
     this.send(res, { statusCode: 200, headers });
@@ -130,7 +130,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     if (!response.statusCode || response.statusCode < 300) {
       response.headers = {
         ...response.headers,
-        'Upload-Offset': `${req.body.size}`,
+        'Upload-Offset': req.body.size,
         'Upload-Metadata': serializeMetadata(req.body.metadata)
       };
     }
