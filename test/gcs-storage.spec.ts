@@ -45,7 +45,7 @@ describe('GCStorage', () => {
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
       file = await storage.create(req, testfile);
       expect(file.name).toEqual(filename);
-      expect(file.status).toEqual('created');
+      expect(file.status).toBe('created');
       expect(file).toMatchObject({ ...testfile, uri });
       expect(mockAuthRequest).toHaveBeenCalledTimes(4);
       expect(mockAuthRequest).toHaveBeenCalledWith(request.create);
@@ -92,7 +92,7 @@ describe('GCStorage', () => {
     it('should request api and set status and bytesWritten', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
       mockAuthRequest.mockResolvedValueOnce('_delete');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-argument
       mockFetch.mockResolvedValueOnce(new Response('{"mediaLink":"http://api.com/123456789"}'));
       const body = createReadStream(srcpath);
       const part: FilePart = {
@@ -108,14 +108,14 @@ describe('GCStorage', () => {
         headers: expect.objectContaining({ 'Content-Range': 'bytes 0-80494/80495' }),
         signal: expect.any(AbortSignal)
       });
-      expect(res.status).toEqual('completed');
+      expect(res.status).toBe('completed');
       expect(res.bytesWritten).toEqual(testfile.size);
     });
 
     it('should request api and set status and bytesWritten on resume', async () => {
       mockAuthRequest.mockResolvedValueOnce(_fileResponse());
       mockFetch.mockResolvedValueOnce(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
         new Response('', {
           status: 308,
           headers: { Range: '0-5' }
@@ -127,8 +127,8 @@ describe('GCStorage', () => {
         method: 'PUT',
         headers: expect.objectContaining({ 'Content-Range': 'bytes */80495' })
       });
-      expect(res.status).toEqual('part');
-      expect(res.bytesWritten).toEqual(6);
+      expect(res.status).toBe('part');
+      expect(res.bytesWritten).toBe(6);
     });
   });
 
@@ -158,11 +158,11 @@ describe('Range utils', () => {
     [{}, 'bytes */*'],
     [{ body }, 'bytes */*'],
     [{ start: 0 }, 'bytes */*'],
-    [{ start: 0, body } as any, 'bytes 0-*/*'],
+    [{ start: 0, body }, 'bytes 0-*/*'],
     [{ start: 10, size: 80, body }, 'bytes 10-*/80'],
     [{ start: 0, contentLength: 80, size: 80, body }, 'bytes 0-79/80'],
     [{ start: 0, contentLength: 80, size: 80 }, 'bytes */80']
   ])('buildContentRange(%o) === %s', (str, expected) => {
-    expect(buildContentRange(str)).toBe(expected);
+    expect(buildContentRange(str as FilePart & GCSFile)).toBe(expected);
   });
 });

@@ -15,6 +15,7 @@ import { createReadStream } from 'fs';
 import { S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
 import { FilePart } from '../packages/core/src';
 import { filename, metafilename, srcpath, storageOptions, testfile } from './shared';
+import { IncomingMessage } from 'http';
 
 const s3Mock = mockClient(S3Client);
 
@@ -24,6 +25,7 @@ describe('S3Storage', () => {
 
   let file: S3File;
   let storage: S3Storage;
+  const req = {} as IncomingMessage;
 
   beforeEach(async () => {
     s3Mock.reset();
@@ -39,7 +41,7 @@ describe('S3Storage', () => {
     it('should request api and set status and uri', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
-      file = await storage.create({} as any, testfile);
+      file = await storage.create(req, testfile);
       expect(file.name).toEqual(filename);
       expect(file.status).toBe('created');
       expect(file).toMatchObject({
@@ -54,7 +56,7 @@ describe('S3Storage', () => {
       s3Mock.on(HeadObjectCommand).resolves({
         Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
       });
-      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
+      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
     });
@@ -62,7 +64,7 @@ describe('S3Storage', () => {
     it('should reject if not found', async () => {
       expect.assertions(1);
       await expect(
-        storage.update(filename, { metadata: { name: 'newname.mp4' } } as any)
+        storage.update(filename, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });

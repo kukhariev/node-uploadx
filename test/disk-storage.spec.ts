@@ -8,6 +8,7 @@ import {
   storageOptions,
   testfile
 } from './shared';
+import { IncomingMessage } from 'http';
 
 const directory = 'ds-test';
 let fileWriteStream: FileWriteStream;
@@ -35,9 +36,10 @@ describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
   let readStream: RequestReadStream;
+  const req = {} as IncomingMessage;
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
-    return storage.create({} as any, testfile);
+    return storage.create(req, testfile);
   };
 
   describe('initialization', () => {
@@ -56,13 +58,13 @@ describe('DiskStorage', () => {
     beforeEach(() => (storage = new DiskStorage(options)));
 
     it('should set status', async () => {
-      const { status, bytesWritten } = await storage.create({} as any, testfile);
+      const { status, bytesWritten } = await storage.create(req, testfile);
       expect(bytesWritten).toBe(0);
       expect(status).toBe('created');
     });
 
     it('should reject on limits', async () => {
-      await expect(storage.create({} as any, { ...testfile, size: 6e10 })).rejects.toMatchObject({
+      await expect(storage.create(req, { ...testfile, size: 6e10 })).rejects.toMatchObject({
         code: 'RequestEntityTooLarge',
         message: 'Request entity too large',
         name: 'ValidationError',
@@ -75,7 +77,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should update metadata', async () => {
-      const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } } as any);
+      const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
     });

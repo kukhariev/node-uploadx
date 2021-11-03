@@ -1,5 +1,6 @@
 import { createRequest, createResponse } from 'node-mocks-http';
 import { testStorage, TestUploader } from './shared';
+import * as http from 'http';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
@@ -17,13 +18,13 @@ describe('BaseHandler', () => {
     uploader.storage.isReady = false;
     const res = createResponse();
     uploader.handle(createRequest({ method: 'OPTIONS' }), res);
-    expect(res.statusCode).toEqual(503);
+    expect(res.statusCode).toBe(503);
   });
 
   it('should check http method', () => {
     const res = createResponse();
     uploader.handle(createRequest({ method: 'GET' }), res);
-    expect(res.statusCode).toEqual(405);
+    expect(res.statusCode).toBe(405);
   });
 
   describe('sendError', () => {
@@ -67,6 +68,6 @@ describe('BaseHandler', () => {
     ['/1/2', ''],
     ['/3/files/4', '']
   ])('nodejs: getName(%p) === %p', (url, name) => {
-    expect(uploader.getName({ url } as any)).toBe(name);
+    expect(uploader.getName({ url } as http.IncomingMessage)).toBe(name);
   });
 });
