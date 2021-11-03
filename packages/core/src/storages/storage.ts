@@ -124,7 +124,7 @@ export abstract class BaseStorage<TFile extends File> {
     const mime: Required<ValidatorConfig<TFile>> = {
       value: opts.allowMIME,
       isValid(file) {
-        return !!typeis.is(file.contentType, this.value);
+        return !!typeis.is(file.contentType, this.value as string[]);
       },
       response: ErrorMap.UnsupportedMediaType
     };

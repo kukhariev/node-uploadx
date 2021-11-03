@@ -86,7 +86,7 @@ describe('utils', () => {
     const req = { headers: { 'content-type': mime } } as IncomingMessage;
 
     it('typeis()', () => {
-      expect(utils.typeis({ headers: {} } as any, ['json'])).toBe(false);
+      expect(utils.typeis({ headers: {} } as IncomingMessage, ['json'])).toBe(false);
       expect(utils.typeis(req, ['html'])).toBe(false);
       expect(utils.typeis(req, ['json'])).toBe(mime);
     });
@@ -100,7 +100,7 @@ describe('utils', () => {
     });
 
     it('typeis.hasBody()', () => {
-      expect(utils.typeis.hasBody({ headers: {} } as any)).toBe(false);
+      expect(utils.typeis.hasBody({ headers: {} } as IncomingMessage)).toBe(false);
       expect(utils.typeis.hasBody({ headers: { 'content-length': '0' } } as IncomingMessage)).toBe(
         0
       );

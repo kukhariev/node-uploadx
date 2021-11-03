@@ -111,9 +111,9 @@ export function isCompleted(file: File): boolean {
 }
 
 export class FileName {
-  static INVALID_CHARS: any[] = ['"', '*', ':', '<', '>', '?', '\\', '|', 0x7f, 0o000, '../'];
-  static INVALID_PREFIXES: any[] = [];
-  static INVALID_SUFFIXES: any[] = [];
+  static INVALID_CHARS = ['"', '*', ':', '<', '>', '?', '\\', '|', '../'];
+  static INVALID_PREFIXES: string[] = [];
+  static INVALID_SUFFIXES: string[] = [];
   static MAX_LENGTH = 255;
   static MIN_LENGTH = 3;
   static isValid(name: string): boolean {
@@ -127,7 +127,7 @@ export class FileName {
     } else {
       const upperCase = name.toUpperCase();
       return !(
-        FileName.INVALID_CHARS.filter(Boolean).some(chars => upperCase.includes(chars as string)) ||
+        FileName.INVALID_CHARS.filter(Boolean).some(chars => upperCase.includes(chars)) ||
         FileName.INVALID_PREFIXES.filter(Boolean).some(chars => upperCase.startsWith(chars)) ||
         FileName.INVALID_SUFFIXES.filter(Boolean).some(chars => upperCase.endsWith(chars))
       );

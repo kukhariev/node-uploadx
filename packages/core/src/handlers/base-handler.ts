@@ -144,7 +144,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
             req['_body'] = true;
             req['body'] = file;
             const completed = (await this.storage.onComplete(file)) as UploadxResponse;
-            next ? next() : this.finish(req as any, res, completed || file);
+            next ? next() : this.finish(req, res, completed || file);
           }
           return;
         }
@@ -253,7 +253,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   }
 
   protected finish(
-    req: http.IncomingMessage & { body: File },
+    req: http.IncomingMessage,
     res: http.ServerResponse,
     response: UploadxResponse
   ): void {
