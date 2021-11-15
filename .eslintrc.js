@@ -17,7 +17,6 @@ module.exports = {
     'plugin:jest/recommended',
     'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:promise/recommended',
     'plugin:prettier/recommended',
