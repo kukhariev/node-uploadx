@@ -1,7 +1,7 @@
 import * as http from 'http';
 import { join, resolve as pathResolve } from 'path';
 import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
-import { File, FileInit, FilePart, hasContent, isCompleted, isValidPart } from './file';
+import { File, FileInit, FilePart, getFileStatus, hasContent, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
@@ -61,8 +61,8 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     await this.validate(file);
     const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
-    await this.saveMeta(file);
-    file.status = 'created';
+    file.status = getFileStatus(file);
+    if (file.status === 'created') await this.saveMeta(file);
     return file;
   }
 
@@ -78,9 +78,8 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
-      if (isCompleted(file)) {
-        await this.saveMeta(file);
-      }
+      file.status = getFileStatus(file);
+      if (file.status === 'completed') await this.saveMeta(file);
       return file;
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);

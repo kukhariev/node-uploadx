@@ -26,7 +26,9 @@ describe('GCStorage', () => {
   let storage: GCStorage;
   let file: GCSFile;
   const uri = 'http://api.com?upload_id=123456789';
-  const _fileResponse = (): { data: GCSFile } => ({ data: { ...testfile, uri } });
+  const _fileResponse = (): { data: GCSFile } => ({
+    data: { ...testfile, uri, createdAt: Date.now() }
+  });
   const _createResponse = (): any => ({ headers: { location: uri } });
   const req = { headers: { origin: 'http://api.com' } } as IncomingMessage;
 

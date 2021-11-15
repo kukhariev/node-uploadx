@@ -26,6 +26,11 @@ describe('S3Storage', () => {
   let file: S3File;
   let storage: S3Storage;
   const req = {} as IncomingMessage;
+  const headResponse = {
+    Metadata: {
+      metadata: encodeURIComponent(JSON.stringify({ ...testfile, createdAt: Date.now() }))
+    }
+  };
 
   beforeEach(async () => {
     s3Mock.reset();
@@ -44,6 +49,7 @@ describe('S3Storage', () => {
       file = await storage.create(req, testfile);
       expect(file.name).toEqual(filename);
       expect(file.status).toBe('created');
+      expect(file.createdAt).toBeDefined();
       expect(file).toMatchObject({
         ...testfile,
         UploadId: expect.any(String)
@@ -53,9 +59,7 @@ describe('S3Storage', () => {
 
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
-      s3Mock.on(HeadObjectCommand).resolves({
-        Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-      });
+      s3Mock.on(HeadObjectCommand).resolves(headResponse);
       file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
@@ -83,9 +87,7 @@ describe('S3Storage', () => {
 
   describe('.write()', () => {
     it('should request api and set status and bytesWritten', async () => {
-      s3Mock.on(HeadObjectCommand).resolves({
-        Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-      });
+      s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       s3Mock.on(UploadPartCommand).resolves({ ETag: '1234' });
       s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
@@ -101,9 +103,7 @@ describe('S3Storage', () => {
     });
 
     it('should request api and set status and bytesWritten on resume', async () => {
-      s3Mock.on(HeadObjectCommand).resolves({
-        Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-      });
+      s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       const part: FilePart = {
         name: filename,
@@ -117,9 +117,7 @@ describe('S3Storage', () => {
 
   describe('delete()', () => {
     it('should set status', async () => {
-      s3Mock.on(HeadObjectCommand).resolves({
-        Metadata: { metadata: encodeURIComponent(JSON.stringify(testfile)) }
-      });
+      s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(DeleteObjectCommand).resolves({});
       const [deleted] = await storage.delete(filename);
       expect(deleted.status).toBe('deleted');
