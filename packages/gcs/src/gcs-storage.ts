@@ -6,10 +6,10 @@ import {
   File,
   FileInit,
   FilePart,
+  getFileStatus,
   getHeader,
   hasContent,
   HttpError,
-  isCompleted,
   isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
@@ -176,7 +176,8 @@ export class GCStorage extends BaseStorage<GCSFile> {
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
-    if (isCompleted(file)) {
+    file.status = getFileStatus(file);
+    if (file.status === 'completed') {
       file.uri = `${this.storageBaseURI}/${file.name}`;
       await this._onComplete(file);
     }

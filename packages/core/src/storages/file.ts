@@ -105,9 +105,8 @@ export function updateMetadata(file: File, metadata: unknown): void {
   }
 }
 
-export function isCompleted(file: File): boolean {
-  file.status = file.bytesWritten === file.size ? 'completed' : 'part';
-  return file.status === 'completed';
+export function getFileStatus(file: File): UploadEventType {
+  return file.bytesWritten === file.size ? 'completed' : !file.createdAt ? 'created' : 'part';
 }
 
 export class FileName {

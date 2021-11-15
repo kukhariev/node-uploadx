@@ -21,9 +21,9 @@ import {
   File,
   FileInit,
   FilePart,
+  getFileStatus,
   hasContent,
   HttpError,
-  isCompleted,
   isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
@@ -178,7 +178,8 @@ export class S3Storage extends BaseStorage<S3File> {
       file.bytesWritten += part.contentLength || 0;
     }
     this.cache.set(file.name, file);
-    if (isCompleted(file)) {
+    file.status = getFileStatus(file);
+    if (file.status === 'completed') {
       const [completed] = await this._onComplete(file);
       delete file.Parts;
       file.uri = completed.Location;
