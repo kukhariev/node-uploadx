@@ -21,7 +21,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=12.13.0",
+    "node": ">=12.22.0",
     "npm": "use yarn instead",
     "yarn": ">=1.22.15"
   },
