@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, Headers, typeis, UploadxResponse } from '../utils';
+import { ERRORS, fail, getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
 import { BaseHandler } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -55,10 +55,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
-    const headers: Headers = { Location: this.buildFileUrl(req, file) };
-    if (file.expiredAt) {
-      headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
-    }
+    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     // 'creation-with-upload' block
     if (typeis(req, ['application/offset+octet-stream'])) {
       getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
@@ -66,8 +63,10 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
     }
     file.bytesWritten > 0 && (headers['Upload-Offset'] = file.bytesWritten);
+    setHeaders(res, headers);
+    if (file.status === 'completed') return file;
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    this.send(res, { statusCode, headers });
+    this.send(res, { statusCode });
     return file;
   }
 
@@ -83,15 +82,10 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
     const file = await this.storage.write({ start, name, body: req, contentLength });
-    if (file.status) {
-      const headers: Headers = {
-        'Upload-Offset': file.bytesWritten
-      };
-      if (file.expiredAt) {
-        headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
-      }
-      file.status === 'part' && this.send(res, { statusCode: 204, headers });
-    }
+    const headers = this.buildHeaders(file, { 'Upload-Offset': file.bytesWritten });
+    setHeaders(res, headers);
+    if (file.status === 'completed') return file;
+    this.send(res, { statusCode: 204 });
     return file;
   }
 
@@ -102,11 +96,11 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
     const file = await this.storage.write({ name: name });
-    const headers = {
+    const headers = this.buildHeaders(file, {
       'Upload-Offset': file.bytesWritten,
       'Upload-Length': file.size,
       'Upload-Metadata': serializeMetadata(file.metadata)
-    };
+    });
     this.send(res, { statusCode: 200, headers });
     return {} as TFile;
   }
@@ -122,19 +116,9 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     return file;
   }
 
-  finish(
-    req: http.IncomingMessage & { body: File },
-    res: http.ServerResponse,
-    response: UploadxResponse
-  ): void {
-    if (!response.statusCode || response.statusCode < 300) {
-      response.headers = {
-        ...response.headers,
-        'Upload-Offset': req.body.size,
-        'Upload-Metadata': serializeMetadata(req.body.metadata)
-      };
-    }
-    return super.finish(req, res, response);
+  buildHeaders(file: File, headers: Headers = {}): Headers {
+    if (file.expiredAt) headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
+    return headers;
   }
 
   send(res: http.ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {
