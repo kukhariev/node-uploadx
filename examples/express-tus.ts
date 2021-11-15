@@ -5,21 +5,17 @@ import { join } from 'path';
 import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 
 const app = express();
-const dir = 'files';
+const dest = 'files';
 const opts: DiskStorageOptions = {
   allowMIME: ['image/*', 'video/*'],
-  directory: dir,
-  filename: file => `.${file.originalName}` // dot hide incomplete uploads
+  directory: dest
 };
 
-app.use('/files', express.static(dir), tus.upload(opts), async (req, res) => {
+app.use('/files', express.static(dest), tus.upload(opts), async (req, res) => {
   const file = req.body as DiskFile;
-  if (req.method === 'GET') {
-    return res.json(req.body);
-  }
   console.log('File upload complete: ', req.body.originalName);
-  await promises.rename(join(dir, file.name), join(dir, file.originalName)); // unhide
-  return res.sendStatus(204);
+  await promises.rename(join(dest, file.name), join(dest, file.originalName)); // unhide
+  return res.json(file);
 });
 
 app.listen(3002, () => console.log('listening on port:', 3002));

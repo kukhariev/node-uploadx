@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers } from '../utils';
+import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
@@ -31,11 +31,12 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     config.size = getHeader(req, 'x-upload-content-length');
     config.contentType = getHeader(req, 'x-upload-content-type');
     const file = await this.storage.create(req, config);
-    const headers: Headers = { Location: this.buildFileUrl(req, file) };
+    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     file.bytesWritten > 0 && (headers['Range'] = `bytes=0-${file.bytesWritten - 1}`);
-    this.setExpiresHeader(file, headers);
+    setHeaders(res, headers);
+    if (file.status === 'completed') return file;
     const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    this.send(res, { statusCode, headers });
+    this.send(res, { statusCode });
     return file;
   }
 
@@ -48,8 +49,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const { query } = url.parse(decodeURI(req.url || ''), true);
     Object.assign(metadata, query);
     const file = await this.storage.update(name, { metadata, name });
-    const headers = { Location: this.buildFileUrl(req, file) };
-    this.setExpiresHeader(file, headers);
+    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     this.send(res, { body: file.metadata, headers });
     return file;
   }
@@ -64,13 +64,12 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const contentLength = +getHeader(req, 'content-length');
     const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
     const file = await this.storage.write({ name, body: req, start, contentLength, size });
-    const headers: Headers = {};
-    this.setExpiresHeader(file, headers);
-    if (file.status === 'part') {
-      headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
-      res.statusMessage = 'Resume Incomplete';
-      this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-    }
+    const headers = this.buildHeaders(file);
+    if (file.status === 'completed') return file;
+    headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
+    res.statusMessage = 'Resume Incomplete';
+    this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
+
     return file;
   }
 
@@ -93,11 +92,9 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     return super.getName(req);
   }
 
-  /**
-   * @experimental
-   */
-  setExpiresHeader(file: File, headers: Headers): void {
+  buildHeaders(file: File, headers: Headers = {}): Headers {
     if (file.expiredAt) headers['X-Upload-Expires'] = new Date(file.expiredAt).toISOString();
+    return headers;
   }
 
   /**
