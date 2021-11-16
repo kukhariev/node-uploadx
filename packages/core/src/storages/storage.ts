@@ -180,7 +180,11 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
-    return isExpired(file) ? fail(ERRORS.GONE) : Promise.resolve(file);
+    if (isExpired(file)) {
+      void this.delete(file.name).catch(() => null);
+      return fail(ERRORS.GONE);
+    }
+    return Promise.resolve(file);
   }
 
   /**
