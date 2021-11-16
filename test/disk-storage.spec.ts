@@ -17,7 +17,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
   const timestamp = Date.now() - 10000;
   return {
     ensureFile: async () => 0,
-    accessCheck: (dir: string, cb: () => void) => cb(),
+    accessCheck: async () => 0,
     getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafilename)],
     getWriteStream: () => fileWriteStream,
     fsp: {

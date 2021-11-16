@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { fsp, getFiles } from '../utils';
+import { accessCheck, fsp, getFiles } from '../utils';
 import { File } from './file';
 import { MetaStorage, MetaStorageOptions, UploadList } from './meta-storage';
 import { tmpdir } from 'os';
@@ -19,11 +19,11 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   constructor(config?: LocalMetaStorageOptions) {
     super(config);
-    this.directory = (
-      process.env.UPLOADX_META_DIR ||
-      config?.directory ||
-      join(tmpdir(), 'uploadx_meta')
-    ).replace(/\\/g, '/');
+    this.directory = (config?.directory || join(tmpdir(), 'uploadx_meta')).replace(/\\/g, '/');
+    this.accessCheck().catch(err => {
+      // eslint-disable-next-line no-console
+      console.error('ERROR: Could not write to directory: %o', err);
+    });
   }
 
   /**
@@ -65,5 +65,9 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
         });
     }
     return { items: uploads };
+  }
+
+  private accessCheck(): Promise<void> {
+    return accessCheck(this.directory);
   }
 }
