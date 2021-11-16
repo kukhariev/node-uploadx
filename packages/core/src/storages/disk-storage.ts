@@ -1,6 +1,6 @@
 import * as http from 'http';
-import { join, resolve as pathResolve } from 'path';
-import { ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
+import { resolve as pathResolve } from 'path';
+import { accessCheck, ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
 import { File, FileInit, FilePart, getFileStatus, hasContent, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { MetaStorage } from './meta-storage';
@@ -133,9 +133,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     });
   }
 
-  private async accessCheck(): Promise<void> {
-    const path = join(this.directory, '.writeTest');
-    await ensureFile(path, true);
-    await fsp.unlink(path).catch(() => null);
+  private accessCheck(): Promise<void> {
+    return accessCheck(this.directory);
   }
 }
