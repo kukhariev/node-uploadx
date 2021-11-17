@@ -31,10 +31,6 @@ export interface ExpirationOptions {
    */
   maxAge: number | string;
   /**
-   * Send `410 Gone` if the client tries to resume an expired upload
-   */
-  errorIfExpired?: boolean;
-  /**
    * Auto purging interval for expired uploads
    */
   purgeInterval?: number | string;
@@ -184,10 +180,11 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
-    return (this.config.expiration?.errorIfExpired || this.config.expiration?.purgeInterval) &&
-      isExpired(file)
-      ? fail(ERRORS.GONE)
-      : Promise.resolve(file);
+    if (isExpired(file)) {
+      void this.delete(file.name).catch(() => null);
+      return fail(ERRORS.GONE);
+    }
+    return Promise.resolve(file);
   }
 
   /**
