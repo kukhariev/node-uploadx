@@ -1,5 +1,16 @@
 import * as http from 'http';
-import { Readable } from 'stream';
+
+export type Headers = Record<string, number | string | string[]>;
+
+export type ResponseBody = string | Record<string, any>;
+export type ResponseBodyType = 'text' | 'json';
+export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
+
+export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
+  statusCode?: number;
+  headers?: Headers;
+  body?: T;
+}
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -14,18 +25,20 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export async function readBody(
-  message: Readable,
+export function readBody(
+  req: http.IncomingMessage,
   encoding = 'utf8' as BufferEncoding,
   limit?: number
 ): Promise<string> {
-  let body = '';
-  message.setEncoding(encoding);
-  for await (const chunk of message) {
-    body += chunk;
-    if (limit && body.length > limit) return Promise.reject('body length limit');
-  }
-  return body;
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.setEncoding(encoding);
+    req.on('data', chunk => {
+      if (limit && body.length > limit) return reject('body length limit');
+      body += chunk;
+    });
+    req.once('end', () => resolve(body));
+  });
 }
 
 export async function getMetadata(
