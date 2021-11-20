@@ -55,13 +55,12 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'upload-length');
     let file = await this.storage.create(req, config);
-    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     // 'creation-with-upload' block
     if (typeis(req, ['application/offset+octet-stream'])) {
-      getHeader(req, 'expect') && this.send(res, { statusCode: 100 });
       const contentLength = +getHeader(req, 'content-length');
       file = await this.storage.write({ ...file, start: 0, body: req, contentLength });
     }
+    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     file.bytesWritten > 0 && (headers['Upload-Offset'] = file.bytesWritten);
     setHeaders(res, headers);
     if (file.status === 'completed') return file;

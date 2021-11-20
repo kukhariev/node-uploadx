@@ -1,5 +1,16 @@
 import * as http from 'http';
-import { Readable } from 'stream';
+
+export type Headers = Record<string, number | string | string[]>;
+
+export type ResponseBody = string | Record<string, any>;
+export type ResponseBodyType = 'text' | 'json';
+export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
+
+export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
+  statusCode?: number;
+  headers?: Headers;
+  body?: T;
+}
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -14,18 +25,20 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
-export async function readBody(
-  message: Readable,
+export function readBody(
+  req: http.IncomingMessage,
   encoding = 'utf8' as BufferEncoding,
   limit?: number
 ): Promise<string> {
-  let body = '';
-  message.setEncoding(encoding);
-  for await (const chunk of message) {
-    body += chunk;
-    if (limit && body.length > limit) return Promise.reject('body length limit');
-  }
-  return body;
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.setEncoding(encoding);
+    req.on('data', chunk => {
+      if (limit && body.length > limit) return reject('body length limit');
+      body += chunk;
+    });
+    req.once('end', () => resolve(body));
+  });
 }
 
 export async function getMetadata(
@@ -44,16 +57,22 @@ export function getHeader(req: http.IncomingMessage, name: string): string {
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
-export function setHeaders(
+export function appendHeader(
   res: http.ServerResponse,
-  headers: Record<string, string | number> = {}
+  name: string,
+  value: http.OutgoingHttpHeader
 ): void {
-  const exposeHeaders = Object.keys(headers).toString();
-  exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
-  for (const [key, value] of Object.entries(headers)) {
+  const s = [res.getHeader(name), value].flat().filter(Boolean).toString();
+  res.setHeader(name, s);
+}
+
+export function setHeaders(res: http.ServerResponse, headers: Headers = {}): void {
+  const keys = Object.keys(headers);
+  keys.length && appendHeader(res, 'Access-Control-Expose-Headers', keys);
+  for (const key of keys) {
     ['location', 'link'].includes(key.toLowerCase())
-      ? res.setHeader(key, encodeURI(value.toString()))
-      : res.setHeader(key, value.toString());
+      ? res.setHeader(key, encodeURI(headers[key].toString()))
+      : res.setHeader(key, headers[key]);
   }
 }
 
@@ -64,18 +83,6 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   if (!proto) return `//${host}`;
   return `${proto}://${host}`;
 }
-
-export type Headers = Record<string, string | number>;
-
-export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
-
-export type ResponseBody = string | Record<string, any>;
-export type ResponseBodyType = 'text' | 'json';
-export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
 
 export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
   if (Array.isArray(response)) return response;
