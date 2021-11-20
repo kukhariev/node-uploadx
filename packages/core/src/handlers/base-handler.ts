@@ -193,6 +193,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     res: http.ServerResponse,
     { statusCode = 200, headers = {}, body = '' }: UploadxResponse
   ): void {
+    setHeaders(res, headers);
     let data: string;
     if (typeof body !== 'string') {
       data = JSON.stringify(body);
@@ -202,7 +203,6 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     }
     res.setHeader('Content-Length', Buffer.byteLength(data));
     res.setHeader('Cache-Control', 'no-store');
-    setHeaders(res, headers);
     res.writeHead(statusCode);
     res.end(data);
   }

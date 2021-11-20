@@ -57,16 +57,22 @@ export function getHeader(req: http.IncomingMessage, name: string): string {
   return Array.isArray(raw) ? raw[0] : raw || '';
 }
 
-export function setHeaders(
+export function appendHeader(
   res: http.ServerResponse,
-  headers: Record<string, string | number> = {}
+  name: string,
+  value: http.OutgoingHttpHeader
 ): void {
-  const exposeHeaders = Object.keys(headers).toString();
-  exposeHeaders && res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
-  for (const [key, value] of Object.entries(headers)) {
+  const s = [res.getHeader(name), value].flat().filter(Boolean).toString();
+  res.setHeader(name, s);
+}
+
+export function setHeaders(res: http.ServerResponse, headers: Headers = {}): void {
+  const keys = Object.keys(headers);
+  keys.length && appendHeader(res, 'Access-Control-Expose-Headers', keys);
+  for (const key of keys) {
     ['location', 'link'].includes(key.toLowerCase())
-      ? res.setHeader(key, encodeURI(value.toString()))
-      : res.setHeader(key, value.toString());
+      ? res.setHeader(key, encodeURI(headers[key].toString()))
+      : res.setHeader(key, headers[key]);
   }
 }
 
@@ -77,18 +83,6 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   if (!proto) return `//${host}`;
   return `${proto}://${host}`;
 }
-
-export type Headers = Record<string, string | number>;
-
-export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
-
-export type ResponseBody = string | Record<string, any>;
-export type ResponseBodyType = 'text' | 'json';
-export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
 
 export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
   if (Array.isArray(response)) return response;
