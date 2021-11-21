@@ -3,6 +3,8 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const { DiskStorage, Uploadx } = require('@uploadx/core');
 
+const PORT = process.env.PORT || 3002;
+
 const storage = new DiskStorage({
   directory: 'upload',
   path: '/files',
@@ -28,4 +30,4 @@ const server = createServer((req, res) => {
   }
 });
 
-server.listen(3002, () => console.log('listening on port:', 3002));
+server.listen(+PORT, () => console.log('listening on port:', PORT));

@@ -1,6 +1,8 @@
 import { DiskFile, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 
 const auth: express.Handler = (req, res, next) => {
@@ -24,6 +26,4 @@ app.use(
   onComplete
 );
 
-app.listen(3002, () => {
-  console.log('listening on port:', 3002);
-});
+app.listen(PORT, () => console.log('listening on port:', PORT));

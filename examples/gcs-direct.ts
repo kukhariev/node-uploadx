@@ -3,6 +3,8 @@ import { GCStorage } from '@uploadx/gcs';
 import { createServer } from 'http';
 import { parse } from 'url';
 
+const PORT = process.env.PORT || 3002;
+
 // Don't forget to set GCS_BUCKET and GCS_KEYFILE environment variables
 const storage = new GCStorage({
   clientDirectUpload: true,
@@ -19,10 +21,10 @@ uploads.on('created', file =>
 
 createServer((req, res) => {
   const { pathname } = parse(req.url || '');
-  if (pathname === '/upload') {
+  if (pathname === '/files') {
     uploads.handle(req, res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plan' });
     res.end('Not Found');
   }
-}).listen(3002, () => console.log('listening on port:', 3002));
+}).listen(PORT, () => console.log('listening on port:', PORT));

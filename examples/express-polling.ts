@@ -4,6 +4,8 @@ import * as express from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 
 type Moving = { percent: number; status: 'moving' | 'error' | 'done' };
@@ -11,7 +13,7 @@ type Moving = { percent: number; status: 'moving' | 'error' | 'done' };
 const processes = {} as Record<string, Moving>;
 
 const uploadDirectory = 'upload';
-const moveTo = 'upload';
+const moveTo = 'files';
 
 const storage = new DiskStorage({ directory: uploadDirectory });
 
@@ -51,4 +53,4 @@ const uploadx = new Uploadx({ storage });
 
 app.use('/files', uploadx.upload, onComplete);
 
-app.listen(3002, () => console.log('listening on port:', 3002));
+app.listen(PORT, () => console.log('listening on port:', PORT));

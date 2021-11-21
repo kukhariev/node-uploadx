@@ -1,6 +1,8 @@
 import * as express from 'express';
 import { DiskFile, DiskStorage, OnComplete, uploadx, UploadxResponse } from 'node-uploadx';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 
 type OnCompleteBody = {
@@ -40,6 +42,6 @@ const storage = new DiskStorage({
 
 app.use('/files', uploadx({ storage }));
 
-app.listen(3002, () => {
-  console.log('listening on port:', 3002);
+app.listen(PORT, () => {
+  console.log('listening on port:', PORT);
 });

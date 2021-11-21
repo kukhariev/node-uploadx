@@ -1,6 +1,8 @@
 import * as express from 'express';
 import { GCStorage, Uploadx } from 'node-uploadx';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 
 const storage = new GCStorage({ maxUploadSize: '1GB' });
@@ -17,6 +19,4 @@ storage.onComplete = ({ uri, id }) => {
 
 app.use('/files', uploadx.handle);
 
-app.listen(3002, () => {
-  console.log('listening on port:', 3002);
-});
+app.listen(PORT, () => console.log('listening on port:', PORT));
