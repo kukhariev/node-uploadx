@@ -1,6 +1,8 @@
 import { DiskStorageOptions, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 
 const opts: DiskStorageOptions = {
@@ -13,10 +15,6 @@ const opts: DiskStorageOptions = {
   }
 };
 
-app.use('/files', express.static('files'));
+app.use('files', uploadx(opts));
 
-app.use('/upload/files', uploadx(opts));
-
-app.listen(3002, () => {
-  console.log('listening on port:', 3002);
-});
+app.listen(PORT, () => console.log('listening on port:', PORT));

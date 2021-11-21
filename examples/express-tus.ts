@@ -4,6 +4,8 @@ import { promises } from 'fs';
 import { join } from 'path';
 import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 
+const PORT = process.env.PORT || 3002;
+
 const app = express();
 const dest = 'files';
 const opts: DiskStorageOptions = {
@@ -11,11 +13,11 @@ const opts: DiskStorageOptions = {
   directory: dest
 };
 
-app.use('/files', express.static(dest), tus.upload(opts), async (req, res) => {
+app.use('/files', tus.upload(opts), async (req, res) => {
   const file = req.body as DiskFile;
   console.log('File upload complete: ', req.body.originalName);
-  await promises.rename(join(dest, file.name), join(dest, file.originalName)); // unhide
+  await promises.rename(join(dest, file.name), join(dest, file.originalName));
   return res.json(file);
 });
 
-app.listen(3002, () => console.log('listening on port:', 3002));
+app.listen(PORT, () => console.log('listening on port:', PORT));

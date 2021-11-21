@@ -2,6 +2,7 @@ import * as express from 'express';
 import { uploadx } from '@uploadx/core';
 import { S3Storage } from '@uploadx/s3';
 
+const PORT = process.env.PORT || 3002;
 const app = express();
 
 // const storage = new S3Storage({
@@ -25,4 +26,4 @@ const storage = new S3Storage({
 
 app.use('/files', uploadx({ storage }));
 
-app.listen(3002, () => console.log('Listening on port:', 3002));
+app.listen(PORT, () => console.log('Listening on port:', PORT));
