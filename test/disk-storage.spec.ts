@@ -18,6 +18,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
   return {
     ensureFile: async () => 0,
     accessCheck: async () => 0,
+    removeFile: async () => null,
     getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafilename)],
     getWriteStream: () => fileWriteStream,
     fsp: {
@@ -27,7 +28,8 @@ jest.mock('../packages/core/src/utils/fs', () => {
       }),
       writeFile: async () => 0,
       readFile: async () => JSON.stringify(testfile),
-      unlink: async () => null
+      unlink: async () => null,
+      rm: async () => null
     }
   };
 });

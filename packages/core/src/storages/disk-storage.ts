@@ -1,6 +1,14 @@
 import * as http from 'http';
 import { resolve as pathResolve } from 'path';
-import { accessCheck, ensureFile, ERRORS, fail, fsp, getWriteStream, HttpError } from '../utils';
+import {
+  accessCheck,
+  ensureFile,
+  ERRORS,
+  fail,
+  getWriteStream,
+  HttpError,
+  removeFile
+} from '../utils';
 import { File, FileInit, FilePart, getFileStatus, hasContent, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { MetaStorage } from './meta-storage';
@@ -88,12 +96,11 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   /**
    * @inheritdoc
-   * @todo delete by prefix
    */
   async delete(name: string): Promise<DiskFile[]> {
     const file = await this.getMeta(name).catch(() => null);
     if (file) {
-      await fsp.unlink(this.getFilePath(name)).catch(() => null);
+      await removeFile(this.getFilePath(name)).catch(() => null);
       await this.deleteMeta(name);
       return [{ ...file, status: 'deleted' }];
     }

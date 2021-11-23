@@ -26,6 +26,15 @@ export async function accessCheck(dir: string): Promise<void> {
 }
 
 /**
+ * Removes the specified file from the local file system
+ * @param path filename or path to a local file
+ */
+export async function removeFile(path: string): Promise<void> {
+  if (fsp.rm) return fsp.rm(path);
+  return fsp.unlink(path);
+}
+
+/**
  * Returns file WriteStream for data appending.
  * @param path
  * @param start
@@ -45,7 +54,7 @@ export function getFiles(prefix: string): Promise<string[]> {
   const prefix_ = prefix.replace(/\\/g, '/');
   const _getFiles = async (current: string): Promise<string[]> => {
     try {
-      if ((await fsp.stat(current)).isFile()) return [current];
+      if ((await fsp.stat(current)).isFile()) return _getFiles(dirname(current));
     } catch {
       return _getFiles(dirname(current));
     }
@@ -56,10 +65,7 @@ export function getFiles(prefix: string): Promise<string[]> {
         return path.startsWith(prefix_) ? (dirent.isDirectory() ? _getFiles(path) : path) : null;
       })
     );
-    return Array.prototype
-      .concat(...files)
-      .filter(Boolean)
-      .sort() as string[];
+    return files.flat().filter(Boolean).sort() as string[];
   };
   return _getFiles(prefix_);
 }
