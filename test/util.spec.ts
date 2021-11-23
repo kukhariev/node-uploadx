@@ -34,9 +34,11 @@ describe('utils', () => {
 
     it('getFiles(full path)', async () => {
       await utils.ensureFile(filepath);
+      await utils.ensureFile(`${filepath}.ext`);
       await utils.ensureFile(filepath2);
-      await expect(utils.getFiles(filepath)).resolves.toHaveLength(1);
-      await expect(utils.getFiles(filepath2)).resolves.toHaveLength(1);
+      await utils.ensureFile(`${filepath2}.ext`);
+      await expect(utils.getFiles(filepath)).resolves.toHaveLength(2);
+      await expect(utils.getFiles(filepath2)).resolves.toHaveLength(2);
     });
 
     it('getFiles(prefix)', async () => {

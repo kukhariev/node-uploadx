@@ -45,7 +45,7 @@ export function getFiles(prefix: string): Promise<string[]> {
   const prefix_ = prefix.replace(/\\/g, '/');
   const _getFiles = async (current: string): Promise<string[]> => {
     try {
-      if ((await fsp.stat(current)).isFile()) return [current];
+      if ((await fsp.stat(current)).isFile()) return _getFiles(dirname(current));
     } catch {
       return _getFiles(dirname(current));
     }
@@ -56,10 +56,7 @@ export function getFiles(prefix: string): Promise<string[]> {
         return path.startsWith(prefix_) ? (dirent.isDirectory() ? _getFiles(path) : path) : null;
       })
     );
-    return Array.prototype
-      .concat(...files)
-      .filter(Boolean)
-      .sort() as string[];
+    return files.flat().filter(Boolean).sort() as string[];
   };
   return _getFiles(prefix_);
 }
