@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { accessCheck, fsp, getFiles } from '../utils';
+import { accessCheck, fsp, getFiles, removeFile } from '../utils';
 import { File } from './file';
 import { MetaStorage, MetaStorageOptions, UploadList } from './meta-storage';
 import { tmpdir } from 'os';
@@ -50,7 +50,7 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
   }
 
   async delete(name: string): Promise<void> {
-    await fsp.unlink(this.getMetaPath(name));
+    await removeFile(this.getMetaPath(name));
     return;
   }
 

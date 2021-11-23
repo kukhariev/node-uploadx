@@ -26,6 +26,15 @@ export async function accessCheck(dir: string): Promise<void> {
 }
 
 /**
+ * Removes the specified file from the local file system
+ * @param path filename or path to a local file
+ */
+export async function removeFile(path: string): Promise<void> {
+  if (fsp.rm) return fsp.rm(path);
+  return fsp.unlink(path);
+}
+
+/**
  * Returns file WriteStream for data appending.
  * @param path
  * @param start
