@@ -13,12 +13,9 @@ export function serializeMetadata(obj: Metadata): string {
 
 export function parseMetadata(encoded = ''): Metadata {
   const kvPairs = encoded.split(',').map(kv => kv.split(' '));
-  const metadata = Object.create(null) as Record<string, string>;
+  const metadata = Object.create(Metadata.prototype) as Record<string, string>;
   for (const [key, value] of kvPairs) {
-    if (!value || !key) {
-      return metadata;
-    }
-    metadata[key] = Buffer.from(value, 'base64').toString();
+    if (key) metadata[key] = value ? Buffer.from(value, 'base64').toString() : '';
   }
   return metadata;
 }

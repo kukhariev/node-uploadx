@@ -77,7 +77,7 @@ export function isValidPart(part: FilePart, file: File): boolean {
 }
 
 /** User-provided metadata */
-export interface Metadata {
+export class Metadata {
   [key: string]: any;
 
   size?: string | number;

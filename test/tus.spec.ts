@@ -132,19 +132,25 @@ describe('::Tus', () => {
       expect(parseMetadata(sample)).toEqual({});
     });
 
-    it('should parse single key', () => {
+    it('should parse single key/value', () => {
       const sample = 'name dGl0bGUubXA0';
       expect(parseMetadata(sample)).toEqual({ name: 'title.mp4' });
     });
 
+    it('should parse empty value', () => {
+      const sample = 'is_ok';
+      expect(parseMetadata(sample)).toEqual({ is_ok: '' });
+    });
+
     it('should parse multiple keys', () => {
       const sample =
-        'name dGl0bGUubXA0,mimeType dmlkZW8vbXA0,size ODM4NjkyNTM=,lastModified MTQzNzM5MDEzODIzMQ==';
+        'name dGl0bGUubXA0,mimeType dmlkZW8vbXA0,size ODM4NjkyNTM=,lastModified MTQzNzM5MDEzODIzMQ==,is_ok';
       expect(parseMetadata(sample)).toEqual({
         name: 'title.mp4',
         mimeType: 'video/mp4',
         size: '83869253',
-        lastModified: '1437390138231'
+        lastModified: '1437390138231',
+        is_ok: ''
       });
     });
   });
