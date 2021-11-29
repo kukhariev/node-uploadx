@@ -13,7 +13,6 @@ uploadx.on('completed', ({ name, originalName }) =>
   )
 );
 
-// eslint-disable-next-line promise/catch-or-return
 server.register(middie).then(
   () => {
     void server.use('/files', uploadx.handle);

@@ -18,11 +18,9 @@ module.exports = {
     'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:promise/recommended',
     'plugin:prettier/recommended',
     'plugin:jest-formatting/recommended'
   ],
-  plugins: ['@typescript-eslint', 'prettier', 'promise', 'jest-formatting'],
   rules: {
     'prettier/prettier': 'warn',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
@@ -64,7 +62,6 @@ module.exports = {
     'no-var': 'error',
     'prefer-const': 'error',
     'prefer-object-spread': 'error',
-    'promise/no-callback-in-promise': ['error', { exceptions: ['next'] }],
     'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
     'prefer-template': 'error',
     'prefer-arrow-callback': 'warn',
