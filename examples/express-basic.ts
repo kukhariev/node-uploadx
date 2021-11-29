@@ -6,6 +6,7 @@ const PORT = process.env.PORT || 3002;
 const app = express();
 
 const opts: DiskStorageOptions = {
+  directory: 'upload',
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
   expiration: { maxAge: '1h', purgeInterval: '10min' },
