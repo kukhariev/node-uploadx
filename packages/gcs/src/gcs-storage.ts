@@ -19,7 +19,7 @@ import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import * as http from 'http';
 import request from 'node-fetch';
-import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
+import { GCSConfig } from './gcs-config';
 import { GCSMetaStorage, GCSMetaStorageOptions } from './gcs-meta-storage';
 
 export interface ClientError extends Error {
@@ -108,11 +108,12 @@ export class GCStorage extends BaseStorage<GCSFile> {
           ? new LocalMetaStorage(metaConfig)
           : new GCSMetaStorage(metaConfig);
     }
-    config.scopes ||= authScopes;
+
     config.keyFile ||= process.env.GCS_KEYFILE;
-    this.bucket = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
-    this.storageBaseURI = [storageAPI, this.bucket, 'o'].join('/');
-    this.uploadBaseURI = [uploadAPI, this.bucket, 'o'].join('/');
+    this.bucket = config.bucket || process.env.GCS_BUCKET || GCSConfig.bucketName;
+    this.storageBaseURI = [GCSConfig.storageAPI, this.bucket, 'o'].join('/');
+    this.uploadBaseURI = [GCSConfig.uploadAPI, this.bucket, 'o'].join('/');
+    config.scopes ||= GCSConfig.authScopes;
     this.authClient = new GoogleAuth(config);
 
     this.accessCheck().catch((err: ClientError) => {
@@ -236,6 +237,6 @@ export class GCStorage extends BaseStorage<GCSFile> {
   };
 
   private accessCheck(): Promise<any> {
-    return this.authClient.request({ url: `${storageAPI}/${this.bucket}` });
+    return this.authClient.request({ url: `${GCSConfig.storageAPI}/${this.bucket}` });
   }
 }
