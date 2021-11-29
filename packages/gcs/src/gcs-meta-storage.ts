@@ -1,6 +1,6 @@
-import { File, UploadList, MetaStorage, MetaStorageOptions } from '@uploadx/core';
+import { File, MetaStorage, MetaStorageOptions, UploadList } from '@uploadx/core';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
-import { authScopes, BUCKET_NAME, storageAPI, uploadAPI } from './constants';
+import { GCSConfig } from './gcs-config';
 
 export interface GCSMetaStorageOptions extends GoogleAuthOptions, MetaStorageOptions {
   bucket?: string;
@@ -13,12 +13,12 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   constructor(readonly config: GCSMetaStorageOptions = {}) {
     super(config);
-    config.scopes ||= authScopes;
     config.keyFile ||= process.env.GCS_KEYFILE;
-    const bucketName = config.bucket || process.env.GCS_BUCKET || BUCKET_NAME;
-    this.storageBaseURI = [storageAPI, bucketName, 'o'].join('/');
+    const bucketName = config.bucket || process.env.GCS_BUCKET || GCSConfig.bucketName;
+    this.storageBaseURI = [GCSConfig.storageAPI, bucketName, 'o'].join('/');
+    this.uploadBaseURI = [GCSConfig.uploadAPI, bucketName, 'o'].join('/');
+    config.scopes ||= GCSConfig.authScopes;
     this.authClient = new GoogleAuth(config);
-    this.uploadBaseURI = [uploadAPI, bucketName, 'o'].join('/');
   }
 
   getMetaName = (name: string): string => this.prefix + name + this.suffix;

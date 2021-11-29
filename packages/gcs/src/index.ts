@@ -1,3 +1,3 @@
 export * from './gcs-storage';
 export * from './gcs-meta-storage';
-export * from './constants';
+export * from './gcs-config';
