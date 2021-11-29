@@ -31,7 +31,7 @@
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",
     "lint": "eslint . --fix --ext .js,.ts",
-    "prepare": "yarn run build && husky install",
+    "prepare": "husky install",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
     "test:watch": "jest --watchAll"
