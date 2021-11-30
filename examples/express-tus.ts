@@ -7,16 +7,17 @@ import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 const PORT = process.env.PORT || 3002;
 
 const app = express();
-const dest = 'files';
+const uploadDirectory = 'upload';
+const moveTo = 'files';
 const opts: DiskStorageOptions = {
   allowMIME: ['image/*', 'video/*'],
-  directory: dest
+  directory: uploadDirectory
 };
 
 app.use('/files', tus.upload(opts), async (req, res) => {
   const file = req.body as DiskFile;
-  console.log('File upload complete: ', req.body.originalName);
-  await promises.rename(join(dest, file.name), join(dest, file.originalName));
+  console.log('File upload complete: ', file.originalName);
+  await promises.rename(join(uploadDirectory, file.name), join(moveTo, file.originalName));
   return res.json(file);
 });
 
