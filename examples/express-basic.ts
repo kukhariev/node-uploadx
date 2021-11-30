@@ -16,6 +16,6 @@ const opts: DiskStorageOptions = {
   }
 };
 
-app.use('files', uploadx(opts));
+app.use('/files', uploadx(opts));
 
 app.listen(PORT, () => console.log('listening on port:', PORT));

@@ -6,7 +6,7 @@ import { join } from 'path';
 const PORT = process.env.PORT || 3002;
 
 const server = fastify({ logger: true });
-const uploadx = new Uploadx({ directory: 'files' });
+const uploadx = new Uploadx({ directory: 'upload' });
 uploadx.on('completed', ({ name, originalName }) =>
   server.log.info(
     `upload complete, path: ${join('files', name)}, original filename: ${originalName}`
