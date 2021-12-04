@@ -4,11 +4,13 @@ import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
 import {
   ERRORS,
   fail,
+  first,
   getBaseUrl,
   getHeader,
   getMetadata,
   Headers,
   isEmpty,
+  mapValues,
   setHeaders
 } from '../utils';
 import { BaseHandler } from './base-handler';
@@ -89,15 +91,14 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
       fail(ERRORS.BAD_REQUEST, error)
     );
-    // FIXME: query values as array
-    return isEmpty(metadata) && req.url ? url.parse(decodeURI(req.url), true).query : metadata;
+    return isEmpty(metadata) && req.url
+      ? mapValues(url.parse(req.url, true).query, first, decodeURIComponent)
+      : metadata;
   }
 
   getName(req: http.IncomingMessage): string {
     const { query } = url.parse(decodeURI(req.url || ''), true);
-    if (query.upload_id) return query.upload_id as string;
-    if (query.name) return query.name as string;
-    if (query.prefix) return query.prefix as string;
+    if (query.upload_id) return first(query.upload_id);
     return super.getName(req);
   }
 

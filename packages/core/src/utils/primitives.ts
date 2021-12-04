@@ -26,14 +26,21 @@ export function fnv(str: string): number {
   return hash >>> 0;
 }
 
-export function mapValues<T>(
-  object: Record<string, any>,
-  func: (value: any) => T
-): Record<string, T> {
+type Fns<T> = (arg: any) => T;
+
+export const pipeFunc = <T>(...fns: Fns<T>[]): Fns<T> =>
+  fns.reduce(
+    (fn, next) =>
+      (...args) =>
+        next(fn(...args))
+  );
+
+export function mapValues<T>(obj: Record<string, any>, ...fns: Fns<T>[]): Record<string, T> {
+  const piped = pipeFunc(...fns);
   const result: Record<string, T> = {};
-  const keys = Object.keys(object);
+  const keys = Object.keys(obj);
   for (const key of keys) {
-    result[key] = func(object[key]);
+    result[key] = piped(obj[key]);
   }
   return result;
 }
@@ -49,6 +56,10 @@ export function isRecord(x: unknown): x is Record<any, any> {
 
 export const isEmpty = (val: object | null | undefined): boolean =>
   !val || !(Object.keys(val) || val).length;
+
+export function first<T>(val: T | T[]): T {
+  return Array.isArray(val) ? val[0] : val;
+}
 
 /**
  * convert a human-readable duration to ms

@@ -1,4 +1,5 @@
 import * as http from 'http';
+import { first } from './primitives';
 
 export type Headers = Record<string, number | string | string[]>;
 
@@ -53,8 +54,7 @@ export async function getMetadata(
 }
 
 export function getHeader(req: http.IncomingMessage, name: string): string {
-  const raw = req.headers?.[name.toLowerCase()];
-  return Array.isArray(raw) ? raw[0] : raw || '';
+  return first(req.headers?.[name.toLowerCase()]) || '';
 }
 
 export function appendHeader(
