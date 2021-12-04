@@ -63,7 +63,7 @@ export function first<T>(val: T | T[]): T {
 }
 
 export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
-  const cache = new Cache<K>();
+  const cache = new Cache<K>(1000, 0);
   const cached = (val: T): K => {
     const key = JSON.stringify(val);
     return cache.get(key) || cache.set(key, fn.call(this, val));
