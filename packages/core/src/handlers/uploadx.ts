@@ -41,14 +41,14 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   }
 
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
       fail(ERRORS.BAD_REQUEST, error)
     );
     const { query } = url.parse(decodeURI(req.url || ''), true);
     Object.assign(metadata, query);
-    const file = await this.storage.update(name, { metadata, name });
+    const file = await this.storage.update(id, { metadata, id });
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     this.send(res, { body: file.metadata, headers });
     return file;
@@ -58,12 +58,12 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Write a chunk to file or/and return chunk offset
    */
   async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
     const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
-    const file = await this.storage.write({ name, body: req, start, contentLength, size });
+    const file = await this.storage.write({ id, body: req, start, contentLength, size });
     const headers = this.buildHeaders(file);
     if (file.status === 'completed') return file;
     headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
@@ -74,22 +74,21 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   }
 
   /**
-   * Delete upload by id
+   * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(name);
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;
   }
 
-  getName(req: http.IncomingMessage): string {
+  getId(req: http.IncomingMessage): string {
     const { query } = url.parse(decodeURI(req.url || ''), true);
     if (query.upload_id) return query.upload_id as string;
-    if (query.name) return query.name as string;
     if (query.prefix) return query.prefix as string;
-    return super.getName(req);
+    return super.getId(req);
   }
 
   buildHeaders(file: File, headers: Headers = {}): Headers {
@@ -107,7 +106,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     if (file.GCSUploadURI) return file.GCSUploadURI;
 
     const { query, pathname } = url.parse(req.originalUrl || (req.url as string), true);
-    query.upload_id = file.name;
+    query.upload_id = file.id;
     const path = url.format({ pathname, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;

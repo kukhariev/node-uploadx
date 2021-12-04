@@ -95,18 +95,16 @@ describe('DiskStorage', () => {
     it('should set status and bytesWritten', async () => {
       readStream.__mockSend();
       const file = await storage.write({ ...testfile, start: 0, body: readStream });
-      expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(5);
     });
 
     it('should set status and bytesWritten (resume)', async () => {
       const file = await storage.write({ ...testfile });
-      expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(0);
     });
 
     it('should reject with 404', async () => {
-      storage.cache.delete(testfile.name);
+      storage.cache.delete(testfile.id);
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
       const write = storage.write({ ...testfile });
@@ -140,13 +138,13 @@ describe('DiskStorage', () => {
     it('should return all user files', async () => {
       const { items } = await storage.list(testfile.userId);
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ name: filename });
+      expect(items[0]).toMatchObject({ id: filename });
     });
 
     it('should return one file', async () => {
       const { items } = await storage.list(filename);
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ name: filename });
+      expect(items[0]).toMatchObject({ id: filename });
     });
   });
 
@@ -155,7 +153,7 @@ describe('DiskStorage', () => {
 
     it('should set status', async () => {
       const [deleted] = await storage.delete(filename);
-      expect(deleted.name).toBe(filename);
+      expect(deleted.id).toBe(filename);
       expect(deleted.status).toBe('deleted');
     });
 
@@ -163,7 +161,7 @@ describe('DiskStorage', () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce('notfound');
       const [deleted] = await storage.delete('notfound');
-      expect(deleted.name).toBe('notfound');
+      expect(deleted.id).toBe('notfound');
       expect(deleted.status).toBeUndefined();
     });
   });

@@ -2,8 +2,8 @@ import { FileName } from './file';
 
 /** @experimental */
 interface UploadListEntry {
-  /** upload name */
-  name: string;
+  /** upload id */
+  id: string;
   createdAt: string | Date | number;
   expiredAt?: string | Date | number;
 }
@@ -36,21 +36,21 @@ export class MetaStorage<T> {
   /**
    * Saves upload metadata
    */
-  async save(name: string, file: T): Promise<T> {
+  async save(id: string, file: T): Promise<T> {
     return file;
   }
 
   /**
    * Deletes an upload metadata
    */
-  async delete(name: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     return;
   }
 
   /**
    * Retrieves upload metadata
    */
-  async get(name: string): Promise<T> {
+  async get(id: string): Promise<T> {
     return Promise.reject();
   }
 

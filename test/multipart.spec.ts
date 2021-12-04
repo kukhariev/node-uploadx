@@ -23,17 +23,13 @@ describe('::Multipart', () => {
 
   afterAll(async () => cleanup(directory));
 
-  test('wrapper', () => {
-    expect(multipart()).toBeInstanceOf(Function);
-  });
-
   describe('POST', () => {
     it('should support custom fields', async () => {
       res = await request(app)
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .field('custom', 'customField')
-        .attach('file', srcpath, metadata.name)
+        .attach('file', srcpath, 'file.ext')
         .expect(200);
       expect(res.body.size).toBeDefined();
       uri = res.header['location'] as string;

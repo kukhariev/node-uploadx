@@ -28,12 +28,12 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     this.client = new S3Client(config);
   }
 
-  getMetaName(name: string): string {
-    return this.prefix + name + this.suffix;
+  getMetaName(id: string): string {
+    return this.prefix + id + this.suffix;
   }
 
-  async get(name: string): Promise<T> {
-    const params = { Bucket: this.bucket, Key: this.getMetaName(name) };
+  async get(id: string): Promise<T> {
+    const params = { Bucket: this.bucket, Key: this.getMetaName(id) };
     const { Metadata } = await this.client.send(new HeadObjectCommand(params));
     if (Metadata) {
       return JSON.parse(decodeURIComponent(Metadata.metadata)) as T;
@@ -41,16 +41,16 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     return Promise.reject();
   }
 
-  async delete(name: string): Promise<void> {
-    const params = { Bucket: this.bucket, Key: this.getMetaName(name) };
+  async delete(id: string): Promise<void> {
+    const params = { Bucket: this.bucket, Key: this.getMetaName(id) };
     await this.client.send(new DeleteObjectCommand(params));
   }
 
-  async save(name: string, file: T): Promise<T> {
+  async save(id: string, file: T): Promise<T> {
     const metadata = encodeURIComponent(JSON.stringify(file));
     const params = {
       Bucket: this.bucket,
-      Key: this.getMetaName(name),
+      Key: this.getMetaName(id),
       Metadata: { metadata }
     };
     await this.client.send(new PutObjectCommand(params));
@@ -70,7 +70,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
           LastModified &&
           Key.endsWith(this.suffix) &&
           items.push({
-            name: Key?.slice(this.prefix.length, -this.suffix.length),
+            id: Key?.slice(this.prefix.length, -this.suffix.length),
             createdAt: LastModified
           });
       }

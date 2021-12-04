@@ -67,7 +67,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     file.name = this.namingFunction(file, req);
     file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
     await this.validate(file);
-    const path = this.getFilePath(file.name);
+    const path = this.getFilePath(file);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     file.status = getFileStatus(file);
     if (file.status === 'created') await this.saveMeta(file);
@@ -75,7 +75,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   }
 
   async write(part: FilePart): Promise<DiskFile> {
-    const file = await this.getMeta(part.name);
+    const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (part.size && part.size < file.size) {
@@ -97,26 +97,26 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   /**
    * @inheritdoc
    */
-  async delete(name: string): Promise<DiskFile[]> {
-    const file = await this.getMeta(name).catch(() => null);
+  async delete(id: string): Promise<DiskFile[]> {
+    const file = await this.getMeta(id).catch(() => null);
     if (file) {
-      await removeFile(this.getFilePath(name)).catch(() => null);
-      await this.deleteMeta(name);
+      await removeFile(this.getFilePath(file)).catch(() => null);
+      await this.deleteMeta(id);
       return [{ ...file, status: 'deleted' }];
     }
-    return [{ name } as DiskFile];
+    return [{ id } as DiskFile];
   }
 
   /**
    * Returns an absolute path of the uploaded file
    */
-  getFilePath(name: string): string {
-    return pathResolve(this.directory, name);
+  getFilePath(file: DiskFile): string {
+    return pathResolve(this.directory, file.name);
   }
 
   protected _write(part: FilePart & File): Promise<number> {
     return new Promise((resolve, reject) => {
-      const path = this.getFilePath(part.name);
+      const path = this.getFilePath(part);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
         file.once('error', error => reject(error));

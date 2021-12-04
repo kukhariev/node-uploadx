@@ -26,10 +26,11 @@ export class Cache<T> {
     return this._map.delete(key);
   }
 
-  set(key: string, value: T): void {
+  set(key: string, value: T): T {
     if (this._map.has(key)) this._map.delete(key);
     else if (this._map.size === this.maxEntries)
       this._map.delete(this._map.keys().next().value as string);
     this._map.set(key, [value, Date.now() + this.maxAge * 1000]);
+    return value;
   }
 }

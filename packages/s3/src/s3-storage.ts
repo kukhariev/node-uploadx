@@ -128,7 +128,7 @@ export class S3Storage extends BaseStorage<S3File> {
     file.name = this.namingFunction(file, req);
     await this.validate(file);
     try {
-      const existing = await this.getMeta(file.name);
+      const existing = await this.getMeta(file.id);
       if (existing.bytesWritten >= 0) {
         return existing;
       }
@@ -152,7 +152,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async write(part: FilePart): Promise<S3File> {
-    const file = await this.getMeta(part.name);
+    const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
@@ -177,7 +177,7 @@ export class S3Storage extends BaseStorage<S3File> {
       file.Parts = [...file.Parts, uploadPart];
       file.bytesWritten += part.contentLength || 0;
     }
-    this.cache.set(file.name, file);
+    this.cache.set(file.id, file);
     file.status = getFileStatus(file);
     if (file.status === 'completed') {
       const [completed] = await this._onComplete(file);
@@ -187,18 +187,18 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async delete(name: string): Promise<S3File[]> {
-    const file = await this.getMeta(name).catch(() => null);
+  async delete(id: string): Promise<S3File[]> {
+    const file = await this.getMeta(id).catch(() => null);
     if (file) {
       file.status = 'deleted';
-      await Promise.all([this.deleteMeta(file.name), this._abortMultipartUpload(file)]);
+      await Promise.all([this.deleteMeta(file.id), this._abortMultipartUpload(file)]);
       return [{ ...file }];
     }
-    return [{ name } as S3File];
+    return [{ id } as S3File];
   }
 
   protected _onComplete = (file: S3File): Promise<[CompleteMultipartUploadOutput, any]> => {
-    return Promise.all([this._complete(file), this.deleteMeta(file.name)]);
+    return Promise.all([this._complete(file), this.deleteMeta(file.id)]);
   };
 
   private async _getParts(file: S3File): Promise<Part[]> {

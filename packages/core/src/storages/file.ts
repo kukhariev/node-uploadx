@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { isRecord, md5, uid } from '../utils';
+import { hash, isRecord, uid } from '../utils';
 import { isAbsolute } from 'path';
 
 export function isExpired(file: File): boolean {
@@ -17,9 +17,8 @@ export function extractMimeType(meta: Metadata): string | undefined {
 
 const generateFileId = (file: File): string => {
   const { originalName, size, userId, metadata } = file;
-  return metadata.lastModified
-    ? md5([originalName, size, metadata.lastModified, userId || ''].join('-'))
-    : uid();
+  const mtime = String(metadata.lastModified || Date.now());
+  return [userId, originalName, size, mtime].filter(Boolean).map(String).map(hash).join('-');
 };
 
 export interface FileInit {
@@ -58,7 +57,7 @@ export class File implements FileInit {
 export interface FilePart {
   body?: Readable;
   contentLength?: number;
-  name: string;
+  id: string;
   size?: number;
   start?: number;
 }

@@ -70,14 +70,14 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Write a chunk to file
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
-    metadata && (await this.storage.update(name, { metadata, name }));
+    metadata && (await this.storage.update(id, { metadata, id }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
-    const file = await this.storage.write({ start, name, body: req, contentLength });
+    const file = await this.storage.write({ start, id, body: req, contentLength });
     const headers = this.buildHeaders(file, { 'Upload-Offset': file.bytesWritten });
     setHeaders(res, headers);
     if (file.status === 'completed') return file;
@@ -89,9 +89,9 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Return chunk offset
    */
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const file = await this.storage.write({ name: name });
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const file = await this.storage.write({ id });
     const headers = this.buildHeaders(file, {
       'Upload-Offset': file.bytesWritten,
       'Upload-Length': file.size,
@@ -105,9 +105,9 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(name);
+    const id = this.getId(req);
+    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;
   }

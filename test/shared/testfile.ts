@@ -14,11 +14,12 @@ export const metadata = {
 };
 export const testfile = {
   userId: userPrefix,
+  id: `${userPrefix}/${metadata.name}`,
   name: `${userPrefix}/${metadata.name}`,
   originalName: metadata.name,
   size: stat.size,
   contentType: metadata.mimeType,
   metadata: metadata as Metadata
 } as File;
-export const metafilename = testfile.name + METAFILE_EXTNAME;
+export const metafilename = testfile.id + METAFILE_EXTNAME;
 export const filename = testfile.name;
