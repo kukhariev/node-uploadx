@@ -47,6 +47,9 @@ export function isRecord(x: unknown): x is Record<any, any> {
   return x !== null && typeof x === 'object' && !Array.isArray(x);
 }
 
+export const isEmpty = (val: object | null | undefined): boolean =>
+  !val || !(Object.keys(val) || val).length;
+
 /**
  * convert a human-readable duration to ms
  * @param value

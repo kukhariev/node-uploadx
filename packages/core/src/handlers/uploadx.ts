@@ -1,7 +1,16 @@
 import * as http from 'http';
 import * as url from 'url';
 import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
+import {
+  ERRORS,
+  fail,
+  getBaseUrl,
+  getHeader,
+  getMetadata,
+  Headers,
+  isEmpty,
+  setHeaders
+} from '../utils';
 import { BaseHandler } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
@@ -21,11 +30,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Create File from request and send a file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
-      fail(ERRORS.BAD_REQUEST, error)
-    );
-    const { query } = url.parse(decodeURI(req.url || ''), true);
-    Object.assign(metadata, query);
+    const metadata = await this.getMetadata(req);
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
@@ -43,11 +48,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const name = this.getName(req);
     if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
-      fail(ERRORS.BAD_REQUEST, error)
-    );
-    const { query } = url.parse(decodeURI(req.url || ''), true);
-    Object.assign(metadata, query);
+    const metadata = await this.getMetadata(req);
     const file = await this.storage.update(name, { metadata, name });
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     this.send(res, { body: file.metadata, headers });
@@ -82,6 +83,14 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const [file] = await this.storage.delete(name);
     this.send(res, { statusCode: 204 });
     return file;
+  }
+
+  async getMetadata(req: http.IncomingMessage): Promise<Record<any, any>> {
+    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
+      fail(ERRORS.BAD_REQUEST, error)
+    );
+    // FIXME: query values as array
+    return isEmpty(metadata) && req.url ? url.parse(decodeURI(req.url), true).query : metadata;
   }
 
   getName(req: http.IncomingMessage): string {
