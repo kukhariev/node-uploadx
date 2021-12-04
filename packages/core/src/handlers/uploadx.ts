@@ -41,8 +41,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   }
 
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
       fail(ERRORS.BAD_REQUEST, error)
     );
@@ -58,8 +57,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Write a chunk to file or/and return chunk offset
    */
   async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
     const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
@@ -77,15 +75,14 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;
   }
 
   getId(req: http.IncomingMessage): string {
-    const { query } = url.parse(decodeURI(req.url || ''), true);
+    const { query } = url.parse(req.url || '', true);
     if (query.upload_id) return query.upload_id as string;
     if (query.prefix) return query.prefix as string;
     return super.getId(req);

@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
+import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
 import { BaseHandler } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -70,8 +70,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Write a chunk to file
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
     metadata && (await this.storage.update(id, { metadata, id }));
@@ -89,8 +88,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Return chunk offset
    */
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const file = await this.storage.write({ id });
     const headers = this.buildHeaders(file, {
       'Upload-Offset': file.bytesWritten,
@@ -105,8 +103,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;

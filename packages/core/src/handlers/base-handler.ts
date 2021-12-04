@@ -233,7 +233,14 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
-    return path.startsWith('/') ? '' : decodeURI(path);
+    return path.startsWith('/') ? '' : path;
+  }
+
+  async getAndVerifyId(req: http.IncomingMessage, res: http.ServerResponse): Promise<string> {
+    const uid = this.getUserId(req, res) || '';
+    const id = this.getId(req);
+    if (id && id.startsWith(uid && hash(uid))) return id;
+    return fail(ERRORS.FORBIDDEN);
   }
 
   /**

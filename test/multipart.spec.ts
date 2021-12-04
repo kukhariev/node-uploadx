@@ -71,7 +71,7 @@ describe('::Multipart', () => {
     });
 
     it('should 404', async () => {
-      res = await request(app).delete(basePath).expect(404);
+      res = await request(app).delete(basePath).expect(403);
     });
   });
 });

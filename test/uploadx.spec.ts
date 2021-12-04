@@ -122,8 +122,8 @@ describe('::Uploadx', () => {
         .expect(409);
     });
 
-    it('should 404 (no id)', async () => {
-      await request(app).put(basePath).send(fs.readFileSync(srcpath)).expect(404);
+    it('should 403 (no id)', async () => {
+      await request(app).put(basePath).send(fs.readFileSync(srcpath)).expect(403);
     });
 
     it('should stream', async () => {

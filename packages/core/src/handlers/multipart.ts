@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
-import { ERRORS, fail, setHeaders } from '../utils';
+import { setHeaders } from '../utils';
 import { BaseHandler } from './base-handler';
 
 interface MultipartyPart extends multiparty.Part {
@@ -46,11 +46,10 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
   }
 
   /**
-   * Delete upload by id
+   * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const id = this.getId(req);
-    if (!id) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;
