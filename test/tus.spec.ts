@@ -42,7 +42,8 @@ describe('::Tus', () => {
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', '0');
+        .expect('upload-offset', '0')
+        .expect('upload-expires', /.*/);
     });
 
     it('should 200', async () => {
@@ -56,7 +57,8 @@ describe('::Tus', () => {
         .send(fs.readFileSync(srcpath))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', metadata.size.toString());
+        .expect('upload-offset', metadata.size.toString())
+        .expect('upload-expires', /.*/);
     });
   });
 
@@ -121,7 +123,8 @@ describe('::Tus', () => {
         .send(fs.readFileSync(srcpath).slice(0, 5))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', '5');
+        .expect('upload-offset', '5')
+        .expect('upload-expires', /.*/);
       expect(res.header.location).toEqual(expect.stringContaining('/tus'));
     });
   });

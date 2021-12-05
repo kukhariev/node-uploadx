@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { uploadx } from '../packages/core/src';
-import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot, userPrefix } from './shared';
+import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot, userId } from './shared';
 
 describe('::Uploadx', () => {
   const file1 = { ...metadata };
@@ -54,13 +54,17 @@ describe('::Uploadx', () => {
     });
 
     it('should 201 (x-headers)', async () => {
-      const res = await create(file1).expect(201);
+      const res = await create(file1).expect(201).expect('x-upload-expires', /.*/);
       uri1 = res.header.location as string;
       expect(uri1).toBeDefined();
     });
 
     it('should 201 (metadata)', async () => {
-      const res = await request(app).post(basePath).send(file2).expect(201);
+      const res = await request(app)
+        .post(basePath)
+        .send(file2)
+        .expect(201)
+        .expect('x-upload-expires', /.*/);
       uri2 = res.header.location as string;
       expect(uri2).toBeDefined();
     });
@@ -73,7 +77,7 @@ describe('::Uploadx', () => {
   describe('PATCH', () => {
     it('update metadata', async () => {
       uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).patch(uri1).send({ name: 'newname.mp4' }).expect(200);
+      const res = await request(app).patch(uri2).send({ name: 'newname.mp4' }).expect(200);
       expect(res.body.name).toBe('newname.mp4');
     });
   });
@@ -104,14 +108,14 @@ describe('::Uploadx', () => {
 
       const res = await uploadChunks();
       expect(res.type).toBe('application/json');
-      expect(fs.statSync(join(directory, userPrefix, file1.name)).size).toBe(file1.size);
+      expect(fs.statSync(join(directory, userId, file1.name)).size).toBe(file1.size);
     });
 
     it('should 200 (single request)', async () => {
       uri2 ||= (await create(file2)).header.location;
       const res = await request(app).put(uri2).send(fs.readFileSync(srcpath)).expect(200);
       expect(res.type).toBe('application/json');
-      expect(fs.statSync(join(directory, userPrefix, file2.name)).size).toBe(file2.size);
+      expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
     });
 
     it('should 409 (invalid size)', async () => {
