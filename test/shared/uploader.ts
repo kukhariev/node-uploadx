@@ -18,15 +18,15 @@ export class TestStorage extends BaseStorage<File> {
   }
 
   create(req: any, file: FileInit): Promise<File> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve(file as File);
   }
 
   write(part: FilePart): Promise<File> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve(part as File);
   }
 
   delete(id: string): Promise<File[]> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve([{ id } as File]);
   }
 }
 

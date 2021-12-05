@@ -19,4 +19,11 @@ describe('BaseStorage', () => {
       storage.validate({ ...testfile, originalName: '../file.ext' })
     ).rejects.toHaveProperty('statusCode');
   });
+
+  it('should check if expired', async () => {
+    storage = new TestStorage();
+    await expect(
+      storage.checkIfExpired({ ...testfile, expiredAt: Date.now() - 100 })
+    ).rejects.toHaveProperty('uploadxErrorCode', 'Gone');
+  });
 });
