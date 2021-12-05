@@ -15,6 +15,7 @@ import {
   ERRORS,
   fail,
   getBaseUrl,
+  hash,
   isUploadxError,
   isValidationError,
   Logger,
@@ -175,15 +176,11 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   }
 
   /**
-   * `GET` request handler
+   * Returns user uploads list
    */
   get(req: http.IncomingMessage, res: http.ServerResponse): Promise<UploadList> {
     const userId = this.getUserId(req, res);
-    if (userId) {
-      const name = this.getName(req);
-      if (name.startsWith(userId)) return this.storage.get(name);
-    }
-    return fail(ERRORS.FILE_NOT_FOUND);
+    return userId ? this.storage.get(hash(userId)) : fail(ERRORS.FILE_NOT_FOUND);
   }
 
   /**
@@ -231,12 +228,19 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   /**
    * Get id from request
    */
-  getName(req: http.IncomingMessage & { originalUrl?: string }): string {
+  getId(req: http.IncomingMessage & { originalUrl?: string }): string {
     const pathname = url.parse(req.url as string).pathname || '';
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.path}/`, '');
-    return path.startsWith('/') ? '' : decodeURI(path);
+    return path.startsWith('/') ? '' : path;
+  }
+
+  async getAndVerifyId(req: http.IncomingMessage, res: http.ServerResponse): Promise<string> {
+    const uid = this.getUserId(req, res) || '';
+    const id = this.getId(req);
+    if (id && id.startsWith(uid && hash(uid))) return id;
+    return fail(ERRORS.FORBIDDEN);
   }
 
   /**
@@ -247,7 +251,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
     file: TFile
   ): string {
     const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
-    const path = url.format({ pathname: `${pathname as string}/${file.name}`, query });
+    const path = url.format({ pathname: `${pathname as string}/${file.id}`, query });
     const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
     return `${baseUrl}${path}`;
   }

@@ -142,7 +142,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     file.name = this.namingFunction(file, req);
     await this.validate(file);
     try {
-      const existing = await this.getMeta(file.name);
+      const existing = await this.getMeta(file.id);
       existing.bytesWritten = await this._write(existing);
       return existing;
     } catch {}
@@ -172,7 +172,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   async write(part: FilePart): Promise<GCSFile> {
-    const file = await this.getMeta(part.name);
+    const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
@@ -185,17 +185,17 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return file;
   }
 
-  async delete(name: string): Promise<GCSFile[]> {
-    const file = await this.getMeta(name).catch(() => null);
+  async delete(id: string): Promise<GCSFile[]> {
+    const file = await this.getMeta(id).catch(() => null);
     if (file?.uri) {
       file.status = 'deleted';
       await Promise.all([
         this.authClient.request({ method: 'DELETE' as const, url: file.uri, validateStatus }),
-        this.deleteMeta(file.name)
+        this.deleteMeta(file.id)
       ]);
       return [{ ...file }];
     }
-    return [{ name } as GCSFile];
+    return [{ id } as GCSFile];
   }
 
   protected async _write(part: FilePart & GCSFile): Promise<number> {
@@ -233,7 +233,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   private _onComplete = (file: GCSFile): Promise<any> => {
-    return this.deleteMeta(file.name);
+    return this.deleteMeta(file.id);
   };
 
   private accessCheck(): Promise<any> {

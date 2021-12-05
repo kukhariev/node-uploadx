@@ -72,7 +72,7 @@ export interface BaseStorageOptions<T extends File> {
 const defaultOptions = {
   allowMIME: ['*/*'],
   maxUploadSize: '5TB',
-  filename: ({ userId, id }: File): string => [userId, id].filter(Boolean).join('-'),
+  filename: ({ id }: File): string => id,
   useRelativeLocation: false,
   onComplete: () => null,
   path: '/files',
@@ -151,27 +151,27 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
-    this.cache.set(file.name, file);
-    return this.meta.save(file.name, file);
+    this.cache.set(file.id, file);
+    return this.meta.save(file.id, file);
   }
 
   /**
    * Deletes an upload metadata
    */
-  async deleteMeta(name: string): Promise<void> {
-    this.cache.delete(name);
-    return this.meta.delete(name);
+  async deleteMeta(id: string): Promise<void> {
+    this.cache.delete(id);
+    return this.meta.delete(id);
   }
 
   /**
    * Retrieves upload metadata
    */
-  async getMeta(name: string): Promise<TFile> {
-    let file = this.cache.get(name);
+  async getMeta(id: string): Promise<TFile> {
+    let file = this.cache.get(id);
     if (!file) {
       try {
-        file = await this.meta.get(name);
-        this.cache.set(file.name, file);
+        file = await this.meta.get(id);
+        this.cache.set(file.id, file);
       } catch {
         return fail(ERRORS.FILE_NOT_FOUND);
       }
@@ -181,7 +181,7 @@ export abstract class BaseStorage<TFile extends File> {
 
   checkIfExpired(file: TFile): Promise<TFile> {
     if (isExpired(file)) {
-      void this.delete(file.name).catch(() => null);
+      void this.delete(file.id).catch(() => null);
       return fail(ERRORS.GONE);
     }
     return Promise.resolve(file);
@@ -200,8 +200,8 @@ export abstract class BaseStorage<TFile extends File> {
       const entries = (await this.list(prefix)).items.filter(
         item => +new Date(item.createdAt) < before
       );
-      for (const { name, createdAt } of entries) {
-        const [deleted] = await this.delete(name);
+      for (const { id, createdAt } of entries) {
+        const [deleted] = await this.delete(id);
         purged.items.push({ ...deleted, createdAt });
       }
     }
@@ -226,8 +226,8 @@ export abstract class BaseStorage<TFile extends File> {
    * @experimental
    * @todo Metadata size limit
    */
-  async update(name: string, { metadata }: Partial<File>): Promise<TFile> {
-    const file = await this.getMeta(name);
+  async update(id: string, { metadata }: Partial<File>): Promise<TFile> {
+    const file = await this.getMeta(id);
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };

@@ -142,13 +142,20 @@ describe('utils', () => {
 
   describe('primitives', () => {
     it('fnv', () => {
-      expect(utils.fnv('test string')).toBeGreaterThan(0);
+      expect(utils.fnv('123456')).toBe('9995b6aa');
     });
 
     it('pick', () => {
       expect(utils.pick({ test: 'test', rest: 'rest' }, ['test'])).toMatchObject({
         test: 'test'
       });
+    });
+
+    it('memoize', () => {
+      const md5Cached = utils.memoize(utils.md5);
+      const fnvCached = utils.memoize(utils.fnv);
+      expect(md5Cached('123456')).toBe('e10adc3949ba59abbe56e057f20f883e');
+      expect(fnvCached('123456')).toBe('9995b6aa');
     });
   });
 });

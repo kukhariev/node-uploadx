@@ -9,6 +9,7 @@ const opts: DiskStorageOptions = {
   directory: 'upload',
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
+  filename: file => file.originalName,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   onComplete: file => {
     console.log('File upload complete: ', file);

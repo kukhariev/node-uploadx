@@ -13,7 +13,6 @@ import {
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import { S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
-import { FilePart } from '../packages/core/src';
 import { filename, metafilename, srcpath, storageOptions, testfile } from './shared';
 import { IncomingMessage } from 'http';
 
@@ -50,10 +49,6 @@ describe('S3Storage', () => {
       expect(file.name).toEqual(filename);
       expect(file.status).toBe('created');
       expect(file.createdAt).toBeDefined();
-      expect(file).toMatchObject({
-        ...testfile,
-        UploadId: expect.any(String)
-      });
     });
   });
 
@@ -81,7 +76,7 @@ describe('S3Storage', () => {
       const { items } = await storage.list(testfile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ name: filename });
+      expect(items[0]).toMatchObject({ id: filename });
     });
   });
 
@@ -91,7 +86,8 @@ describe('S3Storage', () => {
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       s3Mock.on(UploadPartCommand).resolves({ ETag: '1234' });
       s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
-      const part: FilePart = {
+      const part = {
+        id: filename,
         name: filename,
         body: createReadStream(srcpath),
         start: 0,
@@ -105,7 +101,8 @@ describe('S3Storage', () => {
     it('should request api and set status and bytesWritten on resume', async () => {
       s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
-      const part: FilePart = {
+      const part = {
+        id: filename,
         name: filename,
         contentLength: 0
       };

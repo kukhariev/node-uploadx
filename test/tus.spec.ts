@@ -72,11 +72,11 @@ describe('::Tus', () => {
         .expect('tus-resumable', TUS_RESUMABLE);
     });
 
-    it('should 404', async () => {
+    it('should 403', async () => {
       await request(app)
         .head(basePath)
         .set('Tus-Resumable', TUS_RESUMABLE)
-        .expect(404)
+        .expect(403)
         .expect('tus-resumable', TUS_RESUMABLE);
     });
   });
@@ -101,11 +101,11 @@ describe('::Tus', () => {
         .expect('tus-resumable', TUS_RESUMABLE);
     });
 
-    it('should 404', async () => {
+    it('should 403', async () => {
       await request(app)
         .delete(basePath)
         .set('Tus-Resumable', TUS_RESUMABLE)
-        .expect(404)
+        .expect(403)
         .expect('tus-resumable', TUS_RESUMABLE);
     });
   });

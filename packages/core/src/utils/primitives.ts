@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 import duration from 'parse-duration';
+import { Cache } from './cache';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
   const result = {} as Pick<T, K>;
@@ -14,16 +15,16 @@ export function md5(str: string): string {
 }
 
 /**
- * 32-bit FNV-1a hash function
+ * FNV1A32 hash
  */
-export function fnv(str: string): number {
+export function fnv(str: string): string {
   let hash = 2166136261;
   const len = str.length;
   for (let i = 0; i < len; i++) {
     hash ^= str.charCodeAt(i);
     hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
   }
-  return hash >>> 0;
+  return (hash >>> 0).toString(16);
 }
 
 export function mapValues<T>(
@@ -56,3 +57,19 @@ export function toMilliseconds(value: string | number | undefined): number | nul
   if (!value) return null;
   return duration(value);
 }
+
+export function first<T>(val: T | T[]): T {
+  return Array.isArray(val) ? val[0] : val;
+}
+
+export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
+  const cache = new Cache<K>(1000, 0);
+  const cached = (val: T): K => {
+    const key = JSON.stringify(val);
+    return cache.get(key) || cache.set(key, fn.call(this, val));
+  };
+  cached.cache = cache;
+  return cached;
+};
+
+export const hash = memoize(fnv);

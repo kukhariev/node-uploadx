@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
-import { ERRORS, fail, getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
+import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
 import { BaseHandler } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -70,14 +70,13 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Write a chunk to file
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
+    const id = await this.getAndVerifyId(req, res);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
-    metadata && (await this.storage.update(name, { metadata, name }));
+    metadata && (await this.storage.update(id, { metadata, id }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
-    const file = await this.storage.write({ start, name, body: req, contentLength });
+    const file = await this.storage.write({ start, id, body: req, contentLength });
     const headers = this.buildHeaders(file, { 'Upload-Offset': file.bytesWritten });
     setHeaders(res, headers);
     if (file.status === 'completed') return file;
@@ -89,9 +88,8 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Return chunk offset
    */
   async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const file = await this.storage.write({ name: name });
+    const id = await this.getAndVerifyId(req, res);
+    const file = await this.storage.write({ id });
     const headers = this.buildHeaders(file, {
       'Upload-Offset': file.bytesWritten,
       'Upload-Length': file.size,
@@ -105,9 +103,8 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Delete upload
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const name = this.getName(req);
-    if (!name) return fail(ERRORS.FILE_NOT_FOUND);
-    const [file] = await this.storage.delete(name);
+    const id = await this.getAndVerifyId(req, res);
+    const [file] = await this.storage.delete(id);
     this.send(res, { statusCode: 204 });
     return file;
   }

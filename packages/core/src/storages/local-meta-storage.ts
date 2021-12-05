@@ -28,29 +28,29 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   /**
    * Returns metafile path
-   * @param name - upload name
+   * @param id - upload id
    */
-  getMetaPath = (name: string): string => `${this.directory}/${this.prefix + name + this.suffix}`;
+  getMetaPath = (id: string): string => `${this.directory}/${this.prefix + id + this.suffix}`;
 
   /**
-   * Returns upload name from metafile path
+   * Returns upload id from metafile path
    * @internal
    */
-  getNameFromPath = (metaFilePath: string): string =>
+  getIdFromPath = (metaFilePath: string): string =>
     metaFilePath.slice(`${this.directory}/${this.prefix}`.length, -this.suffix.length);
 
-  async save(name: string, file: T): Promise<T> {
-    await fsp.writeFile(this.getMetaPath(file.name), JSON.stringify(file, null, 2));
+  async save(id: string, file: T): Promise<T> {
+    await fsp.writeFile(this.getMetaPath(file.id), JSON.stringify(file, null, 2));
     return file;
   }
 
-  async get(name: string): Promise<T> {
-    const json = await fsp.readFile(this.getMetaPath(name), { encoding: 'utf8' });
+  async get(id: string): Promise<T> {
+    const json = await fsp.readFile(this.getMetaPath(id), { encoding: 'utf8' });
     return JSON.parse(json) as T;
   }
 
-  async delete(name: string): Promise<void> {
-    await removeFile(this.getMetaPath(name));
+  async delete(id: string): Promise<void> {
+    await removeFile(this.getMetaPath(id));
     return;
   }
 
@@ -60,7 +60,7 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     for (const name of files) {
       name.endsWith(this.suffix) &&
         uploads.push({
-          name: this.getNameFromPath(name),
+          id: this.getIdFromPath(name),
           createdAt: (await fsp.stat(name)).ctime
         });
     }
