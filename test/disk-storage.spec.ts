@@ -1,13 +1,13 @@
 import { posix } from 'path';
 import { DiskStorage, fsp } from '../packages/core/src';
 import {
+  authRequest,
   FileWriteStream,
   metafilename,
   RequestReadStream,
   storageOptions,
   testfile
 } from './shared';
-import { IncomingMessage } from 'http';
 
 const directory = 'ds-test';
 let fileWriteStream: FileWriteStream;
@@ -40,7 +40,7 @@ describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
   let readStream: RequestReadStream;
-  const req = {} as IncomingMessage;
+  const req = authRequest();
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
     return storage.create(req, testfile);

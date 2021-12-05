@@ -13,8 +13,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import { S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
-import { metafilename, srcpath, storageOptions, testfile } from './shared';
-import { IncomingMessage } from 'http';
+import { authRequest, metafilename, srcpath, storageOptions, testfile } from './shared';
 
 const s3Mock = mockClient(S3Client);
 
@@ -23,7 +22,7 @@ describe('S3Storage', () => {
 
   let file: S3File;
   let storage: S3Storage;
-  const req = {} as IncomingMessage;
+  const req = authRequest();
   const headResponse = {
     Metadata: {
       metadata: encodeURIComponent(JSON.stringify({ ...testfile, createdAt: Date.now() }))

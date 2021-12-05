@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { File, METAFILE_EXTNAME } from '../../packages/core/src';
-import { userPrefix as userId } from './config';
+import { userId } from './config';
 
 export const srcpath = join(__dirname, `testfile.mp4`);
 export const id = '11f967df-da1013ca-385ed251-b9682398';

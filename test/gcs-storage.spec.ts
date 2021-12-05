@@ -11,7 +11,7 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
-import { metafilename, request, srcpath, storageOptions, testfile } from './shared';
+import { authRequest, metafilename, request, srcpath, storageOptions, testfile } from './shared';
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');
@@ -30,7 +30,7 @@ describe('GCStorage', () => {
     data: { ...testfile, uri, createdAt: Date.now() }
   });
   const _createResponse = (): any => ({ headers: { location: uri } });
-  const req = { headers: { origin: 'http://api.com' } } as IncomingMessage;
+  const req = authRequest({ headers: { origin: 'http://api.com' } } as IncomingMessage);
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
