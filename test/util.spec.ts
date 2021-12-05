@@ -44,10 +44,10 @@ describe('utils', () => {
     it('getFiles(prefix)', async () => {
       await utils.ensureFile(filepath);
       await utils.ensureFile(filepath2);
-      await expect(utils.getFiles('files/fs-')).resolves.toHaveLength(2);
-      await expect(utils.getFiles('files\\fs-')).resolves.toHaveLength(2);
-      await expect(utils.getFiles('files\fs-')).resolves.toHaveLength(0);
-      await expect(utils.getFiles('files/fs_')).resolves.toHaveLength(0);
+      await expect(utils.getFiles(`${uploadRoot}/fs-`)).resolves.toHaveLength(2);
+      await expect(utils.getFiles(`${uploadRoot}\\fs-`)).resolves.toHaveLength(2);
+      await expect(utils.getFiles(`${uploadRoot}\fs-`)).resolves.toHaveLength(0);
+      await expect(utils.getFiles(`${uploadRoot}/fs_`)).resolves.toHaveLength(0);
     });
 
     it('getFiles(directory)', async () => {

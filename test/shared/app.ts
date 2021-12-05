@@ -16,10 +16,6 @@ app.use((req: Authorized<express.Request>, res, next) => {
   next();
 });
 
-app.get('/*/upload', (req, res) => {
-  res.json(req.body);
-});
-
 app.on('error', err => console.error(err));
 
 process.on('uncaughtException', err => console.error(err));

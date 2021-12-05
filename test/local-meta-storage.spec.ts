@@ -1,6 +1,7 @@
 import { LocalMetaStorage } from '../packages/core/src';
 import * as path from 'path';
 import { testfile } from './shared';
+import { tmpdir } from 'os';
 
 describe('LocalMetaStorage', () => {
   it('defaults', () => {
@@ -11,9 +12,13 @@ describe('LocalMetaStorage', () => {
   });
 
   it('custom', () => {
-    const meta = new LocalMetaStorage({ prefix: '.', suffix: '.', directory: './meta' });
+    const meta = new LocalMetaStorage({
+      prefix: '.',
+      suffix: '.',
+      directory: path.join(tmpdir(), 'meta')
+    });
     const metaPath = meta.getMetaPath(testfile.id);
-    expect(metaPath).toBe(`./meta/.${testfile.id}.`);
+    expect(path.basename(metaPath)).toBe(`.${testfile.id}.`);
     expect(meta.getIdFromPath(metaPath)).toBe(testfile.id);
   });
 
