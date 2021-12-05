@@ -12,6 +12,12 @@ describe('::Tus', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, tus(opts));
 
+  function exposedHeaders(response: request.Response): string[] {
+    return response
+      .get('Access-Control-Expose-Headers')
+      .split(',')
+      .map(s => s.toLowerCase());
+  }
   function create(): request.Test {
     return request(app)
       .post(basePath)
@@ -29,13 +35,16 @@ describe('::Tus', () => {
       const res = await create().expect('tus-resumable', TUS_RESUMABLE);
       uri = res.header.location as string;
       expect(uri).toEqual(expect.stringContaining('/tus'));
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['location', 'upload-expires', 'tus-resumable'])
+      );
     });
   });
 
   describe('PATCH', () => {
     it('should 204 and Upload-Offset', async () => {
       uri ||= (await create()).header.location;
-      await request(app)
+      const res = await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Offset', '0')
@@ -44,6 +53,9 @@ describe('::Tus', () => {
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', '0')
         .expect('upload-expires', /.*/);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['upload-offset', 'upload-expires', 'tus-resumable'])
+      );
     });
 
     it('should 200', async () => {
@@ -65,13 +77,22 @@ describe('::Tus', () => {
   describe('HEAD', () => {
     it('should 204', async () => {
       uri ||= (await create()).header.location;
-      await request(app)
+      const res = await request(app)
         .head(uri)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(200)
         .expect('upload-offset', /\d*/)
         .expect('upload-metadata', /.*\S.*/)
         .expect('tus-resumable', TUS_RESUMABLE);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining([
+          'upload-offset',
+          'upload-length',
+          'upload-metadata',
+          'upload-expires',
+          'tus-resumable'
+        ])
+      );
     });
 
     it('should 403', async () => {
@@ -85,11 +106,14 @@ describe('::Tus', () => {
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      await request(app)
+      const res = await request(app)
         .options(basePath)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['tus-extension', 'tus-max-size', 'tus-resumable'])
+      );
     });
   });
 
@@ -126,6 +150,9 @@ describe('::Tus', () => {
         .expect('upload-offset', '5')
         .expect('upload-expires', /.*/);
       expect(res.header.location).toEqual(expect.stringContaining('/tus'));
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['upload-offset', 'location', 'upload-expires', 'tus-resumable'])
+      );
     });
   });
 

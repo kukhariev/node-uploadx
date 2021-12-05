@@ -16,6 +16,12 @@ describe('::Uploadx', () => {
   const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
   app.use(basePath, uploadx(opts));
 
+  function exposedHeaders(response: request.Response): string[] {
+    return response
+      .get('Access-Control-Expose-Headers')
+      .split(',')
+      .map(s => s.toLowerCase());
+  }
   function create(file: typeof metadata): request.Test {
     return request(app)
       .post(basePath)
@@ -56,6 +62,7 @@ describe('::Uploadx', () => {
     it('should 201 (x-headers)', async () => {
       const res = await create(file1).expect(201).expect('x-upload-expires', /.*/);
       uri1 = res.header.location as string;
+      expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['location', 'x-upload-expires']));
       expect(uri1).toBeDefined();
     });
 
@@ -66,11 +73,17 @@ describe('::Uploadx', () => {
         .expect(201)
         .expect('x-upload-expires', /.*/);
       uri2 = res.header.location as string;
+      expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['location', 'x-upload-expires']));
       expect(uri2).toBeDefined();
     });
 
     it('should 201 (query)', async () => {
-      await request(app).post(basePath).send('').query(file1).expect(201);
+      await request(app)
+        .post(basePath)
+        .send('')
+        .query(file1)
+        .expect(201)
+        .expect('Access-Control-Expose-Headers', /.*/);
     });
   });
 
@@ -83,6 +96,13 @@ describe('::Uploadx', () => {
   });
 
   describe('PUT', () => {
+    it('should 200 (simple request)', async () => {
+      uri2 ||= (await create(file2)).header.location;
+      const res = await request(app).put(uri2).send(fs.readFileSync(srcpath)).expect(200);
+      expect(res.type).toBe('application/json');
+      expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
+    });
+
     it('should 200 (chunks)', async () => {
       uri1 ||= (await create(file1)).header.location;
 
@@ -111,15 +131,43 @@ describe('::Uploadx', () => {
       expect(fs.statSync(join(directory, userId, file1.name)).size).toBe(file1.size);
     });
 
-    it('should 200 (single request)', async () => {
-      uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).put(uri2).send(fs.readFileSync(srcpath)).expect(200);
-      expect(res.type).toBe('application/json');
-      expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
+    it('should 308 (chunk)', async () => {
+      let res = await create({ ...file2, size: 15, name: 'chunk.308' });
+      const uri = res.header.location as string;
+      const chunk = '12345';
+      res = await request(app)
+        .put(uri)
+        .redirects(0)
+        .set('content-type', 'application/octet-stream')
+        .set('content-range', `bytes 0-4/15`)
+        .send(chunk)
+        .expect(308)
+        .expect('range', 'bytes=0-4');
+      expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['range', 'x-upload-expires']));
+      res = await request(app)
+        .put(uri)
+        .redirects(0)
+        .set('content-type', 'application/octet-stream')
+        .set('content-range', `bytes */*`)
+        .send()
+        .expect(308)
+        .expect('range', 'bytes=0-4');
+      expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['range', 'x-upload-expires']));
+    });
+
+    it('should 409 (invalid range)', async () => {
+      const res = await create({ ...file2, size: 15, name: 'range.409' });
+      await request(app)
+        .put(res.header.location as string)
+        .redirects(0)
+        .set('content-type', 'application/octet-stream')
+        .set('content-range', `bytes 0-4/70`)
+        .send('12345')
+        .expect('range', 'bytes=0-4');
     });
 
     it('should 409 (invalid size)', async () => {
-      const res = await create({ ...file2, size: 5 });
+      const res = await create({ ...file2, size: 15, name: 'size.409' });
       await request(app)
         .put(res.header.location as string)
         .send(fs.readFileSync(srcpath))
@@ -132,14 +180,10 @@ describe('::Uploadx', () => {
 
     it('should stream', async () => {
       let res = await request(app).post(basePath).send({ name: 'stream' });
-      const streamUri = res.header.location as string;
-      await request(app)
-        .put(streamUri)
-        .redirects(0)
-        .set('content-range', `bytes 0-5/*`)
-        .send('012345');
+      const uri = res.header.location as string;
+      await request(app).put(uri).redirects(0).set('content-range', `bytes 0-5/*`).send('012345');
       res = await request(app)
-        .put(streamUri)
+        .put(uri)
         .redirects(0)
         .set('content-range', `bytes 6-9/10`)
         .send('6789');
