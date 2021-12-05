@@ -13,14 +13,13 @@ import {
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import { S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
-import { filename, metafilename, srcpath, storageOptions, testfile } from './shared';
+import { metafilename, srcpath, storageOptions, testfile } from './shared';
 import { IncomingMessage } from 'http';
 
 const s3Mock = mockClient(S3Client);
 
 describe('S3Storage', () => {
   const options = { ...(storageOptions as S3StorageOptions) };
-  testfile.name = filename;
 
   let file: S3File;
   let storage: S3Storage;
@@ -46,7 +45,7 @@ describe('S3Storage', () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
       file = await storage.create(req, testfile);
-      expect(file.name).toEqual(filename);
+      expect(file.name).toEqual(testfile.name);
       expect(file.status).toBe('created');
       expect(file.createdAt).toBeDefined();
     });
@@ -55,7 +54,7 @@ describe('S3Storage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       s3Mock.on(HeadObjectCommand).resolves(headResponse);
-      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
+      file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
     });
@@ -63,7 +62,7 @@ describe('S3Storage', () => {
     it('should reject if not found', async () => {
       expect.assertions(1);
       await expect(
-        storage.update(filename, { metadata: { name: 'newname.mp4' } })
+        storage.update(testfile.id, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
@@ -76,7 +75,7 @@ describe('S3Storage', () => {
       const { items } = await storage.list(testfile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: filename });
+      expect(items[0]).toMatchObject({ id: testfile.id });
     });
   });
 
@@ -87,8 +86,8 @@ describe('S3Storage', () => {
       s3Mock.on(UploadPartCommand).resolves({ ETag: '1234' });
       s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
       const part = {
-        id: filename,
-        name: filename,
+        id: testfile.id,
+        name: testfile.name,
         body: createReadStream(srcpath),
         start: 0,
         contentLength: testfile.size
@@ -102,8 +101,8 @@ describe('S3Storage', () => {
       s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       const part = {
-        id: filename,
-        name: filename,
+        id: testfile.id,
+        name: testfile.name,
         contentLength: 0
       };
       const res = await storage.write(part);
@@ -116,7 +115,7 @@ describe('S3Storage', () => {
     it('should set status', async () => {
       s3Mock.on(HeadObjectCommand).resolves(headResponse);
       s3Mock.on(DeleteObjectCommand).resolves({});
-      const [deleted] = await storage.delete(filename);
+      const [deleted] = await storage.delete(testfile.id);
       expect(deleted.status).toBe('deleted');
     });
   });

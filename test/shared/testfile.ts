@@ -1,25 +1,27 @@
-import { statSync } from 'fs';
 import { join } from 'path';
-import { File, Metadata, METAFILE_EXTNAME } from '../../packages/core/src';
-import { userPrefix } from './config';
+import { File, METAFILE_EXTNAME } from '../../packages/core/src';
+import { userPrefix as userId } from './config';
 
 export const srcpath = join(__dirname, `testfile.mp4`);
-const stat = statSync(srcpath);
+export const id = '11f967df-da1013ca-385ed251-b9682398';
 export const metadata = {
   name: 'testfile.mp4',
-  size: stat.size,
+  size: 80495,
   mimeType: 'video/mp4',
-  lastModified: Math.round(stat.mtimeMs),
+  lastModified: 1635398061454,
   custom: ''
 };
+
 export const testfile = {
-  userId: userPrefix,
-  id: `${userPrefix}/${metadata.name}`,
-  name: `${userPrefix}/${metadata.name}`,
-  originalName: metadata.name,
-  size: stat.size,
-  contentType: metadata.mimeType,
-  metadata: metadata as Metadata
+  bytesWritten: null as unknown as number,
+  name: 'userId/testfile.mp4',
+  metadata,
+  originalName: 'testfile.mp4',
+  contentType: 'video/mp4',
+  size: 80495,
+  userId,
+  id
 } as File;
-export const metafilename = testfile.id + METAFILE_EXTNAME;
+
+export const metafilename = id + METAFILE_EXTNAME;
 export const filename = testfile.name;

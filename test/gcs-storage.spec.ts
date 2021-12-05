@@ -11,7 +11,7 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
-import { filename, metafilename, request, srcpath, storageOptions, testfile } from './shared';
+import { metafilename, request, srcpath, storageOptions, testfile } from './shared';
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');
@@ -46,7 +46,7 @@ describe('GCStorage', () => {
       mockAuthRequest.mockResolvedValueOnce(_createResponse());
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
       file = await storage.create(req, testfile);
-      expect(file.name).toEqual(filename);
+      expect(file.name).toEqual(testfile.name);
       expect(file.status).toBe('created');
       expect(mockAuthRequest).toHaveBeenCalledTimes(4);
       expect(mockAuthRequest).toHaveBeenCalledWith(request.create);
@@ -62,7 +62,7 @@ describe('GCStorage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(_fileResponse());
-      file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
+      file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.originalName).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
@@ -71,7 +71,7 @@ describe('GCStorage', () => {
     it('should reject if not found', async () => {
       mockAuthRequest.mockResolvedValue({});
       await expect(
-        storage.update(filename, { metadata: { name: 'newname.mp4' } })
+        storage.update(testfile.id, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
@@ -79,13 +79,13 @@ describe('GCStorage', () => {
   describe('.get()', () => {
     it('should return all user files', async () => {
       const list = {
-        data: { items: [{ id: metafilename }] }
+        data: { items: [{ name: metafilename }] }
       };
       mockAuthRequest.mockResolvedValue(list);
       const { items } = await storage.get(testfile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: filename });
+      expect(items[0]).toMatchObject({ id: testfile.id });
     });
   });
 
@@ -97,7 +97,7 @@ describe('GCStorage', () => {
       mockFetch.mockResolvedValueOnce(new Response('{"mediaLink":"http://api.com/123456789"}'));
       const body = createReadStream(srcpath);
       const part: FilePart = {
-        id: filename,
+        id: testfile.id,
         body,
         start: 0,
         contentLength: testfile.size
@@ -122,7 +122,7 @@ describe('GCStorage', () => {
           headers: { Range: '0-5' }
         })
       );
-      const part: FilePart = { id: filename, contentLength: 0 };
+      const part: FilePart = { id: testfile.id, contentLength: 0 };
       const res = await storage.write(part);
       expect(mockFetch).toHaveBeenCalledWith(uri, {
         method: 'PUT',
@@ -136,8 +136,8 @@ describe('GCStorage', () => {
   describe('.delete()', () => {
     it('should set status', async () => {
       mockAuthRequest.mockResolvedValue({ data: { ...testfile, uri } });
-      const [deleted] = await storage.delete(filename);
-      expect(deleted.id).toBe(filename);
+      const [deleted] = await storage.delete(testfile.id);
+      expect(deleted.id).toBe(testfile.id);
       expect(deleted.status).toBe('deleted');
     });
   });
