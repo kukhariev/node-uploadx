@@ -1,4 +1,3 @@
-import { IncomingMessage } from 'http';
 import {
   BaseHandler,
   BaseStorage,
@@ -18,23 +17,16 @@ export class TestStorage extends BaseStorage<File> {
     super({});
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  list = (_url: any): Promise<any> => Promise.resolve({ uploads: [] });
-
-  update(name: string, file: Partial<File>): Promise<File> {
-    throw new Error('Method not implemented.');
-  }
-
-  create(req: IncomingMessage, file: FileInit): Promise<File> {
-    throw new Error('Method not implemented.');
+  create(req: any, file: FileInit): Promise<File> {
+    return Promise.resolve(file as File);
   }
 
   write(part: FilePart): Promise<File> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve(part as File);
   }
 
-  delete(prefix: string): Promise<File[]> {
-    throw new Error('Method not implemented.');
+  delete(id: string): Promise<File[]> {
+    return Promise.resolve([{ id } as File]);
   }
 }
 

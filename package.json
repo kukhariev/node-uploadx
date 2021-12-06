@@ -34,7 +34,8 @@
     "prepare": "husky install",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "coverage": "jest --coverage"
   },
   "devDependencies": {
     "@types/express": "4.17.13",

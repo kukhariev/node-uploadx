@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 import * as request from 'supertest';
-import { multipart } from '../packages/core/src';
+import { multipart, Multipart } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
 
 describe('::Multipart', () => {
@@ -22,6 +22,13 @@ describe('::Multipart', () => {
   beforeAll(async () => cleanup(directory));
 
   afterAll(async () => cleanup(directory));
+
+  describe('default options', () => {
+    it('should be defined', () => {
+      expect(multipart.upload()).toBeInstanceOf(Function);
+      expect(new Multipart()).toBeInstanceOf(Multipart);
+    });
+  });
 
   describe('POST', () => {
     it('should support custom fields', async () => {

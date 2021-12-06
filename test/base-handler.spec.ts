@@ -56,7 +56,7 @@ describe('BaseHandler', () => {
     ['/3', '3'],
     ['/files', 'files'],
     ['/', '']
-  ])('express: getName(%p) === %p', (url, name) => {
+  ])('express: getId(%p) === %p', (url, name) => {
     expect(uploader.getId(createRequest({ url }))).toBe(name);
   });
 
@@ -67,7 +67,7 @@ describe('BaseHandler', () => {
     ['/', ''],
     ['/1/2', ''],
     ['/3/files/4', '']
-  ])('nodejs: getName(%p) === %p', (url, name) => {
+  ])('nodejs: getId(%p) === %p', (url, name) => {
     expect(uploader.getId({ url } as http.IncomingMessage)).toBe(name);
   });
 });

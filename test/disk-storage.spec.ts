@@ -1,14 +1,13 @@
 import { posix } from 'path';
 import { DiskStorage, fsp } from '../packages/core/src';
 import {
-  filename,
+  authRequest,
   FileWriteStream,
   metafilename,
   RequestReadStream,
   storageOptions,
   testfile
 } from './shared';
-import { IncomingMessage } from 'http';
 
 const directory = 'ds-test';
 let fileWriteStream: FileWriteStream;
@@ -19,7 +18,10 @@ jest.mock('../packages/core/src/utils/fs', () => {
     ensureFile: async () => 0,
     accessCheck: async () => 0,
     removeFile: async () => null,
-    getFiles: async () => [posix.join(directory, filename), posix.join(directory, metafilename)],
+    getFiles: async () => [
+      posix.join(directory, testfile.name),
+      posix.join(directory, metafilename)
+    ],
     getWriteStream: () => fileWriteStream,
     fsp: {
       stat: async () => ({
@@ -38,7 +40,7 @@ describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
   let readStream: RequestReadStream;
-  const req = {} as IncomingMessage;
+  const req = authRequest();
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
     return storage.create(req, testfile);
@@ -79,7 +81,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should update metadata', async () => {
-      const file = await storage.update(filename, { metadata: { name: 'newname.mp4' } });
+      const file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
     });
@@ -138,13 +140,13 @@ describe('DiskStorage', () => {
     it('should return all user files', async () => {
       const { items } = await storage.list(testfile.userId);
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: filename });
+      expect(items[0]).toMatchObject({ id: testfile.id });
     });
 
     it('should return one file', async () => {
-      const { items } = await storage.list(filename);
+      const { items } = await storage.list(testfile.id);
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: filename });
+      expect(items[0]).toMatchObject({ id: testfile.id });
     });
   });
 
@@ -152,8 +154,8 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should set status', async () => {
-      const [deleted] = await storage.delete(filename);
-      expect(deleted.id).toBe(filename);
+      const [deleted] = await storage.delete(testfile.id);
+      expect(deleted.id).toBe(testfile.id);
       expect(deleted.status).toBe('deleted');
     });
 

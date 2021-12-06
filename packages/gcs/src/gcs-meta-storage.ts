@@ -44,7 +44,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
       body: JSON.stringify(file),
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       method: 'POST',
-      params: { id: encodeURIComponent(this.getMetaName(id)), uploadType: 'media' },
+      params: { name: encodeURIComponent(this.getMetaName(id)), uploadType: 'media' },
       url: this.uploadBaseURI
     });
     return file;
@@ -67,13 +67,13 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
     const url = '/';
     const options = { baseURL, url, params: { prefix: encodeURIComponent(prefix) } };
     const { data } = await this.authClient.request<{
-      items: { id: string; timeCreated: string; metadata?: T }[];
+      items: { name: string; timeCreated: string; metadata?: T }[];
     }>(options);
     return {
       items: data.items
-        .filter(item => item.id.endsWith(this.suffix))
-        .map(({ id, timeCreated }) => ({
-          id: this.getIdFromPath(id),
+        .filter(item => item.name.endsWith(this.suffix))
+        .map(({ name, timeCreated }) => ({
+          id: this.getIdFromPath(name),
           createdAt: new Date(timeCreated)
         }))
     };

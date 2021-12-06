@@ -5,5 +5,6 @@ module.exports = {
   testEnvironment: 'node',
   testRegex: '.*\\.(spec|test)\\.ts$',
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
-  modulePathIgnorePatterns: ['<rootDir>/package.json']
+  modulePathIgnorePatterns: ['<rootDir>/package.json'],
+  collectCoverageFrom: ['packages/**/*.ts', '!**/lib/**', '!<rootDir>/test/shared/**']
 };

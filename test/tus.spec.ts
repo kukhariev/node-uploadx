@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { parseMetadata, serializeMetadata, tus, TUS_RESUMABLE } from '../packages/core/src';
+import { parseMetadata, serializeMetadata, tus, Tus, TUS_RESUMABLE } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
 
 describe('::Tus', () => {
@@ -12,6 +12,12 @@ describe('::Tus', () => {
   const opts = { ...storageOptions, directory };
   app.use(basePath, tus(opts));
 
+  function exposedHeaders(response: request.Response): string[] {
+    return response
+      .get('Access-Control-Expose-Headers')
+      .split(',')
+      .map(s => s.toLowerCase());
+  }
   function create(): request.Test {
     return request(app)
       .post(basePath)
@@ -24,25 +30,39 @@ describe('::Tus', () => {
 
   afterAll(async () => cleanup(directory));
 
+  describe('default options', () => {
+    it('should be defined', () => {
+      expect(tus.upload()).toBeInstanceOf(Function);
+      expect(new Tus()).toBeInstanceOf(Tus);
+    });
+  });
+
   describe('POST', () => {
     it('should 201', async () => {
       const res = await create().expect('tus-resumable', TUS_RESUMABLE);
       uri = res.header.location as string;
       expect(uri).toEqual(expect.stringContaining('/tus'));
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['location', 'upload-expires', 'tus-resumable'])
+      );
     });
   });
 
   describe('PATCH', () => {
     it('should 204 and Upload-Offset', async () => {
       uri ||= (await create()).header.location;
-      await request(app)
+      const res = await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', '0');
+        .expect('upload-offset', '0')
+        .expect('upload-expires', /.*/);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['upload-offset', 'upload-expires', 'tus-resumable'])
+      );
     });
 
     it('should 200', async () => {
@@ -56,20 +76,30 @@ describe('::Tus', () => {
         .send(fs.readFileSync(srcpath))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', metadata.size.toString());
+        .expect('upload-offset', metadata.size.toString())
+        .expect('upload-expires', /.*/);
     });
   });
 
   describe('HEAD', () => {
     it('should 204', async () => {
       uri ||= (await create()).header.location;
-      await request(app)
+      const res = await request(app)
         .head(uri)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(200)
         .expect('upload-offset', /\d*/)
         .expect('upload-metadata', /.*\S.*/)
         .expect('tus-resumable', TUS_RESUMABLE);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining([
+          'upload-offset',
+          'upload-length',
+          'upload-metadata',
+          'upload-expires',
+          'tus-resumable'
+        ])
+      );
     });
 
     it('should 403', async () => {
@@ -83,11 +113,14 @@ describe('::Tus', () => {
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      await request(app)
+      const res = await request(app)
         .options(basePath)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE);
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['tus-extension', 'tus-max-size', 'tus-resumable'])
+      );
     });
   });
 
@@ -121,8 +154,12 @@ describe('::Tus', () => {
         .send(fs.readFileSync(srcpath).slice(0, 5))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', '5');
+        .expect('upload-offset', '5')
+        .expect('upload-expires', /.*/);
       expect(res.header.location).toEqual(expect.stringContaining('/tus'));
+      expect(exposedHeaders(res)).toEqual(
+        expect.arrayContaining(['upload-offset', 'location', 'upload-expires', 'tus-resumable'])
+      );
     });
   });
 
