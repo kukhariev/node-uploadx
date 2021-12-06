@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx } from '../packages/core/src';
+import { uploadx, Uploadx } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot, userId } from './shared';
 
 describe('::Uploadx', () => {
@@ -33,6 +33,13 @@ describe('::Uploadx', () => {
   beforeAll(async () => cleanup(directory));
 
   afterAll(async () => cleanup(directory));
+
+  describe('default options', () => {
+    it('should be defined', () => {
+      expect(uploadx.upload()).toBeInstanceOf(Function);
+      expect(new Uploadx()).toBeInstanceOf(Uploadx);
+    });
+  });
 
   describe('POST', () => {
     it('should 413 (size limit)', async () => {

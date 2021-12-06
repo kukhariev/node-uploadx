@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { parseMetadata, serializeMetadata, tus, TUS_RESUMABLE } from '../packages/core/src';
+import { parseMetadata, serializeMetadata, tus, Tus, TUS_RESUMABLE } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
 
 describe('::Tus', () => {
@@ -29,6 +29,13 @@ describe('::Tus', () => {
   beforeAll(async () => cleanup(directory));
 
   afterAll(async () => cleanup(directory));
+
+  describe('default options', () => {
+    it('should be defined', () => {
+      expect(tus.upload()).toBeInstanceOf(Function);
+      expect(new Tus()).toBeInstanceOf(Tus);
+    });
+  });
 
   describe('POST', () => {
     it('should 201', async () => {
