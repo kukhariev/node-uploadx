@@ -81,7 +81,6 @@ const defaultOptions = {
 };
 
 export abstract class BaseStorage<TFile extends File> {
-  static maxCacheMemory = '800MB';
   onComplete: (file: TFile) => Promise<any> | any;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -101,8 +100,7 @@ export abstract class BaseStorage<TFile extends File> {
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
-    const storage = <typeof BaseStorage>this.constructor;
-    this.cache = new Cache(Math.floor(bytes.parse(storage.maxCacheMemory) / this.maxMetadataSize));
+    this.cache = new Cache(1000, 300);
 
     const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
     if (purgeInterval) {

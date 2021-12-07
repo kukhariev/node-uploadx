@@ -9,7 +9,7 @@ export class Cache<T> {
    * @param maxEntries The maximum number of entries before the cache starts flushing out the old items
    * @param maxAge The maximum life of a cached items in seconds
    */
-  constructor(public maxEntries = 500, readonly maxAge = 300) {
+  constructor(public maxEntries = 1000, readonly maxAge = 0) {
     this._ttl = maxAge * 1000;
   }
 
