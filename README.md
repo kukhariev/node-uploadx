@@ -97,7 +97,8 @@ Some available options: :
 | `maxMetadataSize`     |   `string\|number`   |     `"4MB"`      | _Metadata size limit_                                        |
 | `validation`          |     `Validation`     |                  | _Upload validation options_                                  |
 | `useRelativeLocation` |      `boolean`       |     `false`      | _Use relative urls_                                          |
-| `filename`            |      `Function`      |                  | _Name generator function_                                    |
+| `filename`            |      `Function`      |                  | _File naming function_                                       |
+| `userIdentifier`      |   `UserIdentifier`   |                  | _Get user identity_                                          |
 | `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
 | `clientDirectUpload`  |      `boolean`       |                  | _Upload by a compatible client directly to the GCS_          |
 | `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |

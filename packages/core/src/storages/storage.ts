@@ -19,6 +19,8 @@ import { File, FileInit, FileName, FilePart, isExpired, updateMetadata } from '.
 import { MetaStorage, UploadList } from './meta-storage';
 import { setInterval } from 'timers';
 
+export type UserIdentifier = (req: any, res: any) => string;
+
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
 ) => Promise<TResponseBody> | TResponseBody;
@@ -41,8 +43,10 @@ export interface BaseStorageOptions<T extends File> {
   allowMIME?: string[];
   /** File size limit */
   maxUploadSize?: number | string;
-  /** Name generator function */
+  /** File naming function */
   filename?: (file: T, req: any) => string;
+  /** Get user identity */
+  userIdentifier?: UserIdentifier;
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;

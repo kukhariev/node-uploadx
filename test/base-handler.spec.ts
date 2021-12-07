@@ -4,14 +4,15 @@ import * as http from 'http';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
-  TestUploader.methods = ['post', 'put', 'options'];
+  TestUploader.methods = ['post', 'put', 'options', 'get'];
 
   beforeEach(() => (uploader = new TestUploader({ storage: testStorage })));
 
-  it('should implement get()', async () => {
+  it('should implement options()', async () => {
     const res = createResponse();
-    const req = createRequest({ url: '/files/12345' });
-    await expect(uploader.get(req, res)).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
+    const req = createRequest({ url: '/files' });
+    await uploader.options(req, res);
+    expect(res.statusCode).toBe(204);
   });
 
   it('should check if storage not ready', () => {
@@ -23,31 +24,48 @@ describe('BaseHandler', () => {
 
   it('should check http method', () => {
     const res = createResponse();
-    uploader.handle(createRequest({ method: 'GET' }), res);
+    uploader.handle(createRequest({ method: 'PATCH' }), res);
     expect(res.statusCode).toBe(405);
   });
 
-  describe('sendError', () => {
-    beforeEach(() => {
-      uploader = new TestUploader({ storage: testStorage });
-    });
+  it('should check user (no auth)', async () => {
+    const res = createResponse();
+    const req = createRequest({ url: '/files' });
+    await expect(uploader.get(req, res)).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
+  });
 
-    it('should send Error', () => {
-      uploader.responseType = 'json';
-      const res = createResponse();
-      const sendSpy = jest.spyOn(uploader, 'send');
-      const err = new Error('Error Message');
-      uploader.sendError(res, err);
-      expect(sendSpy).toHaveBeenCalledWith(res, {
-        statusCode: 500,
-        body: {
-          error: {
-            message: 'Generic Uploadx Error',
-            code: 'GenericUploadxError'
-          }
-        },
-        headers: undefined
-      });
+  it('should check user (default)', async () => {
+    const res = createResponse();
+    const req = createRequest({ url: '/files' });
+    req.user = { _id: '12345' };
+    await expect(uploader.get(req, res)).resolves.toHaveProperty('items', []);
+  });
+
+  it('should check user (custom)', async () => {
+    uploader = new TestUploader({
+      storage: testStorage,
+      userIdentifier: (_, res) => res.locals.user_id // eslint-disable-line
+    });
+    const res = createResponse({ locals: { user_id: '12345' } });
+    const req = createRequest({ url: '/files' });
+    await expect(uploader.get(req, res)).resolves.toHaveProperty('items', []);
+  });
+
+  it('should send Error', () => {
+    uploader.responseType = 'json';
+    const res = createResponse();
+    const sendSpy = jest.spyOn(uploader, 'send');
+    const err = new Error('Error Message');
+    uploader.sendError(res, err);
+    expect(sendSpy).toHaveBeenCalledWith(res, {
+      statusCode: 500,
+      body: {
+        error: {
+          message: 'Generic Uploadx Error',
+          code: 'GenericUploadxError'
+        }
+      },
+      headers: undefined
     });
   });
 
