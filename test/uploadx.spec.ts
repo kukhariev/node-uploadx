@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
-import { uploadx, Uploadx } from '../packages/core/src';
+import { DiskStorage, uploadx, Uploadx } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot, userId } from './shared';
 
 describe('::Uploadx', () => {
@@ -11,11 +11,13 @@ describe('::Uploadx', () => {
   let uri1 = '';
   let uri2 = '';
   let start: number;
-  const basePath = '/uploadx';
+  const path1 = '/uploadx';
+  const path2 = '/uploadx2';
   const directory = join(uploadRoot, 'uploadx');
   const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
-  app.use(basePath, uploadx(opts));
-
+  const uploadx2 = new Uploadx({ storage: new DiskStorage(opts) });
+  app.use(path1, uploadx(opts));
+  app.use(path2, uploadx2.handle);
   function exposedHeaders(response: request.Response): string[] {
     return response
       .get('Access-Control-Expose-Headers')
@@ -24,7 +26,7 @@ describe('::Uploadx', () => {
   }
   function create(file: typeof metadata): request.Test {
     return request(app)
-      .post(basePath)
+      .post(path1)
       .set('x-upload-content-type', file.mimeType)
       .set('x-upload-content-length', String(file.size))
       .send(file);
@@ -75,7 +77,7 @@ describe('::Uploadx', () => {
 
     it('should 201 (metadata)', async () => {
       const res = await request(app)
-        .post(basePath)
+        .post(path1)
         .send(file2)
         .expect(201)
         .expect('x-upload-expires', /.*/);
@@ -86,7 +88,7 @@ describe('::Uploadx', () => {
 
     it('should 201 (query)', async () => {
       await request(app)
-        .post(basePath)
+        .post(path1)
         .send('')
         .query(file1)
         .expect(201)
@@ -182,11 +184,11 @@ describe('::Uploadx', () => {
     });
 
     it('should 403 (no id)', async () => {
-      await request(app).put(basePath).send(fs.readFileSync(srcpath)).expect(403);
+      await request(app).put(path1).send(fs.readFileSync(srcpath)).expect(403);
     });
 
     it('should stream', async () => {
-      let res = await request(app).post(basePath).send({ name: 'stream' });
+      let res = await request(app).post(path1).send({ name: 'stream' });
       const uri = res.header.location as string;
       await request(app).put(uri).redirects(0).set('content-range', `bytes 0-5/*`).send('012345');
       res = await request(app)
@@ -203,7 +205,7 @@ describe('::Uploadx', () => {
     it('should return info array', async () => {
       uri1 ||= (await create(file1)).header.location;
       uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).get(`${basePath}`).expect(200);
+      const res = await request(app).get(`${path1}`).expect(200);
       expect(res.body.items.length).toBeGreaterThan(2);
     });
   });
@@ -217,7 +219,28 @@ describe('::Uploadx', () => {
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      await request(app).options(basePath).expect(204);
+      await request(app).options(path1).expect(204);
+    });
+  });
+
+  describe('events', () => {
+    it('should emit `created`', async () => {
+      let event;
+      uploadx2.on('created', evt => (event = evt));
+      await request(app).post(path2).send(file2).expect(201);
+      expect(event).toHaveProperty('request.method', 'POST');
+      expect(event).toHaveProperty('status', 'created');
+    });
+
+    it('should emit `error`', async () => {
+      let event;
+      uploadx2.on('error', evt => (event = evt));
+      await request(app)
+        .post(path2)
+        .send({ ...file2, size: 10e10 })
+        .expect(413);
+      expect(event).toHaveProperty('request.method', 'POST');
+      expect(event).toHaveProperty('code', 'RequestEntityTooLarge');
     });
   });
 });

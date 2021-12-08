@@ -85,7 +85,7 @@ describe('BaseHandler', () => {
     ['/', ''],
     ['/1/2', ''],
     ['/3/files/4', '']
-  ])('nodejs: getId(%p) === %p', (url, name) => {
-    expect(uploader.getId({ url } as http.IncomingMessage)).toBe(name);
+  ])('nodejs: getId(%p) === %p', (url, id) => {
+    expect(uploader.getId({ url } as http.IncomingMessage)).toBe(id);
   });
 });
