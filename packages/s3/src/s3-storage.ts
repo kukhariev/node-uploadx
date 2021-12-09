@@ -198,7 +198,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   protected _onComplete = (file: S3File): Promise<[CompleteMultipartUploadOutput, any]> => {
-    return Promise.all([this._complete(file), this.deleteMeta(file.id)]);
+    return Promise.all([this._completeMultipartUpload(file), this.deleteMeta(file.id)]);
   };
 
   private async _getParts(file: S3File): Promise<Part[]> {
@@ -207,7 +207,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return Parts;
   }
 
-  private _complete(file: S3File): Promise<CompleteMultipartUploadOutput> {
+  private _completeMultipartUpload(file: S3File): Promise<CompleteMultipartUploadOutput> {
     const params = {
       Bucket: this.bucket,
       Key: file.name,

@@ -190,7 +190,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     if (file?.uri) {
       file.status = 'deleted';
       await Promise.all([
-        this.authClient.request({ method: 'DELETE' as const, url: file.uri, validateStatus }),
+        this.authClient.request({ method: 'DELETE', url: file.uri, validateStatus }),
         this.deleteMeta(file.id)
       ]);
       return [{ ...file }];

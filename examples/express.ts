@@ -1,13 +1,18 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DiskFile, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
 const PORT = process.env.PORT || 3002;
+type UserInfo = { user?: { id: string; email: string } };
 
 const app = express();
 
-const auth: express.Handler = (req, res, next) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  (req as any)['user'] = { id: '92be348f-172d-5f69-840d-100f79e4d1ef' };
+const auth = (
+  req: express.Request & UserInfo,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  req.user = { id: '92be348f', email: 'user@example.com' };
   next();
 };
 
@@ -21,7 +26,8 @@ app.use(
   '/files',
   uploadx.upload({
     directory: 'upload',
-    expiration: { maxAge: '1h', purgeInterval: '10min' }
+    expiration: { maxAge: '1h', purgeInterval: '10min' },
+    userIdentifier: (req: express.Request & UserInfo) => req.user!.email + req.user!.id
   }),
   onComplete
 );

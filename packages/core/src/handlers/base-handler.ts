@@ -7,7 +7,8 @@ import {
   DiskStorageOptions,
   File,
   UploadEventType,
-  UploadList
+  UploadList,
+  UserIdentifier
 } from '../storages';
 import {
   ErrorMap,
@@ -72,13 +73,20 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   protected log = Logger.get(this.constructor.name);
   protected _errorResponses = {} as ErrorResponses;
 
-  constructor(config: { storage: BaseStorage<TFile> } | DiskStorageOptions = {}) {
+  constructor(
+    config:
+      | { storage: BaseStorage<TFile>; userIdentifier?: UserIdentifier }
+      | DiskStorageOptions = {}
+  ) {
     super();
     this.cors = new Cors();
     this.storage =
       'storage' in config
         ? config.storage
         : (new DiskStorage(config) as unknown as BaseStorage<TFile>);
+    if (config.userIdentifier) {
+      this.getUserId = config.userIdentifier;
+    }
     this.assembleErrors();
     this.compose();
 
@@ -168,7 +176,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
       });
   };
 
-  getUserId = (req: any, _res: any): string | undefined => req.user?.id || req.user?._id; // eslint-disable-line
+  getUserId: UserIdentifier = (req, _res) => req.user?.id || req.user?._id; // eslint-disable-line
 
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     this.send(res, { statusCode: 204 });
