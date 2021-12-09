@@ -86,7 +86,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   /**
    * Build file url from request
    */
-  protected buildFileUrl(
+  buildFileUrl(
     req: http.IncomingMessage & { originalUrl?: string },
     file: File & { GCSUploadURI?: string }
   ): string {
