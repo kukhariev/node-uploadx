@@ -254,14 +254,10 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   /**
    * Build file url from request
    */
-  protected buildFileUrl(
-    req: http.IncomingMessage & { originalUrl?: string },
-    file: TFile
-  ): string {
+  buildFileUrl(req: http.IncomingMessage & { originalUrl?: string }, file: TFile): string {
     const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
-    const path = url.format({ pathname: `${pathname as string}/${file.id}`, query });
-    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return `${baseUrl}${path}`;
+    const relative = url.format({ pathname: `${pathname as string}/${file.id}`, query });
+    return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
   }
 
   protected finish(
