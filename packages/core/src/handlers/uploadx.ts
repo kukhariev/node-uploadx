@@ -21,11 +21,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    * Create File from request and send a file url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
-      fail(ERRORS.BAD_REQUEST, error)
-    );
-    const { query } = url.parse(decodeURI(req.url || ''), true);
-    Object.assign(metadata, query);
+    const metadata = await this.getMetadata(req);
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
     config.size = getHeader(req, 'x-upload-content-length');
@@ -42,11 +38,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
-      fail(ERRORS.BAD_REQUEST, error)
-    );
-    const { query } = url.parse(decodeURI(req.url || ''), true);
-    Object.assign(metadata, query);
+    const metadata = await this.getMetadata(req);
     const file = await this.storage.update(id, { metadata, id });
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     this.send(res, { body: file.metadata, headers });
@@ -83,9 +75,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 
   getId(req: http.IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
-    if (query.upload_id) return query.upload_id as string;
-    if (query.prefix) return query.prefix as string;
-    return super.getId(req);
+    return (query.upload_id || query.prefix || super.getId(req)) as string;
   }
 
   buildHeaders(file: File, headers: Headers = {}): Headers {
@@ -104,9 +94,17 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 
     const { query, pathname } = url.parse(req.originalUrl || (req.url as string), true);
     query.upload_id = file.id;
-    const path = url.format({ pathname, query });
-    const baseUrl = this.storage.config.useRelativeLocation ? '' : getBaseUrl(req);
-    return `${baseUrl}${path}`;
+    const relative = url.format({ pathname, query });
+    return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
+  }
+
+  async getMetadata(req: http.IncomingMessage): Promise<Record<any, any>> {
+    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
+      fail(ERRORS.BAD_REQUEST, error)
+    );
+    if (Object.keys(metadata).length) return metadata;
+    const { query } = url.parse(decodeURI(req.url || ''), true);
+    return { ...metadata, ...query };
   }
 }
 
