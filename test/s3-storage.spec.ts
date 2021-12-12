@@ -78,7 +78,7 @@ describe('S3Storage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
+      file = await storage.update(testfile, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
     });
@@ -86,7 +86,7 @@ describe('S3Storage', () => {
     it('should reject if not found', async () => {
       expect.assertions(1);
       await expect(
-        storage.update(testfile.id, { metadata: { name: 'newname.mp4' } })
+        storage.update(testfile, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
@@ -139,13 +139,13 @@ describe('S3Storage', () => {
     it('should set status', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(DeleteObjectCommand).resolves({});
-      const [deleted] = await storage.delete(testfile.id);
+      const [deleted] = await storage.delete(testfile);
       expect(deleted.status).toBe('deleted');
     });
 
     it('should ignore if not exist', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      const [deleted] = await storage.delete(testfile.id);
+      const [deleted] = await storage.delete(testfile);
       expect(deleted.id).toBe(testfile.id);
     });
   });

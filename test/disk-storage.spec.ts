@@ -81,7 +81,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should update metadata', async () => {
-      const file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
+      const file = await storage.update(testfile, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
     });
@@ -154,7 +154,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should set status', async () => {
-      const [deleted] = await storage.delete(testfile.id);
+      const [deleted] = await storage.delete(testfile);
       expect(deleted.id).toBe(testfile.id);
       expect(deleted.status).toBe('deleted');
     });
@@ -162,7 +162,7 @@ describe('DiskStorage', () => {
     it('should ignore not found', async () => {
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce('notfound');
-      const [deleted] = await storage.delete('notfound');
+      const [deleted] = await storage.delete({ id: 'notfound' });
       expect(deleted.id).toBe('notfound');
       expect(deleted.status).toBeUndefined();
     });

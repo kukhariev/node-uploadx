@@ -12,9 +12,9 @@ import { AbortSignal } from 'abort-controller';
 import { createReadStream } from 'fs';
 import { IncomingMessage } from 'http';
 import { authRequest, metafilename, request, srcpath, storageOptions, testfile } from './shared';
+import fetch from 'node-fetch';
 
 jest.mock('node-fetch');
-import fetch from 'node-fetch';
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const { Response } = jest.requireActual('node-fetch');
 
@@ -74,7 +74,7 @@ describe('GCStorage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(metafileResponse());
-      file = await storage.update(testfile.id, { metadata: { name: 'newname.mp4' } });
+      file = await storage.update(testfile, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.originalName).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
@@ -83,16 +83,16 @@ describe('GCStorage', () => {
     it('should reject if not found', async () => {
       mockAuthRequest.mockResolvedValue({});
       await expect(
-        storage.update(testfile.id, { metadata: { name: 'newname.mp4' } })
+        storage.update(testfile, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
 
-  describe('.get()', () => {
+  describe('.list()', () => {
     it('should return all user files', async () => {
       const list = { data: { items: [{ name: metafilename }] } };
       mockAuthRequest.mockResolvedValue(list);
-      const { items } = await storage.get(testfile.userId);
+      const { items } = await storage.list(testfile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ id: testfile.id });
@@ -152,14 +152,14 @@ describe('GCStorage', () => {
   describe('.delete()', () => {
     it('should set status', async () => {
       mockAuthRequest.mockResolvedValue({ data: { ...testfile, uri } });
-      const [deleted] = await storage.delete(testfile.id);
+      const [deleted] = await storage.delete(testfile);
       expect(deleted.id).toBe(testfile.id);
       expect(deleted.status).toBe('deleted');
     });
 
     it('should ignore if not exist', async () => {
       mockAuthRequest.mockResolvedValue({});
-      const [deleted] = await storage.delete(testfile.id);
+      const [deleted] = await storage.delete(testfile);
       expect(deleted.id).toBe(testfile.id);
     });
   });

@@ -73,7 +73,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadataHeader = getHeader(req, 'upload-metadata');
     const metadata = metadataHeader && parseMetadata(metadataHeader);
-    metadata && (await this.storage.update(id, { metadata, id }));
+    metadata && (await this.storage.update({ id }, { metadata, id }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
     const file = await this.storage.write({ start, id, body: req, contentLength });
@@ -104,7 +104,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
-    const [file] = await this.storage.delete(id);
+    const [file] = await this.storage.delete({ id });
     this.send(res, { statusCode: 204 });
     return file;
   }

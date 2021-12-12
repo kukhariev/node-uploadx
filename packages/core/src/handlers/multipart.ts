@@ -50,7 +50,7 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
-    const [file] = await this.storage.delete(id);
+    const [file] = await this.storage.delete({ id });
     this.send(res, { statusCode: 204 });
     return file;
   }
