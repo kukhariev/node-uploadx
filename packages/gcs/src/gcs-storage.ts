@@ -185,7 +185,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return file;
   }
 
-  async delete(id: string): Promise<GCSFile[]> {
+  async delete({ id }: FilePart): Promise<GCSFile[]> {
     const file = await this.getMeta(id).catch(() => null);
     if (file?.uri) {
       file.status = 'deleted';

@@ -39,7 +39,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadata = await this.getMetadata(req);
-    const file = await this.storage.update(id, { metadata, id });
+    const file = await this.storage.update({ id }, { metadata, id });
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     this.send(res, { body: file.metadata, headers });
     return file;
@@ -68,7 +68,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    */
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
-    const [file] = await this.storage.delete(id);
+    const [file] = await this.storage.delete({ id });
     this.send(res, { statusCode: 204 });
     return file;
   }

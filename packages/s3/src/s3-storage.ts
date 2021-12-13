@@ -187,7 +187,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async delete(id: string): Promise<S3File[]> {
+  async delete({ id }: FilePart): Promise<S3File[]> {
     const file = await this.getMeta(id).catch(() => null);
     if (file) {
       file.status = 'deleted';

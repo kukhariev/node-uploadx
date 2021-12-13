@@ -60,6 +60,7 @@ export interface FilePart {
   id: string;
   size?: number;
   start?: number;
+  userId?: string;
 }
 
 interface HasContent {

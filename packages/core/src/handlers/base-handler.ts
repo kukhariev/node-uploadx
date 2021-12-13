@@ -188,7 +188,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
    */
   get(req: http.IncomingMessage, res: http.ServerResponse): Promise<UploadList> {
     const userId = this.getUserId(req, res);
-    return userId ? this.storage.get(hash(userId)) : fail(ERRORS.FILE_NOT_FOUND);
+    return userId ? this.storage.list(hash(userId)) : fail(ERRORS.FILE_NOT_FOUND);
   }
 
   /**

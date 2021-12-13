@@ -25,7 +25,7 @@ export class TestStorage extends BaseStorage<File> {
     return Promise.resolve(part as File);
   }
 
-  delete(id: string): Promise<File[]> {
+  delete({ id }: FilePart): Promise<File[]> {
     return Promise.resolve([{ id } as File]);
   }
 }

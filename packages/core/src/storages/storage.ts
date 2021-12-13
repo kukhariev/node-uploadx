@@ -183,7 +183,7 @@ export abstract class BaseStorage<TFile extends File> {
 
   checkIfExpired(file: TFile): Promise<TFile> {
     if (isExpired(file)) {
-      void this.delete(file.id).catch(() => null);
+      void this.delete(file).catch(() => null);
       return fail(ERRORS.GONE);
     }
     return Promise.resolve(file);
@@ -203,7 +203,7 @@ export abstract class BaseStorage<TFile extends File> {
         item => +new Date(item.createdAt) < before
       );
       for (const { id, createdAt } of entries) {
-        const [deleted] = await this.delete(id);
+        const [deleted] = await this.delete({ id });
         purged.items.push({ ...deleted, createdAt });
       }
     }
@@ -211,8 +211,8 @@ export abstract class BaseStorage<TFile extends File> {
     return purged;
   }
 
-  async get(prefix = ''): Promise<UploadList> {
-    return this.meta.list(prefix);
+  async get({ id }: FilePart): Promise<UploadList> {
+    return this.meta.list(id);
   }
 
   /**
@@ -228,7 +228,7 @@ export abstract class BaseStorage<TFile extends File> {
    * @experimental
    * @todo Metadata size limit
    */
-  async update(id: string, { metadata }: Partial<File>): Promise<TFile> {
+  async update({ id }: FilePart, { metadata }: Partial<File>): Promise<TFile> {
     const file = await this.getMeta(id);
     updateMetadata(file, metadata);
     await this.saveMeta(file);
@@ -260,7 +260,7 @@ export abstract class BaseStorage<TFile extends File> {
   abstract write(part: FilePart): Promise<TFile>;
 
   /**
-   * Delete files whose path starts with the specified prefix
+   * Delete files
    */
-  abstract delete(prefix: string): Promise<TFile[]>;
+  abstract delete(file: FilePart): Promise<TFile[]>;
 }
