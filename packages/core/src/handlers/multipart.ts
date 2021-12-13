@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
-import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
+import { File, FileInit } from '../storages';
 import { setHeaders } from '../utils';
-import { BaseHandler } from './base-handler';
+import { BaseHandler, UploadOptions } from './base-handler';
 
 interface MultipartyPart extends multiparty.Part {
   headers: {
@@ -25,7 +25,7 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
         config.originalName = part.filename;
         config.contentType = part.headers['content-type'];
         config.userId = this.getUserId(req, res);
-        part.on('error', error => null);
+        part.on('error', _ => null);
         this.storage
           .create(req, config)
           .then(({ id }) =>
@@ -62,10 +62,11 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
  * app.use('/files', multipart({directory: '/tmp', maxUploadSize: '250GB'}));
  */
 export function multipart<TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
+  options: UploadOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }
+
 /**
  * Express wrapper
  *
@@ -77,6 +78,5 @@ export function multipart<TFile extends Readonly<File>>(
  *   return res.sendStatus(200);
  * });
  */
-multipart.upload = <TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
-) => new Multipart(options).upload;
+multipart.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+  new Multipart(options).upload;

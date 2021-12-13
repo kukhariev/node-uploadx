@@ -1,7 +1,7 @@
 import * as http from 'http';
-import { BaseStorage, DiskStorageOptions, File, FileInit, Metadata } from '../storages';
+import { File, FileInit, Metadata } from '../storages';
 import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
-import { BaseHandler } from './base-handler';
+import { BaseHandler, UploadOptions } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
 
@@ -125,8 +125,8 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
  * @example
  * app.use('/files', tus({directory: '/tmp', maxUploadSize: '250GB'}));
  */
-export function tus<TFile extends File>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
+export function tus<TFile extends Readonly<File>>(
+  options: UploadOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
@@ -142,6 +142,5 @@ export function tus<TFile extends File>(
  *   return res.sendStatus(204);
  * });
  */
-tus.upload = <TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
-) => new Tus(options).upload;
+tus.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+  new Tus(options).upload;

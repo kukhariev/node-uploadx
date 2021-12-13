@@ -1,7 +1,7 @@
 import { FileName } from './file';
 
 /** @experimental */
-interface UploadListEntry {
+export interface UploadListEntry {
   /** upload id */
   id: string;
   createdAt: string | Date | number;

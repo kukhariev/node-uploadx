@@ -34,11 +34,11 @@ export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
 
-type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
+export type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
 
-type UploadEvent<TFile extends Readonly<File>> = TFile & ReqEvent;
+export type UploadEvent<TFile extends Readonly<File>> = TFile & ReqEvent;
 
-type UploadErrorEvent = UploadxError & ReqEvent;
+export type UploadErrorEvent = UploadxError & ReqEvent;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface BaseHandler<TFile extends Readonly<File>> extends EventEmitter {
@@ -54,6 +54,10 @@ export interface BaseHandler<TFile extends Readonly<File>> extends EventEmitter 
 
   emit(event: 'error', error: UploadErrorEvent): boolean;
 }
+
+export type UploadOptions<TFile extends Readonly<File>> =
+  | { storage: BaseStorage<TFile>; userIdentifier?: UserIdentifier }
+  | DiskStorageOptions;
 
 export abstract class BaseHandler<TFile extends Readonly<File>>
   extends EventEmitter
@@ -73,11 +77,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   protected log = Logger.get(this.constructor.name);
   protected _errorResponses = {} as ErrorResponses;
 
-  constructor(
-    config:
-      | { storage: BaseStorage<TFile>; userIdentifier?: UserIdentifier }
-      | DiskStorageOptions = {}
-  ) {
+  constructor(config: UploadOptions<TFile> = {}) {
     super();
     this.cors = new Cors();
     this.storage =

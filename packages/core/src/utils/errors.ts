@@ -80,7 +80,7 @@ export function fail(uploadxErrorCode: string, detail: unknown = ''): Promise<ne
   });
 }
 
-interface HttpErrorBody {
+export interface HttpErrorBody {
   message: string;
   code: string;
   uploadxErrorCode?: string;
