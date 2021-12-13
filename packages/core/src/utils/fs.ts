@@ -70,4 +70,7 @@ export function getFiles(prefix: string): Promise<string[]> {
   return _getFiles(prefix_);
 }
 
+/**
+ * @internal
+ */
 export { fsp };

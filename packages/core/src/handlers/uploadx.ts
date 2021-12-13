@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as url from 'url';
-import { BaseStorage, DiskStorageOptions, File, FileInit } from '../storages';
+import { File, FileInit } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
-import { BaseHandler } from './base-handler';
+import { BaseHandler, UploadOptions } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const parts = rangeHeader.split(/\s+|\//);
@@ -114,7 +114,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
  * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
  */
 export function uploadx<TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
+  options: UploadOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Uploadx(options).handle;
 }
@@ -130,6 +130,5 @@ export function uploadx<TFile extends Readonly<File>>(
  *  return res.json(req.body);
  * });
  */
-uploadx.upload = <TFile extends Readonly<File>>(
-  options: DiskStorageOptions | { storage: BaseStorage<TFile> } = {}
-) => new Uploadx(options).upload;
+uploadx.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+  new Uploadx(options).upload;
