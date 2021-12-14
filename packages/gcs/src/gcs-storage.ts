@@ -57,17 +57,20 @@ export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAut
   /**
    * Configure metafiles storage
    * @example
-   * // use local metafiles
+   * ```ts
+   * Using local metafiles
    * const storage = new GCStorage({
    *   bucket: 'uploads',
    *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
    * })
-   * @example
-   * // use a separate bucket for metafiles
+   * ```
+   * Using a separate bucket for metafiles
+   * ```ts
    * const storage = new GCStorage({
    *   bucket: 'uploads',
    *   metaStorageConfig: { bucket: 'upload-metafiles' }
    * })
+   * ```
    */
   metaStorageConfig?: LocalMetaStorageOptions | GCSMetaStorageOptions;
 }
@@ -80,15 +83,17 @@ export class GCSFile extends File {
 /**
  * Google cloud storage based backend.
  * @example
-    const storage = new GCStorage({
-      bucket: <YOUR_BUCKET>,
-      keyFile: <PATH_TO_KEY_FILE>,
-      metaStorage: new MetaStorage(),
-      clientDirectUpload: true,
-      maxUploadSize: '15GB',
-      allowMIME: ['video/*', 'image/*'],
-      filename: file => file.originalName
-    });
+ * ```ts
+ *  const storage = new GCStorage({
+ *    bucket: <YOUR_BUCKET>,
+ *    keyFile: <PATH_TO_KEY_FILE>,
+ *    metaStorage: new MetaStorage(),
+ *    clientDirectUpload: true,
+ *    maxUploadSize: '15GB',
+ *    allowMIME: ['video/*', 'image/*'],
+ *    filename: file => file.originalName
+ *  });
+ * ```
  */
 export class GCStorage extends BaseStorage<GCSFile> {
   bucket: string;

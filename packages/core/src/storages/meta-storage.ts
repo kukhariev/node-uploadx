@@ -64,6 +64,6 @@ export class MetaStorage<T> {
 }
 
 /**
- * @deprecated
+ * @deprecated Use MetaStorage.suffix instead
  */
 export const METAFILE_EXTNAME = '.META';

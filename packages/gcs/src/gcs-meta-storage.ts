@@ -25,7 +25,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   /**
    * Returns metafile url
-   * @param id upload id
+   * @param id - upload id
    */
   getMetaPath(id: string): string {
     return `${this.storageBaseURI}/${this.getMetaName(id)}`;

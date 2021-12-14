@@ -53,19 +53,22 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
     /**
      * Configure metafiles storage
      * @example
-     * // use local metafiles
+     * Using local metafiles
+     * ```ts
      * const storage = new S3Storage({
      *   bucket: 'uploads',
      *   region: 'eu-west-3',
      *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
      * })
-     * @example
-     * // use a separate bucket for metafiles
+     * ```
+     * Using a separate bucket for metafiles
+     * ```ts
      * const storage = new S3Storage({
      *   bucket: 'uploads',
      *   region: 'eu-west-3',
      *   metaStorageConfig: { bucket: 'upload-metafiles' }
      * })
+     * ```
      */
     metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
   };
@@ -73,16 +76,18 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
 /**
  * S3 storage based backend.
  * @example
-   const storage = new S3Storage({
-    bucket: <YOUR_BUCKET>,
-    endpoint: <YOUR_ENDPOINT>,
-    region: <YOUR_REGION>,
-    credentials: {
-      accessKeyId: <YOUR_ACCESS_KEY_ID>,
-      secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
-    },
-    metaStorageConfig: { directory: '/tmp/upload-metafiles' }
-  });
+ * ```ts
+ * const storage = new S3Storage({
+ *  bucket: <YOUR_BUCKET>,
+ *  endpoint: <YOUR_ENDPOINT>,
+ *  region: <YOUR_REGION>,
+ *  credentials: {
+ *    accessKeyId: <YOUR_ACCESS_KEY_ID>,
+ *    secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
+ *  },
+ *  metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+ * });
+ * ```
  */
 export class S3Storage extends BaseStorage<S3File> {
   bucket: string;

@@ -49,8 +49,7 @@ export function isRecord(x: unknown): x is Record<any, any> {
 }
 
 /**
- * convert a human-readable duration to ms
- * @param value
+ * Convert a human-readable duration to ms
  */
 export function toMilliseconds(value: string | number | undefined): number | null {
   if (isNumber(value)) return value;
