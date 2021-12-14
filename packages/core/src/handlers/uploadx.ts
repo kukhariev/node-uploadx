@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as url from 'url';
-import { File, FileInit } from '../storages';
+import { FileInit, UploadxFile } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
-import { BaseHandler, UploadOptions } from './base-handler';
+import { BaseHandler, UploadxOptions } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const parts = rangeHeader.split(/\s+|\//);
@@ -14,7 +14,7 @@ export function rangeParser(rangeHeader = ''): { start: number; size: number } {
 /**
  * [X-headers protocol implementation](https://github.com/kukhariev/node-uploadx/blob/master/proto.md#requests-overview)
  */
-export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
+export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   static RESUME_STATUS_CODE = 308;
 
   /**
@@ -78,7 +78,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     return (query.upload_id || query.prefix || super.getId(req)) as string;
   }
 
-  buildHeaders(file: File, headers: Headers = {}): Headers {
+  buildHeaders(file: UploadxFile, headers: Headers = {}): Headers {
     if (file.expiredAt) headers['X-Upload-Expires'] = new Date(file.expiredAt).toISOString();
     return headers;
   }
@@ -88,7 +88,7 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
    */
   buildFileUrl(
     req: http.IncomingMessage & { originalUrl?: string },
-    file: File & { GCSUploadURI?: string }
+    file: UploadxFile & { GCSUploadURI?: string }
   ): string {
     if (file.GCSUploadURI) return file.GCSUploadURI;
 
@@ -111,10 +111,12 @@ export class Uploadx<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 /**
  * Basic express wrapper
  * @example
+ * ```ts
  * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
+ * ```
  */
-export function uploadx<TFile extends Readonly<File>>(
-  options: UploadOptions<TFile> = {}
+export function uploadx<TFile extends UploadxFile>(
+  options: UploadxOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Uploadx(options).handle;
 }
@@ -124,11 +126,13 @@ export function uploadx<TFile extends Readonly<File>>(
  *
  * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
+ * ```ts
  * app.use('/files', uploadx.upload({ storage }), (req, res, next) => {
  *  if (req.method === 'GET') return res.sendStatus(404);
  *  console.log('File upload complete: ', req.body.name);
  *  return res.json(req.body);
  * });
+ * ```
  */
-uploadx.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+uploadx.upload = <TFile extends UploadxFile>(options: UploadxOptions<TFile> = {}) =>
   new Uploadx(options).upload;

@@ -1,7 +1,7 @@
 import * as http from 'http';
-import { File, FileInit, Metadata } from '../storages';
+import { UploadxFile, FileInit, Metadata } from '../storages';
 import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
-import { BaseHandler, UploadOptions } from './base-handler';
+import { BaseHandler, UploadxOptions } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
 
@@ -23,7 +23,7 @@ export function parseMetadata(encoded = ''): Metadata {
 /**
  * [tus resumable upload protocol](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md)
  */
-export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
+export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   get extension(): string[] {
     const _extensions = ['creation', 'creation-with-upload', 'termination'];
     if (this.storage.config.expiration) _extensions.push('expiration');
@@ -109,7 +109,7 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
     return file;
   }
 
-  buildHeaders(file: File, headers: Headers = {}): Headers {
+  buildHeaders(file: UploadxFile, headers: Headers = {}): Headers {
     if (file.expiredAt) headers['Upload-Expires'] = new Date(file.expiredAt).toUTCString();
     return headers;
   }
@@ -123,10 +123,12 @@ export class Tus<TFile extends Readonly<File>> extends BaseHandler<TFile> {
 /**
  * Basic express wrapper
  * @example
+ * ```js
  * app.use('/files', tus({directory: '/tmp', maxUploadSize: '250GB'}));
+ * ```
  */
-export function tus<TFile extends Readonly<File>>(
-  options: UploadOptions<TFile> = {}
+export function tus<TFile extends UploadxFile>(
+  options: UploadxOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Tus(options).handle;
 }
@@ -136,11 +138,13 @@ export function tus<TFile extends Readonly<File>>(
  *
  * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
+ * ```js
  * app.all('/files', tus.upload({ storage }), (req, res, next) => {
  *   if (req.method === 'GET') return res.sendStatus(404);
  *   console.log('File upload complete: ', req.body.name);
  *   return res.sendStatus(204);
  * });
+ * ```
  */
-tus.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+tus.upload = <TFile extends UploadxFile>(options: UploadxOptions<TFile> = {}) =>
   new Tus(options).upload;

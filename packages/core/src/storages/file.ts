@@ -29,7 +29,7 @@ export interface FileInit {
   userId?: string;
 }
 
-export type UploadEventType = 'created' | 'completed' | 'deleted' | 'part' | 'updated';
+export type UploadxEventType = 'created' | 'completed' | 'deleted' | 'part' | 'updated';
 
 export class File implements FileInit {
   bytesWritten = NaN;
@@ -39,7 +39,7 @@ export class File implements FileInit {
   metadata: Metadata;
   name = '';
   size;
-  status?: UploadEventType;
+  status?: UploadxEventType;
   userId?;
   expiredAt?: string | Date | number;
   createdAt?: string | Date | number;
@@ -53,6 +53,8 @@ export class File implements FileInit {
     this.id ||= generateFileId(this);
   }
 }
+
+export type UploadxFile = Readonly<File>;
 
 export interface FilePart {
   body?: Readable;
@@ -105,7 +107,7 @@ export function updateMetadata(file: File, metadata: unknown): void {
   }
 }
 
-export function getFileStatus(file: File): UploadEventType {
+export function getFileStatus(file: File): UploadxEventType {
   return file.bytesWritten === file.size ? 'completed' : !file.createdAt ? 'created' : 'part';
 }
 

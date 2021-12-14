@@ -5,8 +5,8 @@ import {
   BaseStorage,
   DiskStorage,
   DiskStorageOptions,
-  File,
-  UploadEventType,
+  UploadxFile,
+  UploadxEventType,
   UploadList,
   UserIdentifier
 } from '../storages';
@@ -33,41 +33,42 @@ type Handlers = 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put'
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
+type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
 
-export type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
+export type UploadxEvent<TFile extends UploadxFile> = TFile & ReqEvent;
 
-export type UploadEvent<TFile extends Readonly<File>> = TFile & ReqEvent;
-
-export type UploadErrorEvent = UploadxError & ReqEvent;
+export type UploadxErrorEvent = UploadxError & ReqEvent;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export interface BaseHandler<TFile extends Readonly<File>> extends EventEmitter {
-  on(event: 'error', listener: (error: UploadErrorEvent) => void): this;
+export interface BaseHandler<TFile extends UploadxFile> extends EventEmitter {
+  on(event: 'error', listener: (error: UploadxErrorEvent) => void): this;
 
-  on(event: UploadEventType, listener: (payload: UploadEvent<TFile>) => void): this;
+  on(event: UploadxEventType, listener: (payload: UploadxEvent<TFile>) => void): this;
 
-  off(event: UploadEventType, listener: (payload: UploadEvent<TFile>) => void): this;
+  off(event: UploadxEventType, listener: (payload: UploadxEvent<TFile>) => void): this;
 
-  off(event: 'error', listener: (error: UploadErrorEvent) => void): this;
+  off(event: 'error', listener: (error: UploadxErrorEvent) => void): this;
 
-  emit(event: UploadEventType, payload: UploadEvent<TFile>): boolean;
+  emit(event: UploadxEventType, payload: UploadxEvent<TFile>): boolean;
 
-  emit(event: 'error', error: UploadErrorEvent): boolean;
+  emit(event: 'error', error: UploadxErrorEvent): boolean;
 }
 
-export type UploadOptions<TFile extends Readonly<File>> =
+export type UploadxOptions<TFile extends UploadxFile> =
   | { storage: BaseStorage<TFile>; userIdentifier?: UserIdentifier }
   | DiskStorageOptions;
 
-export abstract class BaseHandler<TFile extends Readonly<File>>
+export abstract class BaseHandler<TFile extends UploadxFile>
   extends EventEmitter
   implements MethodHandler
 {
   /**
    * Limiting enabled http method handlers
    * @example
+   * ```ts
    * Uploadx.methods = ['post', 'put', 'delete'];
    * app.use('/upload', uploadx(opts));
+   * ```
    */
   static methods: Handlers[] = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put'];
   cors: Cors;
@@ -77,7 +78,7 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   protected log = Logger.get(this.constructor.name);
   protected _errorResponses = {} as ErrorResponses;
 
-  constructor(config: UploadOptions<TFile> = {}) {
+  constructor(config: UploadxOptions<TFile> = {}) {
     super();
     this.cors = new Cors();
     this.storage =
@@ -96,10 +97,12 @@ export abstract class BaseHandler<TFile extends Readonly<File>>
   /**
    *  Override error responses
    *  @example
+   * ```ts
    *  const uploadx = new Uploadx({ storage });
    *  uploadx.errorResponses = {
    *    FileNotFound: [404, { message: 'Not Found!' }]
    *  }
+   * ```
    */
   set errorResponses(value: Partial<ErrorResponses>) {
     this.assembleErrors(value);
