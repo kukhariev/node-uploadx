@@ -61,14 +61,16 @@ export interface BaseStorageOptions<T extends File> {
   /**
    * Automatic cleaning of abandoned and completed uploads
    * @example
-   app.use(
-     '/upload',
-     uploadx.upload({
-      directory: 'upload',
-      expiration: { maxAge: '6h', purgeInterval: '30min' },
-      onComplete
-    })
-   );
+   * ```ts
+   * app.use(
+   *   '/upload',
+   *   uploadx.upload({
+   *     directory: 'upload',
+   *     expiration: { maxAge: '6h', purgeInterval: '30min' },
+   *     onComplete
+   *   })
+   * );
+   * ```
    */
   expiration?: ExpirationOptions;
 }
@@ -191,8 +193,8 @@ export abstract class BaseStorage<TFile extends File> {
 
   /**
    * Searches for and purges expired uploads
-   * @param maxAge Remove uploads older than a specified age
-   * @param prefix Filter uploads
+   * @param maxAge - remove uploads older than a specified age
+   * @param prefix - filter uploads
    */
   async purge(maxAge?: number | string, prefix?: string): Promise<PurgeList> {
     const maxAgeMs = toMilliseconds(maxAge || this.config.expiration?.maxAge);
@@ -226,7 +228,6 @@ export abstract class BaseStorage<TFile extends File> {
   /**
    * Update user-provided metadata
    * @experimental
-   * @todo Metadata size limit
    */
   async update({ id }: FilePart, { metadata }: Partial<File>): Promise<TFile> {
     const file = await this.getMeta(id);

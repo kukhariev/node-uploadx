@@ -1,6 +1,6 @@
 import { ResponseMetadata } from '@aws-sdk/types';
 /**
- * @version SDK V3
+ * SDK V3
  * A structure containing information about a service or networking error.
  */
 export interface AWSError extends Error {
@@ -12,7 +12,7 @@ export interface AWSError extends Error {
 }
 
 /**
- * @version SDK V2
+ * SDK V2
  * A structure containing information about a service or networking error.
  * @internal
  */

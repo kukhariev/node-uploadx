@@ -27,10 +27,12 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Configuring metafile storage on the local disk
    * @example
+   * ```ts
    * const storage = new DiskStorage({
    *   directory: 'upload',
    *   metaStorageConfig: { directory: '/tmp/upload-metafiles', prefix: '.' }
-   * })
+   * });
+   * ```
    */
   metaStorageConfig?: LocalMetaStorageOptions;
 };

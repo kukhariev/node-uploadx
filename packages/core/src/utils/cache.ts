@@ -6,8 +6,8 @@ export class Cache<T> {
   private _map = new Map<string, [value: T, expiresAt: number]>();
 
   /**
-   * @param maxEntries The maximum number of entries before the cache starts flushing out the old items
-   * @param maxAge The maximum life of a cached items in seconds
+   * @param maxEntries - The maximum number of entries before the cache starts flushing out the old items
+   * @param maxAge - The maximum life of a cached items in seconds
    */
   constructor(public maxEntries = 1000, readonly maxAge = 0) {
     this._ttl = maxAge * 1000;
