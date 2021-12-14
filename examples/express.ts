@@ -27,7 +27,7 @@ app.use(
   uploadx.upload({
     directory: 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
-    userIdentifier: (req: express.Request & UserInfo) => req.user!.email + req.user!.id
+    userIdentifier: (req: express.Request & UserInfo) => `${req.user!.id}-${req.user!.email}`
   }),
   onComplete
 );

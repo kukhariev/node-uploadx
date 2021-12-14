@@ -1,8 +1,8 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
-import { File, FileInit } from '../storages';
+import { UploadxFile, FileInit } from '../storages';
 import { setHeaders } from '../utils';
-import { BaseHandler, UploadOptions } from './base-handler';
+import { BaseHandler, UploadxOptions } from './base-handler';
 
 interface MultipartyPart extends multiparty.Part {
   headers: {
@@ -11,7 +11,7 @@ interface MultipartyPart extends multiparty.Part {
   };
 }
 
-export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> {
+export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
@@ -59,10 +59,12 @@ export class Multipart<TFile extends Readonly<File>> extends BaseHandler<TFile> 
 /**
  * Basic express wrapper
  * @example
+ * ```ts
  * app.use('/files', multipart({directory: '/tmp', maxUploadSize: '250GB'}));
+ * ```
  */
-export function multipart<TFile extends Readonly<File>>(
-  options: UploadOptions<TFile> = {}
+export function multipart<TFile extends UploadxFile>(
+  options: UploadxOptions<TFile> = {}
 ): (req: http.IncomingMessage, res: http.ServerResponse) => void {
   return new Multipart(options).handle;
 }
@@ -72,11 +74,13 @@ export function multipart<TFile extends Readonly<File>>(
  *
  * - express ***should*** respond to the client when the upload complete and handle errors and GET requests
  * @example
+ * ```ts
  * app.use('/files', multipart.upload({ storage }), (req, res, next) => {
  *   if (req.method === 'GET') return res.sendStatus(404);
  *   console.log('File upload complete: ', req.body.name);
  *   return res.sendStatus(200);
  * });
+ * ```
  */
-multipart.upload = <TFile extends Readonly<File>>(options: UploadOptions<TFile> = {}) =>
+multipart.upload = <TFile extends UploadxFile>(options: UploadxOptions<TFile> = {}) =>
   new Multipart(options).upload;
