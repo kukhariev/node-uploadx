@@ -1,5 +1,10 @@
 import * as http from 'http';
 
+export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
+  body?: T;
+  _body?: boolean;
+}
+
 export type Headers = Record<string, number | string | string[]>;
 
 export type ResponseBody = string | Record<string, any>;
@@ -42,7 +47,7 @@ export function readBody(
 }
 
 export async function getMetadata(
-  req: http.IncomingMessage & { body?: Record<any, any> },
+  req: IncomingMessageWithBody<Record<any, any>>,
   limit = 16777216
 ): Promise<Record<any, any>> {
   if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');

@@ -5,9 +5,9 @@ import {
   BaseStorage,
   DiskStorage,
   DiskStorageOptions,
-  UploadxFile,
-  UploadxEventType,
   UploadList,
+  UploadxEventType,
+  UploadxFile,
   UserIdentifier
 } from '../storages';
 import {
@@ -17,6 +17,7 @@ import {
   fail,
   getBaseUrl,
   hash,
+  IncomingMessageWithBody,
   isUploadxError,
   isValidationError,
   Logger,
@@ -39,7 +40,6 @@ export type UploadxEvent<TFile extends UploadxFile> = TFile & ReqEvent;
 
 export type UploadxErrorEvent = UploadxError & ReqEvent;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface BaseHandler<TFile extends UploadxFile> extends EventEmitter {
   on(event: 'error', listener: (error: UploadxErrorEvent) => void): this;
 
@@ -129,11 +129,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
 
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
 
-  upload = (
-    req: http.IncomingMessage & { body?: any; _body?: boolean },
-    res: http.ServerResponse,
-    next?: () => void
-  ): void => {
+  upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
     req.on('error', err => this.log(`[request error]: %o`, err));
     this.cors.preflight(req, res);
     this.log(`[request]: %s`, req.method, req.url);
@@ -153,15 +149,15 @@ export abstract class BaseHandler<TFile extends UploadxFile>
           this.listenerCount(file.status) &&
             this.emit(file.status, { ...file, request: pick(req, ['headers', 'method', 'url']) });
           if (file.status === 'completed') {
-            req['_body'] = true;
-            req['body'] = file;
+            (req as IncomingMessageWithBody)['_body'] = true;
+            (req as IncomingMessageWithBody)['body'] = file;
             const completed = (await this.storage.onComplete(file)) as UploadxResponse;
             next ? next() : this.finish(req, res, completed || file);
           }
           return;
         }
         if (req.method === 'GET') {
-          req['body'] = file;
+          (req as IncomingMessageWithBody)['body'] = file;
           next ? next() : this.send(res, { body: file });
         }
         return;
