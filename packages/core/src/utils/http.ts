@@ -50,9 +50,9 @@ export async function getMetadata(
   req: IncomingMessageWithBody<Record<any, any>>,
   limit = 16777216
 ): Promise<Record<any, any>> {
-  if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
   if (!typeis(req, ['json'])) return {};
   if (req.body) return { ...req.body };
+  if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
   const raw = await readBody(req, 'utf8', limit);
   return { ...JSON.parse(raw) } as Record<any, any>;
 }

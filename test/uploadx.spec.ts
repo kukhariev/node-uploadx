@@ -62,6 +62,11 @@ describe('::Uploadx', () => {
       expect(res.header).not.toHaveProperty('location');
     });
 
+    it('should ignore not json body', async () => {
+      const res = await request(app).post(path1).send(new Array(500).join('c')).expect(201);
+      expect(res.header).toHaveProperty('location');
+    });
+
     it('should check filename', async () => {
       const res = await create({ ...file1, name: '../ghost' }).expect(400);
       expect(res.type).toBe('application/json');
