@@ -34,10 +34,10 @@
   "dependencies": {
     "abort-controller": "^3.0.0",
     "google-auth-library": "^7.0.0",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@types/node-fetch": "^2.5.10"
+    "@types/node-fetch": "^3.0.0"
   },
   "peerDependencies": {
     "@uploadx/core": "^5.0.0"
