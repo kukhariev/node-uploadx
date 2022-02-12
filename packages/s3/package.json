@@ -36,7 +36,7 @@
     "@aws-sdk/credential-providers": "^3.47.0"
   },
   "devDependencies": {
-    "aws-sdk-client-mock": "^0.5.6",
+    "aws-sdk-client-mock": "^0.6.0",
     "@aws-sdk/types": "^3.47.0"
   },
   "peerDependencies": {
