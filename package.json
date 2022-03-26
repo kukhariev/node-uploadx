@@ -61,7 +61,7 @@
     "supertest": "6.2.2",
     "ts-jest": "27.1.4",
     "ts-node-dev": "1.1.8",
-    "tsconfig-paths": "3.12.0",
+    "tsconfig-paths": "3.14.1",
     "typescript": "4.6.3"
   },
   "private": true,
