@@ -18,7 +18,7 @@ const auth = (
 
 app.use(auth);
 
-const onComplete: express.RequestHandler = async (req, res, next) => {
+const onComplete: express.RequestHandler = (req, res, next) => {
   const file = req.body as DiskFile;
   return res.json(file);
 };
