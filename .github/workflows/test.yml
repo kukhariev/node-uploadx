@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-${{ matrix.node }}-node-modules-${{ hashFiles('**/yarn.lock') }}
