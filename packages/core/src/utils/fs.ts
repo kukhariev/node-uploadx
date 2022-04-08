@@ -32,6 +32,10 @@ export async function removeFile(path: string): Promise<void> {
   return fsp.unlink(path);
 }
 
+export function truncateFile(path: string, length = 0): Promise<void> {
+  return fsp.truncate(path, length);
+}
+
 /**
  * Returns file WriteStream for data appending
  */

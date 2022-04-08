@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { FileInit, UploadxFile } from '../storages';
+import { Checksum, FileInit, UploadxFile } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
@@ -10,6 +10,16 @@ export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const start = parseInt(parts[1]);
   return { start, size };
 }
+
+const CHECKSUM_TYPES_MAP: Record<string, string> = {
+  sha: 'sha1',
+  sha1: 'sha1',
+  md5: 'md5',
+  sha256: 'sha256',
+  'sha-256': 'sha256',
+  sha512: 'sha512',
+  'sha-512': 'sha512'
+};
 
 /**
  * [X-headers protocol implementation](https://github.com/kukhariev/node-uploadx/blob/master/proto.md#requests-overview)
@@ -53,7 +63,16 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
     const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
-    const file = await this.storage.write({ id, body: req, start, contentLength, size });
+    const { checksumAlgorithm, checksum } = this.extractChecksum(req);
+    const file = await this.storage.write({
+      start,
+      id,
+      body: req,
+      size,
+      contentLength,
+      checksumAlgorithm,
+      checksum
+    });
     const headers = this.buildHeaders(file);
     if (file.status === 'completed') return file;
     headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
@@ -105,6 +124,17 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     if (Object.keys(metadata).length) return metadata;
     const { query } = url.parse(decodeURI(req.url || ''), true);
     return { ...metadata, ...query };
+  }
+
+  protected extractChecksum(req: http.IncomingMessage): Checksum {
+    const [_type, checksum] = getHeader(req, 'digest')
+      .split('=')
+      .map(e => e.trim());
+    if (checksum && _type) {
+      const checksumAlgorithm = CHECKSUM_TYPES_MAP[_type.toLowerCase()];
+      if (checksumAlgorithm) return { checksumAlgorithm, checksum };
+    }
+    return {};
   }
 }
 

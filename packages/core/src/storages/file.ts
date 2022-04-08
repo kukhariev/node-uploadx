@@ -56,7 +56,7 @@ export class File implements FileInit {
 
 export type UploadxFile = Readonly<File>;
 
-export interface FilePart {
+export interface FilePart extends Checksum {
   body?: Readable;
   contentLength?: number;
   id: string;
@@ -135,3 +135,8 @@ export class FileName {
     }
   }
 }
+
+export type Checksum = {
+  checksum?: string;
+  checksumAlgorithm?: string;
+};

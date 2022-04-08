@@ -7,14 +7,17 @@ import {
   fail,
   getWriteStream,
   HttpError,
-  removeFile
+  removeFile,
+  truncateFile
 } from '../utils';
 import { File, FileInit, FilePart, getFileStatus, hasContent, isValidPart } from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
+import { createHash } from 'crypto';
 
 const INVALID_OFFSET = -1;
+const CHECKSUM_MISMATCH = -2;
 
 export class DiskFile extends File {}
 
@@ -88,6 +91,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
+      if (file.bytesWritten === CHECKSUM_MISMATCH) return fail(ERRORS.CHECKSUM_MISMATCH);
       file.status = getFileStatus(file);
       if (file.status === 'completed') await this.saveMeta(file);
       return file;
@@ -118,6 +122,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       const path = this.getFilePath(part);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
+        const hash = createHash(part.checksumAlgorithm || 'sha1');
         file.once('error', error => reject(error));
         const body = part.body;
         body.once('aborted', () => {
@@ -129,10 +134,21 @@ export class DiskStorage extends BaseStorage<DiskFile> {
           start += chunk.length;
           if (start > part.size) {
             file.close();
+            void truncateFile(path, part.start);
             return resolve(INVALID_OFFSET);
           }
+          if (part.checksum) hash.update(chunk as string);
         });
-        body.pipe(file).on('finish', () => resolve(part.start + file.bytesWritten));
+        body.pipe(file).on('finish', () => {
+          const digest = hash.digest('base64');
+          if (part.checksum && digest !== part.checksum) {
+            file.close();
+            void truncateFile(path, part.start);
+            return resolve(CHECKSUM_MISMATCH);
+          }
+
+          resolve(part.start + file.bytesWritten);
+        });
       } else {
         resolve(ensureFile(path));
       }

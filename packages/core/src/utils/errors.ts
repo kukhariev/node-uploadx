@@ -21,7 +21,8 @@ export enum ERRORS {
   TOO_MANY_REQUESTS = 'TooManyRequests',
   UNKNOWN_ERROR = 'UnknownError',
   UNPROCESSABLE_ENTITY = 'UnprocessableEntity',
-  UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType'
+  UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType',
+  CHECKSUM_MISMATCH = 'ChecksumMismatch'
 }
 
 export type ErrorResponses<T extends string = string> = {
@@ -45,6 +46,7 @@ class E_ {
     InvalidRange: [400, 'Invalid or missing content-range header'],
     MethodNotAllowed: [405, 'Method not allowed'],
     RequestEntityTooLarge: [413, 'Request entity too large'],
+    ChecksumMismatch: [460, 'Checksum mismatch'],
     StorageError: [503, 'Storage error'],
     TooManyRequests: [429, 'Too many requests'],
     UnknownError: [500, 'Something went wrong'],

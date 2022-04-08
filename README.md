@@ -1,12 +1,12 @@
 # node-uploadx
 
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
-[![commits since latest release][comm-image]][comm-url] [![Snyk Vulnerabilities][snyk-image]][snyk-url]
+[![commits since latest release][comm-image]][comm-url]
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 > Supported APIs: Google resumable v3.0, tus 1.0, multipart upload.
-> Capable store uploads locally on disk, on Google Storage or on AWS S3.
+> Capable store uploads locally on disk, on Google Storage or on S3.
 
 ## 🌩 Installation
 
@@ -30,7 +30,7 @@ Separate modules can also be used to save disk space and for faster installation
   npm install @uploadx/gcs
   ```
 
-- _AWS S3_ support:
+- _S3_ support:
 
   ```sh
   npm install @uploadx/s3
@@ -105,7 +105,7 @@ Some available options: :
 
 For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
 
-For AWS S3 - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET`, `S3_KEYFILE` environment variable.
+For S3 buckets - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET`, `S3_KEYFILE` environment variable.
 
 ## References
 
@@ -127,5 +127,3 @@ Pull requests are welcome!
 [gha-url]: https://github.com/kukhariev/node-uploadx
 [comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest
 [comm-url]: https://github.com/kukhariev/node-uploadx/releases/latest
-[snyk-image]: https://img.shields.io/snyk/vulnerabilities/npm/node-uploadx
-[snyk-url]: https://snyk.io/test/github/kukhariev/node-uploadx?targetFile=package.json
