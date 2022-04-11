@@ -206,15 +206,15 @@ export abstract class BaseStorage<TFile extends File> {
     const purged = { items: [], maxAgeMs, prefix } as PurgeList;
     if (maxAgeMs) {
       const before = Date.now() - maxAgeMs;
-      const entries = (await this.list(prefix)).items.filter(
-        item => +new Date(item.modifiedAt || item.createdAt) < before
+      const expired = (await this.list(prefix)).items.filter(
+        item => +new Date(maxAge ? item.modifiedAt || item.createdAt : item.createdAt) < before
       );
-      for (const { id, createdAt, modifiedAt } of entries) {
+      for (const { id, ...rest } of expired) {
         const [deleted] = await this.delete({ id });
-        purged.items.push({ ...deleted, createdAt, modifiedAt });
+        purged.items.push({ ...deleted, ...rest });
       }
+      purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
     }
-    purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
     return purged;
   }
 
