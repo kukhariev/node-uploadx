@@ -112,7 +112,11 @@ describe('::Uploadx', () => {
   describe('PUT', () => {
     it('should 200 (simple request)', async () => {
       uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).put(uri2).send(fs.readFileSync(srcpath)).expect(200);
+      const res = await request(app)
+        .put(uri2)
+        .set('Digest', `sha=${metadata.sha1}`)
+        .send(fs.readFileSync(srcpath))
+        .expect(200);
       expect(res.type).toBe('application/json');
       expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
     });

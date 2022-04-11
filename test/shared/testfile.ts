@@ -10,7 +10,8 @@ export const metadata = {
   size: 80495,
   mimeType: 'video/mp4',
   lastModified: 1635398061454,
-  custom: ''
+  custom: '',
+  sha1: 'YD5eezxkTfmNFCZ2SUA+ZjYcLyg='
 };
 
 export const testfile = {

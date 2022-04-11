@@ -4,16 +4,7 @@ import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../util
 import { BaseHandler, UploadxOptions } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
-
-const CHECKSUM_TYPES_MAP: Record<string, string> = {
-  sha: 'sha1',
-  sha1: 'sha1',
-  md5: 'md5',
-  sha256: 'sha256',
-  'sha-256': 'sha256',
-  sha512: 'sha512',
-  'sha-512': 'sha512'
-};
+export const TUS_VERSION = '1.0.0';
 
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
@@ -47,7 +38,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const headers = {
       'Tus-Extension': this.extension.toString(),
       'Tus-Max-Size': this.storage.maxUploadSize,
-      'Tus-Checksum-Algorithm': Object.values(CHECKSUM_TYPES_MAP).toString()
+      'Tus-Checksum-Algorithm': this.storage.checksumTypes.toString()
     };
     this.send(res, { statusCode: 204, headers });
     return {} as TFile;
@@ -138,15 +129,11 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
     super.send(res, { statusCode, headers, body });
   }
 
-  protected extractChecksum(req: http.IncomingMessage): Checksum {
-    const [_checksumAlgorithm, checksum] = getHeader(req, 'upload-checksum')
-      .split(' ')
-      .map(e => e.trim());
-    if (checksum && _checksumAlgorithm) {
-      const checksumAlgorithm = CHECKSUM_TYPES_MAP[_checksumAlgorithm.toLowerCase()];
-      if (checksumAlgorithm) return { checksumAlgorithm, checksum };
-    }
-    return {};
+  extractChecksum(req: http.IncomingMessage): Checksum {
+    const [checksumAlgorithm, checksum] = getHeader(req, 'upload-checksum')
+      .split(/\s+/)
+      .filter(Boolean);
+    return { checksumAlgorithm, checksum };
   }
 }
 

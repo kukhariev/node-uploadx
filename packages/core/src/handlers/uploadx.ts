@@ -10,16 +10,14 @@ export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const start = parseInt(parts[1]);
   return { start, size };
 }
-
 const CHECKSUM_TYPES_MAP: Record<string, string> = {
   sha: 'sha1',
-  sha1: 'sha1',
-  md5: 'md5',
-  sha256: 'sha256',
-  'sha-256': 'sha256',
-  sha512: 'sha512',
-  'sha-512': 'sha512'
+  'sha-256': 'sha256'
 };
+
+export function normalizeChecksumType(type: string): string {
+  return CHECKSUM_TYPES_MAP[type] || type;
+}
 
 /**
  * [X-headers protocol implementation](https://github.com/kukhariev/node-uploadx/blob/master/proto.md#requests-overview)
@@ -126,15 +124,9 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return { ...metadata, ...query };
   }
 
-  protected extractChecksum(req: http.IncomingMessage): Checksum {
-    const [_type, checksum] = getHeader(req, 'digest')
-      .split('=')
-      .map(e => e.trim());
-    if (checksum && _type) {
-      const checksumAlgorithm = CHECKSUM_TYPES_MAP[_type.toLowerCase()];
-      if (checksumAlgorithm) return { checksumAlgorithm, checksum };
-    }
-    return {};
+  extractChecksum(req: http.IncomingMessage): Checksum {
+    const [_type, checksum] = getHeader(req, 'digest').split(/=(.*)/s);
+    return { checksumAlgorithm: normalizeChecksumType(_type), checksum };
   }
 }
 
