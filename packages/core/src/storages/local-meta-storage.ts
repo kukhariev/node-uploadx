@@ -40,7 +40,13 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     metaFilePath.slice(`${this.directory}/${this.prefix}`.length, -this.suffix.length);
 
   async save(id: string, file: T): Promise<T> {
-    await fsp.writeFile(this.getMetaPath(file.id), JSON.stringify(file, null, 2));
+    await fsp.writeFile(this.getMetaPath(id), JSON.stringify(file, null, 2));
+    return file;
+  }
+
+  async touch(id: string, file: T): Promise<T> {
+    const time = new Date();
+    await fsp.utimes(this.getMetaPath(id), time, time);
     return file;
   }
 
@@ -58,11 +64,11 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     const uploads = [];
     const files = await getFiles(`${this.directory}/${this.prefix + prefix}`);
     for (const name of files) {
-      name.endsWith(this.suffix) &&
-        uploads.push({
-          id: this.getIdFromPath(name),
-          createdAt: (await fsp.stat(name)).ctime
-        });
+      if (name.endsWith(this.suffix)) {
+        const { birthtime, ctime, mtime } = await fsp.stat(name);
+        const id = this.getIdFromPath(name);
+        uploads.push({ id, createdAt: birthtime || ctime, modifiedAt: mtime });
+      }
     }
     return { items: uploads };
   }

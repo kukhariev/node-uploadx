@@ -39,6 +39,16 @@ export function mapValues<T>(
   return result;
 }
 
+export function isMatch<T>(a: T, b: T, ...omit: string[]): boolean {
+  return (
+    Object.entries(a)
+      .filter(e => !omit.includes(e[0]))
+      .toString() ===
+    Object.entries(b)
+      .filter(e => !omit.includes(e[0]))
+      .toString()
+  );
+}
 export function isNumber(x?: unknown): x is number {
   return x === Number(x);
 }

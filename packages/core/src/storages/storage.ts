@@ -8,6 +8,7 @@ import {
   ERRORS,
   fail,
   HttpError,
+  isMatch,
   Logger,
   toMilliseconds,
   typeis,
@@ -155,6 +156,10 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
+    const prev = this.cache.get(file.id) || {};
+    if (isMatch(prev, file, 'bytesWritten')) {
+      return this.meta.touch(file.id, file);
+    }
     this.cache.set(file.id, file);
     return this.meta.save(file.id, file);
   }
@@ -180,7 +185,7 @@ export abstract class BaseStorage<TFile extends File> {
         return fail(ERRORS.FILE_NOT_FOUND);
       }
     }
-    return file;
+    return { ...file };
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
@@ -202,11 +207,11 @@ export abstract class BaseStorage<TFile extends File> {
     if (maxAgeMs) {
       const before = Date.now() - maxAgeMs;
       const entries = (await this.list(prefix)).items.filter(
-        item => +new Date(item.createdAt) < before
+        item => +new Date(item.modifiedAt || item.createdAt) < before
       );
-      for (const { id, createdAt } of entries) {
+      for (const { id, createdAt, modifiedAt } of entries) {
         const [deleted] = await this.delete({ id });
-        purged.items.push({ ...deleted, createdAt });
+        purged.items.push({ ...deleted, createdAt, modifiedAt });
       }
     }
     purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);

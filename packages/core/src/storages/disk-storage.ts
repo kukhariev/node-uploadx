@@ -72,7 +72,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     const path = this.getFilePath(file);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     file.status = getFileStatus(file);
-    if (file.status === 'created') await this.saveMeta(file);
+    await this.saveMeta(file);
     return file;
   }
 
@@ -89,7 +89,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       file.status = getFileStatus(file);
-      if (file.status === 'completed') await this.saveMeta(file);
+      await this.saveMeta(file);
       return file;
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);

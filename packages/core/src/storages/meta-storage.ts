@@ -6,6 +6,7 @@ export interface UploadListEntry {
   id: string;
   createdAt: string | Date | number;
   expiredAt?: string | Date | number;
+  modifiedAt?: string | Date | number;
 }
 
 /** @experimental */
@@ -52,6 +53,13 @@ export class MetaStorage<T> {
    */
   async get(id: string): Promise<T> {
     return Promise.reject();
+  }
+
+  /**
+   * Mark upload active
+   */
+  async touch(id: string, file: T): Promise<T> {
+    return file;
   }
 
   /**
