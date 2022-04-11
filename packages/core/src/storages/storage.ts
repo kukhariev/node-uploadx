@@ -92,6 +92,7 @@ export abstract class BaseStorage<TFile extends File> {
   maxMetadataSize: number;
   path: string;
   isReady = true;
+  checksumTypes = ['md5', 'sha1', 'sha256'];
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   protected log = Logger.get(`${this.constructor.name}`);

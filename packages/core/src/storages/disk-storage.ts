@@ -88,6 +88,9 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       await this.saveMeta(file);
     }
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
+    if (part.checksum && !this.checksumTypes.includes(part.checksumAlgorithm || '')) {
+      return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
+    }
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);

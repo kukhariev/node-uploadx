@@ -184,6 +184,15 @@ describe('::Uploadx', () => {
         .expect('range', 'bytes=0-4');
     });
 
+    it('should 400 (invalid checksum algorithm)', async () => {
+      const res = await create({ ...file2, name: 'invalid checksum' });
+      await request(app)
+        .put(res.header.location as string)
+        .set('Digest', 'crc=798797')
+        .send(fs.readFileSync(srcpath))
+        .expect(400);
+    });
+
     it('should 409 (invalid size)', async () => {
       const res = await create({ ...file2, size: 15, name: 'size.409' });
       await request(app)

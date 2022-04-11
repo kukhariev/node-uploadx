@@ -22,7 +22,8 @@ export enum ERRORS {
   UNKNOWN_ERROR = 'UnknownError',
   UNPROCESSABLE_ENTITY = 'UnprocessableEntity',
   UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType',
-  CHECKSUM_MISMATCH = 'ChecksumMismatch'
+  CHECKSUM_MISMATCH = 'ChecksumMismatch',
+  UNSUPPORTED_CHECKSUM_ALGORITHM = 'UnsupportedChecksumAlgorithm'
 }
 
 export type ErrorResponses<T extends string = string> = {
@@ -47,6 +48,7 @@ class E_ {
     MethodNotAllowed: [405, 'Method not allowed'],
     RequestEntityTooLarge: [413, 'Request entity too large'],
     ChecksumMismatch: [460, 'Checksum mismatch'],
+    UnsupportedChecksumAlgorithm: [400, 'Unsupported checksum algorithm'],
     StorageError: [503, 'Storage error'],
     TooManyRequests: [429, 'Too many requests'],
     UnknownError: [500, 'Something went wrong'],
