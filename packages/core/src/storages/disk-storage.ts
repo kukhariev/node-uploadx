@@ -96,12 +96,12 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   }
 
   async delete({ id }: FilePart): Promise<DiskFile[]> {
-    const file = await this.getMeta(id).catch(() => null);
-    if (file) {
-      await removeFile(this.getFilePath(file)).catch(() => null);
+    try {
+      const file = await this.getMeta(id);
+      await removeFile(this.getFilePath(file));
       await this.deleteMeta(id);
       return [{ ...file, status: 'deleted' }];
-    }
+    } catch {}
     return [{ id } as DiskFile];
   }
 
