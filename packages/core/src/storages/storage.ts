@@ -37,6 +37,10 @@ export interface ExpirationOptions {
    * Auto purging interval for expired uploads
    */
   purgeInterval?: number | string;
+  /**
+   * Auto prolong expiring uploads
+   */
+  rolling?: boolean;
 }
 
 export interface BaseStorageOptions<T extends File> {
@@ -157,7 +161,7 @@ export abstract class BaseStorage<TFile extends File> {
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
     const prev = this.cache.get(file.id) || {};
-    if (isEqual(prev, file, 'bytesWritten')) {
+    if (isEqual(prev, file, 'bytesWritten', 'expiredAt')) {
       return this.meta.touch(file.id, file);
     }
     this.cache.set(file.id, file);
@@ -207,7 +211,10 @@ export abstract class BaseStorage<TFile extends File> {
     if (maxAgeMs) {
       const before = Date.now() - maxAgeMs;
       const expired = (await this.list(prefix)).items.filter(
-        item => +new Date(maxAge ? item.modifiedAt || item.createdAt : item.createdAt) < before
+        item =>
+          +new Date(
+            this.config.expiration?.rolling ? item.modifiedAt || item.createdAt : item.createdAt
+          ) < before
       );
       for (const { id, ...rest } of expired) {
         const [deleted] = await this.delete({ id });
@@ -250,7 +257,9 @@ export abstract class BaseStorage<TFile extends File> {
     file.createdAt ??= new Date().toISOString();
     const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
     if (maxAgeMs) {
-      file.expiredAt = new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
+      file.expiredAt = this.config.expiration?.rolling
+        ? new Date(Date.now() + maxAgeMs).toISOString()
+        : new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
     }
     return file;
   }
