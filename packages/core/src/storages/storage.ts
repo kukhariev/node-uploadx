@@ -8,7 +8,7 @@ import {
   ERRORS,
   fail,
   HttpError,
-  isMatch,
+  isEqual,
   Logger,
   toMilliseconds,
   typeis,
@@ -157,7 +157,7 @@ export abstract class BaseStorage<TFile extends File> {
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
     const prev = this.cache.get(file.id) || {};
-    if (isMatch(prev, file, 'bytesWritten')) {
+    if (isEqual(prev, file, 'bytesWritten')) {
       return this.meta.touch(file.id, file);
     }
     this.cache.set(file.id, file);

@@ -82,7 +82,6 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     if (file.status === 'completed') return file;
     if (part.size && part.size < file.size) {
       file.size = part.size;
-      await this.saveMeta(file);
     }
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {

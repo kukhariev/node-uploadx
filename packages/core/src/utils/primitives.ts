@@ -39,13 +39,13 @@ export function mapValues<T>(
   return result;
 }
 
-export function isMatch<T>(a: T, b: T, ...omit: string[]): boolean {
+export function isEqual<T>(a: T, b: T, ...keysToIgnore: string[]): boolean {
   return (
     Object.entries(a)
-      .filter(e => !omit.includes(e[0]))
+      .filter(e => !keysToIgnore.includes(e[0]))
       .toString() ===
     Object.entries(b)
-      .filter(e => !omit.includes(e[0]))
+      .filter(e => !keysToIgnore.includes(e[0]))
       .toString()
   );
 }
