@@ -73,6 +73,7 @@ describe('::Tus', () => {
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
+        .set('Upload-Checksum', `sha1 ${metadata.sha1}`)
         .send(fs.readFileSync(srcpath))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
@@ -119,7 +120,12 @@ describe('::Tus', () => {
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE);
       expect(exposedHeaders(res)).toEqual(
-        expect.arrayContaining(['tus-extension', 'tus-max-size', 'tus-resumable'])
+        expect.arrayContaining([
+          'tus-extension',
+          'tus-max-size',
+          'tus-resumable',
+          'tus-checksum-algorithm'
+        ])
       );
     });
   });

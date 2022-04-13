@@ -1,9 +1,10 @@
 import * as http from 'http';
-import { UploadxFile, FileInit, Metadata } from '../storages';
+import { Checksum, FileInit, Metadata, UploadxFile } from '../storages';
 import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
+export const TUS_VERSION = '1.0.0';
 
 export function serializeMetadata(obj: Metadata): string {
   return Object.entries(obj)
@@ -25,7 +26,7 @@ export function parseMetadata(encoded = ''): Metadata {
  */
 export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   get extension(): string[] {
-    const _extensions = ['creation', 'creation-with-upload', 'termination'];
+    const _extensions = ['creation', 'creation-with-upload', 'termination', 'checksum'];
     if (this.storage.config.expiration) _extensions.push('expiration');
     return _extensions;
   }
@@ -36,7 +37,8 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const headers = {
       'Tus-Extension': this.extension.toString(),
-      'Tus-Max-Size': this.storage.maxUploadSize
+      'Tus-Max-Size': this.storage.maxUploadSize,
+      'Tus-Checksum-Algorithm': this.storage.checksumTypes.toString()
     };
     this.send(res, { statusCode: 204, headers });
     return {} as TFile;
@@ -76,7 +78,15 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
     metadata && (await this.storage.update({ id }, { metadata, id }));
     const start = Number(getHeader(req, 'upload-offset'));
     const contentLength = +getHeader(req, 'content-length');
-    const file = await this.storage.write({ start, id, body: req, contentLength });
+    const { checksumAlgorithm, checksum } = this.extractChecksum(req);
+    const file = await this.storage.write({
+      start,
+      id,
+      body: req,
+      contentLength,
+      checksumAlgorithm,
+      checksum
+    });
     const headers = this.buildHeaders(file, { 'Upload-Offset': file.bytesWritten });
     setHeaders(res, headers);
     if (file.status === 'completed') return file;
@@ -117,6 +127,13 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   send(res: http.ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {
     headers['Tus-Resumable'] = TUS_RESUMABLE;
     super.send(res, { statusCode, headers, body });
+  }
+
+  extractChecksum(req: http.IncomingMessage): Checksum {
+    const [checksumAlgorithm, checksum] = getHeader(req, 'upload-checksum')
+      .split(/\s+/)
+      .filter(Boolean);
+    return { checksumAlgorithm, checksum };
   }
 }
 

@@ -112,7 +112,11 @@ describe('::Uploadx', () => {
   describe('PUT', () => {
     it('should 200 (simple request)', async () => {
       uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).put(uri2).send(fs.readFileSync(srcpath)).expect(200);
+      const res = await request(app)
+        .put(uri2)
+        .set('Digest', `sha=${metadata.sha1}`)
+        .send(fs.readFileSync(srcpath))
+        .expect(200);
       expect(res.type).toBe('application/json');
       expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
     });
@@ -178,6 +182,15 @@ describe('::Uploadx', () => {
         .set('content-range', `bytes 0-4/70`)
         .send('12345')
         .expect('range', 'bytes=0-4');
+    });
+
+    it('should 400 (invalid checksum algorithm)', async () => {
+      const res = await create({ ...file2, name: 'invalid checksum' });
+      await request(app)
+        .put(res.header.location as string)
+        .set('Digest', 'crc=798797')
+        .send(fs.readFileSync(srcpath))
+        .expect(400);
     });
 
     it('should 409 (invalid size)', async () => {

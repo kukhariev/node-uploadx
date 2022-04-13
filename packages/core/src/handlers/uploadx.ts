@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { FileInit, UploadxFile } from '../storages';
+import { Checksum, FileInit, UploadxFile } from '../storages';
 import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
@@ -9,6 +9,14 @@ export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const size = parseInt(parts[2]);
   const start = parseInt(parts[1]);
   return { start, size };
+}
+const CHECKSUM_TYPES_MAP: Record<string, string> = {
+  sha: 'sha1',
+  'sha-256': 'sha256'
+};
+
+export function normalizeChecksumType(type: string): string {
+  return CHECKSUM_TYPES_MAP[type] || type;
 }
 
 /**
@@ -53,7 +61,16 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
     const { start, size = NaN } = contentRange ? rangeParser(contentRange) : { start: 0 };
-    const file = await this.storage.write({ id, body: req, start, contentLength, size });
+    const { checksumAlgorithm, checksum } = this.extractChecksum(req);
+    const file = await this.storage.write({
+      start,
+      id,
+      body: req,
+      size,
+      contentLength,
+      checksumAlgorithm,
+      checksum
+    });
     const headers = this.buildHeaders(file);
     if (file.status === 'completed') return file;
     headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
@@ -105,6 +122,11 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     if (Object.keys(metadata).length) return metadata;
     const { query } = url.parse(decodeURI(req.url || ''), true);
     return { ...metadata, ...query };
+  }
+
+  extractChecksum(req: http.IncomingMessage): Checksum {
+    const [_type, checksum] = getHeader(req, 'digest').split(/=(.*)/s);
+    return { checksumAlgorithm: normalizeChecksumType(_type), checksum };
   }
 }
 

@@ -18,6 +18,7 @@ jest.mock('../packages/core/src/utils/fs', () => {
     ensureFile: async () => 0,
     accessCheck: async () => 0,
     removeFile: async () => null,
+    truncateFile: async () => null,
     getFiles: async () => [
       posix.join(directory, testfile.name),
       posix.join(directory, metafilename)
