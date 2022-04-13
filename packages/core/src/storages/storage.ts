@@ -8,6 +8,7 @@ import {
   ERRORS,
   fail,
   HttpError,
+  isEqual,
   Logger,
   toMilliseconds,
   typeis,
@@ -36,6 +37,10 @@ export interface ExpirationOptions {
    * Auto purging interval for expired uploads
    */
   purgeInterval?: number | string;
+  /**
+   * Auto prolong expiring uploads
+   */
+  rolling?: boolean;
 }
 
 export interface BaseStorageOptions<T extends File> {
@@ -155,6 +160,10 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
+    const prev = this.cache.get(file.id) || {};
+    if (isEqual(prev, file, 'bytesWritten', 'expiredAt')) {
+      return this.meta.touch(file.id, file);
+    }
     this.cache.set(file.id, file);
     return this.meta.save(file.id, file);
   }
@@ -180,7 +189,7 @@ export abstract class BaseStorage<TFile extends File> {
         return fail(ERRORS.FILE_NOT_FOUND);
       }
     }
-    return file;
+    return { ...file };
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
@@ -201,15 +210,18 @@ export abstract class BaseStorage<TFile extends File> {
     const purged = { items: [], maxAgeMs, prefix } as PurgeList;
     if (maxAgeMs) {
       const before = Date.now() - maxAgeMs;
-      const entries = (await this.list(prefix)).items.filter(
-        item => +new Date(item.createdAt) < before
+      const expired = (await this.list(prefix)).items.filter(
+        item =>
+          +new Date(
+            this.config.expiration?.rolling ? item.modifiedAt || item.createdAt : item.createdAt
+          ) < before
       );
-      for (const { id, createdAt } of entries) {
+      for (const { id, ...rest } of expired) {
         const [deleted] = await this.delete({ id });
-        purged.items.push({ ...deleted, createdAt });
+        purged.items.push({ ...deleted, ...rest });
       }
+      purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
     }
-    purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
     return purged;
   }
 
@@ -245,7 +257,9 @@ export abstract class BaseStorage<TFile extends File> {
     file.createdAt ??= new Date().toISOString();
     const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
     if (maxAgeMs) {
-      file.expiredAt = new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
+      file.expiredAt = this.config.expiration?.rolling
+        ? new Date(Date.now() + maxAgeMs).toISOString()
+        : new Date(+new Date(file.createdAt) + maxAgeMs).toISOString();
     }
     return file;
   }

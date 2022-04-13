@@ -72,7 +72,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     const path = this.getFilePath(file);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     file.status = getFileStatus(file);
-    if (file.status === 'created') await this.saveMeta(file);
+    await this.saveMeta(file);
     return file;
   }
 
@@ -82,14 +82,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     if (file.status === 'completed') return file;
     if (part.size && part.size < file.size) {
       file.size = part.size;
-      await this.saveMeta(file);
     }
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       file.status = getFileStatus(file);
-      if (file.status === 'completed') await this.saveMeta(file);
+      await this.saveMeta(file);
       return file;
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);
@@ -97,12 +96,12 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   }
 
   async delete({ id }: FilePart): Promise<DiskFile[]> {
-    const file = await this.getMeta(id).catch(() => null);
-    if (file) {
-      await removeFile(this.getFilePath(file)).catch(() => null);
+    try {
+      const file = await this.getMeta(id);
+      await removeFile(this.getFilePath(file));
       await this.deleteMeta(id);
       return [{ ...file, status: 'deleted' }];
-    }
+    } catch {}
     return [{ id } as DiskFile];
   }
 

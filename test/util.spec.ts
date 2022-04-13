@@ -151,6 +151,12 @@ describe('utils', () => {
       });
     });
 
+    it('isEqual', () => {
+      expect(utils.isEqual({ a: 1, b: 2 }, { a: 1, b: 2 })).toBe(true);
+      expect(utils.isEqual({ a: 1, b: 2, c: 3 }, { a: 1, b: 2 })).toBe(false);
+      expect(utils.isEqual({ a: 1, b: 2, c: 3 }, { a: 1, b: 2 }, 'c')).toBe(true);
+    });
+
     it('memoize', () => {
       const md5Cached = utils.memoize(utils.md5);
       const fnvCached = utils.memoize(utils.fnv);
