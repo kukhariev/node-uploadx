@@ -81,6 +81,17 @@ describe('utils', () => {
     it('getWriteStream(not exist , 0)', () => {
       expect(() => utils.getWriteStream('', 0)).toThrow();
     });
+
+    it('removeFile(path)', async () => {
+      await utils.ensureFile(filepath);
+      await utils.removeFile(filepath);
+      expect(fs.existsSync(filepath)).toBe(false);
+    });
+
+    it('removeFile(not exist)', async () => {
+      await utils.removeFile(filepath);
+      expect(fs.existsSync(filepath)).toBe(false);
+    });
   });
 
   describe('http', () => {
