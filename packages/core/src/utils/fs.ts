@@ -28,8 +28,10 @@ export async function accessCheck(dir: string): Promise<void> {
  * Removes the specified file from the local file system
  */
 export async function removeFile(path: string): Promise<void> {
-  if (fsp.rm) return fsp.rm(path);
-  return fsp.unlink(path);
+  if (fsp.rm) return fsp.rm(path, { force: true });
+  return fsp.unlink(path).catch((err: NodeJS.ErrnoException): void => {
+    if (err.code !== 'ENOENT') throw err;
+  });
 }
 
 export function truncateFile(path: string, length = 0): Promise<void> {
