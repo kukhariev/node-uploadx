@@ -1,6 +1,6 @@
 {
   "name": "node-uploadx",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
@@ -33,9 +33,9 @@
     "clean": "rimraf ./tsconfig.tsbuildinfo ./lib"
   },
   "dependencies": {
-    "@uploadx/core": "^5.1.0",
-    "@uploadx/gcs": "^5.1.0",
-    "@uploadx/s3": "^5.1.0"
+    "@uploadx/core": "^5.1.1",
+    "@uploadx/gcs": "^5.1.1",
+    "@uploadx/s3": "^5.1.1"
   },
   "publishConfig": {
     "access": "public"
