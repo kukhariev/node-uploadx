@@ -58,7 +58,7 @@
     "oao": "2.0.2",
     "prettier": "2.6.2",
     "rimraf": "3.0.2",
-    "supertest": "6.2.2",
+    "supertest": "6.2.3",
     "ts-jest": "28.0.1",
     "ts-node-dev": "1.1.8",
     "tsconfig-paths": "3.14.1",
