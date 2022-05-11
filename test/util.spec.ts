@@ -146,8 +146,8 @@ describe('utils', () => {
     });
 
     it('getBaseUrl(absolute)', () => {
-      req.headers = { ...req.headers, 'x-forwarded-proto': 'http' };
-      expect(utils.getBaseUrl(req)).toBe('http://example');
+      req.headers = { host: 'example:4443', 'x-forwarded-proto': 'https' };
+      expect(utils.getBaseUrl(req)).toBe('https://example:4443');
     });
   });
 

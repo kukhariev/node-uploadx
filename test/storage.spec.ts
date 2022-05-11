@@ -15,9 +15,9 @@ describe('BaseStorage', () => {
 
   it('should validate error', () => {
     storage = new TestStorage();
-    return expect(
-      storage.validate({ ...testfile, originalName: '../file.ext' })
-    ).rejects.toHaveProperty('statusCode');
+    return expect(storage.validate({ ...testfile, name: '../file.ext' })).rejects.toHaveProperty(
+      'statusCode'
+    );
   });
 
   it('should check if expired', async () => {
