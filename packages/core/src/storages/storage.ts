@@ -136,7 +136,7 @@ export abstract class BaseStorage<TFile extends File> {
     };
     const filename: ValidatorConfig<TFile> = {
       isValid(file) {
-        return FileName.isValid(file.name) && FileName.isValid(file.originalName);
+        return FileName.isValid(file.name);
       },
       response: ErrorMap.InvalidFileName
     };
