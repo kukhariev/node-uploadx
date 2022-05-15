@@ -82,11 +82,36 @@ export function setHeaders(res: http.ServerResponse, headers: Headers = {}): voi
 }
 
 export function getBaseUrl(req: http.IncomingMessage): string {
-  const proto = getHeader(req, 'x-forwarded-proto');
-  const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
+  let { proto, host } = extractForwarded(req);
+  host ||= extractHost(req);
+  proto ||= extractProto(req);
   if (!host) return '';
-  if (!proto) return `//${host}`;
-  return `${proto}://${host}`;
+  return proto ? `${proto}://${host}` : `//${host}`;
+}
+
+function extractProto(req: http.IncomingMessage): string {
+  return getHeader(req, 'x-forwarded-proto');
+}
+
+function extractHost(req: http.IncomingMessage): string {
+  return getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
+}
+
+function extractForwarded(req: http.IncomingMessage): { proto: string; host: string } {
+  // Forwarded: by=<identifier>;for=<identifier>;host=<host>;proto=<http|https>
+  let proto = '';
+  let host = '';
+  const header = getHeader(req, 'forwarded');
+  if (header) {
+    const kvPairs = header.split(';');
+    for (const kv of kvPairs) {
+      const [token, value] = kv.split('=');
+      if (token === 'proto') proto = value;
+      if (token === 'host') host = value;
+    }
+  }
+
+  return { proto, host };
 }
 
 export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {

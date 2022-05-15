@@ -149,6 +149,11 @@ describe('utils', () => {
       req.headers = { host: 'example:4443', 'x-forwarded-proto': 'https' };
       expect(utils.getBaseUrl(req)).toBe('https://example:4443');
     });
+
+    it('getBaseUrl(forwarded)', () => {
+      req.headers = { ...req.headers, forwarded: 'by=by;for=for;host=example;proto=https' };
+      expect(utils.getBaseUrl(req)).toBe('https://example');
+    });
   });
 
   describe('primitives', () => {
