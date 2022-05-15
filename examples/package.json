@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
@@ -20,7 +20,7 @@
     "express": "4.17.1",
     "fastify": "3.21.0",
     "middie": "5.3.0",
-    "node-uploadx": "^5.1.1",
+    "node-uploadx": "^5.1.2",
     "ts-node-dev": "1.1.8"
   },
   "devDependencies": {
