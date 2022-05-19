@@ -60,7 +60,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   async list(prefix: string): Promise<UploadList> {
     const params = {
       Bucket: this.bucket,
-      Prefix: prefix
+      Prefix: this.prefix + prefix
     };
     const items = [];
     const response = await this.client.send(new ListObjectsV2Command(params));
