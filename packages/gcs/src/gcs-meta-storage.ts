@@ -65,7 +65,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   async list(prefix: string): Promise<UploadList> {
     const baseURL = this.storageBaseURI;
     const url = '/';
-    const options = { baseURL, url, params: { prefix: encodeURIComponent(prefix) } };
+    const options = { baseURL, url, params: { prefix: encodeURIComponent(this.prefix + prefix) } };
     const { data } = await this.authClient.request<{
       items: { name: string; timeCreated: string; metadata?: T }[];
     }>(options);
