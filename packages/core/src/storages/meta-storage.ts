@@ -24,8 +24,8 @@ export interface MetaStorageOptions {
  * Stores upload metadata
  */
 export class MetaStorage<T> {
-  prefix = '.';
-  suffix = '.';
+  prefix = '';
+  suffix = '';
 
   constructor(config?: MetaStorageOptions) {
     this.prefix = config?.prefix || '';
@@ -68,6 +68,14 @@ export class MetaStorage<T> {
    */
   async list(prefix = ''): Promise<UploadList> {
     return { items: [] };
+  }
+
+  getMetaName(id: string): string {
+    return this.prefix + id + this.suffix;
+  }
+
+  getIdFromMetaName(name: string): string {
+    return name.slice(this.prefix.length, -this.suffix.length);
   }
 }
 

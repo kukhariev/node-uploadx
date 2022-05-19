@@ -28,10 +28,6 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     this.client = new S3Client(config);
   }
 
-  getMetaName(id: string): string {
-    return this.prefix + id + this.suffix;
-  }
-
   async get(id: string): Promise<T> {
     const params = { Bucket: this.bucket, Key: this.getMetaName(id) };
     const { Metadata } = await this.client.send(new HeadObjectCommand(params));
@@ -60,7 +56,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   async list(prefix: string): Promise<UploadList> {
     const params = {
       Bucket: this.bucket,
-      Prefix: prefix
+      Prefix: this.prefix + prefix
     };
     const items = [];
     const response = await this.client.send(new ListObjectsV2Command(params));
@@ -70,7 +66,7 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
           LastModified &&
           Key.endsWith(this.suffix) &&
           items.push({
-            id: Key?.slice(this.prefix.length, -this.suffix.length),
+            id: this.getIdFromMetaName(Key),
             createdAt: LastModified
           });
       }
