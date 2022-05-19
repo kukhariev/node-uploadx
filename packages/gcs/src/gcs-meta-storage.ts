@@ -21,8 +21,6 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
     this.authClient = new GoogleAuth(config);
   }
 
-  getMetaName = (id: string): string => this.prefix + id + this.suffix;
-
   /**
    * Returns metafile url
    * @param id - upload id
@@ -30,13 +28,6 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   getMetaPath(id: string): string {
     return `${this.storageBaseURI}/${this.getMetaName(id)}`;
   }
-
-  /**
-   * Returns upload id from metafile url
-   * @internal
-   */
-  getIdFromPath = (metaFilePath: string): string =>
-    metaFilePath.slice(`${this.prefix}`.length, -this.suffix.length);
 
   async save(id: string, file: T): Promise<T> {
     //TODO: use JSON API multipart POST?
@@ -73,7 +64,7 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
       items: data.items
         .filter(item => item.name.endsWith(this.suffix))
         .map(({ name, timeCreated }) => ({
-          id: this.getIdFromPath(name),
+          id: this.getIdFromMetaName(name),
           createdAt: new Date(timeCreated)
         }))
     };
