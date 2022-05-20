@@ -82,11 +82,17 @@ export function setHeaders(res: http.ServerResponse, headers: Headers = {}): voi
 }
 
 export function getBaseUrl(req: http.IncomingMessage): string {
-  const proto = getHeader(req, 'x-forwarded-proto');
+  const proto = extractProto(req);
   const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
   if (!host) return '';
   if (!proto) return `//${host}`;
   return `${proto}://${host}`;
+}
+
+export function extractProto(req: http.IncomingMessage): string {
+  if (getHeader(req, 'origin').toLowerCase().startsWith('https')) return 'https';
+  if (getHeader(req, 'referer').toLowerCase().startsWith('https')) return 'https';
+  return getHeader(req, 'x-forwarded-proto').toLowerCase();
 }
 
 export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
