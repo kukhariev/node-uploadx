@@ -52,6 +52,7 @@ export interface BaseStorageOptions<T extends File> {
   filename?: (file: T, req: any) => string;
   /** Get user identity */
   userIdentifier?: UserIdentifier;
+  /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;

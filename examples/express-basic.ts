@@ -9,6 +9,7 @@ const opts: DiskStorageOptions = {
   directory: 'upload',
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
+  useRelativeLocation: true,
   filename: file => file.originalName,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   onComplete: file => {
