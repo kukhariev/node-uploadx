@@ -5,12 +5,11 @@
 
 > Node.js resumable upload middleware.
 > Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
-> Supported APIs: Google resumable v3.0, tus 1.0, multipart upload.
-> Capable store uploads locally on disk, on Google Storage or on S3.
+> Also supports [tus 1.0](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md), multipart uploads.
 
 ## 🌩 Installation
 
-All-In-One:
+All-In-One with cloud storage support:
 
 ```sh
 npm install node-uploadx
@@ -24,17 +23,11 @@ Separate modules can also be used to save disk space and for faster installation
   npm install @uploadx/core
   ```
 
-- _Google Cloud Storage_ support:
+- _S3_ storage support:
 
-  ```sh
-  npm install @uploadx/gcs
-  ```
-
-- _S3_ support:
-
-  ```sh
+```sh
   npm install @uploadx/s3
-  ```
+```
 
 ## ♨ Usage
 
@@ -55,30 +48,6 @@ app.use('/upload/files', uploadx(opts));
 app.listen(3003);
 ```
 
-Node http.Server GCS example:
-
-```js
-const { Uploadx, GCStorage } = require('node-uploadx');
-const http = require('http');
-const url = require('url');
-
-const storage = new GCStorage({ bucket: 'uploads' });
-const uploads = new Uploadx({ storage });
-uploads.on('completed', console.log);
-
-const server = http
-  .createServer((req, res) => {
-    const pathname = url.parse(req.url).pathname;
-    if (pathname === '/upload/files') {
-      uploads.handle(req, res);
-    } else {
-      res.writeHead(404, { 'Content-Type': 'text/plan' });
-      res.end('Not Found');
-    }
-  })
-  .listen(3003);
-```
-
 Please navigate to the [examples](examples) for more.
 
 ### 🛠 Options
@@ -88,7 +57,7 @@ Some available options: :
 | option                |         type         |  default value   | description                                                  |
 | :-------------------- | :------------------: | :--------------: | ------------------------------------------------------------ |
 | `directory`           |       `string`       |    `"files"`     | _DiskStorage upload directory_                               |
-| `bucket`              |       `string`       | `"node-uploadx"` | _S3 or GCS bucket_                                           |
+| `bucket`              |       `string`       | `"node-uploadx"` | _Storage bucket_                                             |
 | `path`                |       `string`       |    `"/files"`    | _Node http base path_                                        |
 | `allowMIME`           |      `string[]`      |    `["*\*"]`     | _Allowed MIME types_                                         |
 | `maxUploadSize`       |   `string\|number`   |     `"5TB"`      | _File size limit_                                            |
@@ -100,17 +69,7 @@ Some available options: :
 | `filename`            |      `Function`      |                  | _File naming function_                                       |
 | `userIdentifier`      |   `UserIdentifier`   |                  | _Get user identity_                                          |
 | `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
-| `clientDirectUpload`  |      `boolean`       |                  | _Upload by a compatible client directly to the GCS_          |
 | `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
-
-For Google Cloud Storage authenticate see [GoogleAuthOptions](https://github.com/googleapis/google-auth-library-nodejs/blob/04dae9c271f0099025188489c61fd245d482832b/src/auth/googleauth.ts#L62). Also supported `GCS_BUCKET`, `GCS_KEYFILE` and `GOOGLE_APPLICATION_CREDENTIALS` environment variables.
-
-For S3 buckets - [Setting Credentials in Node.js](https://docs.aws.amazon.com/en_us/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) and `S3_BUCKET`, `S3_KEYFILE` environment variable.
-
-## References
-
-- [https://developers.google.com/drive/api/v3/manage-uploads#resumable](https://developers.google.com/drive/api/v3/manage-uploads#resumable)
-- [https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md)
 
 ## Contributing
 
