@@ -19,7 +19,8 @@ const app = express();
 // The credentials are loaded from a shared credentials file
 const storage = new S3Storage({
   bucket: 'node-uploadx',
-  region: 'eu-west-3',
+  endpoint: 'http://127.0.0.1:9000',
+  forcePathStyle: true,
   expiration: { maxAge: '1h', purgeInterval: '15min' },
   onComplete: file => console.log('File upload complete: ', file)
 });
