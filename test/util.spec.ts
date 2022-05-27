@@ -141,7 +141,7 @@ describe('utils', () => {
     });
 
     it('getBaseUrl(no-proto)', () => {
-      req.headers = { 'x-forwarded-host': 'example' };
+      req.headers = { host: 'example' };
       expect(utils.getBaseUrl(req)).toBe('//example');
     });
 
