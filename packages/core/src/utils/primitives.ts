@@ -67,14 +67,24 @@ export function toMilliseconds(value: string | number | undefined): number | nul
   return duration(value);
 }
 
-export function getFirstEntry<T>(val: T | T[]): T {
-  return Array.isArray(val) ? val[0] : val;
+/**
+ * Returns a first element of an array
+ */
+export function getFirstOne<T>(val: T[]): T {
+  return val[0];
 }
 
-export function getLastEntry<T>(val: T | T[]): T {
-  return Array.isArray(val) ? val[val.length - 1] : val;
+/**
+ * Returns a last element of an array
+ */
+export function getLastOne<T>(val: T[]): T {
+  return val[val.length - 1];
 }
 
+/**
+ * Returns a function that caches the result of func
+ * @param fn - function to be called
+ */
 export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
   const cache = new Cache<K>(1000, 0);
   const cached = (val: T): K => {

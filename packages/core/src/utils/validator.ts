@@ -28,7 +28,7 @@ export class Validator<T> {
       const code = `${this.prefix}${capitalize(key)}`;
       this._validators[code] = { ...this._validators[code], ...validator };
       if (typeof this._validators[code].isValid !== 'function') {
-        throw new Error('Validation config "isValid" is missing or it is not a function!');
+        throw new Error('Validation config "isValid" is missing, or it is not a function!');
       }
     }
   }
