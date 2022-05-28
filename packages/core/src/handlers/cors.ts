@@ -21,7 +21,7 @@ export class Cors {
       this.allowedMethods.toString() || accessControlRequestMethod
     );
     const allowedHeaders =
-      this.allowedHeaders.toString() || getHeader(req, 'access-control-request-headers');
+      this.allowedHeaders.toString() || getHeader(req, 'access-control-request-headers', true);
     allowedHeaders && res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
     res.setHeader('Access-Control-Max-Age', this.maxAge);
     return;

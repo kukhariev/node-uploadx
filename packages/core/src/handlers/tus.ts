@@ -48,7 +48,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
    * Create a file and send url to client
    */
   async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
-    const metadataHeader = getHeader(req, 'upload-metadata');
+    const metadataHeader = getHeader(req, 'upload-metadata', true);
     const metadata = parseMetadata(metadataHeader);
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
@@ -73,7 +73,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
    */
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
-    const metadataHeader = getHeader(req, 'upload-metadata');
+    const metadataHeader = getHeader(req, 'upload-metadata', true);
     const metadata = metadataHeader && parseMetadata(metadataHeader);
     metadata && (await this.storage.update({ id }, { metadata, id }));
     const start = Number(getHeader(req, 'upload-offset'));

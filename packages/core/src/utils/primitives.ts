@@ -67,8 +67,12 @@ export function toMilliseconds(value: string | number | undefined): number | nul
   return duration(value);
 }
 
-export function first<T>(val: T | T[]): T {
+export function getFirstEntry<T>(val: T | T[]): T {
   return Array.isArray(val) ? val[0] : val;
+}
+
+export function getLastEntry<T>(val: T | T[]): T {
+  return Array.isArray(val) ? val[val.length - 1] : val;
 }
 
 export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
