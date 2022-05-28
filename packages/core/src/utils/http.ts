@@ -1,4 +1,5 @@
 import * as http from 'http';
+import { getLastEntry } from './primitives';
 
 export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
   body?: T;
@@ -57,9 +58,18 @@ export async function getMetadata(
   return { ...JSON.parse(raw) } as Record<any, any>;
 }
 
-export function getHeader(req: http.IncomingMessage, name: string): string {
+/**
+    Retrieve the value of a specific header of an HTTP request.
+    @param req - The request object.
+    @param name - The name of the header.
+    @param all - If true, returns  all values of the header, comma-separated, otherwise returns the last value.
+ */
+export function getHeader(req: http.IncomingMessage, name: string, all = false): string {
   const raw = req.headers?.[name.toLowerCase()];
-  return Array.isArray(raw) ? raw[0] : raw || '';
+  if (!raw) return '';
+  return all
+    ? raw.toString().trim()
+    : getLastEntry(Array.isArray(raw) ? raw : raw.split(',')).trim();
 }
 
 export function appendHeader(

@@ -131,9 +131,19 @@ describe('utils', () => {
       expect(utils.getHeader(req, 'head')).toBe('value');
     });
 
+    it('getHeader(array)', () => {
+      req.headers = { head: ['value1', 'value2 '] };
+      expect(utils.getHeader(req, 'head')).toBe('value2');
+    });
+
     it('getHeader(multiple)', () => {
-      req.headers = { head: ['value1', 'value2'] };
-      expect(utils.getHeader(req, 'head')).toBe('value1');
+      req.headers = { head: 'value1 ,value2' };
+      expect(utils.getHeader(req, 'head')).toBe('value2');
+    });
+
+    it('getHeader(multiple, all)', () => {
+      req.headers = { head: 'value1,value2 ' };
+      expect(utils.getHeader(req, 'head', true)).toBe('value1,value2');
     });
 
     it('getBaseUrl(no-host)', () => {
