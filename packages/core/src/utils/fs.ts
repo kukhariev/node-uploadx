@@ -34,6 +34,9 @@ export async function removeFile(path: string): Promise<void> {
   });
 }
 
+/**
+ * Truncates the file to the specified length. Used to undo chunk write operation.
+ */
 export function truncateFile(path: string, length = 0): Promise<void> {
   return fsp.truncate(path, length);
 }
@@ -42,10 +45,7 @@ export function truncateFile(path: string, length = 0): Promise<void> {
  * Returns file WriteStream for data appending
  */
 export function getWriteStream(path: string, start: number): WriteStream {
-  if (path && start >= 0) {
-    return createWriteStream(path, { flags: 'r+', start });
-  }
-  throw new Error('getWriteStream: invalid parameters!');
+  return createWriteStream(path, { flags: 'r+', start });
 }
 
 /**

@@ -74,14 +74,6 @@ describe('utils', () => {
       stream.close();
     });
 
-    it('getWriteStream(path, NaN)', () => {
-      expect(() => utils.getWriteStream('', NaN)).toThrow();
-    });
-
-    it('getWriteStream(not exist , 0)', () => {
-      expect(() => utils.getWriteStream('', 0)).toThrow();
-    });
-
     it('removeFile(path)', async () => {
       await utils.ensureFile(filepath);
       await utils.removeFile(filepath);

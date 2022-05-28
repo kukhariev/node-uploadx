@@ -1,5 +1,5 @@
 import * as http from 'http';
-import { getLastEntry } from './primitives';
+import { getLastOne } from './primitives';
 
 export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
   body?: T;
@@ -31,6 +31,12 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
   return !isNaN(bodySize) && bodySize;
 };
 
+/**
+ * Reads the body from the request.
+ * @param req - request object
+ * @param encoding - encoding to use
+ * @param limit - optional limit on the size of the body
+ */
 export function readBody(
   req: http.IncomingMessage,
   encoding = 'utf8' as BufferEncoding,
@@ -47,6 +53,11 @@ export function readBody(
   });
 }
 
+/**
+ * Reads the body of the incoming metadata request and parses it as JSON.
+ * @param req - incoming metadata request
+ * @param limit - optional limit on the size of the body
+ */
 export async function getMetadata(
   req: IncomingMessageWithBody<Record<any, any>>,
   limit = 16777216
@@ -59,19 +70,20 @@ export async function getMetadata(
 }
 
 /**
-    Retrieve the value of a specific header of an HTTP request.
-    @param req - The request object.
-    @param name - The name of the header.
-    @param all - If true, returns  all values of the header, comma-separated, otherwise returns the last value.
+ * Retrieve the value of a specific header of an HTTP request.
+ * @param req - request object
+ * @param name - name of the header
+ * @param all - if true, returns  all values of the header, comma-separated, otherwise returns the last value.
  */
 export function getHeader(req: http.IncomingMessage, name: string, all = false): string {
   const raw = req.headers?.[name.toLowerCase()];
-  if (!raw) return '';
-  return all
-    ? raw.toString().trim()
-    : getLastEntry(Array.isArray(raw) ? raw : raw.split(',')).trim();
+  if (!raw || raw.length === 0) return '';
+  return all ? raw.toString().trim() : getLastOne(Array.isArray(raw) ? raw : raw.split(',')).trim();
 }
 
+/**
+ * Appends value to the end of the multi-value header
+ */
 export function appendHeader(
   res: http.ServerResponse,
   name: string,
@@ -81,6 +93,9 @@ export function appendHeader(
   res.setHeader(name, s);
 }
 
+/**
+ * Sets the value of a specific header of an HTTP response.
+ */
 export function setHeaders(res: http.ServerResponse, headers: Headers = {}): void {
   const keys = Object.keys(headers);
   keys.length && appendHeader(res, 'Access-Control-Expose-Headers', keys);
@@ -91,6 +106,9 @@ export function setHeaders(res: http.ServerResponse, headers: Headers = {}): voi
   }
 }
 
+/**
+ * Try build a protocol:hostname:port string from a request object.
+ */
 export function getBaseUrl(req: http.IncomingMessage): string {
   const host = extractHost(req);
   if (!host) return '';
@@ -99,12 +117,18 @@ export function getBaseUrl(req: http.IncomingMessage): string {
   return `${proto}://${host}`;
 }
 
+/**
+ * Extracts host with port from a http or https request.
+ */
 export function extractHost(
   req: http.IncomingMessage & { host?: string; hostname?: string }
 ): string {
   return req.host || req.hostname || getHeader(req, 'host');
 }
 
+/**
+ * Extracts protocol from a http or https request.
+ */
 export function extractProto(req: http.IncomingMessage): string {
   if (getHeader(req, 'origin').toLowerCase().startsWith('https')) return 'https';
   if (getHeader(req, 'referer').toLowerCase().startsWith('https')) return 'https';
