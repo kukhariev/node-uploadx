@@ -24,7 +24,7 @@ const generateFileId = (file: File): string => {
 export interface FileInit {
   contentType?: string;
   originalName?: string;
-  metadata?: Metadata;
+  metadata: Metadata;
   size?: number | string;
   userId?: string;
 }
