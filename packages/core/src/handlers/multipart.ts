@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as multiparty from 'multiparty';
-import { UploadxFile, FileInit } from '../storages';
+import { FileInit, UploadxFile } from '../storages';
 import { setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 

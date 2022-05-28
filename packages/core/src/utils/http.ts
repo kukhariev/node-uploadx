@@ -82,11 +82,17 @@ export function setHeaders(res: http.ServerResponse, headers: Headers = {}): voi
 }
 
 export function getBaseUrl(req: http.IncomingMessage): string {
-  const proto = extractProto(req);
-  const host = getHeader(req, 'host') || getHeader(req, 'x-forwarded-host');
+  const host = extractHost(req);
   if (!host) return '';
+  const proto = extractProto(req);
   if (!proto) return `//${host}`;
   return `${proto}://${host}`;
+}
+
+export function extractHost(
+  req: http.IncomingMessage & { host?: string; hostname?: string }
+): string {
+  return req.host || req.hostname || getHeader(req, 'host');
 }
 
 export function extractProto(req: http.IncomingMessage): string {
