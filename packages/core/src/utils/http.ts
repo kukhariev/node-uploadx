@@ -123,7 +123,8 @@ export function getBaseUrl(req: http.IncomingMessage): string {
 export function extractHost(
   req: http.IncomingMessage & { host?: string; hostname?: string }
 ): string {
-  return req.host || req.hostname || getHeader(req, 'host');
+  return getHeader(req, 'host');
+  // return req.host || req.hostname || getHeader(req, 'host'); //  for express v5 / fastify
 }
 
 /**
