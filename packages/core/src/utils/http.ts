@@ -124,15 +124,13 @@ export function extractHost(
   req: http.IncomingMessage & { host?: string; hostname?: string }
 ): string {
   return getHeader(req, 'host');
-  // return req.host || req.hostname || getHeader(req, 'host'); //  for express v5 / fastify
+  // return req.host || req.hostname || getHeader(req, 'host'); // for express v5 / fastify
 }
 
 /**
  * Extracts protocol from a http or https request.
  */
 export function extractProto(req: http.IncomingMessage): string {
-  if (getHeader(req, 'origin').toLowerCase().startsWith('https')) return 'https';
-  if (getHeader(req, 'referer').toLowerCase().startsWith('https')) return 'https';
   return getHeader(req, 'x-forwarded-proto').toLowerCase();
 }
 
