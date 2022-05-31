@@ -4,5 +4,7 @@
     ":preserveSemverRanges",
     "helpers:disableTypesNodeMajor",
     "schedule:weekends"
-  ]
+  ],
+  "updateInternalDeps": true
+
 }
