@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 import duration from 'parse-duration';
+import { isDeepStrictEqual } from 'util';
 import { Cache } from './cache';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
@@ -40,13 +41,9 @@ export function mapValues<T>(
 }
 
 export function isEqual<T>(a: T, b: T, ...keysToIgnore: string[]): boolean {
-  return (
-    Object.entries(a)
-      .filter(e => !keysToIgnore.includes(e[0]))
-      .toString() ===
-    Object.entries(b)
-      .filter(e => !keysToIgnore.includes(e[0]))
-      .toString()
+  return isDeepStrictEqual(
+    Object.entries(a).filter(e => !keysToIgnore.includes(e[0])),
+    Object.entries(b).filter(e => !keysToIgnore.includes(e[0]))
   );
 }
 export function isNumber(x?: unknown): x is number {
