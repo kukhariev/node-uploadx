@@ -3,6 +3,9 @@ import * as path from 'path';
 import { testfile } from './shared';
 import { tmpdir } from 'os';
 
+jest.mock('fs/promises');
+jest.mock('fs');
+
 describe('LocalMetaStorage', () => {
   it('defaults', () => {
     const meta = new LocalMetaStorage();

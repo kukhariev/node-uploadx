@@ -1,41 +1,18 @@
-import { posix } from 'path';
+import * as fs from 'fs';
+import { vol } from 'memfs';
 import { DiskStorage, fsp } from '../packages/core/src';
 import {
   authRequest,
   FileWriteStream,
-  metafilename,
   RequestReadStream,
   storageOptions,
   testfile
 } from './shared';
 
 const directory = 'ds-test';
-let fileWriteStream: FileWriteStream;
 
-jest.mock('../packages/core/src/utils/fs', () => {
-  const timestamp = Date.now() - 10000;
-  return {
-    ensureFile: async () => 0,
-    accessCheck: async () => 0,
-    removeFile: async () => null,
-    truncateFile: async () => null,
-    getFiles: async () => [
-      posix.join(directory, testfile.name),
-      posix.join(directory, metafilename)
-    ],
-    getWriteStream: () => fileWriteStream,
-    fsp: {
-      stat: async () => ({
-        mtime: timestamp,
-        ctime: timestamp
-      }),
-      writeFile: async () => 0,
-      readFile: async () => JSON.stringify(testfile),
-      unlink: async () => null,
-      rm: async () => null
-    }
-  };
-});
+jest.mock('fs/promises');
+jest.mock('fs');
 
 describe('DiskStorage', () => {
   const options = { ...storageOptions, directory };
@@ -90,7 +67,7 @@ describe('DiskStorage', () => {
 
   describe('.write()', () => {
     beforeEach(() => {
-      fileWriteStream = new FileWriteStream();
+      vol.reset();
       readStream = new RequestReadStream();
       return createFile();
     });
@@ -115,12 +92,20 @@ describe('DiskStorage', () => {
     });
 
     it('should reject with 500', async () => {
+      const fileWriteStream = new FileWriteStream();
+      jest
+        .spyOn(fs, 'createWriteStream')
+        .mockImplementationOnce(() => fileWriteStream as unknown as fs.WriteStream);
       readStream.__mockPipeError(fileWriteStream);
       const write = storage.write({ ...testfile, start: 0, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileError');
     });
 
     it('should close file and reset bytesWritten on abort', async () => {
+      const fileWriteStream = new FileWriteStream();
+      jest
+        .spyOn(fs, 'createWriteStream')
+        .mockImplementationOnce(() => fileWriteStream as unknown as fs.WriteStream);
       const close = jest.spyOn(fileWriteStream, 'close');
       readStream.__mockAbort();
       const file = await storage.write({ ...testfile, start: 0, body: readStream });
@@ -139,7 +124,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should return all user files', async () => {
-      const { items } = await storage.list(testfile.userId);
+      const { items } = await storage.list();
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({ id: testfile.id });
     });
@@ -173,8 +158,11 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should delete file', async () => {
+      jest.useFakeTimers();
+      jest.advanceTimersByTime(500);
       const list = await storage.purge(5);
       expect(list.items).toHaveLength(1);
+      jest.useRealTimers();
     });
   });
 });

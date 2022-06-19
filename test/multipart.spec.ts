@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
+import { vol } from 'memfs';
 import * as request from 'supertest';
 import { multipart, Multipart } from '../packages/core/src';
 import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
+
+jest.mock('fs/promises');
+jest.mock('fs');
 
 describe('::Multipart', () => {
   let res: request.Response;
@@ -11,6 +15,7 @@ describe('::Multipart', () => {
   const directory = join(uploadRoot, 'multipart');
   const opts = { ...storageOptions, directory };
   app.use(basePath, multipart(opts));
+  vol.fromJSON({ [srcpath]: 'data' }, '/');
 
   function create(): request.Test {
     return request(app)

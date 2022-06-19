@@ -1,19 +1,23 @@
 import * as fs from 'fs';
+import { vol } from 'memfs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
-import * as utils from '../packages/core/src/utils';
-import { cleanup, uploadRoot } from './shared';
+import * as utils from '../packages/core/src';
+import { uploadRoot } from './shared';
+
+jest.mock('fs/promises');
+jest.mock('fs');
 
 describe('utils', () => {
+  const testRoot = join(uploadRoot, 'fs-utils');
+  const dir = join(testRoot, '0', '1', '2');
+  const filepath = join(dir, '3', `file.ext`);
+  const filepath2 = join(dir, '3', `fi  le.ext.META`);
+
   describe('fs', () => {
-    const testRoot = join(uploadRoot, 'fs-utils');
-    const dir = join(testRoot, '0', '1', '2');
-    const filepath = join(dir, '3', `file.ext`);
-    const filepath2 = join(dir, '3', `fi  le.ext.META`);
+    beforeEach(() => vol.reset());
 
-    beforeEach(() => cleanup(testRoot));
-
-    afterEach(() => cleanup(testRoot));
+    afterEach(() => vol.reset());
 
     it('ensureDir(dir)', async () => {
       await utils.ensureDir(dir);
@@ -67,13 +71,6 @@ describe('utils', () => {
       await expect(utils.getFiles('not exist')).resolves.toHaveLength(0);
     });
 
-    it('getWriteStream(path, 0)', async () => {
-      await utils.ensureFile(filepath);
-      const stream = utils.getWriteStream(filepath, 0);
-      expect(stream).toBeInstanceOf(fs.WriteStream);
-      stream.close();
-    });
-
     it('removeFile(path)', async () => {
       await utils.ensureFile(filepath);
       await utils.removeFile(filepath);
@@ -83,6 +80,15 @@ describe('utils', () => {
     it('removeFile(not exist)', async () => {
       await utils.removeFile(filepath);
       expect(fs.existsSync(filepath)).toBe(false);
+    });
+  });
+
+  describe('fs-stream', () => {
+    it('getWriteStream(path, 0)', async () => {
+      await utils.ensureFile('filepath');
+      const stream = utils.getWriteStream('filepath', 0);
+      stream.close();
+      expect(stream).toBeInstanceOf(fs.WriteStream);
     });
   });
 
