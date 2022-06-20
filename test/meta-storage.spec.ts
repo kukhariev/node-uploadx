@@ -1,5 +1,5 @@
 import { MetaStorage } from '../packages/core/src';
-import { testfile } from './shared';
+import { metafile } from './shared';
 
 describe('MetaStorage', () => {
   const metaStorage = new MetaStorage();
@@ -10,15 +10,15 @@ describe('MetaStorage', () => {
   });
 
   it('save', async () => {
-    await expect(metaStorage.save(testfile.id, testfile)).resolves.toBe(testfile);
+    await expect(metaStorage.save(metafile.id, metafile)).resolves.toBe(metafile);
   });
 
   it('get', async () => {
-    await expect(metaStorage.get(testfile.id)).rejects.toBeFalsy();
+    await expect(metaStorage.get(metafile.id)).rejects.toBeFalsy();
   });
 
   it('delete', async () => {
-    await expect(metaStorage.delete(testfile.id)).resolves.toBeFalsy();
+    await expect(metaStorage.delete(metafile.id)).resolves.toBeFalsy();
   });
 
   it('list', async () => {

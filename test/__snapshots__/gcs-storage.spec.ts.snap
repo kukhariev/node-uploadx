@@ -1,0 +1,172 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GCStorage .create() should handle existing 1`] = `
+Object {
+  "bytesWritten": 6,
+  "contentType": "video/mp4",
+  "createdAt": "2022-02-02T00:00:00.000Z",
+  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "metadata": Object {
+    "custom": "",
+    "lastModified": 1635398061454,
+    "mimeType": "video/mp4",
+    "name": "testfile.mp4",
+    "sha1": "ZAPAntzKARqtb+j3B529GAOf3kI=",
+    "size": 64,
+  },
+  "name": "userId/testfile.mp4",
+  "originalName": "testfile.mp4",
+  "size": 64,
+  "uri": "http://api.com?upload_id=123456789",
+  "userId": "userId",
+}
+`;
+
+exports[`GCStorage .create() should request api and set status and uri 1`] = `
+GCSFile {
+  "bytesWritten": NaN,
+  "contentType": "video/mp4",
+  "createdAt": "2022-02-02T00:00:00.000Z",
+  "expiredAt": "2022-02-02T01:00:00.000Z",
+  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "metadata": Object {
+    "custom": "",
+    "lastModified": 1635398061454,
+    "mimeType": "video/mp4",
+    "name": "testfile.mp4",
+    "sha1": "ZAPAntzKARqtb+j3B529GAOf3kI=",
+    "size": 64,
+  },
+  "name": "userId/testfile.mp4",
+  "originalName": "testfile.mp4",
+  "size": 64,
+  "status": "created",
+  "uri": "http://api.com?upload_id=123456789",
+  "userId": "userId",
+}
+`;
+
+exports[`GCStorage .create() should request api and set status and uri 2`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "url": "https://storage.googleapis.com/storage/v1/b/test-bucket",
+      },
+    ],
+    Array [
+      Object {
+        "params": Object {
+          "alt": "media",
+        },
+        "url": "https://storage.googleapis.com/storage/v1/b/test-bucket/o/11f967df-da1013ca-19e8e887-b9682398.META",
+      },
+    ],
+    Array [
+      Object {
+        "body": "{\\"metadata\\":{\\"name\\":\\"testfile.mp4\\",\\"size\\":64,\\"mimeType\\":\\"video/mp4\\",\\"lastModified\\":1635398061454,\\"custom\\":\\"\\",\\"sha1\\":\\"ZAPAntzKARqtb+j3B529GAOf3kI=\\"}}",
+        "headers": Object {
+          "Content-Type": "application/json; charset=utf-8",
+          "Origin": "http://api.com",
+          "X-Upload-Content-Length": "64",
+          "X-Upload-Content-Type": "video/mp4",
+        },
+        "method": "POST",
+        "params": Object {
+          "name": "userId/testfile.mp4",
+          "size": 64,
+          "uploadType": "resumable",
+        },
+        "url": "https://storage.googleapis.com/upload/storage/v1/b/test-bucket/o",
+      },
+    ],
+    Array [
+      Object {
+        "body": "{\\"bytesWritten\\":null,\\"name\\":\\"userId/testfile.mp4\\",\\"metadata\\":{\\"name\\":\\"testfile.mp4\\",\\"size\\":64,\\"mimeType\\":\\"video/mp4\\",\\"lastModified\\":1635398061454,\\"custom\\":\\"\\",\\"sha1\\":\\"ZAPAntzKARqtb+j3B529GAOf3kI=\\"},\\"originalName\\":\\"testfile.mp4\\",\\"contentType\\":\\"video/mp4\\",\\"size\\":64,\\"userId\\":\\"userId\\",\\"id\\":\\"11f967df-da1013ca-19e8e887-b9682398\\",\\"uri\\":\\"http://api.com?upload_id=123456789\\",\\"createdAt\\":\\"2022-02-02T00:00:00.000Z\\",\\"expiredAt\\":\\"2022-02-02T01:00:00.000Z\\"}",
+        "headers": Object {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        "method": "POST",
+        "params": Object {
+          "name": "11f967df-da1013ca-19e8e887-b9682398.META",
+          "uploadType": "media",
+        },
+        "url": "https://storage.googleapis.com/upload/storage/v1/b/test-bucket/o",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": Promise {},
+    },
+    Object {
+      "type": "return",
+      "value": Promise {},
+    },
+    Object {
+      "type": "return",
+      "value": Promise {},
+    },
+    Object {
+      "type": "return",
+      "value": Promise {},
+    },
+  ],
+}
+`;
+
+exports[`GCStorage .list() should return all user files 1`] = `
+Array [
+  Object {
+    "createdAt": Date { NaN },
+    "id": "11f967df-da1013ca-19e8e887-b9682398",
+  },
+]
+`;
+
+exports[`GCStorage .write() should request api and set status and bytesWritten 1`] = `
+Object {
+  "bytesWritten": 64,
+  "contentType": "video/mp4",
+  "createdAt": "2022-02-02T00:00:00.000Z",
+  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "metadata": Object {
+    "custom": "",
+    "lastModified": 1635398061454,
+    "mimeType": "video/mp4",
+    "name": "testfile.mp4",
+    "sha1": "ZAPAntzKARqtb+j3B529GAOf3kI=",
+    "size": 64,
+  },
+  "name": "userId/testfile.mp4",
+  "originalName": "testfile.mp4",
+  "size": 64,
+  "status": "completed",
+  "uri": "https://storage.googleapis.com/storage/v1/b/test-bucket/o/userId/testfile.mp4",
+  "userId": "userId",
+}
+`;
+
+exports[`GCStorage .write() should request api and set status and bytesWritten on resume 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      "http://api.com?upload_id=123456789",
+      Object {
+        "headers": Object {
+          "Accept": "application/json",
+          "Content-Range": "bytes */64",
+        },
+        "method": "PUT",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": Promise {},
+    },
+  ],
+}
+`;

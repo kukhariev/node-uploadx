@@ -6,5 +6,6 @@ module.exports = {
   testRegex: '.*\\.(spec|test)\\.ts$',
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
   modulePathIgnorePatterns: ['<rootDir>/package.json'],
-  collectCoverageFrom: ['packages/**/*.ts', '!**/lib/**', '!<rootDir>/test/shared/**']
+  collectCoverageFrom: ['packages/**/*.ts', '!**/lib/**', '!<rootDir>/test/shared/**'],
+  roots: ["<rootDir>/packages/", "<rootDir>/test/"]
 };

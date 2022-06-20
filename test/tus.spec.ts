@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { parseMetadata, serializeMetadata, tus, Tus, TUS_RESUMABLE } from '../packages/core/src';
-import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
+import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
+
+jest.mock('fs/promises');
+jest.mock('fs');
 
 describe('::Tus', () => {
   let uri = '';
   const basePath = '/tus';
-  const directory = join(uploadRoot, 'tus');
+  const directory = join(testRoot, 'tus');
   const opts = { ...storageOptions, directory };
   app.use(basePath, tus(opts));
 
@@ -74,7 +76,7 @@ describe('::Tus', () => {
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
         .set('Upload-Checksum', `sha1 ${metadata.sha1}`)
-        .send(fs.readFileSync(srcpath))
+        .send(testfile.asBuffer)
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', metadata.size.toString())
@@ -157,7 +159,7 @@ describe('::Tus', () => {
         .set('Upload-Metadata', serializeMetadata(metadata))
         .set('Upload-Length', metadata.size.toString())
         .set('Tus-Resumable', TUS_RESUMABLE)
-        .send(fs.readFileSync(srcpath).slice(0, 5))
+        .send(testfile.asBuffer.slice(0, 5))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', '5')
