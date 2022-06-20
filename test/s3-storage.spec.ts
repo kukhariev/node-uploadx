@@ -10,9 +10,8 @@ import {
   UploadPartCommand
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import { createReadStream } from 'fs';
 import { AWSError, S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
-import { authRequest, metafilename, srcpath, storageOptions, testfile } from './shared';
+import { authRequest, metafile, storageOptions, testfile } from './shared';
 
 const s3Mock = mockClient(S3Client);
 
@@ -27,7 +26,7 @@ describe('S3Storage', () => {
     Metadata: {
       metadata: encodeURIComponent(
         JSON.stringify({
-          ...testfile,
+          ...metafile,
           createdAt: Date.now(),
           bytesWritten: 0,
           status: 'created',
@@ -41,7 +40,7 @@ describe('S3Storage', () => {
     s3Mock.reset();
     storage = new S3Storage(options);
     file = {
-      ...testfile,
+      ...metafile,
       UploadId: '123456789',
       Parts: []
     };
@@ -51,15 +50,15 @@ describe('S3Storage', () => {
     it('should request api and set status and UploadId', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
-      file = await storage.create(req, testfile);
-      expect(file.name).toEqual(testfile.name);
+      file = await storage.create(req, metafile);
+      expect(file.name).toEqual(metafile.name);
       expect(file.UploadId).toBe('123456789');
     });
 
     it('should handle existing', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      file = await storage.create(req, testfile);
-      expect(file.name).toEqual(testfile.name);
+      file = await storage.create(req, metafile);
+      expect(file.name).toEqual(metafile.name);
       expect(file.status).toBe('created');
       expect(file.createdAt).toBeDefined();
       expect(file.UploadId).toBe('987654321');
@@ -68,7 +67,7 @@ describe('S3Storage', () => {
     it('should send error', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({});
-      await expect(storage.create(req, testfile)).rejects.toHaveProperty(
+      await expect(storage.create(req, metafile)).rejects.toHaveProperty(
         'uploadxErrorCode',
         'FileError'
       );
@@ -78,15 +77,15 @@ describe('S3Storage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      file = await storage.update(testfile, { metadata: { name: 'newname.mp4' } });
+      file = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
-      expect(file.metadata.mimeType).toBe(testfile.metadata.mimeType);
+      expect(file.metadata.mimeType).toBe(metafile.metadata.mimeType);
     });
 
     it('should reject if not found', async () => {
       expect.assertions(1);
       await expect(
-        storage.update(testfile, { metadata: { name: 'newname.mp4' } })
+        storage.update(metafile, { metadata: { name: 'newname.mp4' } })
       ).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
   });
@@ -94,12 +93,12 @@ describe('S3Storage', () => {
   describe('.list()', () => {
     it('should return all user files', async () => {
       s3Mock.on(ListObjectsV2Command).resolves({
-        Contents: [{ Key: metafilename, LastModified: new Date() }]
+        Contents: [{ Key: testfile.metafilename, LastModified: new Date() }]
       });
-      const { items } = await storage.list(testfile.userId);
+      const { items } = await storage.list(metafile.userId);
       expect(items).toEqual(expect.any(Array));
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: testfile.id });
+      expect(items[0]).toMatchObject({ id: metafile.id });
     });
   });
 
@@ -110,23 +109,23 @@ describe('S3Storage', () => {
       s3Mock.on(UploadPartCommand).resolves({ ETag: '1234' });
       s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
       const part = {
-        id: testfile.id,
-        name: testfile.name,
-        body: createReadStream(srcpath),
+        id: metafile.id,
+        name: metafile.name,
+        body: testfile.asReadable,
         start: 0,
-        contentLength: testfile.size
+        contentLength: metafile.size
       };
       const res = await storage.write(part);
       expect(res.status).toBe('completed');
-      expect(res.bytesWritten).toBe(testfile.size);
+      expect(res.bytesWritten).toBe(metafile.size);
     });
 
     it('should request api and set status and bytesWritten on resume', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       const part = {
-        id: testfile.id,
-        name: testfile.name,
+        id: metafile.id,
+        name: metafile.name,
         contentLength: 0
       };
       const res = await storage.write(part);
@@ -139,14 +138,14 @@ describe('S3Storage', () => {
     it('should set status', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(DeleteObjectCommand).resolves({});
-      const [deleted] = await storage.delete(testfile);
+      const [deleted] = await storage.delete(metafile);
       expect(deleted.status).toBe('deleted');
     });
 
     it('should ignore if not exist', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      const [deleted] = await storage.delete(testfile);
-      expect(deleted.id).toBe(testfile.id);
+      const [deleted] = await storage.delete(metafile);
+      expect(deleted.id).toBe(metafile.id);
     });
   });
 

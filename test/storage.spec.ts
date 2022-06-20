@@ -1,4 +1,4 @@
-import { testfile, TestStorage } from './shared';
+import { metafile, TestStorage } from './shared';
 
 describe('BaseStorage', () => {
   let storage;
@@ -10,12 +10,12 @@ describe('BaseStorage', () => {
 
   it('should validate', () => {
     storage = new TestStorage();
-    return expect(storage.validate(testfile)).resolves.toBeUndefined();
+    return expect(storage.validate(metafile)).resolves.toBeUndefined();
   });
 
   it('should validate error', () => {
     storage = new TestStorage();
-    return expect(storage.validate({ ...testfile, name: '../file.ext' })).rejects.toHaveProperty(
+    return expect(storage.validate({ ...metafile, name: '../file.ext' })).rejects.toHaveProperty(
       'statusCode'
     );
   });
@@ -23,7 +23,7 @@ describe('BaseStorage', () => {
   it('should check if expired', async () => {
     storage = new TestStorage();
     await expect(
-      storage.checkIfExpired({ ...testfile, expiredAt: Date.now() - 100 })
+      storage.checkIfExpired({ ...metafile, expiredAt: Date.now() - 100 })
     ).rejects.toHaveProperty('uploadxErrorCode', 'Gone');
   });
 });

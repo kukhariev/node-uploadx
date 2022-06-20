@@ -3,14 +3,14 @@ import { vol } from 'memfs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../packages/core/src';
-import { uploadRoot } from './shared';
+import { testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
 
 describe('utils', () => {
-  const testRoot = join(uploadRoot, 'fs-utils');
-  const dir = join(testRoot, '0', '1', '2');
+  const root = join(testRoot, 'fs-utils');
+  const dir = join(root, '0', '1', '2');
   const filepath = join(dir, '3', `file.ext`);
   const filepath2 = join(dir, '3', `fi  le.ext.META`);
 
@@ -48,10 +48,10 @@ describe('utils', () => {
     it('getFiles(prefix)', async () => {
       await utils.ensureFile(filepath);
       await utils.ensureFile(filepath2);
-      await expect(utils.getFiles(`${uploadRoot}/fs-`)).resolves.toHaveLength(2);
-      await expect(utils.getFiles(`${uploadRoot}\\fs-`)).resolves.toHaveLength(2);
-      await expect(utils.getFiles(`${uploadRoot}\fs-`)).resolves.toHaveLength(0);
-      await expect(utils.getFiles(`${uploadRoot}/fs_`)).resolves.toHaveLength(0);
+      await expect(utils.getFiles(`${testRoot}/fs-`)).resolves.toHaveLength(2);
+      await expect(utils.getFiles(`${testRoot}\\fs-`)).resolves.toHaveLength(2);
+      await expect(utils.getFiles(`${testRoot}\fs-`)).resolves.toHaveLength(0);
+      await expect(utils.getFiles(`${testRoot}/fs_`)).resolves.toHaveLength(0);
     });
 
     it('getFiles(directory)', async () => {

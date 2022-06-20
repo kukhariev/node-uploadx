@@ -30,7 +30,7 @@
     "build": "tsc --build packages",
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",
-    "lint": "set DEBUG=eslint:cli-engine && eslint . --fix --ext .js,.ts",
+    "lint": "eslint . --fix --ext .js,.ts",
     "prepare": "husky install",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",

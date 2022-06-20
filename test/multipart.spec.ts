@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
-import { vol } from 'memfs';
+// import { vol } from 'memfs';
 import * as request from 'supertest';
 import { multipart, Multipart } from '../packages/core/src';
-import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot } from './shared';
+import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
@@ -12,16 +12,15 @@ describe('::Multipart', () => {
   let res: request.Response;
   let uri = '';
   const basePath = '/multipart';
-  const directory = join(uploadRoot, 'multipart');
+  const directory = join(testRoot, 'multipart');
   const opts = { ...storageOptions, directory };
   app.use(basePath, multipart(opts));
-  vol.fromJSON({ [srcpath]: 'data' }, '/');
 
   function create(): request.Test {
     return request(app)
       .post(basePath)
       .set('Content-Type', 'multipart/formdata')
-      .attach('file', srcpath, metadata.name);
+      .attach('file', testfile.asBuffer, testfile.name);
   }
 
   beforeAll(async () => cleanup(directory));
@@ -41,7 +40,10 @@ describe('::Multipart', () => {
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .field('custom', 'customField')
-        .attach('file', srcpath, 'file.ext')
+        .attach('file', testfile.asBuffer, {
+          filename: testfile.filename,
+          contentType: testfile.contentType
+        })
         .expect(200);
       expect(res.body.size).toBeDefined();
       uri = res.header['location'] as string;
@@ -54,7 +56,7 @@ describe('::Multipart', () => {
         .post(basePath)
         .set('Content-Type', 'multipart/formdata')
         .field('metadata', JSON.stringify(metadata))
-        .attach('file', srcpath, metadata.name)
+        .attach('file', testfile.asBuffer, testfile.name)
         .expect(200);
       expect(res.body.size).toBeDefined();
       expect(res.header['location']).toBeDefined();

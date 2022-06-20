@@ -1,6 +1,6 @@
 import { LocalMetaStorage } from '../packages/core/src';
 import * as path from 'path';
-import { testfile } from './shared';
+import { metafile } from './shared';
 import { tmpdir } from 'os';
 
 jest.mock('fs/promises');
@@ -9,9 +9,9 @@ jest.mock('fs');
 describe('LocalMetaStorage', () => {
   it('defaults', () => {
     const meta = new LocalMetaStorage();
-    const metaPath = meta.getMetaPath(testfile.id);
-    expect(path.basename(metaPath)).toBe(`${testfile.id}.META`);
-    expect(meta.getIdFromPath(metaPath)).toBe(testfile.id);
+    const metaPath = meta.getMetaPath(metafile.id);
+    expect(path.basename(metaPath)).toBe(`${metafile.id}.META`);
+    expect(meta.getIdFromPath(metaPath)).toBe(metafile.id);
   });
 
   it('custom', () => {
@@ -20,19 +20,19 @@ describe('LocalMetaStorage', () => {
       suffix: '.',
       directory: path.join(tmpdir(), 'meta')
     });
-    const metaPath = meta.getMetaPath(testfile.id);
-    expect(path.basename(metaPath)).toBe(`.${testfile.id}.`);
-    expect(meta.getIdFromPath(metaPath)).toBe(testfile.id);
+    const metaPath = meta.getMetaPath(metafile.id);
+    expect(path.basename(metaPath)).toBe(`.${metafile.id}.`);
+    expect(meta.getIdFromPath(metaPath)).toBe(metafile.id);
   });
 
   it('methods', async () => {
     const meta = new LocalMetaStorage();
-    await meta.save(testfile.id, testfile);
-    await expect(meta.get(testfile.id)).resolves.toEqual(testfile);
-    const list = await meta.list(testfile.id.slice(0, 8));
-    expect(list.items[0]).toMatchObject({ id: testfile.id });
+    await meta.save(metafile.id, metafile);
+    await expect(meta.get(metafile.id)).resolves.toEqual(metafile);
+    const list = await meta.list(metafile.id.slice(0, 8));
+    expect(list.items[0]).toMatchObject({ id: metafile.id });
     await expect(meta.list('alien')).resolves.toEqual({ items: [] });
-    await meta.delete(testfile.id);
+    await meta.delete(metafile.id);
     await expect(meta.list()).resolves.toEqual({ items: [] });
   });
 });

@@ -3,9 +3,8 @@ import * as fs from 'fs';
 import { join } from 'path';
 import * as request from 'supertest';
 import { DiskStorage, uploadx, Uploadx } from '../packages/core/src';
-import { app, cleanup, metadata, srcpath, storageOptions, uploadRoot, userId } from './shared';
+import { app, cleanup, metadata, storageOptions, testfile, testRoot, userId } from './shared';
 
-const { readFileSync, createReadStream } = jest.requireActual<typeof fs>('fs');
 jest.mock('fs/promises');
 jest.mock('fs');
 
@@ -17,7 +16,7 @@ describe('::Uploadx', () => {
   let start: number;
   const path1 = '/uploadx';
   const path2 = '/uploadx2';
-  const directory = join(uploadRoot, 'uploadx');
+  const directory = join(testRoot, 'uploadx');
   const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
   const uploadx2 = new Uploadx({ storage: new DiskStorage(opts) });
   app.use(path1, uploadx(opts));
@@ -119,7 +118,7 @@ describe('::Uploadx', () => {
       const res = await request(app)
         .put(uri2)
         .set('Digest', `sha=${metadata.sha1}`)
-        .send(readFileSync(srcpath))
+        .send(testfile.asBuffer)
         .expect(200);
       expect(res.type).toBe('application/json');
       expect(fs.statSync(join(directory, userId, file2.name)).size).toBe(file2.size);
@@ -131,7 +130,7 @@ describe('::Uploadx', () => {
       function uploadChunks(): Promise<request.Response> {
         return new Promise(resolve => {
           start = 0;
-          const readable = createReadStream(srcpath);
+          const readable = testfile.asReadable;
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           readable.on('data', async (chunk: { length: number }) => {
             readable.pause();
@@ -193,7 +192,7 @@ describe('::Uploadx', () => {
       await request(app)
         .put(res.header.location as string)
         .set('Digest', 'crc=798797')
-        .send(readFileSync(srcpath))
+        .send(testfile.asBuffer)
         .expect(400);
     });
 
@@ -201,12 +200,12 @@ describe('::Uploadx', () => {
       const res = await create({ ...file2, size: 15, name: 'size.409' });
       await request(app)
         .put(res.header.location as string)
-        .send(readFileSync(srcpath))
+        .send(testfile.asBuffer)
         .expect(409);
     });
 
     it('should 403 (no id)', async () => {
-      await request(app).put(path1).send(readFileSync(srcpath)).expect(403);
+      await request(app).put(path1).send(testfile.asBuffer).expect(403);
     });
 
     it('should stream', async () => {

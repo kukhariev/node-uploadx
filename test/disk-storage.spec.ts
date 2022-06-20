@@ -4,9 +4,9 @@ import { DiskStorage, fsp } from '../packages/core/src';
 import {
   authRequest,
   FileWriteStream,
+  metafile,
   RequestReadStream,
-  storageOptions,
-  testfile
+  storageOptions
 } from './shared';
 
 const directory = 'ds-test';
@@ -21,7 +21,7 @@ describe('DiskStorage', () => {
   const req = authRequest();
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
-    return storage.create(req, testfile);
+    return storage.create(req, metafile);
   };
 
   describe('initialization', () => {
@@ -40,13 +40,13 @@ describe('DiskStorage', () => {
     beforeEach(() => (storage = new DiskStorage(options)));
 
     it('should set status', async () => {
-      const { status, bytesWritten } = await storage.create(req, testfile);
+      const { status, bytesWritten } = await storage.create(req, metafile);
       expect(bytesWritten).toBe(0);
       expect(status).toBe('created');
     });
 
     it('should reject on limits', async () => {
-      await expect(storage.create(req, { ...testfile, size: 6e10 })).rejects.toMatchObject({
+      await expect(storage.create(req, { ...metafile, size: 6e10 })).rejects.toMatchObject({
         code: 'RequestEntityTooLarge',
         message: 'Request entity too large',
         name: 'ValidationError',
@@ -59,7 +59,7 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should update metadata', async () => {
-      const file = await storage.update(testfile, { metadata: { name: 'newname.mp4' } });
+      const file = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
       expect(file.metadata.name).toBe('newname.mp4');
       expect(file.metadata.mimeType).toBe('video/mp4');
     });
@@ -74,20 +74,20 @@ describe('DiskStorage', () => {
 
     it('should set status and bytesWritten', async () => {
       readStream.__mockSend();
-      const file = await storage.write({ ...testfile, start: 0, body: readStream });
+      const file = await storage.write({ ...metafile, start: 0, body: readStream });
       expect(file.bytesWritten).toBe(5);
     });
 
     it('should set status and bytesWritten (resume)', async () => {
-      const file = await storage.write({ ...testfile });
+      const file = await storage.write({ ...metafile });
       expect(file.bytesWritten).toBe(0);
     });
 
     it('should reject with 404', async () => {
-      storage.cache.delete(testfile.id);
+      storage.cache.delete(metafile.id);
       const mockReadFile = jest.spyOn(fsp, 'readFile');
       mockReadFile.mockRejectedValueOnce(new Error('not found'));
-      const write = storage.write({ ...testfile });
+      const write = storage.write({ ...metafile });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileNotFound');
     });
 
@@ -97,7 +97,7 @@ describe('DiskStorage', () => {
         .spyOn(fs, 'createWriteStream')
         .mockImplementationOnce(() => fileWriteStream as unknown as fs.WriteStream);
       readStream.__mockPipeError(fileWriteStream);
-      const write = storage.write({ ...testfile, start: 0, body: readStream });
+      const write = storage.write({ ...metafile, start: 0, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileError');
     });
 
@@ -108,14 +108,14 @@ describe('DiskStorage', () => {
         .mockImplementationOnce(() => fileWriteStream as unknown as fs.WriteStream);
       const close = jest.spyOn(fileWriteStream, 'close');
       readStream.__mockAbort();
-      const file = await storage.write({ ...testfile, start: 0, body: readStream });
+      const file = await storage.write({ ...metafile, start: 0, body: readStream });
       expect(+file.bytesWritten).toBeNaN();
       expect(close).toHaveBeenCalled();
     });
 
     it('should check chunk size', async () => {
       readStream.__mockSend();
-      const write = storage.write({ ...testfile, start: testfile.size - 2, body: readStream });
+      const write = storage.write({ ...metafile, start: metafile.size - 2, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
   });
@@ -126,13 +126,13 @@ describe('DiskStorage', () => {
     it('should return all user files', async () => {
       const { items } = await storage.list();
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: testfile.id });
+      expect(items[0]).toMatchObject({ id: metafile.id });
     });
 
     it('should return one file', async () => {
-      const { items } = await storage.list(testfile.id);
+      const { items } = await storage.list(metafile.id);
       expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: testfile.id });
+      expect(items[0]).toMatchObject({ id: metafile.id });
     });
   });
 
@@ -140,8 +140,8 @@ describe('DiskStorage', () => {
     beforeEach(createFile);
 
     it('should set status', async () => {
-      const [deleted] = await storage.delete(testfile);
-      expect(deleted.id).toBe(testfile.id);
+      const [deleted] = await storage.delete(metafile);
+      expect(deleted.id).toBe(metafile.id);
       expect(deleted.status).toBe('deleted');
     });
 
