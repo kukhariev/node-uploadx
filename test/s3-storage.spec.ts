@@ -10,15 +10,15 @@ import {
   UploadPartCommand
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import { AWSError, S3File, S3Storage, S3StorageOptions } from '../packages/s3/src';
+import { AWSError, S3Storage, S3StorageOptions } from '../packages/s3/src';
 import { authRequest, metafile, storageOptions, testfile } from './shared';
 
 const s3Mock = mockClient(S3Client);
 
 describe('S3Storage', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2022-02-02'));
   const options = { ...(storageOptions as S3StorageOptions) };
 
-  let file: S3File;
   let storage: S3Storage;
   const req = authRequest();
 
@@ -27,7 +27,7 @@ describe('S3Storage', () => {
       metadata: encodeURIComponent(
         JSON.stringify({
           ...metafile,
-          createdAt: Date.now(),
+          createdAt: new Date().toISOString(),
           bytesWritten: 0,
           status: 'created',
           UploadId: '987654321'
@@ -39,47 +39,35 @@ describe('S3Storage', () => {
   beforeEach(async () => {
     s3Mock.reset();
     storage = new S3Storage(options);
-    file = {
-      ...metafile,
-      UploadId: '123456789',
-      Parts: []
-    };
   });
 
   describe('.create()', () => {
     it('should request api and set status and UploadId', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
-      file = await storage.create(req, metafile);
-      expect(file.name).toEqual(metafile.name);
-      expect(file.UploadId).toBe('123456789');
+      const s3file = await storage.create(req, metafile);
+      expect(s3file).toMatchSnapshot();
     });
 
     it('should handle existing', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      file = await storage.create(req, metafile);
-      expect(file.name).toEqual(metafile.name);
-      expect(file.status).toBe('created');
-      expect(file.createdAt).toBeDefined();
-      expect(file.UploadId).toBe('987654321');
+      const s3file = await storage.create(req, metafile);
+      expect(s3file).toMatchSnapshot();
     });
 
-    it('should send error', async () => {
+    it('should send error on invalid s3 response', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({});
-      await expect(storage.create(req, metafile)).rejects.toHaveProperty(
-        'uploadxErrorCode',
-        'FileError'
-      );
+      await expect(storage.create(req, metafile)).rejects.toMatchSnapshot();
     });
   });
 
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
-      file = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
-      expect(file.metadata.name).toBe('newname.mp4');
-      expect(file.metadata.mimeType).toBe(metafile.metadata.mimeType);
+      const s3file = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
+      expect(s3file.metadata.name).toBe('newname.mp4');
+      expect(s3file.metadata.mimeType).toBe(metafile.metadata.mimeType);
     });
 
     it('should reject if not found', async () => {
@@ -115,9 +103,8 @@ describe('S3Storage', () => {
         start: 0,
         contentLength: metafile.size
       };
-      const res = await storage.write(part);
-      expect(res.status).toBe('completed');
-      expect(res.bytesWritten).toBe(metafile.size);
+      const s3file = await storage.write(part);
+      expect(s3file).toMatchSnapshot();
     });
 
     it('should request api and set status and bytesWritten on resume', async () => {
@@ -128,9 +115,8 @@ describe('S3Storage', () => {
         name: metafile.name,
         contentLength: 0
       };
-      const res = await storage.write(part);
-      expect(res.status).toBe('part');
-      expect(res.bytesWritten).toBe(0);
+      const s3file = await storage.write(part);
+      expect(s3file).toMatchSnapshot();
     });
   });
 
@@ -150,24 +136,18 @@ describe('S3Storage', () => {
   });
 
   describe('normalizeError', () => {
-    it('aws error', () => {
-      const e = {
+    it('s3 error', () => {
+      const err = {
         $metadata: { httpStatusCode: 400 },
         message: 'SomeServiceException',
-        name: 'AWSError',
+        name: 'SomeError',
         Code: 'SomeServiceException'
       };
-
-      expect(storage.normalizeError(e)).toEqual(
-        expect.objectContaining({ code: 'SomeServiceException', statusCode: 400 })
-      );
+      expect(storage.normalizeError(err)).toMatchSnapshot();
     });
 
-    it('not aws error', () => {
-      expect(storage.normalizeError(Error('unknown') as AWSError)).toHaveProperty(
-        'code',
-        'GenericUploadxError'
-      );
+    it('not s3 error', () => {
+      expect(storage.normalizeError(Error('unknown') as AWSError)).toMatchSnapshot();
     });
   });
 });

@@ -22,64 +22,41 @@ jest.mock('google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-const request = {
-  create: {
-    body: expect.any(String),
-    // '{"metadata":{"name":"testfile.mp4","size":80495,"mimeType":"video/mp4","lastModified":1580413885165}}',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'X-Upload-Content-Length': '80495',
-      'X-Upload-Content-Type': 'video/mp4',
-      Origin: 'http://api.com'
-    },
-    method: 'POST',
-    params: { name: 'userId/testfile.mp4', size: 80495, uploadType: 'resumable' },
-    url: expect.any(String)
-  }
-};
-
 describe('GCStorage', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2022-02-02'));
   let storage: GCStorage;
-  let file: GCSFile;
   const uri = 'http://api.com?upload_id=123456789';
   const metafileResponse = (): { data: GCSFile } => ({
-    data: { ...metafile, uri, createdAt: Date.now() }
+    data: { ...metafile, uri, createdAt: new Date().toISOString() }
   });
   const _createResponse = (): any => ({ headers: { location: uri } });
   const req = authRequest({ headers: { origin: 'http://api.com' } } as IncomingMessage);
 
   beforeEach(async () => {
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
-    storage = new GCStorage({ ...(storageOptions as GCStorageOptions) });
-    file = metafileResponse().data;
+    storage = new GCStorage({ ...(storageOptions as GCStorageOptions), bucket: 'test-bucket' });
   });
 
-  afterEach(() => mockAuthRequest.mockReset());
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
       mockAuthRequest.mockRejectedValueOnce({ code: 404, detail: 'meta not found' }); // getMeta
       mockAuthRequest.mockResolvedValueOnce(_createResponse());
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
-      file = await storage.create(req, metafile);
-      expect(file.name).toEqual(metafile.name);
-      expect(file.uri).toBe(uri);
-      expect(file.status).toBe('created');
-      expect(mockAuthRequest).toHaveBeenCalledTimes(4);
-      expect(mockAuthRequest).toHaveBeenCalledWith(request.create);
-      // expect(mockAuthRequest).toMatchSnapshot();
+      const gcsFile = await storage.create(req, metafile);
+      expect(gcsFile).toMatchSnapshot();
+      expect(mockAuthRequest).toMatchSnapshot();
     });
 
     it('should handle existing', async () => {
       mockAuthRequest.mockResolvedValue(metafileResponse());
       // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('', { status: 308, headers: { Range: '0-5' } }));
-      file = await storage.create(req, metafile);
-      // expect(file).toMatchSnapshot({ createdAt: expect.any(Number) });
-      expect(file.uri).toBe(uri);
-      expect(file.name).toEqual(metafile.name);
-      expect(file.createdAt).toBeDefined();
+      const gcsFile = await storage.create(req, metafile);
+      expect(gcsFile).toMatchSnapshot();
     });
 
     it('should reject on api error', async () => {
@@ -92,10 +69,10 @@ describe('GCStorage', () => {
   describe('.update()', () => {
     it('should update changed metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(metafileResponse());
-      file = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
-      expect(file.metadata.name).toBe('newname.mp4');
-      expect(file.originalName).toBe('newname.mp4');
-      expect(file.metadata.mimeType).toBe('video/mp4');
+      const gcsFile = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
+      expect(gcsFile.metadata.name).toBe('newname.mp4');
+      expect(gcsFile.originalName).toBe('newname.mp4');
+      expect(gcsFile.metadata.mimeType).toBe('video/mp4');
     });
 
     it('should reject if not found', async () => {
@@ -111,9 +88,7 @@ describe('GCStorage', () => {
       const list = { data: { items: [{ name: testfile.metafilename }] } };
       mockAuthRequest.mockResolvedValue(list);
       const { items } = await storage.list(metafile.userId);
-      expect(items).toEqual(expect.any(Array));
-      expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({ id: metafile.id });
+      expect(items).toMatchSnapshot();
     });
   });
 
@@ -125,7 +100,7 @@ describe('GCStorage', () => {
         new Response('{"mediaLink":"http://api.com/123456789"}', { status: 200 })
       );
       const body = testfile.asReadable;
-      const res = await storage.write({
+      const gcsFile = await storage.write({
         id: metafile.id,
         body,
         start: 0,
@@ -134,14 +109,13 @@ describe('GCStorage', () => {
       expect(mockFetch).toHaveBeenCalledWith(uri, {
         body,
         method: 'PUT',
-        headers: expect.objectContaining({ 'Content-Range': 'bytes 0-80494/80495' }),
+        headers: expect.objectContaining({ 'Content-Range': 'bytes 0-63/64' }),
         signal: expect.any(AbortSignal)
       });
-      expect(res.status).toBe('completed');
-      expect(res.bytesWritten).toEqual(metafile.size);
+      expect(gcsFile).toMatchSnapshot();
     });
 
-    it('should send write error', async () => {
+    it('should send normalized  error', async () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
       // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('Bad Request', { status: 400 }));
@@ -157,13 +131,10 @@ describe('GCStorage', () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
       // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('', { status: 308, headers: { Range: '0-5' } }));
-      const res = await storage.write({ id: metafile.id, contentLength: 0 });
-      expect(mockFetch).toHaveBeenCalledWith(uri, {
-        method: 'PUT',
-        headers: expect.objectContaining({ 'Content-Range': 'bytes */80495' })
-      });
-      expect(res.status).toBe('part');
-      expect(res.bytesWritten).toBe(6);
+      const gcsFile = await storage.write({ id: metafile.id, contentLength: 0 });
+      expect(mockFetch).toMatchSnapshot();
+      expect(gcsFile.status).toBe('part');
+      expect(gcsFile.bytesWritten).toBe(6);
     });
   });
 

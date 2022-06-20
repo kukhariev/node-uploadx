@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DiskStorage .create() should reject on limits 1`] = `
+Object {
+  "code": "RequestEntityTooLarge",
+  "message": "Request entity too large",
+  "name": "ValidationError",
+  "statusCode": 413,
+}
+`;
+
+exports[`DiskStorage .create() should set status and bytesWritten 1`] = `
+DiskFile {
+  "bytesWritten": 0,
+  "contentType": "video/mp4",
+  "createdAt": "2022-02-02T00:00:00.000Z",
+  "expiredAt": "2022-02-02T01:00:00.000Z",
+  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "metadata": Object {
+    "custom": "",
+    "lastModified": 1635398061454,
+    "mimeType": "video/mp4",
+    "name": "testfile.mp4",
+    "sha1": "ZAPAntzKARqtb+j3B529GAOf3kI=",
+    "size": 64,
+  },
+  "name": "userId/testfile.mp4",
+  "originalName": "testfile.mp4",
+  "size": 64,
+  "status": "created",
+  "userId": "userId",
+}
+`;
+
+exports[`DiskStorage .list() should return all user files 1`] = `
+Array [
+  Object {
+    "createdAt": 2022-02-02T00:00:00.000Z,
+    "id": "11f967df-da1013ca-19e8e887-b9682398",
+    "modifiedAt": 2022-02-02T00:00:00.000Z,
+  },
+]
+`;

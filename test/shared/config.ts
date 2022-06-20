@@ -17,16 +17,20 @@ export const storageOptions: BaseStorageOptions<File> = {
   expiration: { maxAge: '1h' }
 };
 
-const id = '11f967df-da1013ca-385ed251-b9682398';
-const size = 80495;
+async function* generateChunks(): AsyncIterableIterator<string> {
+  yield 'xz'.repeat(16);
+  yield 'xz'.repeat(16);
+}
+const id = '11f967df-da1013ca-19e8e887-b9682398';
 const contentType = 'video/mp4';
-const fileAsBuffer = Buffer.from(Array(size).fill(5));
-const fileAsReadStream = Readable.from(fileAsBuffer);
+const fileAsBuffer = Buffer.from('xz'.repeat(32));
+const size = Buffer.byteLength(fileAsBuffer);
+const fileAsReadStream = Readable.from(generateChunks());
 const sha1 = hash(fileAsBuffer, 'sha1');
 
 export const metadata = {
   name: 'testfile.mp4',
-  size: 80495,
+  size,
   mimeType: 'video/mp4',
   lastModified: 1635398061454,
   custom: '',
