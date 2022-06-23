@@ -1,5 +1,5 @@
 import * as http from 'http';
-import { resolve as pathResolve } from 'path';
+import { join } from 'path';
 import {
   accessCheck,
   ensureFile,
@@ -80,7 +80,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     file.name = this.namingFunction(file, req);
     file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
     await this.validate(file);
-    const path = this.getFilePath(file);
+    const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(e => fail(ERRORS.FILE_ERROR, e));
     file.status = getFileStatus(file);
     await this.saveMeta(file);
@@ -116,7 +116,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   async delete({ id }: FileQuery): Promise<DiskFile[]> {
     try {
       const file = await this.getMeta(id);
-      await removeFile(this.getFilePath(file));
+      await removeFile(this.getFilePath(file.name));
       await this.deleteMeta(id);
       return [{ ...file, status: 'deleted' }];
     } catch {}
@@ -126,13 +126,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   /**
    * Returns path for the uploaded file
    */
-  getFilePath(file: DiskFile): string {
-    return pathResolve(this.directory, file.name);
+  getFilePath(filename: string): string {
+    return join(this.directory, filename);
   }
 
   protected _write(part: Partial<FilePart> & File): Promise<number> {
     return new Promise((resolve, reject) => {
-      const path = this.getFilePath(part);
+      const path = this.getFilePath(part.name);
       if (hasContent(part)) {
         const file = getWriteStream(path, part.start);
         const hash = createHash(part.checksumAlgorithm || 'sha1');
