@@ -56,25 +56,21 @@ export class File implements FileInit {
 
 export type UploadxFile = Readonly<File>;
 
-export interface FilePart extends Checksum {
-  body?: Readable;
-  contentLength?: number;
+export interface FileQuery extends Partial<File> {
   id: string;
-  size?: number;
-  start?: number;
-  userId?: string;
 }
 
-interface HasContent {
-  start: number;
+export interface FilePart extends Checksum, FileQuery {
   body: Readable;
+  contentLength?: number;
+  start: number;
 }
 
-export function hasContent(part: Partial<FilePart>): part is HasContent {
+export function hasContent(part: Partial<FilePart>): part is FilePart {
   return typeof part.start === 'number' && part.start >= 0 && !!part.body;
 }
 
-export function isValidPart(part: FilePart, file: File): boolean {
+export function isValidPart(part: Partial<FilePart>, file: File): boolean {
   return (part.start || 0) + (part.contentLength || 0) <= file.size;
 }
 

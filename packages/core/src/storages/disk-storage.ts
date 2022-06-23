@@ -10,7 +10,15 @@ import {
   removeFile,
   truncateFile
 } from '../utils';
-import { File, FileInit, FilePart, getFileStatus, hasContent, isValidPart } from './file';
+import {
+  File,
+  FileInit,
+  FilePart,
+  FileQuery,
+  getFileStatus,
+  hasContent,
+  isValidPart
+} from './file';
 import { BaseStorage, BaseStorageOptions } from './storage';
 import { MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
@@ -79,7 +87,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     return file;
   }
 
-  async write(part: FilePart): Promise<DiskFile> {
+  async write(part: FilePart | FileQuery): Promise<DiskFile> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
@@ -87,7 +95,10 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       file.size = part.size;
     }
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
-    if (part.checksum && !this.checksumTypes.includes(part.checksumAlgorithm || '')) {
+    if (
+      (part as FilePart).checksum &&
+      !this.checksumTypes.includes((part as FilePart).checksumAlgorithm || '')
+    ) {
       return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
     }
     try {
@@ -102,7 +113,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     }
   }
 
-  async delete({ id }: FilePart): Promise<DiskFile[]> {
+  async delete({ id }: FileQuery): Promise<DiskFile[]> {
     try {
       const file = await this.getMeta(id);
       await removeFile(this.getFilePath(file));
@@ -113,13 +124,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   }
 
   /**
-   * Returns an absolute path of the uploaded file
+   * Returns path for the uploaded file
    */
   getFilePath(file: DiskFile): string {
     return pathResolve(this.directory, file.name);
   }
 
-  protected _write(part: FilePart & File): Promise<number> {
+  protected _write(part: Partial<FilePart> & File): Promise<number> {
     return new Promise((resolve, reject) => {
       const path = this.getFilePath(part);
       if (hasContent(part)) {

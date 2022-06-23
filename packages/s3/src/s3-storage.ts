@@ -21,6 +21,7 @@ import {
   File,
   FileInit,
   FilePart,
+  FileQuery,
   getFileStatus,
   hasContent,
   HttpError,
@@ -156,7 +157,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async write(part: FilePart): Promise<S3File> {
+  async write(part: FilePart | FileQuery): Promise<S3File> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
@@ -192,7 +193,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async delete({ id }: FilePart): Promise<S3File[]> {
+  async delete({ id }: FileQuery): Promise<S3File[]> {
     const file = await this.getMeta(id).catch(() => null);
     if (file) {
       file.status = 'deleted';

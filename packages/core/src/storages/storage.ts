@@ -16,7 +16,7 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
-import { File, FileInit, FileName, FilePart, isExpired, updateMetadata } from './file';
+import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
 import { setInterval } from 'timers';
 
@@ -243,7 +243,7 @@ export abstract class BaseStorage<TFile extends File> {
    * Update user-provided metadata
    * @experimental
    */
-  async update({ id }: FilePart, { metadata }: Partial<File>): Promise<TFile> {
+  async update({ id }: FileQuery, { metadata }: Partial<File>): Promise<TFile> {
     const file = await this.getMeta(id);
     updateMetadata(file, metadata);
     await this.saveMeta(file);
@@ -274,10 +274,10 @@ export abstract class BaseStorage<TFile extends File> {
   /**
    * Write chunks
    */
-  abstract write(part: FilePart): Promise<TFile>;
+  abstract write(part: FilePart | FileQuery): Promise<TFile>;
 
   /**
    * Delete files
    */
-  abstract delete(file: FilePart): Promise<TFile[]>;
+  abstract delete(file: FileQuery): Promise<TFile[]>;
 }
