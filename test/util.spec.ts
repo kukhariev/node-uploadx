@@ -164,6 +164,10 @@ describe('utils', () => {
       expect(utils.fnv('123456')).toBe('9995b6aa');
     });
 
+    it('fnv64', () => {
+      expect(utils.fnv64('123456')).toBe('f6e3ed7e0e67290a');
+    });
+
     it('pick', () => {
       expect(utils.pick({ test: 'test', rest: 'rest' }, ['test'])).toMatchObject({
         test: 'test'

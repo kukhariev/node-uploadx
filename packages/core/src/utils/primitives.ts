@@ -28,6 +28,20 @@ export function fnv(str: string): string {
   return (hash >>> 0).toString(16);
 }
 
+/**
+ * FNV1A64 hash
+ */
+export function fnv64(str: string): string {
+  let hash = BigInt('14695981039346656037');
+  const offset = BigInt(1099511628211);
+  const len = str.length;
+  for (let i = 0; i < len; i++) {
+    hash ^= BigInt(str.charCodeAt(i));
+    hash *= offset;
+  }
+  return BigInt.asUintN(64, hash).toString(16);
+}
+
 export function mapValues<T>(
   object: Record<string, any>,
   func: (value: any) => T
@@ -92,4 +106,4 @@ export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
   return cached;
 };
 
-export const hash = memoize(fnv);
+export const hash = memoize(fnv64);

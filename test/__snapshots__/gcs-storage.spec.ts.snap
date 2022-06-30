@@ -5,7 +5,7 @@ Object {
   "bytesWritten": 6,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
-  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
   "metadata": Object {
     "custom": "",
     "lastModified": 1635398061454,
@@ -28,7 +28,7 @@ GCSFile {
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
   "expiredAt": "2022-02-02T01:00:00.000Z",
-  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
   "metadata": Object {
     "custom": "",
     "lastModified": 1635398061454,
@@ -59,7 +59,7 @@ exports[`GCStorage .create() should request api and set status and uri 2`] = `
         "params": Object {
           "alt": "media",
         },
-        "url": "https://storage.googleapis.com/storage/v1/b/test-bucket/o/11f967df-da1013ca-19e8e887-b9682398.META",
+        "url": "https://storage.googleapis.com/storage/v1/b/test-bucket/o/f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78.META",
       },
     ],
     Array [
@@ -82,13 +82,13 @@ exports[`GCStorage .create() should request api and set status and uri 2`] = `
     ],
     Array [
       Object {
-        "body": "{\\"bytesWritten\\":null,\\"name\\":\\"userId/testfile.mp4\\",\\"metadata\\":{\\"name\\":\\"testfile.mp4\\",\\"size\\":64,\\"mimeType\\":\\"video/mp4\\",\\"lastModified\\":1635398061454,\\"custom\\":\\"\\",\\"sha1\\":\\"ZAPAntzKARqtb+j3B529GAOf3kI=\\"},\\"originalName\\":\\"testfile.mp4\\",\\"contentType\\":\\"video/mp4\\",\\"size\\":64,\\"userId\\":\\"userId\\",\\"id\\":\\"11f967df-da1013ca-19e8e887-b9682398\\",\\"uri\\":\\"http://api.com?upload_id=123456789\\",\\"createdAt\\":\\"2022-02-02T00:00:00.000Z\\",\\"expiredAt\\":\\"2022-02-02T01:00:00.000Z\\"}",
+        "body": "{\\"bytesWritten\\":null,\\"name\\":\\"userId/testfile.mp4\\",\\"metadata\\":{\\"name\\":\\"testfile.mp4\\",\\"size\\":64,\\"mimeType\\":\\"video/mp4\\",\\"lastModified\\":1635398061454,\\"custom\\":\\"\\",\\"sha1\\":\\"ZAPAntzKARqtb+j3B529GAOf3kI=\\"},\\"originalName\\":\\"testfile.mp4\\",\\"contentType\\":\\"video/mp4\\",\\"size\\":64,\\"userId\\":\\"userId\\",\\"id\\":\\"f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78\\",\\"uri\\":\\"http://api.com?upload_id=123456789\\",\\"createdAt\\":\\"2022-02-02T00:00:00.000Z\\",\\"expiredAt\\":\\"2022-02-02T01:00:00.000Z\\"}",
         "headers": Object {
           "Content-Type": "application/json; charset=utf-8",
         },
         "method": "POST",
         "params": Object {
-          "name": "11f967df-da1013ca-19e8e887-b9682398.META",
+          "name": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78.META",
           "uploadType": "media",
         },
         "url": "https://storage.googleapis.com/upload/storage/v1/b/test-bucket/o",
@@ -120,7 +120,7 @@ exports[`GCStorage .list() should return all user files 1`] = `
 Array [
   Object {
     "createdAt": Date { NaN },
-    "id": "11f967df-da1013ca-19e8e887-b9682398",
+    "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
   },
 ]
 `;
@@ -130,7 +130,7 @@ Object {
   "bytesWritten": 64,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
-  "id": "11f967df-da1013ca-19e8e887-b9682398",
+  "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
   "metadata": Object {
     "custom": "",
     "lastModified": 1635398061454,
