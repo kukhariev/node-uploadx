@@ -10,14 +10,6 @@ export function rangeParser(rangeHeader = ''): { start: number; size: number } {
   const start = parseInt(parts[1]);
   return { start, size };
 }
-const CHECKSUM_TYPES_MAP: Record<string, string> = {
-  sha: 'sha1',
-  'sha-256': 'sha256'
-};
-
-export function normalizeChecksumType(type: string): string {
-  return CHECKSUM_TYPES_MAP[type] || type;
-}
 
 /**
  * [X-headers protocol implementation](https://github.com/kukhariev/node-uploadx/blob/master/proto.md#requests-overview)
@@ -116,8 +108,8 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   }
 
   async getMetadata(req: http.IncomingMessage): Promise<Record<any, any>> {
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(error =>
-      fail(ERRORS.BAD_REQUEST, error)
+    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(err =>
+      fail(ERRORS.BAD_REQUEST, err)
     );
     if (Object.keys(metadata).length) return metadata;
     const { query } = url.parse(decodeURI(req.url || ''), true);
@@ -125,8 +117,10 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   }
 
   extractChecksum(req: http.IncomingMessage): Checksum {
-    const [_type, checksum] = getHeader(req, 'digest').split(/=(.*)/s);
-    return { checksumAlgorithm: normalizeChecksumType(_type), checksum };
+    const contentMD5 = getHeader(req, 'content-md5');
+    if (contentMD5) return { checksumAlgorithm: 'md5', checksum: contentMD5 };
+    const [type, checksum] = getHeader(req, 'digest').split(/=(.*)/s);
+    return { checksumAlgorithm: { sha: 'sha1', 'sha-256': 'sha256' }[type] || type, checksum };
   }
 }
 

@@ -4,6 +4,7 @@ import {
   File,
   FileInit,
   FilePart,
+  FileQuery,
   MetaStorage
 } from '../../packages/core/src';
 
@@ -21,12 +22,12 @@ export class TestStorage extends BaseStorage<File> {
     return Promise.resolve(file as File);
   }
 
-  write(part: FilePart): Promise<File> {
+  write(part: FilePart | FileQuery): Promise<File> {
     return Promise.resolve(part as File);
   }
 
-  delete({ id }: FilePart): Promise<File[]> {
-    return Promise.resolve([{ id } as File]);
+  delete(file: FileQuery): Promise<File[]> {
+    return Promise.resolve([file as File]);
   }
 }
 

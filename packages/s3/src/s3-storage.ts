@@ -21,14 +21,16 @@ import {
   File,
   FileInit,
   FilePart,
+  FileQuery,
   getFileStatus,
   hasContent,
   HttpError,
-  isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
-  MetaStorage
+  MetaStorage,
+  partMatch,
+  updateSize
 } from '@uploadx/core';
 import * as http from 'http';
 import { AWSError } from './aws-error';
@@ -93,6 +95,7 @@ export class S3Storage extends BaseStorage<S3File> {
   bucket: string;
   client: S3Client;
   meta: MetaStorage<S3File>;
+  checksumTypes = ['md5'];
 
   constructor(public config: S3StorageOptions) {
     super(config);
@@ -156,18 +159,22 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async write(part: FilePart): Promise<S3File> {
+  async write(part: FilePart | FileQuery): Promise<S3File> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
-    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
-
+    if (part.size) updateSize(file, part.size);
+    if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ??= await this._getParts(file);
     file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce(
       (prev, next) => prev + next,
       0
     );
     if (hasContent(part)) {
+      if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
+        return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
+      }
+      const checksumMD5 = part.checksumAlgorithm === 'md5' ? part.checksum : '';
       const partNumber = file.Parts.length + 1;
       const params: UploadPartRequest = {
         Bucket: this.bucket,
@@ -175,7 +182,8 @@ export class S3Storage extends BaseStorage<S3File> {
         UploadId: file.UploadId,
         PartNumber: partNumber,
         Body: part.body,
-        ContentLength: part.contentLength || 0
+        ContentLength: part.contentLength || 0,
+        ContentMD5: checksumMD5
       };
       const { ETag } = await this.client.send(new UploadPartCommand(params));
       const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
@@ -192,7 +200,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return file;
   }
 
-  async delete({ id }: FilePart): Promise<S3File[]> {
+  async delete({ id }: FileQuery): Promise<S3File[]> {
     const file = await this.getMeta(id).catch(() => null);
     if (file) {
       file.status = 'deleted';

@@ -6,14 +6,15 @@ import {
   File,
   FileInit,
   FilePart,
+  FileQuery,
   getFileStatus,
   getHeader,
   hasContent,
   HttpError,
-  isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
-  MetaStorage
+  MetaStorage,
+  partMatch
 } from '@uploadx/core';
 import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
@@ -33,7 +34,7 @@ export function getRangeEnd(range: string): number {
   return end > 0 ? end + 1 : 0;
 }
 
-export function buildContentRange(part: FilePart & GCSFile): string {
+export function buildContentRange(part: Partial<FilePart> & GCSFile): string {
   if (hasContent(part)) {
     const end = part.contentLength ? part.start + part.contentLength - 1 : '*';
     return `bytes ${part.start}-${end}/${part.size ?? '*'}`;
@@ -176,11 +177,11 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return file;
   }
 
-  async write(part: FilePart): Promise<GCSFile> {
+  async write(part: FilePart | FileQuery): Promise<GCSFile> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
-    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
+    if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
     file.status = getFileStatus(file);
     if (file.status === 'completed') {
@@ -190,7 +191,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return file;
   }
 
-  async delete({ id }: FilePart): Promise<GCSFile[]> {
+  async delete({ id }: FileQuery): Promise<GCSFile[]> {
     const file = await this.getMeta(id).catch(() => null);
     if (file?.uri) {
       file.status = 'deleted';
@@ -203,7 +204,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return [{ id } as GCSFile];
   }
 
-  protected async _write(part: FilePart & GCSFile): Promise<number> {
+  protected async _write(part: Partial<FilePart> & GCSFile): Promise<number> {
     const { size, uri, body } = part;
     const contentRange = buildContentRange(part);
     const options: Record<string, any> = { method: 'PUT' };
