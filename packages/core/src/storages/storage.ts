@@ -98,7 +98,7 @@ export abstract class BaseStorage<TFile extends File> {
   maxMetadataSize: number;
   path: string;
   isReady = true;
-  checksumTypes = ['md5', 'sha1', 'sha256'];
+  checksumTypes: string[] = [];
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   protected log = Logger.get(`${this.constructor.name}`);
@@ -162,12 +162,11 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async saveMeta(file: TFile): Promise<TFile> {
     this.updateTimestamps(file);
-    const prev = this.cache.get(file.id) || {};
-    if (isEqual(prev, file, 'bytesWritten', 'expiredAt')) {
-      return this.meta.touch(file.id, file);
-    }
+    const prev = { ...this.cache.get(file.id) };
     this.cache.set(file.id, file);
-    return this.meta.save(file.id, file);
+    return isEqual(prev, file, 'bytesWritten', 'expiredAt')
+      ? this.meta.touch(file.id, file)
+      : this.meta.save(file.id, file);
   }
 
   /**
@@ -240,7 +239,7 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Update user-provided metadata
+   * Updates user-defined metadata for an upload
    * @experimental
    */
   async update({ id }: FileQuery, { metadata }: Partial<File>): Promise<TFile> {
@@ -248,6 +247,10 @@ export abstract class BaseStorage<TFile extends File> {
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };
+  }
+
+  protected isUnsupportedChecksum(algorithm = ''): boolean {
+    return !!algorithm && !this.checksumTypes.includes(algorithm);
   }
 
   protected startAutoPurge(purgeInterval: number): void {
@@ -267,17 +270,17 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Add an upload to storage
+   *  Creates a new upload and saves its metadata
    */
   abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
 
   /**
-   * Write chunks
+   *  Write part and/or return status of an upload
    */
   abstract write(part: FilePart | FileQuery): Promise<TFile>;
 
   /**
-   * Delete files
+   * Deletes an upload and its metadata
    */
-  abstract delete(file: FileQuery): Promise<TFile[]>;
+  abstract delete(query: FileQuery): Promise<TFile[]>;
 }

@@ -23,7 +23,8 @@ export enum ERRORS {
   UNPROCESSABLE_ENTITY = 'UnprocessableEntity',
   UNSUPPORTED_MEDIA_TYPE = 'UnsupportedMediaType',
   CHECKSUM_MISMATCH = 'ChecksumMismatch',
-  UNSUPPORTED_CHECKSUM_ALGORITHM = 'UnsupportedChecksumAlgorithm'
+  UNSUPPORTED_CHECKSUM_ALGORITHM = 'UnsupportedChecksumAlgorithm',
+  REQUEST_ABORTED = 'REQUEST_ABORTED'
 }
 
 export type ErrorResponses<T extends string = string> = {
@@ -53,7 +54,8 @@ class E_ {
     TooManyRequests: [429, 'Too many requests'],
     UnknownError: [500, 'Something went wrong'],
     UnprocessableEntity: [422, 'Validation failed'],
-    UnsupportedMediaType: [415, 'Unsupported media type']
+    UnsupportedMediaType: [415, 'Unsupported media type'],
+    RequestAborted: [499, 'Request aborted']
   };
 
   static _buildErrorBody = (target: typeof E_, _: string): void => {

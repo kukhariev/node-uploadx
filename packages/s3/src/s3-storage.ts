@@ -25,11 +25,12 @@ import {
   getFileStatus,
   hasContent,
   HttpError,
-  isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
-  MetaStorage
+  MetaStorage,
+  partMatch,
+  updateSize
 } from '@uploadx/core';
 import * as http from 'http';
 import { AWSError } from './aws-error';
@@ -161,8 +162,8 @@ export class S3Storage extends BaseStorage<S3File> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
-    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
-
+    if (part.size) updateSize(file, part.size);
+    if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.Parts ??= await this._getParts(file);
     file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce(
       (prev, next) => prev + next,

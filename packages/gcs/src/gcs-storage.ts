@@ -11,10 +11,10 @@ import {
   getHeader,
   hasContent,
   HttpError,
-  isValidPart,
   LocalMetaStorage,
   LocalMetaStorageOptions,
-  MetaStorage
+  MetaStorage,
+  partMatch
 } from '@uploadx/core';
 import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
@@ -181,7 +181,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     const file = await this.getMeta(part.id);
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
-    if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
+    if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     file.bytesWritten = await this._write({ ...file, ...part });
     file.status = getFileStatus(file);
     if (file.status === 'completed') {

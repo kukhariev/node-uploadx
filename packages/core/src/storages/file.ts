@@ -56,8 +56,11 @@ export class File implements FileInit {
 
 export type UploadxFile = Readonly<File>;
 
-export interface FileQuery extends Partial<File> {
+export interface FileQuery {
   id: string;
+  name?: string;
+  size?: number;
+  userId?: string;
 }
 
 export interface FilePart extends Checksum, FileQuery {
@@ -70,8 +73,14 @@ export function hasContent(part: Partial<FilePart>): part is FilePart {
   return typeof part.start === 'number' && part.start >= 0 && !!part.body;
 }
 
-export function isValidPart(part: Partial<FilePart>, file: File): boolean {
+export function partMatch(part: Partial<FilePart>, file: File): boolean {
+  if (part.size && part.size > file.size) return false;
   return (part.start || 0) + (part.contentLength || 0) <= file.size;
+}
+
+export function updateSize(file: File, size: number): File {
+  if (size < file.size) file.size = size;
+  return file;
 }
 
 /** User-provided metadata */
