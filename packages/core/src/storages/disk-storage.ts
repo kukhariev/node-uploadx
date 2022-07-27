@@ -45,6 +45,11 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
    * ```
    */
   metaStorageConfig?: LocalMetaStorageOptions;
+  /**
+   * Enable/disable file/range checksum calculation
+   * @experimental
+   */
+  checksum?: boolean | 'md5' | 'sha1';
 };
 
 /**
@@ -77,6 +82,8 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
+    const existing = await this.getMeta(file.id).catch(() => null);
+    if (existing?.status === 'completed') return existing;
     file.name = this.namingFunction(file, req);
     file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
     await this.validate(file);
@@ -95,20 +102,19 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     const path = this.getFilePath(file.name);
     try {
+      file.bytesWritten = (part as FilePart).start || (await ensureFile(path));
       if (hasContent(part)) {
         if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
           return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
         }
-        const [bytesWritten, errorCode] = await this._write({ ...file, ...part });
+        const [bytesWritten, errorCode] = await this._write({ ...part, ...file });
         if (errorCode) {
-          await truncateFile(path, part.start);
+          await truncateFile(path, file.bytesWritten);
           return fail(errorCode);
         }
         file.bytesWritten = bytesWritten;
         file.status = getFileStatus(file);
         await this.saveMeta(file);
-      } else {
-        file.bytesWritten = await ensureFile(path);
       }
       return file;
     } catch (err) {
@@ -133,7 +139,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     return join(this.directory, filename);
   }
 
-  protected _write(part: FilePart & File): Promise<[number, ERRORS?]> {
+  protected _write(part: FilePart & DiskFile): Promise<[number, ERRORS?]> {
     return new Promise((resolve, reject) => {
       const dest = getWriteStream(this.getFilePath(part.name), part.start);
       const lengthChecker = streamLength(part.contentLength || part.size - part.start);
@@ -151,9 +157,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
         .pipe(checksumChecker)
         .pipe(dest)
         .on('error', reject)
-        .on('finish', () => {
-          return resolve([part.start + dest.bytesWritten]);
-        });
+        .on('finish', () => resolve([part.start + dest.bytesWritten]));
     });
   }
 
