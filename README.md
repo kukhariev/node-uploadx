@@ -54,22 +54,23 @@ Please navigate to the [examples](examples) for more.
 
 Some available options: :
 
-| option                |         type         |  default value   | description                                                  |
-| :-------------------- | :------------------: | :--------------: | ------------------------------------------------------------ |
-| `directory`           |       `string`       |    `"files"`     | _DiskStorage upload directory_                               |
-| `bucket`              |       `string`       | `"node-uploadx"` | _Storage bucket_                                             |
-| `path`                |       `string`       |    `"/files"`    | _Node http base path_                                        |
-| `allowMIME`           |      `string[]`      |    `["*\*"]`     | _Allowed MIME types_                                         |
-| `maxUploadSize`       |   `string\|number`   |     `"5TB"`      | _File size limit_                                            |
-| `metaStorage`         |    `MetaStorage`     |                  | _Provide custom meta storage_                                |
-| `metaStorageConfig`   | `MetaStorageOptions` |                  | _Configure metafiles storage_                                |
-| `maxMetadataSize`     |   `string\|number`   |     `"4MB"`      | _Metadata size limit_                                        |
-| `validation`          |     `Validation`     |                  | _Upload validation options_                                  |
-| `useRelativeLocation` |      `boolean`       |     `false`      | _Use relative urls_                                          |
-| `filename`            |      `Function`      |                  | _File naming function_                                       |
-| `userIdentifier`      |   `UserIdentifier`   |                  | _Get user identity_                                          |
-| `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
-| `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
+| option                |           type           |  default value   | description                                                  |
+| :-------------------- | :----------------------: | :--------------: | ------------------------------------------------------------ |
+| `directory`           |         `string`         |    `"files"`     | _DiskStorage upload directory_                               |
+| `bucket`              |         `string`         | `"node-uploadx"` | _Storage bucket_                                             |
+| `path`                |         `string`         |    `"/files"`    | _Node http base path_                                        |
+| `allowMIME`           |        `string[]`        |    `["*\*"]`     | _Allowed MIME types_                                         |
+| `maxUploadSize`       |     `string\|number`     |     `"5TB"`      | _File size limit_                                            |
+| `metaStorage`         |      `MetaStorage`       |                  | _Provide custom meta storage_                                |
+| `metaStorageConfig`   |   `MetaStorageOptions`   |                  | _Configure metafiles storage_                                |
+| `maxMetadataSize`     |     `string\|number`     |     `"4MB"`      | _Metadata size limit_                                        |
+| `validation`          |       `Validation`       |                  | _Upload validation options_                                  |
+| `useRelativeLocation` |        `boolean`         |     `false`      | _Use relative urls_                                          |
+| `filename`            |        `Function`        |                  | _File naming function_                                       |
+| `userIdentifier`      |     `UserIdentifier`     |                  | _Get user identity_                                          |
+| `onComplete`          |       `OnComplete`       |                  | _On upload complete callback_                                |
+| `expiration`          |   `ExpirationOptions`    |                  | _Configuring the cleanup of abandoned and completed uploads_ |
+| `checksum`            | `boolean\|"md5"\|"sha1"` |                  | _Enable/disable file/range checksum calculation_             |
 
 ## Contributing
 

@@ -88,6 +88,8 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   }
 
   buildHeaders(file: UploadxFile, headers: Headers = {}): Headers {
+    if (file.md5) headers['X-Range-MD5'] = file.md5;
+    if (file.sha1) headers['X-Range-SHA1'] = file.sha1;
     if (file.expiredAt) headers['X-Upload-Expires'] = new Date(file.expiredAt).toISOString();
     return headers;
   }

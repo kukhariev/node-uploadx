@@ -5,4 +5,5 @@ export * from './http';
 export * from './logger';
 export * from './pipes';
 export * from './primitives';
+export * from './range-checksum';
 export * from './validator';

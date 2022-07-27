@@ -5,6 +5,7 @@ import {
   BaseStorage,
   DiskStorage,
   DiskStorageOptions,
+  DiskStorageWithChecksum,
   UploadList,
   UploadxEventType,
   UploadxFile,
@@ -81,10 +82,13 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   constructor(config: UploadxOptions<TFile> = {}) {
     super();
     this.cors = new Cors();
-    this.storage =
-      'storage' in config
-        ? config.storage
-        : (new DiskStorage(config) as unknown as BaseStorage<TFile>);
+    if ('storage' in config) {
+      this.storage = config.storage;
+    } else {
+      this.storage = (config.checksum
+        ? new DiskStorageWithChecksum(config)
+        : new DiskStorage(config)) as unknown as BaseStorage<TFile>;
+    }
     if (config.userIdentifier) {
       this.getUserId = config.userIdentifier;
     }
