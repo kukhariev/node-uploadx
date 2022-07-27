@@ -1,18 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 import * as request from 'supertest';
 import { parseMetadata, serializeMetadata, tus, Tus, TUS_RESUMABLE } from '../packages/core/src';
-import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
+import { app, cleanup, getNewFileMetadata, storageOptions, testfile, testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
 
 describe('::Tus', () => {
-  let uri = '';
-  const basePath = '/tus';
+  let fileMetadata = getNewFileMetadata('fileMetadata');
+  const endpoint = '/tus';
   const directory = join(testRoot, 'tus');
   const opts = { ...storageOptions, directory };
-  app.use(basePath, tus(opts));
+  app.use(endpoint, tus(opts));
 
   function exposedHeaders(response: request.Response): string[] {
     return response
@@ -20,17 +19,19 @@ describe('::Tus', () => {
       .split(',')
       .map(s => s.toLowerCase());
   }
-  function create(): request.Test {
+
+  function create(config = fileMetadata, url = endpoint): request.Test {
     return request(app)
-      .post(basePath)
-      .set('Upload-Metadata', serializeMetadata(metadata))
-      .set('Upload-Length', metadata.size.toString())
+      .post(url)
+      .set('Upload-Metadata', serializeMetadata(config))
+      .set('Upload-Length', config.size.toString())
       .set('Tus-Resumable', TUS_RESUMABLE);
   }
 
-  beforeAll(async () => cleanup(directory));
-
-  afterAll(async () => cleanup(directory));
+  beforeEach(async () => {
+    await cleanup(directory);
+    fileMetadata = getNewFileMetadata();
+  });
 
   describe('default options', () => {
     it('should be defined', () => {
@@ -41,8 +42,8 @@ describe('::Tus', () => {
 
   describe('POST', () => {
     it('should 201', async () => {
-      const res = await create().expect('tus-resumable', TUS_RESUMABLE);
-      uri = res.header.location as string;
+      const res = await create(fileMetadata).expect('tus-resumable', TUS_RESUMABLE);
+      const uri = res.get('location');
       expect(uri).toEqual(expect.stringContaining('/tus'));
       expect(exposedHeaders(res)).toEqual(
         expect.arrayContaining(['location', 'upload-expires', 'tus-resumable'])
@@ -52,7 +53,7 @@ describe('::Tus', () => {
 
   describe('PATCH', () => {
     it('should 204 and Upload-Offset', async () => {
-      uri ||= (await create()).header.location;
+      const uri = (await create(fileMetadata)).get('location');
       const res = await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
@@ -68,25 +69,25 @@ describe('::Tus', () => {
     });
 
     it('should 200', async () => {
-      uri ||= (await create()).header.location;
+      const uri = (await create(fileMetadata)).get('location');
       await request(app)
         .patch(uri)
         .set('Content-Type', 'application/offset+octet-stream')
-        .set('Upload-Metadata', serializeMetadata(metadata))
+        .set('Upload-Metadata', serializeMetadata(fileMetadata))
         .set('Upload-Offset', '0')
         .set('Tus-Resumable', TUS_RESUMABLE)
-        .set('Upload-Checksum', `sha1 ${metadata.sha1}`)
+        .set('Upload-Checksum', `sha1 ${fileMetadata.sha1}`)
         .send(testfile.asBuffer)
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
-        .expect('upload-offset', metadata.size.toString())
+        .expect('upload-offset', fileMetadata.size.toString())
         .expect('upload-expires', /.*/);
     });
   });
 
   describe('HEAD', () => {
     it('should 204', async () => {
-      uri ||= (await create()).header.location;
+      const uri = (await create(fileMetadata)).get('location');
       const res = await request(app)
         .head(uri)
         .set('Tus-Resumable', TUS_RESUMABLE)
@@ -107,7 +108,7 @@ describe('::Tus', () => {
 
     it('should 403', async () => {
       await request(app)
-        .head(basePath)
+        .head(endpoint)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(403)
         .expect('tus-resumable', TUS_RESUMABLE);
@@ -117,7 +118,7 @@ describe('::Tus', () => {
   describe('OPTIONS', () => {
     it('should 204', async () => {
       const res = await request(app)
-        .options(basePath)
+        .options(endpoint)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(204)
         .expect('tus-resumable', TUS_RESUMABLE);
@@ -134,7 +135,7 @@ describe('::Tus', () => {
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      uri ||= (await create()).header.location;
+      const uri = (await create(fileMetadata)).get('location');
       await request(app)
         .delete(uri)
         .set('Tus-Resumable', TUS_RESUMABLE)
@@ -144,7 +145,7 @@ describe('::Tus', () => {
 
     it('should 403', async () => {
       await request(app)
-        .delete(basePath)
+        .delete(endpoint)
         .set('Tus-Resumable', TUS_RESUMABLE)
         .expect(403)
         .expect('tus-resumable', TUS_RESUMABLE);
@@ -154,17 +155,17 @@ describe('::Tus', () => {
   describe('POST (creation-with-upload)', () => {
     it('should return upload-offset', async () => {
       const res = await request(app)
-        .post(basePath)
+        .post(endpoint)
         .set('Content-Type', 'application/offset+octet-stream')
-        .set('Upload-Metadata', serializeMetadata(metadata))
-        .set('Upload-Length', metadata.size.toString())
+        .set('Upload-Metadata', serializeMetadata(fileMetadata))
+        .set('Upload-Length', fileMetadata.size.toString())
         .set('Tus-Resumable', TUS_RESUMABLE)
         .send(testfile.asBuffer.slice(0, 5))
         .expect(200)
         .expect('tus-resumable', TUS_RESUMABLE)
         .expect('upload-offset', '5')
         .expect('upload-expires', /.*/);
-      expect(res.header.location).toEqual(expect.stringContaining('/tus'));
+      expect(res.get('location')).toEqual(expect.stringContaining('/tus'));
       expect(exposedHeaders(res)).toEqual(
         expect.arrayContaining(['upload-offset', 'location', 'upload-expires', 'tus-resumable'])
       );

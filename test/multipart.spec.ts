@@ -1,29 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable jest/no-disabled-tests */
 import { join } from 'path';
-// import { vol } from 'memfs';
 import * as request from 'supertest';
 import { multipart, Multipart } from '../packages/core/src';
-import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
+import { app, cleanup, getNewFileMetadata, storageOptions, testfile, testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
 
 describe('::Multipart', () => {
-  let res: request.Response;
-  let uri = '';
-  const basePath = '/multipart';
+  const fileMetadata = getNewFileMetadata('fileMetadata');
+  const endpoint = '/multipart';
   const directory = join(testRoot, 'multipart');
-  const opts = { ...storageOptions, directory };
-  app.use(basePath, multipart(opts));
+  const opts = { ...storageOptions, directory, checksum: true };
+  app.use(endpoint, multipart(opts));
 
-  function create(): request.Test {
+  function create(config = fileMetadata): request.Test {
     return request(app)
-      .post(basePath)
+      .post(endpoint)
       .set('Content-Type', 'multipart/formdata')
-      .attach('file', testfile.asBuffer, testfile.name);
+      .attach('file', testfile.asBuffer, config.name);
   }
-
-  beforeAll(async () => cleanup(directory));
 
   afterAll(async () => cleanup(directory));
 
@@ -36,34 +32,31 @@ describe('::Multipart', () => {
 
   describe('POST', () => {
     it('should support custom fields', async () => {
-      res = await request(app)
-        .post(basePath)
+      expect.assertions(2);
+      const res = await request(app)
+        .post(endpoint)
         .set('Content-Type', 'multipart/formdata')
         .field('custom', 'customField')
-        .attach('file', testfile.asBuffer, {
-          filename: testfile.filename,
-          contentType: testfile.contentType
-        })
+        .attach('file', testfile.asBuffer, fileMetadata.name)
         .expect(200);
-      expect(res.body.size).toBeDefined();
-      expect(res.header['location']).toBeDefined();
+      expect(res.body).toHaveProperty('metadata.custom', 'customField');
+      expect(res.get('location')).toBeDefined();
     });
 
     it('should support json metadata', async () => {
-      expect.assertions(2);
-      res = await request(app)
-        .post(basePath)
+      expect.assertions(1);
+      const res = await request(app)
+        .post(endpoint)
         .set('Content-Type', 'multipart/formdata')
-        .field('metadata', JSON.stringify(metadata))
-        .attach('file', testfile.asBuffer, testfile.name)
+        .field('metadata', JSON.stringify(fileMetadata))
+        .attach('file', testfile.asBuffer, fileMetadata.name)
         .expect(200);
-      expect(res.body.size).toBeDefined();
-      expect(res.header['location']).toBeDefined();
+      expect(res.body).toHaveProperty('metadata.name', fileMetadata.name);
     });
 
     it('should 403 (unsupported filetype)', async () => {
       await request(app)
-        .post(basePath)
+        .post(endpoint)
         .set('Content-Type', 'multipart/formdata')
         .attach('file', 'package.json', 'package.json')
         .expect(403)
@@ -73,18 +66,18 @@ describe('::Multipart', () => {
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
-      res = await request(app).options(basePath).expect(204);
+      await request(app).options(endpoint).expect(204);
     });
   });
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      uri ||= (await create()).header.location;
-      res = await request(app).delete(uri).expect(204);
+      const uri = (await create(fileMetadata)).get('location');
+      await request(app).delete(uri).expect(204);
     });
 
     it('should 404', async () => {
-      res = await request(app).delete(basePath).expect(403);
+      await request(app).delete(endpoint).expect(403);
     });
   });
 });

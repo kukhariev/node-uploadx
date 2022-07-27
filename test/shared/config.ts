@@ -1,13 +1,10 @@
-import type { BaseStorageOptions, File } from '../../packages/core/src';
-import { METAFILE_EXTNAME } from '../../packages/core/src';
-import * as path from 'path';
-import { tmpdir } from 'os';
+import { BaseStorageOptions, File, METAFILE_EXTNAME } from '../../packages/core/src';
 import { Readable } from 'stream';
-import { hash } from './utils';
+import { checksum, randomString } from './utils';
 
 export const userId = 'userId';
 
-export const testRoot = path.join(tmpdir(), 'files');
+export const testRoot = '/tmp/uploadx/tests';
 
 export const storageOptions: BaseStorageOptions<File> = {
   filename: file => `${file.userId || 'anonymous'}/${file.originalName}`,
@@ -25,8 +22,7 @@ const id = 'f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78';
 const contentType = 'video/mp4';
 const fileAsBuffer = Buffer.from('xz'.repeat(32));
 const size = Buffer.byteLength(fileAsBuffer);
-const fileAsReadStream = Readable.from(generateChunks());
-const sha1 = hash(fileAsBuffer, 'sha1');
+const sha1 = checksum(fileAsBuffer, 'sha1');
 
 export const metadata = {
   name: 'testfile.mp4',
@@ -36,21 +32,30 @@ export const metadata = {
   custom: '',
   sha1
 };
+
 export const testfile = {
   ...metadata,
   filename: metadata.name,
   metafilename: id + METAFILE_EXTNAME,
+  contentType: metadata.mimeType,
   asBuffer: fileAsBuffer,
-  asReadable: fileAsReadStream,
-  contentType: metadata.mimeType
+  get asReadable() {
+    return Readable.from(generateChunks());
+  }
 };
+
 export const metafile = {
   bytesWritten: null as number | null,
   name: 'userId/testfile.mp4',
-  metadata,
   originalName: 'testfile.mp4',
+  metadata,
   contentType,
   size,
   userId,
   id
 } as File;
+
+export function getNewFileMetadata(name?: string): typeof metadata {
+  name = name || `${randomString()}.mp4`;
+  return { ...metadata, name };
+}
