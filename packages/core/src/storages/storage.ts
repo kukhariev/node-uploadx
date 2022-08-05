@@ -169,7 +169,7 @@ export abstract class BaseStorage<TFile extends File> {
     this.updateTimestamps(file);
     const prev = { ...this.cache.get(file.id) };
     this.cache.set(file.id, file);
-    return isEqual(prev, file, 'bytesWritten', 'expiredAt')
+    return isEqual(prev, file, 'bytesWritten', 'expiredAt', 'md5', 'sha1')
       ? this.meta.touch(file.id, file)
       : this.meta.save(file.id, file);
   }

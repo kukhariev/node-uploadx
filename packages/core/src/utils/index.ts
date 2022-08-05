@@ -6,4 +6,5 @@ export * from './locker';
 export * from './logger';
 export * from './pipes';
 export * from './primitives';
+export * from './range-checksum';
 export * from './validator';

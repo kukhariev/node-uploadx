@@ -43,6 +43,8 @@ export class File implements FileInit {
   userId?;
   expiredAt?: string | Date | number;
   createdAt?: string | Date | number;
+  md5?: string;
+  sha1?: string;
 
   constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
     this.metadata = metadata;
