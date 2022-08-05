@@ -182,11 +182,16 @@ export class GCStorage extends BaseStorage<GCSFile> {
     await this.checkIfExpired(file);
     if (file.status === 'completed') return file;
     if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
-    file.bytesWritten = await this._write({ ...file, ...part });
-    file.status = getFileStatus(file);
-    if (file.status === 'completed') {
-      file.uri = `${this.storageBaseURI}/${file.name}`;
-      await this._onComplete(file);
+    await this.lock(part.id);
+    try {
+      file.bytesWritten = await this._write({ ...file, ...part });
+      file.status = getFileStatus(file);
+      if (file.status === 'completed') {
+        file.uri = `${this.storageBaseURI}/${file.name}`;
+        await this._onComplete(file);
+      }
+    } finally {
+      await this.unlock(part.id);
     }
     return file;
   }

@@ -9,6 +9,7 @@ import {
   fail,
   HttpError,
   isEqual,
+  Locker,
   Logger,
   toMilliseconds,
   typeis,
@@ -91,6 +92,10 @@ const defaultOptions = {
   validation: {},
   maxMetadataSize: '4MB'
 };
+
+const LOCK_TIMEOUT = 300; // seconds
+
+export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
   onComplete: (file: TFile) => Promise<any> | any;
@@ -247,6 +252,21 @@ export abstract class BaseStorage<TFile extends File> {
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };
+  }
+
+  /**
+   * Prevent upload from being accessed by multiple requests
+   */
+  async lock(key: string): Promise<string> {
+    try {
+      return locker.lock(key);
+    } catch {
+      return fail(ERRORS.FILE_LOCKED);
+    }
+  }
+
+  async unlock(key: string): Promise<void> {
+    locker.unlock(key);
   }
 
   protected isUnsupportedChecksum(algorithm = ''): boolean {

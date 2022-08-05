@@ -170,32 +170,37 @@ export class S3Storage extends BaseStorage<S3File> {
       (prev, next) => prev + next,
       0
     );
-    if (hasContent(part)) {
-      if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
-        return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
+    await this.lock(part.id);
+    try {
+      if (hasContent(part)) {
+        if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
+          return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
+        }
+        const checksumMD5 = part.checksumAlgorithm === 'md5' ? part.checksum : '';
+        const partNumber = file.Parts.length + 1;
+        const params: UploadPartRequest = {
+          Bucket: this.bucket,
+          Key: file.name,
+          UploadId: file.UploadId,
+          PartNumber: partNumber,
+          Body: part.body,
+          ContentLength: part.contentLength || 0,
+          ContentMD5: checksumMD5
+        };
+        const { ETag } = await this.client.send(new UploadPartCommand(params));
+        const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
+        file.Parts = [...file.Parts, uploadPart];
+        file.bytesWritten += part.contentLength || 0;
       }
-      const checksumMD5 = part.checksumAlgorithm === 'md5' ? part.checksum : '';
-      const partNumber = file.Parts.length + 1;
-      const params: UploadPartRequest = {
-        Bucket: this.bucket,
-        Key: file.name,
-        UploadId: file.UploadId,
-        PartNumber: partNumber,
-        Body: part.body,
-        ContentLength: part.contentLength || 0,
-        ContentMD5: checksumMD5
-      };
-      const { ETag } = await this.client.send(new UploadPartCommand(params));
-      const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
-      file.Parts = [...file.Parts, uploadPart];
-      file.bytesWritten += part.contentLength || 0;
-    }
-    this.cache.set(file.id, file);
-    file.status = getFileStatus(file);
-    if (file.status === 'completed') {
-      const [completed] = await this._onComplete(file);
-      delete file.Parts;
-      file.uri = completed.Location;
+      this.cache.set(file.id, file);
+      file.status = getFileStatus(file);
+      if (file.status === 'completed') {
+        const [completed] = await this._onComplete(file);
+        delete file.Parts;
+        file.uri = completed.Location;
+      }
+    } finally {
+      await this.unlock(part.id);
     }
     return file;
   }

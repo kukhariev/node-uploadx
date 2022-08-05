@@ -113,6 +113,16 @@ describe('DiskStorage', () => {
       const write = storage.write({ ...metafile, start: metafile.size - 2, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
+
+    it('should support lock', async () => {
+      readStream.__mockSend();
+      const write = storage.write({ ...metafile, start: 0, body: readStream });
+      const write2 = storage.write({ ...metafile, start: 0, body: readStream });
+      await expect(Promise.all([write, write2])).rejects.toHaveProperty(
+        'uploadxErrorCode',
+        'FileLocked'
+      );
+    });
   });
 
   describe('.list()', () => {
