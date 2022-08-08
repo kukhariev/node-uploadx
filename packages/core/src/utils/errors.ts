@@ -2,7 +2,6 @@
 
 import { UploadxResponse } from './http';
 
-// eslint-disable-next-line no-shadow
 export enum ERRORS {
   BAD_REQUEST = 'BadRequest',
   FILE_CONFLICT = 'FileConflict',
