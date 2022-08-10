@@ -189,4 +189,38 @@ describe('utils', () => {
       expect(fnvCached('123456')).toBe('9995b6aa');
     });
   });
+
+  describe('BasicLogger', () => {
+    it('should default silent', () => {
+      const logger = utils.logger;
+      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+      logger.error('test');
+      expect(consoleErrorMock).not.toHaveBeenCalled();
+      consoleErrorMock.mockRestore();
+    });
+
+    it('should support logLevels', () => {
+      const logger = utils.logger;
+      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+      const consoleDebugMock = jest.spyOn(console, 'debug').mockImplementation();
+      logger.logLevel = 'info';
+      logger.error('test');
+      logger.debug('test');
+      expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+      expect(consoleDebugMock).not.toHaveBeenCalled();
+      consoleErrorMock.mockRestore();
+      consoleDebugMock.mockRestore();
+    });
+
+    it('should format log', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2022-02-02'));
+      const logger = utils.logger;
+      logger.logLevel = 'info';
+      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+      logger.error('test');
+      expect(consoleErrorMock).toHaveBeenCalledWith('2022-02-02T00:00:00.000Z ERROR uploadx: test');
+      consoleErrorMock.mockRestore();
+      jest.useRealTimers();
+    });
+  });
 });
