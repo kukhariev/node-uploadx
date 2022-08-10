@@ -20,6 +20,7 @@ import {
 import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
 import { setInterval } from 'timers';
+import { configHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
@@ -82,17 +83,6 @@ export interface BaseStorageOptions<T extends File> {
   expiration?: ExpirationOptions;
 }
 
-const defaultOptions = {
-  allowMIME: ['*/*'],
-  maxUploadSize: '5TB',
-  filename: ({ id }: File): string => id,
-  useRelativeLocation: false,
-  onComplete: () => null,
-  path: '/files',
-  validation: {},
-  maxMetadataSize: '4MB'
-};
-
 const LOCK_TIMEOUT = 300; // seconds
 
 export const locker = new Locker(1000, LOCK_TIMEOUT);
@@ -112,7 +102,7 @@ export abstract class BaseStorage<TFile extends File> {
   abstract meta: MetaStorage<TFile>;
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
-    const opts = { ...defaultOptions, ...config };
+    const opts = configHandler.set(config);
     this.path = opts.path;
     this.onComplete = opts.onComplete;
     this.namingFunction = opts.filename;
