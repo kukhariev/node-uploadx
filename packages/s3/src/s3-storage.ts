@@ -243,7 +243,7 @@ export class S3Storage extends BaseStorage<S3File> {
       const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
       await this.client.send(new AbortMultipartUploadCommand(params));
     } catch (err) {
-      this.log('_abortMultipartUploadError: ', err);
+      this.logger.error('_abortMultipartUploadError: ', err);
     }
   }
 

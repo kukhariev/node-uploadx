@@ -168,7 +168,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     file.uri = res.headers.location as string;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = file.uri;
-      this.log('send uploadURI to client: %s', file.GCSUploadURI);
+      this.logger.debug('send uploadURI to client: %s', file.GCSUploadURI);
       file.status = 'created';
       return file;
     }
@@ -227,7 +227,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
         return range ? getRangeEnd(range) : 0;
       } else if (res.ok) {
         const data = (await res.json()) as Record<string, any>;
-        this.log('uploaded %o', data);
+        this.logger.debug('uploaded %o', data);
         return size;
       }
       const message = await res.text();
@@ -238,7 +238,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
         name: 'FetchError'
       });
     } catch (err) {
-      this.log(uri, err);
+      this.logger.error(uri, err);
       return NaN;
     }
   }

@@ -1,4 +1,5 @@
 import { FileName } from './file';
+import { configHandler } from './config';
 
 /** @experimental */
 export interface UploadListEntry {
@@ -26,6 +27,7 @@ export interface MetaStorageOptions {
 export class MetaStorage<T> {
   prefix = '';
   suffix = '';
+  logger = configHandler.getLogger();
 
   constructor(config?: MetaStorageOptions) {
     this.prefix = config?.prefix || '';
