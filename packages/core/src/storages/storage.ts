@@ -82,9 +82,12 @@ export interface BaseStorageOptions<T extends File> {
    * ```
    */
   expiration?: ExpirationOptions;
-  /** Custom logger */
+  /** Custom logger injection */
   logger?: Logger;
-  /** Set internal logger level */
+  /**
+   * Set built-in logger severity level
+   * @defaultValue 'none'
+   */
   logLevel?: LogLevel;
 }
 

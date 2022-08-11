@@ -70,6 +70,8 @@ Some available options: :
 | `userIdentifier`      |   `UserIdentifier`   |                  | _Get user identity_                                          |
 | `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
 | `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
+| `logger`              |       `Logger`       |                  | _Custom logger injection_                                    |
+| `logLevel`            |      `LogLevel`      |     `"none"`     | _Set built-in logger severity level_                         |
 
 ## Contributing
 
