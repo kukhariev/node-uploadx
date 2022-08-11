@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { uploadx } from '@uploadx/core';
+import { LogLevel, uploadx } from '@uploadx/core';
 import { S3Storage } from '@uploadx/s3';
 
 const PORT = process.env.PORT || 3002;
@@ -22,7 +22,9 @@ const storage = new S3Storage({
   endpoint: 'http://127.0.0.1:9000',
   forcePathStyle: true,
   expiration: { maxAge: '1h', purgeInterval: '15min' },
-  onComplete: file => console.log('File upload complete: ', file)
+  onComplete: file => console.log('File upload complete: ', file),
+  // logger: console
+  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info'
 });
 
 app.use('/files', uploadx({ storage }));
