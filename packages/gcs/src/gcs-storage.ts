@@ -124,8 +124,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
     this.accessCheck().catch((err: ClientError) => {
       this.isReady = false;
-      // eslint-disable-next-line no-console
-      console.error('ERROR: Unable to open bucket: %o', err);
+      this.logger.error('Unable to open bucket: %o', err);
     });
   }
 

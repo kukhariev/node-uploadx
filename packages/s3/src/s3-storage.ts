@@ -114,8 +114,7 @@ export class S3Storage extends BaseStorage<S3File> {
     }
     this.accessCheck().catch((err: AWSError) => {
       this.isReady = false;
-      // eslint-disable-next-line no-console
-      console.error('ERROR: Unable to open bucket: %o', err);
+      this.logger.error('Unable to open bucket: %o', err);
     });
   }
 
