@@ -91,7 +91,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     this.logger = this.storage.logger;
     this.assembleErrors();
     this.compose();
-    this.logger.debug('Config: %j', config);
+    this.logger.debug('Config:', config);
   }
 
   /**

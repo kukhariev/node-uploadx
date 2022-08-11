@@ -1,12 +1,14 @@
 import { formatWithOptions } from 'util';
 
-export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'none';
+const levels = ['debug', 'info', 'warn', 'error', 'none'];
 
 enum PriorityOf {
   debug,
   info,
   warn,
-  error
+  error,
+  none
 }
 
 export interface LoggerOptions {
@@ -28,22 +30,33 @@ export interface Logger {
  * Basic logger implementation
  */
 export class BasicLogger implements Logger {
-  logLevel?: LogLevel;
   label: string;
-  private readonly _logger: Logger;
+  private readonly logger: Logger;
+  private _logLevel: LogLevel = 'none';
+
   constructor(readonly options: LoggerOptions = {}) {
-    this._logger = options.logger || console;
-    this.logLevel = options.logLevel;
+    this.logger = options.logger || console;
     this.label = options.label ?? 'uploadx:';
-    this.write = options.write || this.write;
+    if (options.logLevel) this.logLevel = options.logLevel;
+    if (options.write) this.write = options.write;
   }
 
-  write = (data: unknown[], level: LogLevel): void => {
-    if (!this.logLevel) return;
-    if (PriorityOf[level] >= PriorityOf[this.logLevel]) {
+  get logLevel(): LogLevel {
+    return this._logLevel;
+  }
+
+  set logLevel(value: LogLevel) {
+    if (value && !levels.includes(value)) {
+      throw new Error(`Invalid log level: ${value}, supported levels are: ${levels.join(', ')}.`);
+    }
+    this._logLevel = value;
+  }
+
+  write = (data: unknown[], level: Exclude<LogLevel, 'none'>): void => {
+    if (PriorityOf[level] >= PriorityOf[this._logLevel]) {
       const message = formatWithOptions({ colors: true, depth: 1, maxStringLength: 80 }, ...data);
       const timestamp = new Date().toISOString();
-      this._logger[level](`${timestamp} ${level.toUpperCase()} ${this.label} ${message}`);
+      this.logger[level](`${timestamp} ${level.toUpperCase()} ${this.label} ${message}`);
     }
   };
 
