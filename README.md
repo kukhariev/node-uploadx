@@ -3,11 +3,22 @@
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
 [![commits since latest release][comm-image]][comm-url]
 
-> Node.js resumable upload middleware.
-> Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
-> Also supports [tus 1.0](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md), multipart uploads.
+Resumable upload middleware for [express](https://github.com/expressjs/express), [fastify](https://github.com/fastify/fastify) and plain node.js.
+Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
-## 🌩 Installation
+## ✨ Features
+
+- resumable simple/chunked uploads
+- can save files to local filesystem, S3, GCS
+- saving added metadata along with files
+- logging and error handling
+- chunks checksum verification
+- file type/size/custom validations
+- fixed/rolling expiration and cleanup
+- extensibility (custom storages, upload protocols, etc)
+
+
+## 🌩️ Installation
 
 All-In-One with cloud storage support:
 
@@ -25,11 +36,11 @@ Separate modules can also be used to save disk space and for faster installation
 
 - _S3_ storage support:
 
-```sh
+  ```sh
   npm install @uploadx/s3
-```
+  ```
 
-## ♨ Usage
+## ♨️ Usage
 
 Express example:
 
@@ -50,7 +61,7 @@ app.listen(3003);
 
 Please navigate to the [examples](examples) for more.
 
-### 🛠 Options
+## 🛠️ Options
 
 Some available options: :
 
