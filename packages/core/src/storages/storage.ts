@@ -11,6 +11,7 @@ import {
   isEqual,
   Locker,
   Logger,
+  LogLevel,
   toMilliseconds,
   typeis,
   Validation,
@@ -81,6 +82,13 @@ export interface BaseStorageOptions<T extends File> {
    * ```
    */
   expiration?: ExpirationOptions;
+  /** Custom logger injection */
+  logger?: Logger;
+  /**
+   * Set built-in logger severity level
+   * @defaultValue 'none'
+   */
+  logLevel?: LogLevel;
 }
 
 const LOCK_TIMEOUT = 300; // seconds
@@ -96,7 +104,7 @@ export abstract class BaseStorage<TFile extends File> {
   checksumTypes: string[] = [];
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
-  protected log = Logger.get(`${this.constructor.name}`);
+  logger: Logger;
   protected namingFunction: (file: TFile, req: any) => string;
   protected validation = new Validator<TFile>();
   abstract meta: MetaStorage<TFile>;
@@ -109,8 +117,11 @@ export abstract class BaseStorage<TFile extends File> {
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
     this.cache = new Cache(1000, 300);
-
-    const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
+    this.logger = opts.logger;
+    if (opts.logLevel && 'logLevel' in this.logger) {
+      this.logger.logLevel = opts.logLevel;
+    }
+    const purgeInterval = toMilliseconds(opts.expiration?.purgeInterval);
     if (purgeInterval) {
       this.startAutoPurge(purgeInterval);
     }
@@ -216,7 +227,7 @@ export abstract class BaseStorage<TFile extends File> {
         const [deleted] = await this.delete({ id });
         purged.items.push({ ...deleted, ...rest });
       }
-      purged.items.length && this.log(`Purge: removed ${purged.items.length} uploads`);
+      purged.items.length && this.logger.info(`Purge: removed ${purged.items.length} uploads`);
     }
     return purged;
   }
@@ -265,7 +276,7 @@ export abstract class BaseStorage<TFile extends File> {
 
   protected startAutoPurge(purgeInterval: number): void {
     if (purgeInterval >= 2147483647) throw Error('“purgeInterval” must be less than 2147483647 ms');
-    setInterval(() => void this.purge().catch(this.log), purgeInterval);
+    setInterval(() => void this.purge().catch(e => this.logger.error(e)), purgeInterval);
   }
 
   protected updateTimestamps(file: TFile): TFile {

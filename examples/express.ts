@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DiskFile, uploadx } from '@uploadx/core';
 import * as express from 'express';
+import { createLogger, format, transports } from 'winston';
+
+const logger = createLogger({
+  format: format.combine(format.splat(), format.simple()),
+  transports: [new transports.Console()],
+  level: 'info'
+});
 
 const PORT = process.env.PORT || 3002;
 type UserInfo = { user?: { id: string; email: string } };
@@ -27,9 +34,10 @@ app.use(
   uploadx.upload({
     directory: 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
-    userIdentifier: (req: express.Request & UserInfo) => `${req.user!.id}-${req.user!.email}`
+    userIdentifier: (req: express.Request & UserInfo) => `${req.user!.id}-${req.user!.email}`,
+    logger
   }),
   onComplete
 );
 
-app.listen(PORT, () => console.log('listening on port:', PORT));
+app.listen(PORT, () => logger.info('listening on port: %d', PORT));

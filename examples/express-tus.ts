@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as express from 'express';
 import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 

@@ -1,4 +1,4 @@
-import { DiskStorageOptions, uploadx } from '@uploadx/core';
+import { DiskStorageOptions, LogLevel, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
 const PORT = process.env.PORT || 3002;
@@ -12,6 +12,7 @@ const opts: DiskStorageOptions = {
   useRelativeLocation: true,
   filename: file => file.originalName,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
+  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
   onComplete: file => {
     console.log('File upload complete: ', file);
     return file;

@@ -1,3 +1,4 @@
+import { logger, Logger } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -10,7 +11,8 @@ class ConfigHandler {
     onComplete: () => null,
     path: '/files',
     validation: {},
-    maxMetadataSize: '4MB'
+    maxMetadataSize: '4MB',
+    logger: logger
   };
 
   private _config = this.set(ConfigHandler.defaults);
@@ -21,6 +23,10 @@ class ConfigHandler {
 
   get<T extends File>(): Required<BaseStorageOptions<T>> {
     return this._config as unknown as Required<BaseStorageOptions<T>>;
+  }
+
+  getLogger(): Logger {
+    return this._config.logger;
   }
 }
 

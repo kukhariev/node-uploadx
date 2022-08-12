@@ -75,7 +75,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   responseType: ResponseBodyType = 'json';
   storage: BaseStorage<TFile>;
   registeredHandlers = new Map<string, AsyncHandler>();
-  protected log = Logger.get(this.constructor.name);
+  logger: Logger;
   protected _errorResponses = {} as ErrorResponses;
 
   constructor(config: UploadxOptions<TFile> = {}) {
@@ -88,10 +88,10 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     if (config.userIdentifier) {
       this.getUserId = config.userIdentifier;
     }
+    this.logger = this.storage.logger;
     this.assembleErrors();
     this.compose();
-
-    this.log('options: %o', config);
+    this.logger.debug('Config:', config);
   }
 
   /**
@@ -115,7 +115,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       handler && this.registeredHandlers.set(method.toUpperCase(), handler);
       // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
-    this.log('Handlers', this.registeredHandlers);
+    this.logger.debug('Registered handlers: %s', [...this.registeredHandlers.keys()].join(', '));
   }
 
   assembleErrors(customErrors = {}): void {
@@ -130,9 +130,9 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
 
   upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
-    req.on('error', err => this.log(`[request error]: %o`, err));
+    req.on('error', err => this.logger.error(`[request error]: %o`, err));
     this.cors.preflight(req, res);
-    this.log(`[request]: %s`, req.method, req.url);
+    this.logger.debug(`[request]: %s %s`, req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
       return this.sendError(res, { uploadxErrorCode: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
@@ -145,7 +145,13 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       .call(this, req, res)
       .then(async (file: TFile | UploadList): Promise<void> => {
         if ('status' in file && file.status) {
-          this.log('[%s]: %s', file.status, file.name);
+          this.logger.debug(
+            '[%s]: %s: %d/%d',
+            file.status,
+            file.name,
+            file.bytesWritten,
+            file.size
+          );
           this.listenerCount(file.status) &&
             this.emit(file.status, { ...file, request: pick(req, ['headers', 'method', 'url']) });
           if (file.status === 'completed') {
@@ -169,7 +175,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         ]) as UploadxError;
         const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent);
-        this.log('[error]: %o', errorEvent);
+        this.logger.error('[error]: %o', errorEvent);
         if ('aborted' in req && req['aborted']) return;
         return this.sendError(res, error);
       });

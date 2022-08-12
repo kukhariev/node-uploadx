@@ -66,8 +66,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     }
     this.accessCheck().catch(err => {
       this.isReady = false;
-      // eslint-disable-next-line no-console
-      console.error('ERROR: Could not write to directory: %o', err);
+      this.logger.error('[error]: Could not write to directory: %o', err);
     });
   }
 
