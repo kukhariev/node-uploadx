@@ -17,7 +17,6 @@ Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 - fixed/rolling expiration and cleanup
 - extensibility (custom storages, upload protocols, etc)
 
-
 ## 🌩️ Installation
 
 All-In-One with cloud storage support:
@@ -49,12 +48,16 @@ const express = require('express');
 const { uploadx } = require('@uploadx/core');
 
 const app = express();
-const opts = {
-  directory: './files',
-  onComplete: file => console.log('Upload complete: ', file)
-};
 
-app.use('/upload/files', uploadx(opts));
+app.use(
+  '/uploads',
+  uploadx({
+    directory: './files',
+    maxUploadSize: '10GB',
+    allowMIME: ['video/*'],
+    onComplete: file => console.log('Upload complete: ', file)
+  })
+);
 
 app.listen(3003);
 ```

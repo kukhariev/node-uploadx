@@ -1,11 +1,11 @@
-import { DiskStorageOptions, LogLevel, uploadx } from '@uploadx/core';
+import { LogLevel, uploadx } from '@uploadx/core';
 import * as express from 'express';
 
 const PORT = process.env.PORT || 3002;
 
 const app = express();
 
-const opts: DiskStorageOptions = {
+const uploads = uploadx({
   directory: 'upload',
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
@@ -17,8 +17,8 @@ const opts: DiskStorageOptions = {
     console.log('File upload complete: ', file);
     return file;
   }
-};
+});
 
-app.use('/files', uploadx(opts));
+app.use('/uploads', uploads);
 
 app.listen(PORT, () => console.log('listening on port:', PORT));
