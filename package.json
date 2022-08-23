@@ -57,7 +57,7 @@
     "memfs": "^3.4.4",
     "node-mocks-http": "1.11.0",
     "oao": "2.0.2",
-    "prettier": "2.6.2",
+    "prettier": "2.7.1",
     "rimraf": "3.0.2",
     "supertest": "6.2.3",
     "ts-jest": "28.0.4",
