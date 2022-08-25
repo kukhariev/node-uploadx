@@ -17,6 +17,7 @@ import {
   fail,
   getBaseUrl,
   hash,
+  HttpErrorBody,
   IncomingMessageWithBody,
   isUploadxError,
   isValidationError,
@@ -207,7 +208,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     let data: string;
     if (typeof body !== 'string') {
       data = JSON.stringify(body);
-      res.setHeader('Content-Type', 'application/json');
+      if (!headers['Content-Type']) res.setHeader('Content-Type', 'application/json');
     } else {
       data = body;
     }
@@ -221,21 +222,15 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    * Send Error to client
    */
   sendError(res: http.ServerResponse, error: Error): void {
-    const response = isUploadxError(error)
+    const httpError = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
       : !isValidationError(error)
       ? this.storage.normalizeError(error)
       : error;
-    const { statusCode = 200, headers, ...rest } = response;
-    const body = response.body ? response.body : rest;
-    this.send(res, this.formatErrorResponse({ statusCode, body, headers }));
-  }
-
-  /**
-   * Adjusting the error response
-   */
-  formatErrorResponse({ statusCode, body, headers }: UploadxResponse): UploadxResponse {
-    return { statusCode, body: { error: body }, headers };
+    const { statusCode = 200, headers, ...rest } = httpError;
+    const body = httpError.body ? httpError.body : (rest as HttpErrorBody);
+    const response = { statusCode, body, headers };
+    this.send(res, this.storage.onError(response) || response);
   }
 
   /**

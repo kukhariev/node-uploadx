@@ -1,4 +1,4 @@
-import { logger, Logger } from '../utils';
+import { HttpError, logger } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -9,6 +9,9 @@ export class ConfigHandler {
     filename: ({ id }: File): string => id,
     useRelativeLocation: false,
     onComplete: () => null,
+    onError: ({ statusCode, body, headers }: HttpError) => {
+      return { statusCode, body: { error: body }, headers };
+    },
     path: '/files',
     validation: {},
     maxMetadataSize: '4MB',
@@ -24,10 +27,4 @@ export class ConfigHandler {
   get<T extends File>(): Required<BaseStorageOptions<T>> {
     return this._config as unknown as Required<BaseStorageOptions<T>>;
   }
-
-  getLogger(): Logger {
-    return this._config.logger;
-  }
 }
-
-export const configHandler = new ConfigHandler();

@@ -1,6 +1,5 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
-
 import {
   Cache,
   ErrorMap,
@@ -8,12 +7,14 @@ import {
   ERRORS,
   fail,
   HttpError,
+  HttpErrorBody,
   isEqual,
   Locker,
   Logger,
   LogLevel,
   toMilliseconds,
   typeis,
+  UploadxResponse,
   Validation,
   Validator,
   ValidatorConfig
@@ -28,6 +29,8 @@ export type UserIdentifier = (req: any, res: any) => string;
 export type OnComplete<TFile extends File, TResponseBody = any> = (
   file: TFile
 ) => Promise<TResponseBody> | TResponseBody;
+
+export type OnError<TResponseBody = HttpErrorBody> = (error: HttpError<TResponseBody>) => any;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
 
@@ -59,6 +62,7 @@ export interface BaseStorageOptions<T extends File> {
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
+  onError?: OnError;
   /** Node http base path */
   path?: string;
   /** Upload validation options */
@@ -97,6 +101,7 @@ export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
   onComplete: (file: TFile) => Promise<any> | any;
+  onError: (err: HttpError) => UploadxResponse;
   maxUploadSize: number;
   maxMetadataSize: number;
   path: string;
@@ -114,6 +119,7 @@ export abstract class BaseStorage<TFile extends File> {
     const opts = configHandler.set(config);
     this.path = opts.path;
     this.onComplete = opts.onComplete;
+    this.onError = opts.onError;
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
