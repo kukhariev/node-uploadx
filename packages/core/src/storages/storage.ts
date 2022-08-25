@@ -62,6 +62,7 @@ export interface BaseStorageOptions<T extends File> {
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
+  /** Customise error response */
   onError?: OnError;
   /** Node http base path */
   path?: string;
