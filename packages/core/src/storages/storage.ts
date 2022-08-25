@@ -21,7 +21,7 @@ import {
 import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
 import { setInterval } from 'timers';
-import { configHandler } from './config';
+import { ConfigHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
@@ -110,6 +110,7 @@ export abstract class BaseStorage<TFile extends File> {
   abstract meta: MetaStorage<TFile>;
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
+    const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
     this.path = opts.path;
     this.onComplete = opts.onComplete;

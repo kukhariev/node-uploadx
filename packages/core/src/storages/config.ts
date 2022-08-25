@@ -2,7 +2,7 @@ import { logger, Logger } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
-class ConfigHandler {
+export class ConfigHandler {
   static defaults = {
     allowMIME: ['*/*'],
     maxUploadSize: '5TB',
