@@ -1,6 +1,7 @@
 import {
   BaseHandler,
   BaseStorage,
+  BaseStorageOptions,
   File,
   FileInit,
   FilePart,
@@ -14,7 +15,7 @@ export class TestStorage extends BaseStorage<File> {
   path = '/files';
   isReady = true;
   meta = new MetaStorage<File>();
-  constructor(config = {}) {
+  constructor(config = {} as BaseStorageOptions<File>) {
     super(config);
   }
 

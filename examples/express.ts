@@ -32,7 +32,15 @@ app.use(
     directory: 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
-    logger
+    logger,
+    onError: ({ statusCode, body }) => {
+      const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
+      return {
+        statusCode,
+        headers: { 'Content-Type': 'application/vnd.api+json' },
+        body: { errors }
+      };
+    }
   }),
   onComplete
 );

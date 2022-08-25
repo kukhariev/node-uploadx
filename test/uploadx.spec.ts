@@ -11,14 +11,23 @@ jest.mock('fs');
 describe('::Uploadx', () => {
   const file1 = { ...metadata };
   const file2 = { ...metadata, name: 'testfile2.mp4' };
-  let uri1 = '';
-  let uri2 = '';
-  let start: number;
   const path1 = '/uploadx';
   const path2 = '/uploadx2';
   const directory = join(testRoot, 'uploadx');
   const opts = { ...storageOptions, directory, maxMetadataSize: 250 };
-  const uploadx2 = new Uploadx({ storage: new DiskStorage(opts) });
+  const uploadx2 = new Uploadx({
+    storage: new DiskStorage({
+      ...storageOptions,
+      onError: ({ statusCode, body }) => {
+        const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
+        return {
+          statusCode,
+          headers: { 'Content-Type': 'application/vnd.api+json' },
+          body: { errors }
+        };
+      }
+    })
+  });
   app.use(path1, uploadx(opts));
   app.use(path2, uploadx2.handle);
   function exposedHeaders(response: request.Response): string[] {
@@ -35,9 +44,9 @@ describe('::Uploadx', () => {
       .send(file);
   }
 
-  beforeAll(async () => cleanup(directory));
+  beforeEach(async () => cleanup(directory));
 
-  afterAll(async () => cleanup(directory));
+  afterEach(async () => cleanup(directory));
 
   describe('default options', () => {
     it('should be defined', () => {
@@ -78,9 +87,8 @@ describe('::Uploadx', () => {
 
     it('should 201 (x-headers)', async () => {
       const res = await create(file1).expect(201).expect('x-upload-expires', /.*/);
-      uri1 = res.header.location as string;
       expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['location', 'x-upload-expires']));
-      expect(uri1).toBeDefined();
+      expect(res.headers.location).toBeDefined();
     });
 
     it('should 201 (metadata)', async () => {
@@ -89,9 +97,8 @@ describe('::Uploadx', () => {
         .send(file2)
         .expect(201)
         .expect('x-upload-expires', /.*/);
-      uri2 = res.header.location as string;
       expect(exposedHeaders(res)).toEqual(expect.arrayContaining(['location', 'x-upload-expires']));
-      expect(uri2).toBeDefined();
+      expect(res.header.location).toBeDefined();
     });
 
     it('should 201 (query)', async () => {
@@ -106,17 +113,17 @@ describe('::Uploadx', () => {
 
   describe('PATCH', () => {
     it('update metadata', async () => {
-      uri2 ||= (await create(file2)).header.location;
-      const res = await request(app).patch(uri2).send({ name: 'newname.mp4' }).expect(200);
+      const uri = (await create(file2)).header.location as string;
+      const res = await request(app).patch(uri).send({ name: 'newname.mp4' }).expect(200);
       expect(res.body.name).toBe('newname.mp4');
     });
   });
 
   describe('PUT', () => {
     it('should 200 (simple request)', async () => {
-      uri2 ||= (await create(file2)).header.location;
+      const uri = (await create(file2)).header.location as string;
       const res = await request(app)
-        .put(uri2)
+        .put(uri)
         .set('Digest', `sha=${metadata.sha1}`)
         .send(testfile.asBuffer)
         .expect(200);
@@ -125,17 +132,16 @@ describe('::Uploadx', () => {
     });
 
     it('should 200 (chunks)', async () => {
-      uri1 ||= (await create(file1)).header.location;
-
+      const uri = (await create(file1)).header.location as string;
       function uploadChunks(): Promise<request.Response> {
         return new Promise(resolve => {
-          start = 0;
+          let start = 0;
           const readable = testfile.asReadable;
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           readable.on('data', async (chunk: { length: number }) => {
             readable.pause();
             const res = await request(app)
-              .put(uri1)
+              .put(uri)
               .redirects(0)
               .set('content-type', 'application/octet-stream')
               .set('content-range', `bytes ${start}-${start + chunk.length - 1}/${metadata.size}`)
@@ -224,23 +230,42 @@ describe('::Uploadx', () => {
 
   describe('GET', () => {
     it('should return info array', async () => {
-      uri1 ||= (await create(file1)).header.location;
-      uri2 ||= (await create(file2)).header.location;
+      await create(file1);
+      await create(file2);
       const res = await request(app).get(`${path1}`).expect(200);
-      expect(res.body.items.length).toBeGreaterThan(2);
+      expect(res.body.items).toHaveLength(2);
     });
   });
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      uri2 ||= (await create(file2)).header.location;
-      await request(app).delete(uri2).expect(204);
+      const uri = (await create(file2)).header.location as string;
+      await request(app).delete(uri).expect(204);
     });
   });
 
   describe('OPTIONS', () => {
     it('should 204', async () => {
       await request(app).options(path1).expect(204);
+    });
+  });
+
+  describe('onError', () => {
+    it('should return custom eeror response', async () => {
+      const res = await request(app)
+        .post(path2)
+        .send({ ...file2, size: 10e10 });
+      expect(res.status).toBe(413);
+      expect(res.body).toMatchObject({
+        errors: [
+          {
+            detail: 'Request entity too large',
+            status: 413,
+            title: 'RequestEntityTooLarge'
+          }
+        ]
+      });
+      expect(res.type).toBe('application/vnd.api+json');
     });
   });
 

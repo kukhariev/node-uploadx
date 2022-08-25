@@ -61,7 +61,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
-      const metaConfig = { ...config, ...(config.metaStorageConfig || {}) };
+      const metaConfig = { ...config, ...(config.metaStorageConfig || {}), logger: this.logger };
       this.meta = new LocalMetaStorage(metaConfig);
     }
     this.accessCheck().catch(err => {
