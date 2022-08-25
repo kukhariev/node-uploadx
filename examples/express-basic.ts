@@ -19,6 +19,6 @@ const uploads = uploadx({
   }
 });
 
-app.use('/uploads', uploads);
+app.use('/files', uploads);
 
 app.listen(PORT, () => console.log('listening on port:', PORT));
