@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`S3Storage .create() should handle existing 1`] = `
-Object {
+{
   "UploadId": "987654321",
   "bytesWritten": 0,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
   "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
-  "metadata": Object {
+  "metadata": {
     "custom": "",
     "lastModified": 1635398061454,
     "mimeType": "video/mp4",
@@ -31,7 +31,7 @@ S3File {
   "createdAt": "2022-02-02T00:00:00.000Z",
   "expiredAt": "2022-02-02T01:00:00.000Z",
   "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
-  "metadata": Object {
+  "metadata": {
     "custom": "",
     "lastModified": 1635398061454,
     "mimeType": "video/mp4",
@@ -48,7 +48,7 @@ S3File {
 `;
 
 exports[`S3Storage .create() should send error on invalid s3 response 1`] = `
-Object {
+{
   "detail": "s3 create multipart upload error",
   "message": "FileError",
   "name": "UploadxError",
@@ -57,13 +57,13 @@ Object {
 `;
 
 exports[`S3Storage .write() should request api and set status and bytesWritten 1`] = `
-Object {
+{
   "UploadId": "987654321",
   "bytesWritten": 64,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
   "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
-  "metadata": Object {
+  "metadata": {
     "custom": "",
     "lastModified": 1635398061454,
     "mimeType": "video/mp4",
@@ -81,14 +81,14 @@ Object {
 `;
 
 exports[`S3Storage .write() should request api and set status and bytesWritten on resume 1`] = `
-Object {
-  "Parts": Array [],
+{
+  "Parts": [],
   "UploadId": "987654321",
   "bytesWritten": 0,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
   "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
-  "metadata": Object {
+  "metadata": {
     "custom": "",
     "lastModified": 1635398061454,
     "mimeType": "video/mp4",
@@ -105,7 +105,7 @@ Object {
 `;
 
 exports[`S3Storage normalizeError not s3 error 1`] = `
-Object {
+{
   "code": "GenericUploadxError",
   "message": "Generic Uploadx Error",
   "statusCode": 500,
@@ -113,7 +113,7 @@ Object {
 `;
 
 exports[`S3Storage normalizeError s3 error 1`] = `
-Object {
+{
   "code": "SomeServiceException",
   "message": "SomeServiceException",
   "name": "SomeError",
