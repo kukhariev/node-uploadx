@@ -54,7 +54,7 @@ export function mapValues<T>(
   return result;
 }
 
-export function isEqual<T>(a: T, b: T, ...keysToIgnore: string[]): boolean {
+export function isEqual(a: object, b: object, ...keysToIgnore: string[]): boolean {
   return isDeepStrictEqual(
     Object.entries(a).filter(e => !keysToIgnore.includes(e[0])),
     Object.entries(b).filter(e => !keysToIgnore.includes(e[0]))

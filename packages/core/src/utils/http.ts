@@ -134,14 +134,16 @@ export function extractProto(req: http.IncomingMessage): string {
   return getHeader(req, 'x-forwarded-proto').toLowerCase();
 }
 
-export function responseToTuple<T>(response: UploadxResponse<T> | ResponseTuple<T>): ResponseTuple {
+export function responseToTuple<T extends ResponseBody>(
+  response: UploadxResponse<T> | ResponseTuple<T>
+): ResponseTuple {
   if (Array.isArray(response)) return response;
   const { statusCode = 200, headers, ...rest } = response;
   const body = response.body ? response.body : rest;
   return [statusCode, body, headers || {}];
 }
 
-export function tupleToResponse<T>(
+export function tupleToResponse<T extends ResponseBody>(
   response: ResponseTuple<T> | UploadxResponse<T>
 ): UploadxResponse {
   if (!Array.isArray(response)) return response;
