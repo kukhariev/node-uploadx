@@ -1,7 +1,6 @@
 # node-uploadx
 
-[![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
-[![commits since latest release][comm-image]][comm-url]
+[![npm version][npm-image]][npm-url] [![commits since latest release][comm-image]][comm-url] [![Build status][gha-image]][gha-url]
 
 Resumable upload middleware for [express](https://github.com/expressjs/express), [fastify](https://github.com/fastify/fastify) and plain node.js.
 Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
@@ -97,9 +96,9 @@ Pull requests are welcome!
 
 [MIT](LICENSE)
 
-[npm-image]: https://img.shields.io/npm/v/node-uploadx.svg
+[npm-image]: https://img.shields.io/npm/v/node-uploadx.svg?style=flat-square
 [npm-url]: https://www.npmjs.com/package/node-uploadx
-[gha-image]: https://github.com/kukhariev/node-uploadx/workflows/CI/badge.svg
-[gha-url]: https://github.com/kukhariev/node-uploadx
-[comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest
+[gha-image]: https://img.shields.io/github/workflow/status/kukhariev/node-uploadx/CI?label=tests&style=flat-square
+[gha-url]: https://github.com/kukhariev/node-uploadx/actions/workflows/test.yml
+[comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest?style=flat-square
 [comm-url]: https://github.com/kukhariev/node-uploadx/releases/latest
