@@ -156,10 +156,14 @@ export abstract class BaseHandler<TFile extends UploadxFile>
           this.listenerCount(file.status) &&
             this.emit(file.status, { ...file, request: pick(req, ['headers', 'method', 'url']) });
           if (file.status === 'completed') {
-            (req as IncomingMessageWithBody)['_body'] = true;
-            (req as IncomingMessageWithBody)['body'] = file;
-            const completed = (await this.storage.onComplete(file)) as UploadxResponse;
-            next ? next() : this.finish(req, res, completed || file);
+            if (next) {
+              (req as IncomingMessageWithBody)['_body'] = true;
+              (req as IncomingMessageWithBody)['body'] = file;
+              next();
+            } else {
+              const completed = await this.storage.onComplete(file);
+              this.finish(req, res, completed);
+            }
           }
           return;
         }
@@ -265,7 +269,6 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     res: http.ServerResponse,
     response: UploadxResponse
   ): void {
-    const { statusCode, headers, ...body } = response;
-    return this.send(res, { statusCode, body, headers });
+    return this.send(res, response);
   }
 }
