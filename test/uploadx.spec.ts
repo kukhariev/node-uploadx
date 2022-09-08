@@ -18,6 +18,7 @@ describe('::Uploadx', () => {
   const uploadx2 = new Uploadx({
     storage: new DiskStorage({
       ...storageOptions,
+      onComplete: () => 'completed',
       onError: ({ statusCode, body }) => {
         const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
         return {
@@ -250,8 +251,16 @@ describe('::Uploadx', () => {
     });
   });
 
+  describe('onComplete', () => {
+    it('should return custom complete response', async () => {
+      const uri = (await request(app).post(path2).send(file1)).header.location as string;
+      const res = await request(app).put(uri).send(testfile.asBuffer);
+      expect(res.text).toBe('completed');
+    });
+  });
+
   describe('onError', () => {
-    it('should return custom eeror response', async () => {
+    it('should return custom error response', async () => {
       const res = await request(app)
         .post(path2)
         .send({ ...file2, size: 10e10 });
