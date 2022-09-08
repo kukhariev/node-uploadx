@@ -9,6 +9,7 @@ import {
   HttpError,
   HttpErrorBody,
   isEqual,
+  isRecord,
   Locker,
   Logger,
   LogLevel,
@@ -101,7 +102,7 @@ const LOCK_TIMEOUT = 300; // seconds
 export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
-  onComplete: (file: TFile) => Promise<any> | any;
+  onComplete: (file: TFile) => Promise<UploadxResponse>;
   onError: (err: HttpError) => UploadxResponse;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -119,7 +120,14 @@ export abstract class BaseStorage<TFile extends File> {
     const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
     this.path = opts.path;
-    this.onComplete = opts.onComplete;
+    this.onComplete = async file => {
+      const response = (await opts.onComplete(file)) as UploadxResponse;
+      if (isRecord(response)) {
+        const { statusCode, headers, body, ...rest } = response;
+        return { statusCode, headers, body: body ?? rest };
+      }
+      return { body: response ?? file };
+    };
     this.onError = opts.onError;
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
