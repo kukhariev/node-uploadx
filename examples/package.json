@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "cp-file": "9.1.0",
-    "dotenv": "16.0.1",
+    "dotenv": "16.0.2",
     "express": "4.18.1",
     "fastify": "3.29.0",
     "middie": "6.1.0",
