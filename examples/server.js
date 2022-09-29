@@ -15,19 +15,39 @@ const apiRedirect = (req, res, next) => {
   next();
 };
 
+app.get('/healthcheck', (req, res) => {
+  const healthcheck = {
+    uptime: process.uptime(),
+    message: 'OK',
+    timestamp: Date.now()
+  };
+
+  try {
+    res.send(healthcheck);
+  } catch (error) {
+    healthcheck.message = error;
+    res.status(503).send(healthcheck);
+  }
+});
+
+app.use(cors());
+
 const opts = {
   directory: 'upload',
   maxUploadSize: '2GB',
   allowMIME: ['video/*', 'image/*'],
   expiration: { maxAge: '1h', purgeInterval: '10min' },
-  logLevel: process.env.LOG_LEVEL || 'info'
+  logLevel: process.env.LOG_LEVEL || 'info',
+  onComplete: file => {
+    console.log('File upload complete: ', file);
+    return file;
+  }
 };
-
-app.use(cors());
-app.use(apiRedirect);
 
 app.use('/uploadx', uploadx(opts));
 app.use('/tus', tus(opts));
 app.use('/multipart', multipart({ ...opts, maxUploadSize: '100MB' }));
+
+app.use(apiRedirect);
 
 app.listen(PORT, () => console.log('listening on port:', PORT));
