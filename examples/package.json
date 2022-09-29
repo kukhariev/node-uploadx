@@ -4,17 +4,19 @@
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
-    "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
     "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
+    "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
     "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
-    "node": "tsnd node-http-server",
     "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
-    "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation"
+    "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation",
+    "plain-nodejs": "tsnd node-http-server",
+    "server": "tsnd -r dotenv/config server"
   },
   "dependencies": {
+    "cors": "2.8.5",
     "cp-file": "9.1.0",
     "dotenv": "16.0.1",
     "express": "4.18.1",
@@ -22,10 +24,11 @@
     "middie": "6.1.0",
     "node-uploadx": "^6.0.0",
     "pino": "8.4.0",
-    "ts-node-dev": "2.0.0",
     "winston": "3.8.1"
   },
   "devDependencies": {
-    "@types/express": "4.17.13"
+    "@types/cors": "2.8.12",
+    "@types/express": "4.17.13",
+    "ts-node-dev": "2.0.0"
   }
 }
