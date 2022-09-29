@@ -23,10 +23,10 @@
   "engines": {
     "node": ">=14.18.20",
     "npm": "use yarn instead",
-    "yarn": ">=1.22.15"
+    "yarn": ">=1.22.5"
   },
   "scripts": {
-    "start": "yarn --cwd examples run basic",
+    "start": "yarn build & yarn --cwd examples run server",
     "build": "tsc --build packages",
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",

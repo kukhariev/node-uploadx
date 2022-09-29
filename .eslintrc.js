@@ -75,6 +75,16 @@ module.exports = {
         '@typescript-eslint/explicit-function-return-type': 'off',
         'no-console': 'off'
       }
+    },
+    {
+      files: ['examples/**/*.js'],
+      rules: {
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/restrict-template-expressions': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off'
+      }
     }
   ]
 };
