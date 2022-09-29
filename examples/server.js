@@ -18,6 +18,7 @@ const apiRedirect = (req, res, next) => {
 const opts = {
   directory: 'upload',
   maxUploadSize: '2GB',
+  useRelativeLocation: true,
   allowMIME: ['video/*', 'image/*'],
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   logLevel: process.env.LOG_LEVEL || 'info'
