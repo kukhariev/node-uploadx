@@ -1,5 +1,5 @@
 import { DiskFile, DiskStorage, Uploadx } from '@uploadx/core';
-import * as copyFile from 'cp-file';
+import { copyFile } from 'cp-file';
 import * as express from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,8 +26,10 @@ const onComplete: express.RequestHandler = (req, res) => {
     const destination = path.resolve(moveTo, file.originalName);
     void (async () => {
       try {
-        await copyFile(source, destination).on('progress', ({ percent }) => {
-          moving.percent = percent * 100;
+        await copyFile(source, destination, {
+          onProgress: ({ percent }) => {
+            moving.percent = percent * 100;
+          }
         });
         await fs.promises.unlink(source);
         moving.status = 'done';
