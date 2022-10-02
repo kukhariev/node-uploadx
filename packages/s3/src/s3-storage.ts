@@ -3,14 +3,12 @@ import {
   CompleteMultipartUploadCommand,
   CompleteMultipartUploadOutput,
   CreateMultipartUploadCommand,
-  CreateMultipartUploadRequest,
-  HeadBucketCommand,
   ListPartsCommand,
   Part,
   S3Client,
   S3ClientConfig,
   UploadPartCommand,
-  UploadPartRequest
+  waitUntilBucketExists
 } from '@aws-sdk/client-s3';
 import { AbortController } from '@aws-sdk/abort-controller';
 import { fromIni } from '@aws-sdk/credential-providers';
@@ -142,7 +140,7 @@ export class S3Storage extends BaseStorage<S3File> {
       }
     } catch {}
 
-    const params: CreateMultipartUploadRequest = {
+    const params = {
       Bucket: this.bucket,
       Key: file.name,
       ContentType: file.contentType,
@@ -178,7 +176,7 @@ export class S3Storage extends BaseStorage<S3File> {
         }
         const checksumMD5 = part.checksumAlgorithm === 'md5' ? part.checksum : '';
         const partNumber = file.Parts.length + 1;
-        const params: UploadPartRequest = {
+        const params = {
           Bucket: this.bucket,
           Key: file.name,
           UploadId: file.UploadId,
@@ -217,6 +215,10 @@ export class S3Storage extends BaseStorage<S3File> {
     return [{ id } as S3File];
   }
 
+  accessCheck(maxWaitTime = 30): Promise<any> {
+    return waitUntilBucketExists({ client: this.client, maxWaitTime }, { Bucket: this.bucket });
+  }
+
   protected _onComplete = (file: S3File): Promise<[CompleteMultipartUploadOutput, any]> => {
     return Promise.all([this._completeMultipartUpload(file), this.deleteMeta(file.id)]);
   };
@@ -247,9 +249,5 @@ export class S3Storage extends BaseStorage<S3File> {
     } catch (err) {
       this.logger.error('_abortMultipartUploadError: ', err);
     }
-  }
-
-  private async accessCheck(): Promise<any> {
-    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 }
