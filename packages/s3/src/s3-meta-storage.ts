@@ -47,7 +47,8 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     const params = {
       Bucket: this.bucket,
       Key: this.getMetaName(id),
-      Metadata: { metadata }
+      Metadata: { metadata },
+      ContentLength: 0
     };
     await this.client.send(new PutObjectCommand(params));
     return file;
