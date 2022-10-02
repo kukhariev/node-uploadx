@@ -95,7 +95,7 @@
     "@aws-sdk/util-utf8-browser" "^3.0.0"
     tslib "^1.11.1"
 
-"@aws-sdk/abort-controller@3.178.0":
+"@aws-sdk/abort-controller@3.178.0", "@aws-sdk/abort-controller@^3.47.0":
   version "3.178.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/abort-controller/-/abort-controller-3.178.0.tgz#fd189d62a689add822c3f40b2827f887639f015c"
   integrity sha512-ptDkCB06BJrYdhKzamM9yI15LxcGkPczY80hzKAY/aecm09alnW27uCt5HJJx2nCd18IUH28ZO1sc7DTLOWb3A==

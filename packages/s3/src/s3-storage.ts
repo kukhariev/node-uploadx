@@ -12,6 +12,7 @@ import {
   UploadPartCommand,
   UploadPartRequest
 } from '@aws-sdk/client-s3';
+import { AbortController } from '@aws-sdk/abort-controller';
 import { fromIni } from '@aws-sdk/credential-providers';
 import {
   BaseStorage,
@@ -186,7 +187,9 @@ export class S3Storage extends BaseStorage<S3File> {
           ContentLength: part.contentLength || 0,
           ContentMD5: checksumMD5
         };
-        const { ETag } = await this.client.send(new UploadPartCommand(params));
+        const abortSignal = new AbortController().signal;
+        part.body.on('error', err => abortSignal.abort());
+        const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
         const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
         file.Parts = [...file.Parts, uploadPart];
         file.bytesWritten += part.contentLength || 0;
