@@ -5,17 +5,19 @@ const PORT = process.env.PORT || 3002;
 
 const app = express();
 
-const storage = new GCStorage({ maxUploadSize: '1GB' });
+const storage = new GCStorage({
+  maxUploadSize: '1GB',
+  onComplete: ({ uri, id }) => {
+    console.log(`File upload complete, storage path: ${uri}`);
+    // send gcs link to client
+    return { id, link: uri };
+  }
+});
+
 const uploadx = new Uploadx({ storage });
 
-uploadx.on('error', err => console.error(err));
-uploadx.on('created', file => console.info(file));
-
-storage.onComplete = ({ uri, id }) => {
-  console.log(`File upload complete, storage path: ${uri}`);
-  // send gcs link to client
-  return { id, link: uri };
-};
+uploadx.on('error', console.error);
+uploadx.on('created', console.info);
 
 app.use('/files', uploadx.handle);
 
