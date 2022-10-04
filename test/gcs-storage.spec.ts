@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { AbortSignal } from 'abort-controller';
+import { IncomingMessage } from 'http';
+import fetch from 'node-fetch';
 import { FilePart } from '../packages/core/src';
 import {
   buildContentRange,
@@ -8,10 +11,7 @@ import {
   GCStorageOptions,
   getRangeEnd
 } from '../packages/gcs/src';
-import { AbortSignal } from 'abort-controller';
-import { IncomingMessage } from 'http';
-import { authRequest, metafile, storageOptions, testfile } from './shared';
-import fetch from 'node-fetch';
+import { authRequest, deepClone, metafile, storageOptions, testfile } from './shared';
 
 jest.mock('node-fetch');
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
@@ -26,25 +26,22 @@ describe('GCStorage', () => {
   jest.useFakeTimers().setSystemTime(new Date('2022-02-02'));
   let storage: GCStorage;
   const uri = 'http://api.com?upload_id=123456789';
-  const metafileResponse = (): { data: GCSFile } => ({
-    data: { ...metafile, uri, createdAt: new Date().toISOString() }
-  });
-  const _createResponse = (): any => ({ headers: { location: uri } });
   const req = authRequest({ headers: { origin: 'http://api.com' } } as IncomingMessage);
+  const metafileResponse = (): { data: GCSFile } =>
+    deepClone({
+      data: { ...metafile, uri, createdAt: new Date().toISOString() }
+    });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
     storage = new GCStorage({ ...(storageOptions as GCStorageOptions), bucket: 'test-bucket' });
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
       mockAuthRequest.mockRejectedValueOnce({ code: 404, detail: 'meta not found' }); // getMeta
-      mockAuthRequest.mockResolvedValueOnce(_createResponse());
+      mockAuthRequest.mockResolvedValueOnce({ headers: { location: uri } }); //
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
       const gcsFile = await storage.create(req, metafile);
       expect(gcsFile).toMatchSnapshot();

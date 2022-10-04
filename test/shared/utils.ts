@@ -12,3 +12,7 @@ export const hash = (
 ): string => {
   return createHash(algorithm).update(buf).digest(encoding);
 };
+
+export function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj)) as T;
+}
