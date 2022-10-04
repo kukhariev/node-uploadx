@@ -3,26 +3,26 @@ import { vol } from 'memfs';
 import { DiskStorage, fsp } from '../packages/core/src';
 import {
   authRequest,
+  deepClone,
   FileWriteStream,
   metafile,
   RequestReadStream,
   storageOptions
 } from './shared';
 
-const directory = 'ds-test';
-
 jest.mock('fs/promises');
 jest.mock('fs');
 
 describe('DiskStorage', () => {
   jest.useFakeTimers({ doNotFake: ['setTimeout'] }).setSystemTime(new Date('2022-02-02'));
+  const directory = 'ds-test';
   const options = { ...storageOptions, directory };
   let storage: DiskStorage;
   let readStream: RequestReadStream;
   const req = authRequest();
   const createFile = (): Promise<any> => {
     storage = new DiskStorage(options);
-    return storage.create(req, metafile);
+    return storage.create(req, deepClone(metafile));
   };
 
   describe('initialization', () => {
@@ -70,10 +70,11 @@ describe('DiskStorage', () => {
     it('should set status and bytesWritten', async () => {
       readStream.__mockSend();
       const file = await storage.write({ ...metafile, start: 0, body: readStream });
+      expect(file.status).toBe('part');
       expect(file.bytesWritten).toBe(5);
     });
 
-    it('should set status and bytesWritten (resume)', async () => {
+    it('should return bytesWritten (resume)', async () => {
       const file = await storage.write({ ...metafile });
       expect(file.bytesWritten).toBe(0);
     });
