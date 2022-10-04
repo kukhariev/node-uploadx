@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { hash, isRecord, uid } from '../utils';
+import { hash, isRecord, extendObject, uid } from '../utils';
 import { isAbsolute } from 'path';
 
 export function isExpired(file: File): boolean {
@@ -103,13 +103,9 @@ export function isMetadata(raw: unknown): raw is Metadata {
   return isRecord(raw);
 }
 
-export function updateMetadata(file: File, metadata: unknown): void {
-  if (isMetadata(file.metadata) && isMetadata(metadata)) {
-    file.metadata = { ...file.metadata, ...metadata };
-    file.originalName = extractOriginalName(file.metadata) || file.originalName;
-  } else {
-    file.metadata = metadata as Metadata;
-  }
+export function updateMetadata<T extends File>(file: T, metadata: Partial<T>): void {
+  extendObject(file, metadata);
+  file.originalName = extractOriginalName(file.metadata) || file.originalName;
 }
 
 export function getFileStatus(file: File): UploadxEventType {

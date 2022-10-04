@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { vol } from 'memfs';
 import { IncomingMessage } from 'http';
+import { vol } from 'memfs';
 import { join } from 'path';
 import * as utils from '../packages/core/src';
 import { testRoot } from './shared';
@@ -187,6 +187,17 @@ describe('utils', () => {
       const fnvCached = utils.memoize(utils.fnv);
       expect(md5Cached('123456')).toBe('e10adc3949ba59abbe56e057f20f883e');
       expect(fnvCached('123456')).toBe('9995b6aa');
+    });
+
+    it('extendObject', () => {
+      expect(utils.extendObject<object>({ a: 1 }, { a: { b: 1 }, c: null })).toEqual({
+        a: { b: 1 },
+        c: null
+      });
+      expect(utils.extendObject<object>({ a: 1, c: [4] }, { a: { b: 1 }, c: [1, 2, 3] })).toEqual({
+        a: { b: 1 },
+        c: [1, 2, 3]
+      });
     });
   });
 

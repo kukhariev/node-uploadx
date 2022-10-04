@@ -27,11 +27,9 @@ import { ConfigHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
-export type OnComplete<TFile extends File, TResponseBody = any> = (
-  file: TFile
-) => Promise<TResponseBody> | TResponseBody;
+export type OnComplete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
 
-export type OnError<TResponseBody = HttpErrorBody> = (error: HttpError<TResponseBody>) => any;
+export type OnError<TBody = HttpErrorBody> = (error: HttpError<TBody>) => any;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
 
@@ -63,7 +61,7 @@ export interface BaseStorageOptions<T extends File> {
   useRelativeLocation?: boolean;
   /** Completed callback */
   onComplete?: OnComplete<T>;
-  /** Customise error response */
+  /** Customize error response */
   onError?: OnError;
   /** Node http base path */
   path?: string;
@@ -261,10 +259,10 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Updates user-defined metadata for an upload
+   * Set user-provided metadata as key-value pairs
    * @experimental
    */
-  async update({ id }: FileQuery, { metadata }: Partial<File>): Promise<TFile> {
+  async update({ id }: FileQuery, metadata: Partial<File>): Promise<TFile> {
     const file = await this.getMeta(id);
     updateMetadata(file, metadata);
     await this.saveMeta(file);

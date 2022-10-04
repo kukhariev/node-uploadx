@@ -113,10 +113,23 @@ describe('::Uploadx', () => {
   });
 
   describe('PATCH', () => {
-    it('update metadata', async () => {
+    it('update metadata and originalName', async () => {
       const uri = (await create(file2)).header.location as string;
-      const res = await request(app).patch(uri).send({ name: 'newname.mp4' }).expect(200);
-      expect(res.body.name).toBe('newname.mp4');
+      const res = await request(app)
+        .patch(uri)
+        .send({ metadata: { name: 'newname.mp4' } })
+        .expect(200);
+      expect(res.body.metadata.name).toBe('newname.mp4');
+      expect(res.body.originalName).toBe('newname.mp4');
+    });
+
+    it('set non metadata', async () => {
+      const uri = (await create(file2)).header.location as string;
+      const res = await request(app)
+        .patch(uri)
+        .send({ custom: { property: 'updated' } })
+        .expect(200);
+      expect(res.body.custom.property).toBe('updated');
     });
   });
 

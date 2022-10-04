@@ -39,9 +39,9 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadata = await this.getMetadata(req);
-    const file = await this.storage.update({ id }, { metadata, id });
-    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
-    this.send(res, { body: file.metadata, headers });
+    const file = await this.storage.update({ id }, metadata);
+    const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, { ...file, id }) });
+    this.send(res, { body: file, headers });
     return file;
   }
 
