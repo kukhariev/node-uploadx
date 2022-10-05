@@ -28,7 +28,13 @@ import { ConfigHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
+export type OnCreate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
+export type OnUpdate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
 export type OnComplete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
+export type OnDelete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
 
 export type OnError<TBody = HttpErrorBody> = (error: HttpError<TBody>) => any;
 
@@ -60,8 +66,14 @@ export interface BaseStorageOptions<T extends File> {
   userIdentifier?: UserIdentifier;
   /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
-  /** Completed callback */
+  /** Callback function that is called when a new upload is created */
+  onCreate?: OnCreate<T>;
+  /** Callback function that is called when an upload is updated */
+  onUpdate?: OnUpdate<T>;
+  /** Callback function that is called when an upload is completed */
   onComplete?: OnComplete<T>;
+  /** Callback function that is called when an upload is cancelled */
+  onDelete?: OnDelete<T>;
   /** Customize error response */
   onError?: OnError;
   /** Node http base path */
@@ -74,6 +86,7 @@ export interface BaseStorageOptions<T extends File> {
   metaStorage?: MetaStorage<T>;
   /**
    * Automatic cleaning of abandoned and completed uploads
+   *
    * @example
    * ```ts
    * app.use(
@@ -101,7 +114,10 @@ const LOCK_TIMEOUT = 300; // seconds
 export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
+  onCreate: (file: TFile) => Promise<UploadxResponse>;
+  onUpdate: (file: TFile) => Promise<UploadxResponse>;
   onComplete: (file: TFile) => Promise<UploadxResponse>;
+  onDelete: (file: TFile) => Promise<UploadxResponse>;
   onError: (err: HttpError) => UploadxResponse;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -119,7 +135,10 @@ export abstract class BaseStorage<TFile extends File> {
     const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
     this.path = opts.path;
+    this.onCreate = normalizeHookResponse(opts.onCreate);
+    this.onUpdate = normalizeHookResponse(opts.onUpdate);
     this.onComplete = normalizeHookResponse(opts.onComplete);
+    this.onDelete = normalizeHookResponse(opts.onDelete);
     this.onError = normalizeOnErrorResponse(opts.onError);
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);

@@ -3,12 +3,15 @@ import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
 export class ConfigHandler {
-  static defaults = {
+  static defaults: BaseStorageOptions<File> = {
     allowMIME: ['*/*'],
     maxUploadSize: '5TB',
     filename: ({ id }: File): string => id,
     useRelativeLocation: false,
-    onComplete: () => null,
+    onComplete: (file: File) => file,
+    onUpdate: (file: File) => file,
+    onCreate: () => '',
+    onDelete: () => '',
     onError: ({ statusCode, body, headers }: HttpError) => {
       return { statusCode, body: { error: body }, headers };
     },
