@@ -17,7 +17,6 @@ import {
   fail,
   getBaseUrl,
   hash,
-  HttpErrorBody,
   IncomingMessageWithBody,
   isUploadxError,
   isValidationError,
@@ -231,10 +230,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       : !isValidationError(error)
       ? this.storage.normalizeError(error)
       : error;
-    const { statusCode = 200, headers, ...rest } = httpError;
-    const body = httpError.body ? httpError.body : (rest as HttpErrorBody);
-    const response = { statusCode, body, headers };
-    this.send(res, this.storage.onError(response) || response);
+    const response = this.storage.onError(httpError);
+    this.send(res, response);
   }
 
   /**

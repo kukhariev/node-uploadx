@@ -9,10 +9,11 @@ import {
   HttpError,
   HttpErrorBody,
   isEqual,
-  isRecord,
   Locker,
   Logger,
   LogLevel,
+  normalizeHookResponse,
+  normalizeOnErrorResponse,
   toMilliseconds,
   typeis,
   UploadxResponse,
@@ -118,15 +119,8 @@ export abstract class BaseStorage<TFile extends File> {
     const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
     this.path = opts.path;
-    this.onComplete = async file => {
-      const response = (await opts.onComplete(file)) as UploadxResponse;
-      if (isRecord(response)) {
-        const { statusCode, headers, body, ...rest } = response;
-        return { statusCode, headers, body: body ?? rest };
-      }
-      return { body: response ?? file };
-    };
-    this.onError = opts.onError;
+    this.onComplete = normalizeHookResponse(opts.onComplete);
+    this.onError = normalizeOnErrorResponse(opts.onError);
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
