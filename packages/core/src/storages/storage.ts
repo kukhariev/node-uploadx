@@ -9,10 +9,11 @@ import {
   HttpError,
   HttpErrorBody,
   isEqual,
-  isRecord,
   Locker,
   Logger,
   LogLevel,
+  normalizeHookResponse,
+  normalizeOnErrorResponse,
   toMilliseconds,
   typeis,
   UploadxResponse,
@@ -27,11 +28,15 @@ import { ConfigHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
-export type OnComplete<TFile extends File, TResponseBody = any> = (
-  file: TFile
-) => Promise<TResponseBody> | TResponseBody;
+export type OnCreate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
 
-export type OnError<TResponseBody = HttpErrorBody> = (error: HttpError<TResponseBody>) => any;
+export type OnUpdate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
+export type OnComplete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
+export type OnDelete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+
+export type OnError<TBody = HttpErrorBody> = (error: HttpError<TBody>) => any;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
 
@@ -61,9 +66,15 @@ export interface BaseStorageOptions<T extends File> {
   userIdentifier?: UserIdentifier;
   /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
-  /** Completed callback */
+  /** Callback function that is called when a new upload is created */
+  onCreate?: OnCreate<T>;
+  /** Callback function that is called when an upload is updated */
+  onUpdate?: OnUpdate<T>;
+  /** Callback function that is called when an upload is completed */
   onComplete?: OnComplete<T>;
-  /** Customise error response */
+  /** Callback function that is called when an upload is cancelled */
+  onDelete?: OnDelete<T>;
+  /** Customize error response */
   onError?: OnError;
   /** Node http base path */
   path?: string;
@@ -75,6 +86,7 @@ export interface BaseStorageOptions<T extends File> {
   metaStorage?: MetaStorage<T>;
   /**
    * Automatic cleaning of abandoned and completed uploads
+   *
    * @example
    * ```ts
    * app.use(
@@ -102,7 +114,10 @@ const LOCK_TIMEOUT = 300; // seconds
 export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
+  onCreate: (file: TFile) => Promise<UploadxResponse>;
+  onUpdate: (file: TFile) => Promise<UploadxResponse>;
   onComplete: (file: TFile) => Promise<UploadxResponse>;
+  onDelete: (file: TFile) => Promise<UploadxResponse>;
   onError: (err: HttpError) => UploadxResponse;
   maxUploadSize: number;
   maxMetadataSize: number;
@@ -120,15 +135,11 @@ export abstract class BaseStorage<TFile extends File> {
     const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
     this.path = opts.path;
-    this.onComplete = async file => {
-      const response = (await opts.onComplete(file)) as UploadxResponse;
-      if (isRecord(response)) {
-        const { statusCode, headers, body, ...rest } = response;
-        return { statusCode, headers, body: body ?? rest };
-      }
-      return { body: response ?? file };
-    };
-    this.onError = opts.onError;
+    this.onCreate = normalizeHookResponse(opts.onCreate);
+    this.onUpdate = normalizeHookResponse(opts.onUpdate);
+    this.onComplete = normalizeHookResponse(opts.onComplete);
+    this.onDelete = normalizeHookResponse(opts.onDelete);
+    this.onError = normalizeOnErrorResponse(opts.onError);
     this.namingFunction = opts.filename;
     this.maxUploadSize = bytes.parse(opts.maxUploadSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
@@ -261,10 +272,10 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Updates user-defined metadata for an upload
+   * Set user-provided metadata as key-value pairs
    * @experimental
    */
-  async update({ id }: FileQuery, { metadata }: Partial<File>): Promise<TFile> {
+  async update({ id }: FileQuery, metadata: Partial<File>): Promise<TFile> {
     const file = await this.getMeta(id);
     updateMetadata(file, metadata);
     await this.saveMeta(file);

@@ -18,6 +18,8 @@ describe('::Uploadx', () => {
   const uploadx2 = new Uploadx({
     storage: new DiskStorage({
       ...storageOptions,
+      onCreate: () => 'created',
+      onUpdate: () => 'updated',
       onComplete: () => 'completed',
       onError: ({ statusCode, body }) => {
         const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
@@ -113,10 +115,23 @@ describe('::Uploadx', () => {
   });
 
   describe('PATCH', () => {
-    it('update metadata', async () => {
+    it('update metadata and originalName', async () => {
       const uri = (await create(file2)).header.location as string;
-      const res = await request(app).patch(uri).send({ name: 'newname.mp4' }).expect(200);
-      expect(res.body.name).toBe('newname.mp4');
+      const res = await request(app)
+        .patch(uri)
+        .send({ metadata: { name: 'newname.mp4' } })
+        .expect(200);
+      expect(res.body.metadata.name).toBe('newname.mp4');
+      expect(res.body.originalName).toBe('newname.mp4');
+    });
+
+    it('set non metadata', async () => {
+      const uri = (await create(file2)).header.location as string;
+      const res = await request(app)
+        .patch(uri)
+        .send({ custom: { property: 'updated' } })
+        .expect(200);
+      expect(res.body.custom.property).toBe('updated');
     });
   });
 
@@ -251,8 +266,23 @@ describe('::Uploadx', () => {
     });
   });
 
+  describe('onCreate', () => {
+    it('should return custom response', async () => {
+      const res = await request(app).post(path2).send(file1);
+      expect(res.text).toBe('created');
+    });
+  });
+
+  describe('onUpdate', () => {
+    it('should return custom response', async () => {
+      const uri = (await request(app).post(path2).send(file1)).header.location as string;
+      const res = await request(app).patch(uri).send({ custom: true });
+      expect(res.text).toBe('updated');
+    });
+  });
+
   describe('onComplete', () => {
-    it('should return custom complete response', async () => {
+    it('should return custom response', async () => {
       const uri = (await request(app).post(path2).send(file1)).header.location as string;
       const res = await request(app).put(uri).send(testfile.asBuffer);
       expect(res.text).toBe('completed');

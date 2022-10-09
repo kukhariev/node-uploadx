@@ -31,17 +31,20 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     file.bytesWritten > 0 && (headers['Range'] = `bytes=0-${file.bytesWritten - 1}`);
     setHeaders(res, headers);
     if (file.status === 'completed') return file;
-    const statusCode = file.bytesWritten > 0 ? 200 : 201;
-    this.send(res, { statusCode });
+    const response = await this.storage.onCreate(file);
+    response.statusCode = file.bytesWritten > 0 ? 200 : 201;
+    this.send(res, response);
     return file;
   }
 
   async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadata = await this.getMetadata(req);
-    const file = await this.storage.update({ id }, { metadata, id });
+    const file = await this.storage.update({ id }, metadata);
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
-    this.send(res, { body: file.metadata, headers });
+    setHeaders(res, headers);
+    const response = await this.storage.onUpdate(file);
+    this.send(res, response);
     return file;
   }
 
@@ -68,7 +71,6 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     headers['Range'] = `bytes=0-${file.bytesWritten - 1}`;
     res.statusMessage = 'Resume Incomplete';
     this.send(res, { statusCode: Uploadx.RESUME_STATUS_CODE, headers });
-
     return file;
   }
 
@@ -78,7 +80,8 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete({ id });
-    this.send(res, { statusCode: 204 });
+    const response = await this.storage.onDelete(file);
+    this.send(res, { statusCode: 204, ...response });
     return file;
   }
 

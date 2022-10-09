@@ -1,5 +1,6 @@
 import * as http from 'http';
-import { getLastOne } from './primitives';
+import { HttpError, HttpErrorBody } from './errors';
+import { getLastOne, isRecord } from './primitives';
 
 export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
   body?: T;
@@ -149,4 +150,28 @@ export function tupleToResponse<T extends ResponseBody>(
   if (!Array.isArray(response)) return response;
   const [statusCode, body, headers] = response;
   return { statusCode, body, headers };
+}
+
+export function normalizeHookResponse<T>(fn: (file: T) => Promise<UploadxResponse>) {
+  return async (file: T) => {
+    const response = await fn(file);
+    if (isRecord(response)) {
+      const { statusCode, headers, body, ...rest } = response;
+      return { statusCode, headers, body: body ?? rest };
+    }
+    return { body: response ?? '' };
+  };
+}
+
+/*
+@internal
+ */
+export function normalizeOnErrorResponse(fn: (error: HttpError) => UploadxResponse) {
+  return (error: HttpError) => {
+    if (isRecord(error)) {
+      const { statusCode, headers, body, ...rest } = error;
+      return fn({ statusCode, headers, body: body ?? (rest as HttpErrorBody) });
+    }
+    return fn({ body: error ?? 'unknown error', statusCode: 500 });
+  };
 }

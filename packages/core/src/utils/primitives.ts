@@ -69,6 +69,21 @@ export function isRecord(x: unknown): x is Record<any, any> {
   return x !== null && typeof x === 'object' && !Array.isArray(x);
 }
 
+export function extendObject<T extends Record<any, any>>(target: T, ...sources: Partial<T[]>): T {
+  if (!sources.length) return target;
+  const source = sources.shift();
+  if (isRecord(source)) {
+    for (const key in source) {
+      if (isRecord(source[key])) {
+        if (!isRecord(target[key])) Object.assign(target, { [key]: {} });
+        extendObject(target[key] as any, source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+  return extendObject(target, ...sources);
+}
 /**
  * Convert a human-readable duration to ms
  */

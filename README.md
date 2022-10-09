@@ -3,7 +3,8 @@
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
 [![commits since latest release][comm-image]][comm-url]
 
-Resumable upload middleware for [express](https://github.com/expressjs/express), [fastify](https://github.com/fastify/fastify) and plain node.js.
+Resumable upload middleware for [express](https://github.com/expressjs/express)
+, [fastify](https://github.com/fastify/fastify) and plain node.js.
 Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 ## ✨ Features
@@ -82,8 +83,11 @@ Some available options: :
 | `useRelativeLocation` |      `boolean`       |     `false`      | _Use relative urls_                                          |
 | `filename`            |      `Function`      |                  | _File naming function_                                       |
 | `userIdentifier`      |   `UserIdentifier`   |                  | _Get user identity_                                          |
-| `onComplete`          |     `OnComplete`     |                  | _On upload complete callback_                                |
-| `onError`             |      `OnError`       |                  | _Customise error response_                                   |
+| `onCreate`            |      `OnCreate`      |                  | _Callback that is called when a new upload is created_       |
+| `onUpdate`            |      `OnUpdate`      |                  | _Callback that is called when an upload is updated_          |
+| `onComplete`          |     `OnComplete`     |                  | _Callback that is called when an upload is completed_        |
+| `onDelete`            |      `OnDelete`      |                  | _Callback that is called when an upload is cancelled_        |
+| `onError`             |      `OnError`       |                  | _Customize error response_                                   |
 | `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
 | `logger`              |       `Logger`       |                  | _Custom logger injection_                                    |
 | `logLevel`            |      `LogLevel`      |     `"none"`     | _Set built-in logger severity level_                         |
