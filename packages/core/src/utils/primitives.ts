@@ -92,6 +92,13 @@ export function toMilliseconds(value: string | number | undefined): number | nul
   if (!value) return null;
   return duration(value);
 }
+/**
+ * Convert a human-readable duration to seconds
+ */
+export function toSeconds(value: string | number): number {
+  if (isNumber(value)) return value;
+  return duration(value, 'sec');
+}
 
 /**
  * Returns a first element of an array
