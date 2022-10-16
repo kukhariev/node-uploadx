@@ -39,6 +39,7 @@ import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
 const BUCKET_NAME = 'node-uploadx';
+const MIN_PART_SIZE = 5 * 1024 * 1024;
 const PART_SIZE = 16 * 1024 * 1024;
 
 export class S3File extends File {
@@ -56,7 +57,13 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * @defaultValue 'node-uploadx'
      */
     bucket?: string;
-    keyFile?: string;
+    /**
+     *   Specifying access rules for uploaded files
+     */
+    acl?: 'private' | 'public-read' | string;
+    /**
+     * Force compatible client upload directly to S3 storage
+     */
     clientDirectUpload?: boolean;
     partSize?: number | string;
     /**
@@ -80,6 +87,10 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * ```
      */
     metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
+    /**
+     * @deprecated Use standard auth providers
+     */
+    keyFile?: string;
   };
 
 /**
@@ -111,6 +122,9 @@ export class S3Storage extends BaseStorage<S3File> {
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
     keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
     this._partSize = bytes.parse(this.config.partSize || PART_SIZE);
+    if (this._partSize < MIN_PART_SIZE) {
+      throw new Error('Minimum allowed partSize value is 5MB');
+    }
     if (this.config.clientDirectUpload) {
       this.onCreate = async file => ({ body: file }); // TODO: remove hook
     }
@@ -157,7 +171,8 @@ export class S3Storage extends BaseStorage<S3File> {
       Bucket: this.bucket,
       Key: file.name,
       ContentType: file.contentType,
-      Metadata: mapValues(file.metadata, encodeURI)
+      Metadata: mapValues(file.metadata, encodeURI),
+      ACL: this.config.acl
     };
     const { UploadId } = await this.client.send(new CreateMultipartUploadCommand(params));
     if (!UploadId) {
@@ -263,6 +278,7 @@ export class S3Storage extends BaseStorage<S3File> {
     file.partSize ??= this._partSize;
     const partsNum = ~~(file.size / this._partSize) + 1;
     const promises = [];
+    const expiresIn = ~~toSeconds(this.config.expiration?.maxAge || '6hrs');
     for (let i = 0; i < partsNum; i++) {
       const partCommandInput = {
         Bucket: this.bucket,
@@ -271,9 +287,7 @@ export class S3Storage extends BaseStorage<S3File> {
         PartNumber: i + 1
       };
       promises.push(
-        getSignedUrl(this.client, new UploadPartCommand(partCommandInput), {
-          expiresIn: ~~toSeconds(this.config.expiration?.maxAge || '6hrs')
-        })
+        getSignedUrl(this.client, new UploadPartCommand(partCommandInput), { expiresIn })
       );
     }
     return Promise.all(promises);
