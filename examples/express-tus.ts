@@ -10,7 +10,7 @@ const opts: DiskStorageOptions = {
   directory: uploadDirectory
 };
 
-app.use('/files', tus.upload(opts), async (req, res) => {
+app.use('/files', tus.upload(opts), (req, res) => {
   const file = req.body as DiskFile;
   console.log('File upload complete: ', file.originalName);
   return res.json(file);

@@ -39,7 +39,7 @@
 
   },
   "devDependencies": {
-    "aws-sdk-client-mock": "^1.0.0",
+    "aws-sdk-client-mock": "^2.0.0",
     "@aws-sdk/types": "^3.47.0"
   },
   "peerDependencies": {
