@@ -43,6 +43,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const file = await this.storage.update({ id }, metadata);
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     setHeaders(res, headers);
+    if (file.status === 'completed') return file;
     const response = await this.storage.onUpdate(file);
     this.send(res, response);
     return file;
