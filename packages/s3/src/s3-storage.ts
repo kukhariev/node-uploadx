@@ -44,7 +44,7 @@ const PART_SIZE = 16 * 1024 * 1024;
 
 export class S3File extends File {
   Parts?: Part[];
-  UploadId = '';
+  UploadId?: string;
   uri?: string;
   partsUrls?: string[];
   partSize?: number;
@@ -245,33 +245,35 @@ export class S3Storage extends BaseStorage<S3File> {
     return [{ id } as S3File];
   }
 
-  async update({ id }: FileQuery, file: Partial<S3File>): Promise<S3File> {
-    if (this.config.clientDirectUpload) return this.buildPresigned(file);
-    return super.update({ id }, file);
+  async update({ id }: FileQuery, metadata: Partial<S3File>): Promise<S3File> {
+    if (this.config.clientDirectUpload) {
+      const file = await this.getMeta(id);
+      return this.buildPresigned({ ...file, ...metadata });
+    }
+    return super.update({ id }, metadata);
   }
 
   accessCheck(maxWaitTime = 30): Promise<any> {
     return waitUntilBucketExists({ client: this.client, maxWaitTime }, { Bucket: this.bucket });
   }
 
-  private async buildPresigned(file: Partial<S3File>): Promise<S3File> {
-    file.partSize ??= this._partSize;
+  private async buildPresigned(file: S3File): Promise<S3File> {
     if (!file.Parts?.length) {
-      file.Parts = await this._getParts(file as S3File);
+      file.Parts = await this._getParts(file);
     }
-    if (!file.partsUrls?.length) {
-      file.partsUrls = await this.getPartsPresignedUrls(file as S3File);
-    }
-
-    if (file.Parts.length === file.partsUrls?.length) {
-      file.bytesWritten = file.size;
-      const [completed] = await this._onComplete(file as S3File);
+    file.bytesWritten = Math.min(file.Parts.length * this._partSize, file.size);
+    file.status = getFileStatus(file);
+    if (file.status === 'completed') {
+      const [completed] = await this._onComplete(file);
       delete file.Parts;
       delete file.partsUrls;
       file.uri = completed.Location;
+      return file;
     }
-    file.status = getFileStatus(file as File);
-    return file as S3File;
+    if (!file.partsUrls?.length) {
+      file.partsUrls = await this.getPartsPresignedUrls(file);
+    }
+    return file;
   }
 
   private async getPartsPresignedUrls(file: S3File): Promise<string[]> {
