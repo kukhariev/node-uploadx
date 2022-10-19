@@ -163,6 +163,20 @@ describe('S3PresignedStorage', () => {
   let storage: S3Storage;
   const req = authRequest();
 
+  const metafileResponse = {
+    Metadata: {
+      metadata: encodeURIComponent(
+        JSON.stringify({
+          ...metafile,
+          createdAt: new Date().toISOString(),
+          bytesWritten: 0,
+          status: 'created',
+          UploadId: '987654321'
+        })
+      )
+    }
+  };
+
   beforeEach(async () => {
     s3Mock.reset();
     storage = new S3Storage(options);
@@ -182,6 +196,7 @@ describe('S3PresignedStorage', () => {
 
   describe('update', () => {
     it('should add partsUrls', async () => {
+      s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
       getSignedUrlMock.mockResolvedValue('https://api.s3.example.com?signed');
       const s3file = await storage.update(metafile, metafile);
@@ -189,6 +204,7 @@ describe('S3PresignedStorage', () => {
     });
 
     it('should complete', async () => {
+      s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       const preCompleted = {
         ...metafile,
         Parts: [{ PartNumber: 1, Size: 64, ETag: '123456789' }],
@@ -198,6 +214,16 @@ describe('S3PresignedStorage', () => {
       };
       s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
       const s3file = await storage.update({ id: metafile.id }, preCompleted);
+      expect(s3file.status).toBe('completed');
+    });
+
+    it('should complete (empty payload)', async () => {
+      s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
+      s3Mock
+        .on(ListPartsCommand)
+        .resolves({ Parts: [{ PartNumber: 1, Size: 64, ETag: '123456789' }] });
+      s3Mock.on(CompleteMultipartUploadCommand).resolves({ Location: '/1234' });
+      const s3file = await storage.update({ id: metafile.id }, {});
       expect(s3file.status).toBe('completed');
     });
   });
