@@ -78,7 +78,7 @@ export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAut
 
 export class GCSFile extends File {
   GCSUploadURI?: string;
-  uri = '';
+  uri?: string;
 }
 
 /**
@@ -140,6 +140,10 @@ export class GCStorage extends BaseStorage<GCSFile> {
       };
     }
     return super.normalizeError(error);
+  }
+
+  accessCheck(): Promise<any> {
+    return this.authClient.request({ url: `${GCSConfig.storageAPI}/${this.bucket}` });
   }
 
   async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
@@ -209,7 +213,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
   }
 
   protected async _write(part: Partial<FilePart> & GCSFile): Promise<number> {
-    const { size, uri, body } = part;
+    const { size, uri = '', body } = part;
     const contentRange = buildContentRange(part);
     const options: Record<string, any> = { method: 'PUT' };
     if (body?.on) {
@@ -245,8 +249,4 @@ export class GCStorage extends BaseStorage<GCSFile> {
   private _onComplete = (file: GCSFile): Promise<any> => {
     return this.deleteMeta(file.id);
   };
-
-  private accessCheck(): Promise<any> {
-    return this.authClient.request({ url: `${GCSConfig.storageAPI}/${this.bucket}` });
-  }
 }
