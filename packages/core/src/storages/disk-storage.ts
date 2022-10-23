@@ -74,6 +74,10 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     return super.normalizeError(err);
   }
 
+  accessCheck(): Promise<void> {
+    return accessCheck(this.directory);
+  }
+
   async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file, req);
@@ -157,9 +161,5 @@ export class DiskStorage extends BaseStorage<DiskFile> {
           return resolve([part.start + dest.bytesWritten]);
         });
     });
-  }
-
-  private accessCheck(): Promise<void> {
-    return accessCheck(this.directory);
   }
 }
