@@ -124,7 +124,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
     this.accessCheck().catch((err: ClientError) => {
       this.isReady = false;
-      this.logger.error('Unable to open bucket: %o', err);
+      this.logger.error('Unable to open bucket: %O', err);
     });
   }
 
@@ -230,7 +230,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
         return range ? getRangeEnd(range) : 0;
       } else if (res.ok) {
         const data = (await res.json()) as Record<string, any>;
-        this.logger.debug('uploaded %o', data);
+        this.logger.debug('uploaded %O', data);
         return size;
       }
       const message = await res.text();
