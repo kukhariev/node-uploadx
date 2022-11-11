@@ -129,7 +129,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
 
   upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
-    req.on('error', err => this.logger.error(`[request error]: %o`, err));
+    req.on('error', err => this.logger.error(`[request error]: %O`, err));
     this.cors.preflight(req, res);
     this.logger.debug(`[request]: %s %s`, req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
@@ -178,7 +178,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         ]) as UploadxError;
         const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent);
-        this.logger.error('[error]: %o', errorEvent);
+        this.logger.error('[error]: %O', errorEvent);
         if ('aborted' in req && req['aborted']) return;
         return this.sendError(res, error);
       });
@@ -226,9 +226,9 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   sendError(res: http.ServerResponse, error: Error): void {
     const httpError = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
-      : !isValidationError(error)
-      ? this.storage.normalizeError(error)
-      : error;
+      : isValidationError(error)
+      ? error
+      : this.storage.normalizeError(error);
     const response = this.storage.onError(httpError);
     this.send(res, response);
   }

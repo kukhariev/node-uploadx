@@ -21,7 +21,7 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
     super(config);
     this.directory = (config?.directory || join(tmpdir(), 'uploadx_meta')).replace(/\\/g, '/');
     this.accessCheck().catch(err => {
-      this.logger.error('[error]: Could not write to directory: %o', err);
+      this.logger.error('[error]: Could not write to directory: %O', err);
     });
   }
 

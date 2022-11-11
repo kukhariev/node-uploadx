@@ -66,7 +66,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     }
     this.accessCheck().catch(err => {
       this.isReady = false;
-      this.logger.error('[error]: Could not write to directory: %o', err);
+      this.logger.error('[error]: Could not write to directory: %O', err);
     });
   }
 
