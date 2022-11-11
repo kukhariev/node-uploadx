@@ -1,5 +1,7 @@
 import * as bytes from 'bytes';
 import * as http from 'http';
+import { setInterval } from 'timers';
+import { inspect } from 'util';
 import {
   Cache,
   ErrorMap,
@@ -21,10 +23,9 @@ import {
   Validator,
   ValidatorConfig
 } from '../utils';
+import { ConfigHandler } from './config';
 import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
-import { setInterval } from 'timers';
-import { ConfigHandler } from './config';
 
 export type UserIdentifier = (req: any, res: any) => string;
 
@@ -148,6 +149,9 @@ export abstract class BaseStorage<TFile extends File> {
     if (opts.logLevel && 'logLevel' in this.logger) {
       this.logger.logLevel = opts.logLevel;
     }
+    this.logger.debug(
+      `${this.constructor.name} config: ${inspect({ ...config, logger: this.logger.constructor })}`
+    );
     const purgeInterval = toMilliseconds(opts.expiration?.purgeInterval);
     if (purgeInterval) {
       this.startAutoPurge(purgeInterval);
