@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3002;
 const logger = createLogger({
   format: format.combine(format.splat(), format.simple()),
   transports: [new transports.Console()],
-  level: 'info'
+  level: 'debug'
 });
 
 const app = express();
