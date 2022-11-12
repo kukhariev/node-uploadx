@@ -65,6 +65,10 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * Force compatible client upload directly to S3 storage
      */
     clientDirectUpload?: boolean;
+    /**
+     * The parts size that the client should use for presigned multipart unloading
+     * @defaultValue '16MB'
+     */
     partSize?: number | string;
     /**
      * Configure metafiles storage
