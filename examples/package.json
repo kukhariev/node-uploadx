@@ -21,10 +21,10 @@
     "cp-file": "10.0.0",
     "dotenv": "16.0.3",
     "express": "4.18.2",
-    "fastify": "4.8.1",
+    "fastify": "4.9.2",
     "@fastify/middie": "8.0.0",
     "node-uploadx": "^6.1.0",
-    "pino": "8.6.1",
+    "pino": "8.7.0",
     "winston": "3.8.2"
   },
   "devDependencies": {
