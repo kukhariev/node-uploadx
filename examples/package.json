@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
@@ -23,7 +23,7 @@
     "express": "4.18.2",
     "fastify": "4.9.2",
     "@fastify/middie": "8.0.0",
-    "node-uploadx": "^6.1.0",
+    "node-uploadx": "^6.1.1",
     "pino": "8.7.0",
     "winston": "3.8.2"
   },
