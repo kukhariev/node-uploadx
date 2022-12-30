@@ -22,11 +22,10 @@
   "license": "MIT",
   "engines": {
     "node": ">=14.18.20",
-    "npm": "use yarn instead",
-    "yarn": ">=1.22.5"
+    "npm": ">=7.0.0"
   },
   "scripts": {
-    "start": "yarn build & yarn --cwd examples run server",
+    "start": "npm run build & npm run server -prefix examples",
     "build": "tsc --build packages",
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",
