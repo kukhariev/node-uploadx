@@ -18,17 +18,22 @@ export class Cache<T> {
   }
 
   get(key: string): T | undefined {
-    const [value, expiresAt] = this._map.get(key) || [];
-    if (value) {
-      this._map.delete(key);
-      if (expiresAt && Date.now() > expiresAt) return;
-      this._map.set(key, [value, this._expiry]);
-    }
-    return value;
+    const tuple = this._map.get(key);
+    if (!tuple) return;
+    this._map.delete(key);
+    if (tuple[1] && Date.now() > tuple[1]) return;
+    this._map.set(key, [tuple[0], this._expiry]);
+    return tuple[0];
   }
 
-  delete(key: string): boolean {
-    return this._map.delete(key);
+  has(key: string): boolean {
+    const tuple = this._map.get(key);
+    if (!tuple) return false;
+    if (tuple[1] && Date.now() > tuple[1]) {
+      this._map.delete(key);
+      return false;
+    }
+    return true;
   }
 
   set(key: string, value: T): T {
@@ -37,5 +42,9 @@ export class Cache<T> {
       this._map.delete(this._map.keys().next().value as string);
     this._map.set(key, [value, this._expiry]);
     return value;
+  }
+
+  delete(key: string): boolean {
+    return this._map.delete(key);
   }
 }
