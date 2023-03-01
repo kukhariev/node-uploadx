@@ -108,6 +108,11 @@ export interface BaseStorageOptions<T extends File> {
    * @defaultValue 'none'
    */
   logLevel?: LogLevel;
+
+  /**
+   * Limits the number of concurrent upload requests
+   */
+  concurrency?: number;
 }
 
 const LOCK_TIMEOUT = 300; // seconds
@@ -288,17 +293,25 @@ export abstract class BaseStorage<TFile extends File> {
 
   /**
    * Prevent upload from being accessed by multiple requests
+   * Limits the number of concurrent upload requests
    */
   async lock(key: string): Promise<string> {
-    try {
-      return locker.lock(key);
-    } catch {
+    const activeUploads = locker.keys();
+    if (activeUploads.includes(key)) {
       return fail(ERRORS.FILE_LOCKED);
     }
+    if (this.config.concurrency && this.config.concurrency < activeUploads.length) {
+      return fail(ERRORS.STORAGE_BUSY);
+    }
+    locker.set(key, key);
+    return key;
   }
 
+  /**
+   * Unlocks a previously locked upload
+   */
   async unlock(key: string): Promise<void> {
-    locker.unlock(key);
+    locker.delete(key);
   }
 
   protected isUnsupportedChecksum(algorithm = ''): boolean {
