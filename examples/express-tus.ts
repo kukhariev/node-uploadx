@@ -4,10 +4,9 @@ import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 const PORT = process.env.PORT || 3002;
 
 const app = express();
-const uploadDirectory = 'upload';
 const opts: DiskStorageOptions = {
   allowMIME: ['image/*', 'video/*'],
-  directory: uploadDirectory
+  directory: process.env.UPLOAD_DIR || 'upload'
 };
 
 app.use('/files', tus.upload(opts), (req, res) => {

@@ -29,7 +29,7 @@ const onComplete: express.RequestHandler = (req, res, next) => {
 app.use(
   '/files',
   uploadx.upload({
-    directory: 'upload',
+    directory: process.env.UPLOAD_DIR || 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
     logger,

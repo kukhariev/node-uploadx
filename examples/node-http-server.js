@@ -6,7 +6,7 @@ const { DiskStorage, Uploadx } = require('@uploadx/core');
 const PORT = process.env.PORT || 3002;
 
 const storage = new DiskStorage({
-  directory: 'upload',
+  directory: process.env.UPLOAD_DIR || 'upload',
   path: '/files',
   maxUploadSize: '15GB',
   allowMIME: ['video/*', 'image/*']
