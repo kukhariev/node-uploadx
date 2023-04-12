@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const PORT = process.env.PORT || 3002;
 const opts = {
-  directory: 'upload',
+  directory: process.env.UPLOAD_DIR || 'upload',
   allowMIME: ['video/*', 'image/*'],
   maxUploadSize: process.env.MAX_UPLOAD_SIZE || '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },

@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3002;
 const app = express();
 
 const uploads = uploadx({
-  directory: 'upload',
+  directory: process.env.UPLOAD_DIR || 'upload',
   maxUploadSize: '1GB',
   allowMIME: ['video/*', 'image/*'],
   useRelativeLocation: true,

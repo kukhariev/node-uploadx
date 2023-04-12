@@ -12,7 +12,7 @@ type Moving = { percent: number; status: 'moving' | 'error' | 'done' };
 
 const processes = {} as Record<string, Moving>;
 
-const uploadDirectory = 'upload';
+const uploadDirectory = process.env.UPLOAD_DIR || 'upload';
 const moveTo = 'files';
 
 const storage = new DiskStorage({ directory: uploadDirectory });

@@ -9,7 +9,7 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info', name: 'uploadx' })
 const port = process.env.PORT || 3002;
 
 async function build() {
-  const uploadx = new Uploadx({ directory: 'upload', logger });
+  const uploadx = new Uploadx({ directory: process.env.UPLOAD_DIR || 'upload', logger });
   uploadx.on('completed', ({ name, originalName }) =>
     logger.info(`upload complete, path: ${join('files', name)}, original filename: ${originalName}`)
   );
