@@ -1,11 +1,10 @@
-const { multipart, tus, uploadx } = require('@uploadx/core');
+const { cors, multipart, tus, uploadx } = require('@uploadx/core');
 const express = require('express');
-const cors = require('cors');
 
 const PORT = process.env.PORT || 3002;
 const opts = {
   directory: process.env.UPLOAD_DIR || 'upload',
-  allowMIME: ['video/*', 'image/*'],
+  allowMIME: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
   maxUploadSize: process.env.MAX_UPLOAD_SIZE || '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },
   logLevel: process.env.LOG_LEVEL || 'info',
@@ -37,12 +36,10 @@ app.get('/healthcheck', (req, res) => {
   res.send(healthcheck);
 });
 
-app.use(cors());
-
 app.use('/uploadx', uploadx(opts));
 app.use('/tus', tus(opts));
 app.use('/multipart', multipart({ ...opts, maxUploadSize: '100MB' }));
 
-app.use(apiRedirect);
+app.use(cors(), apiRedirect);
 
 app.listen(PORT, () => console.log('listening on port:', PORT));

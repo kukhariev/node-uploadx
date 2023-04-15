@@ -1,9 +1,10 @@
-// @ts-check
 const { createServer } = require('http');
 const { parse } = require('url');
-const { DiskStorage, Uploadx } = require('@uploadx/core');
+const { DiskStorage, Uploadx, Cors } = require('@uploadx/core');
 
 const PORT = process.env.PORT || 3002;
+
+const cors = new Cors();
 
 const storage = new DiskStorage({
   directory: process.env.UPLOAD_DIR || 'upload',
@@ -11,6 +12,7 @@ const storage = new DiskStorage({
   maxUploadSize: '15GB',
   allowMIME: ['video/*', 'image/*']
 });
+
 const uploads = new Uploadx({ storage });
 
 uploads.on('error', error => console.error('error: ', error));
@@ -25,6 +27,10 @@ const server = createServer((req, res) => {
   if (pathname === '/files') {
     uploads.handle(req, res);
   } else {
+    if (cors.preflight(req, res)) {
+      res.writeHead(204, { 'Content-Length': 0 });
+      return res.end();
+    }
     res.writeHead(404, { 'Content-Type': 'text/plan' });
     res.end('Not Found');
   }
