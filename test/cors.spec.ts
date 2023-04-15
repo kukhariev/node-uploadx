@@ -65,10 +65,18 @@ describe('CORS', () => {
       expect(res.header('Access-Control-Allow-Credentials')).toBe('true');
     });
 
-    it('should set custom origin', () => {
-      cors.origin = '*';
+    it.each([
+      [[], 'https://example.com'],
+      [['*'], 'https://example.com'],
+      [['https://example.com'], 'https://example.com'],
+      [['https://*'], 'https://example.com'],
+      [['https://*.com'], 'https://example.com'],
+      [['http://*.com', 'https://*.com'], 'https://example.com'],
+      [['http://example.com'], undefined]
+    ])('allowOrigins: %p set Access-Control-Allow-Origin: %p', (allowOrigins, origin) => {
+      cors.allowOrigins = allowOrigins;
       cors.preflight(req, res);
-      expect(res.header('Access-Control-Allow-Origin')).toBe('*');
+      expect(res.header('Access-Control-Allow-Origin')).toBe(origin);
     });
   });
 });
