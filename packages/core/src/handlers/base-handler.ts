@@ -129,9 +129,11 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
 
   upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
-    req.on('error', err => this.logger.error(`[request error]: %O`, err));
-    this.cors.preflight(req, res);
-    this.logger.debug(`[request]: %s %s`, req.method, req.url);
+    if (this.cors.preflight(req, res)) {
+      return this.send(res, { statusCode: 204 });
+    }
+    req.on('error', err => this.logger.error('[request error]: %O', err));
+    this.logger.debug('[request]: %s %s', req.method, req.url);
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
       return this.sendError(res, { uploadxErrorCode: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
