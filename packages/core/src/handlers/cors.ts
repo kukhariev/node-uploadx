@@ -2,12 +2,12 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { getHeader } from '../utils';
 
 export interface CorsConfig {
-  allowedMethods?: string[];
   allowedHeaders?: string[];
-  maxAge?: number;
+  allowedMethods?: string[];
   allowOrigins?: string[];
   credentials?: boolean;
   exposeHeaders?: string[];
+  maxAge?: number;
 }
 
 export class Cors {
@@ -15,7 +15,7 @@ export class Cors {
   allowedMethods: string[];
   allowOrigins: string[];
   credentials: boolean;
-  exposeHeaders?: string[];
+  exposeHeaders: string[];
   maxAge: number;
 
   constructor(config: CorsConfig = {}) {
@@ -38,25 +38,36 @@ export class Cors {
       next?.(new Error(`Access is not allowed from the origin: ${origin}`));
       return true;
     }
+
     res.setHeader('Access-Control-Allow-Origin', origin);
-    this.allowOrigins[0] !== '*' && res.setHeader('Vary', 'Origin');
     this.credentials && res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    const vary = [res.getHeader('vary'), 'Origin'].flat().filter(Boolean);
+
     const accessControlRequestMethod = getHeader(req, 'access-control-request-method');
     if (accessControlRequestMethod && req.method === 'OPTIONS') {
       // preflight
       res.setHeader(
         'Access-Control-Allow-Methods',
-        this.allowedMethods.toString().toUpperCase() || accessControlRequestMethod
+        this.allowedMethods.join() || accessControlRequestMethod
       );
-      const allowedHeaders =
-        this.allowedHeaders.toString() || getHeader(req, 'access-control-request-headers', true);
+
+      const accessControlRequestHeaders = getHeader(req, 'access-control-request-headers', true);
+      const allowedHeaders = this.allowedHeaders.join() || accessControlRequestHeaders;
       allowedHeaders && res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
+
+      !this.allowedHeaders.length && vary.push('Access-Control-Request-Headers');
+      !this.allowedMethods.length && vary.push('Access-Control-Request-Method');
+      res.setHeader('Vary', vary.join());
+
       res.setHeader('Access-Control-Max-Age', this.maxAge);
       return true;
     }
+
     // actual
-    this.exposeHeaders?.length &&
-      res.setHeader('Access-Control-Expose-Headers', this.exposeHeaders.join(','));
+    res.setHeader('Vary', vary.join());
+    this.exposeHeaders.length &&
+      res.setHeader('Access-Control-Expose-Headers', this.exposeHeaders.join());
     return false;
   }
 
@@ -75,16 +86,26 @@ export class Cors {
   }
 }
 
-const defaultConfig: CorsConfig = {
-  allowedMethods: ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'],
-  maxAge: 600,
-  allowOrigins: ['*']
-};
-
 type RequestHandler = (req: IncomingMessage, res: ServerResponse, next?: (e?: any) => any) => void;
 
+const defaultCorsConfig: CorsConfig = {
+  allowedHeaders: [],
+  allowedMethods: ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'],
+  allowOrigins: [],
+  credentials: false,
+  exposeHeaders: [],
+  maxAge: 600
+};
+
+/**
+ * CORS middleware for Node.js.
+ * @example
+ * ```ts
+ * app.use(cors({ allowOrigins: ['https://example.com'] }));
+ * ```
+ */
 export const cors = (config: CorsConfig = {}): RequestHandler => {
-  const _cors = new Cors({ ...defaultConfig, ...config });
+  const _cors = new Cors({ ...defaultCorsConfig, ...config });
   return (req: IncomingMessage, res: ServerResponse, next?: (e?: any) => any): void => {
     if (_cors.preflight(req, res, next)) {
       res.writeHead(204, { 'Content-Length': 0 });
