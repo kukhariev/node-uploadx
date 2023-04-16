@@ -24,15 +24,22 @@ describe('CORS', () => {
       cors.preflight(req, res);
       expect(res.header('Access-Control-Allow-Origin')).toBeUndefined();
     });
+
+    it('should set `Access-Control-Allow-Credentials` header', () => {
+      req.headers.origin = 'https://example.com';
+      cors.credentials = true;
+      cors.preflight(req, res);
+      expect(res.header('Access-Control-Allow-Credentials')).toBe('true');
+    });
   });
 
   describe('Preflight Request', () => {
-    cors = new Cors();
-
     beforeEach(() => {
+      cors = new Cors();
       req = httpMocks.createRequest({ url: 'https://example.com/upload', method: 'OPTIONS' });
       res = httpMocks.createResponse();
       req.headers.origin = 'https://example.com';
+      req.headers['access-control-request-method'] = 'PUT';
     });
 
     it('should set headers for valid preflight', () => {
@@ -54,15 +61,18 @@ describe('CORS', () => {
     });
 
     it('should not set headers for invalid preflight', () => {
+      req.headers['access-control-request-method'] = undefined;
       req.headers['access-control-request-headers'] = 'x-header1,x-header2';
       cors.preflight(req, res);
       expect(res.header('Access-Control-Allow-Headers')).toBeUndefined();
     });
 
-    it('should set `Access-Control-Allow-Credentials` header', () => {
-      cors.credentials = true;
+    it('should append `Vary` header', () => {
+      res.setHeader('Vary', 'Accept');
       cors.preflight(req, res);
-      expect(res.header('Access-Control-Allow-Credentials')).toBe('true');
+      expect(res.header('Vary')).toBe(
+        'Accept,Origin,Access-Control-Request-Headers,Access-Control-Request-Method'
+      );
     });
 
     it.each([
