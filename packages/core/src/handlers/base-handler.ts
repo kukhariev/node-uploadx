@@ -130,7 +130,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
 
   upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
     if (this.cors.preflight(req, res)) {
-      return this.send(res, { statusCode: 204 });
+      res.writeHead(204, { 'Content-Length': 0 }).end();
+      return;
     }
     req.on('error', err => this.logger.error('[request error]: %O', err));
     this.logger.debug('[request]: %s %s', req.method, req.url);
