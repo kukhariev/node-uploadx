@@ -101,15 +101,14 @@ const defaultCorsConfig: CorsConfig = {
  * CORS middleware for Node.js.
  * @example
  * ```ts
- * app.use(cors({ allowOrigins: ['https://example.com'] }));
+ * app.use(cors({ allowOrigins: ['*'], exposeHeaders: ['Authorization, ETag'] }));
  * ```
  */
 export const cors = (config: CorsConfig = {}): RequestHandler => {
   const _cors = new Cors({ ...defaultCorsConfig, ...config });
   return (req: IncomingMessage, res: ServerResponse, next?: (e?: any) => any): void => {
     if (_cors.preflight(req, res, next)) {
-      res.writeHead(204, { 'Content-Length': 0 });
-      res.end();
+      res.writeHead(204, { 'Content-Length': 0 }).end();
     } else {
       next?.();
     }

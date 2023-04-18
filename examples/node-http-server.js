@@ -1,10 +1,10 @@
 const { createServer } = require('http');
 const { parse } = require('url');
-const { DiskStorage, Uploadx, Cors } = require('@uploadx/core');
+const { DiskStorage, Uploadx, cors } = require('@uploadx/core');
 
 const PORT = process.env.PORT || 3002;
 
-const cors = new Cors();
+const corsHandler = cors();
 
 const storage = new DiskStorage({
   directory: process.env.UPLOAD_DIR || 'upload',
@@ -13,26 +13,25 @@ const storage = new DiskStorage({
   allowMIME: ['video/*', 'image/*']
 });
 
-const uploads = new Uploadx({ storage });
+const uploadx = new Uploadx({ storage });
 
-uploads.on('error', error => console.error('error: ', error));
-uploads.on('created', ({ originalName }) => console.log('created: ', originalName));
-uploads.on('part', ({ originalName }) => console.log('part: ', originalName));
-uploads.on('deleted', ({ originalName }) => console.log('deleted: ', originalName));
-uploads.on('completed', file => console.log('completed: ', file));
-uploads.on('updated', file => console.log(' metadata updated: ', file));
+uploadx.on('error', error => console.error('error: ', error));
+uploadx.on('created', ({ originalName }) => console.log('created: ', originalName));
+uploadx.on('part', ({ originalName }) => console.log('part: ', originalName));
+uploadx.on('deleted', ({ originalName }) => console.log('deleted: ', originalName));
+uploadx.on('completed', file => console.log('completed: ', file));
+uploadx.on('updated', file => console.log(' metadata updated: ', file));
 
 const server = createServer((req, res) => {
   const { pathname } = parse(req.url || '');
   if (pathname === '/files') {
-    uploads.handle(req, res);
+    uploadx.upload(req, res, () => {
+      uploadx.send(res, { body: req.body, statusCode: 200 });
+    });
   } else {
-    if (cors.preflight(req, res)) {
-      res.writeHead(204, { 'Content-Length': 0 });
-      return res.end();
-    }
-    res.writeHead(404, { 'Content-Type': 'text/plan' });
-    res.end('Not Found');
+    corsHandler(req, res, () => {
+      uploadx.send(res, { body: 'Not Found', statusCode: 404 });
+    });
   }
 });
 
