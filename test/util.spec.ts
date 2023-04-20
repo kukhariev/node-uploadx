@@ -162,10 +162,12 @@ describe('utils', () => {
   describe('primitives', () => {
     it('fnv', () => {
       expect(utils.fnv('123456')).toBe('9995b6aa');
+      expect(utils.fnv('спутник')).toBe('5e1edd8c');
     });
 
     it('fnv64', () => {
       expect(utils.fnv64('123456')).toBe('f6e3ed7e0e67290a');
+      expect(utils.fnv64('спутник')).toBe('6251be44251f6e2c');
     });
 
     it('pick', () => {
