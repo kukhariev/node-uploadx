@@ -20,9 +20,9 @@ export function md5(str: string): string {
  */
 export function fnv(str: string): string {
   let hash = 2166136261;
-  const len = str.length;
-  for (let i = 0; i < len; i++) {
-    hash ^= str.charCodeAt(i);
+  const bytes = Buffer.from(str, 'utf8');
+  for (const byte of bytes) {
+    hash ^= byte;
     hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
   }
   return (hash >>> 0).toString(16);
@@ -32,14 +32,14 @@ export function fnv(str: string): string {
  * FNV1A64 hash
  */
 export function fnv64(str: string): string {
-  let hash = BigInt('14695981039346656037');
-  const offset = BigInt(1099511628211);
-  const len = str.length;
-  for (let i = 0; i < len; i++) {
-    hash ^= BigInt(str.charCodeAt(i));
-    hash *= offset;
+  let hash = 14695981039346656037n;
+  const offset = 1099511628211n;
+  const bytes = Buffer.from(str, 'utf8');
+  for (const byte of bytes) {
+    hash ^= BigInt(byte);
+    hash = BigInt.asUintN(64, hash * offset);
   }
-  return BigInt.asUintN(64, hash).toString(16);
+  return hash.toString(16);
 }
 
 export function mapValues<T>(
