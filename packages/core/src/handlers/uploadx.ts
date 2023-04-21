@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { Checksum, FileInit, UploadxFile } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getMetadata, Headers, setHeaders } from '../utils';
+import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, Headers, setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
@@ -112,12 +112,12 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   }
 
   async getMetadata(req: http.IncomingMessage): Promise<Record<any, any>> {
-    const metadata = await getMetadata(req, this.storage.maxMetadataSize).catch(err =>
+    const metadata = await getJsonBody(req, this.storage.maxMetadataSize).catch(err =>
       fail(ERRORS.BAD_REQUEST, err)
     );
     if (Object.keys(metadata).length) return metadata;
     const { query } = url.parse(decodeURI(req.url || ''), true);
-    return { ...metadata, ...query };
+    return { ...query };
   }
 
   extractChecksum(req: http.IncomingMessage): Checksum {
