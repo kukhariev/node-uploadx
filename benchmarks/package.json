@@ -1,0 +1,15 @@
+{
+  "name": "benchmarks",
+  "version": "6.1.1",
+  "private": true,
+  "scripts": {
+    "bench": "tsnd hash"
+  },
+  "dependencies": {
+    "@uploadx/core": "^6.1.1"
+  },
+  "devDependencies": {
+    "ts-node-dev": "2.0.0",
+    "tinybench": "^2.4.0"
+  }
+}

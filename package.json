@@ -64,7 +64,8 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "examples"
+    "examples",
+    "benchmarks"
   ],
   "lint-staged": {
     "*.{md,json}": "prettier --write",
