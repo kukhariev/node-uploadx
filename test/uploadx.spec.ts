@@ -182,7 +182,7 @@ describe('::Uploadx', () => {
         .put(uri)
         .redirects(0)
         .set('content-type', 'application/octet-stream')
-        .set('content-range', `bytes 0-4/15`)
+        .set('content-range', 'bytes 0-4/15')
         .send(chunk)
         .expect(308)
         .expect('range', 'bytes=0-4');
@@ -191,7 +191,7 @@ describe('::Uploadx', () => {
         .put(uri)
         .redirects(0)
         .set('content-type', 'application/octet-stream')
-        .set('content-range', `bytes */*`)
+        .set('content-range', 'bytes */*')
         .send()
         .expect(308)
         .expect('range', 'bytes=0-4');
@@ -204,7 +204,7 @@ describe('::Uploadx', () => {
         .put(res.header.location as string)
         .redirects(0)
         .set('content-type', 'application/octet-stream')
-        .set('content-range', `bytes 13-18/70`)
+        .set('content-range', 'bytes 13-18/70')
         .send('12345')
         .expect(409);
     });
@@ -233,11 +233,11 @@ describe('::Uploadx', () => {
     it('should stream', async () => {
       let res = await request(app).post(path1).send({ name: 'stream' });
       const uri = res.header.location as string;
-      await request(app).put(uri).redirects(0).set('content-range', `bytes 0-5/*`).send('012345');
+      await request(app).put(uri).redirects(0).set('content-range', 'bytes 0-5/*').send('012345');
       res = await request(app)
         .put(uri)
         .redirects(0)
-        .set('content-range', `bytes 6-9/10`)
+        .set('content-range', 'bytes 6-9/10')
         .send('6789');
       expect(res.status).toBe(200);
       expect(res.body.size).toBe(10);

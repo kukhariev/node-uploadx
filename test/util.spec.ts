@@ -11,8 +11,8 @@ jest.mock('fs');
 describe('utils', () => {
   const root = join(testRoot, 'fs-utils');
   const dir = join(root, '0', '1', '2');
-  const filepath = join(dir, '3', `file.ext`);
-  const filepath2 = join(dir, '3', `fi  le.ext.META`);
+  const filepath = join(dir, '3', 'file.ext');
+  const filepath2 = join(dir, '3', 'fi  le.ext.META');
 
   describe('fs', () => {
     beforeEach(() => vol.reset());
