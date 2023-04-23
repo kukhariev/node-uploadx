@@ -118,14 +118,17 @@ export function getLastOne<T>(val: T[]): T {
  * Returns a function that caches the result of func
  * @param fn - function to be called
  */
-export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
-  const cache = new Cache<K>(1000, 0);
-  const cached = (val: T): K => {
-    const key = JSON.stringify(val);
-    return cache.get(key) || cache.set(key, fn.call(this, val));
+export const memoize = <T, K>(fn: (arg: T) => K): ((arg: T) => K) => {
+  const cache = new Cache<K>(1000);
+  return (arg: T): K => {
+    const key = JSON.stringify(arg);
+    let result = cache.get(key);
+    if (result === undefined && !cache.has(key)) {
+      result = fn(arg);
+      cache.set(key, result);
+    }
+    return result as K;
   };
-  cached.cache = cache;
-  return cached;
 };
 
 export const hash = memoize(fnv64);
