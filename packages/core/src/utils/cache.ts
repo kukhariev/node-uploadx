@@ -1,5 +1,5 @@
 /**
- * LRU Cache Implementation
+ * Time-aware LRU Cache Implementation
  */
 export class Cache<T> {
   private readonly _ttl: number;
@@ -9,39 +9,44 @@ export class Cache<T> {
    * @param maxEntries - The maximum number of entries before the cache starts flushing out the old items
    * @param maxAge - The maximum life of a cached items in seconds
    */
-  constructor(public maxEntries = 1000, readonly maxAge = 86400) {
-    this._ttl = maxAge * 1000;
-  }
-
-  private get _expiry(): number {
-    return this._ttl && Date.now() + this._ttl;
+  constructor(public maxEntries = 1000, readonly maxAge?: number) {
+    this._ttl = maxAge ? maxAge * 1000 : 0;
   }
 
   /**
-   * If the cache has a TTL, return an array of keys that have not expired, otherwise return an array
-   * of all keys
-   * @returns An array of all the keys in the map.
+   * @returns the total number of cache entries, including expired ones
    */
-  keys(): string[] {
+  get size(): number {
+    return this._map.size;
+  }
+
+  /**
+   * Cache keys iterator
+   * @returns an iterator of all keys in a cache
+   */
+  keys(): IterableIterator<string> {
+    return this._map.keys();
+  }
+
+  /**
+   * Remove expired entries
+   * @returns array of actual keys
+   */
+  prune(): string[] {
     if (this._ttl) {
-      const actualKeys: string[] = [];
       const now = Date.now();
-
-      this._map.forEach(([, expiresAt], key) => {
-        if (now < expiresAt) {
-          actualKeys.push(key);
-        } else {
-          this._map.delete(key);
-        }
-      });
-
-      return actualKeys;
+      for (const [key, [, expiresAt]] of this._map) {
+        if (now > expiresAt) this._map.delete(key);
+      }
+    }
+    while (this._map.size > this.maxEntries) {
+      this._map.delete(this._map.keys().next().value as string);
     }
     return Array.from(this._map.keys());
   }
 
-  getAllKeys(): string[] {
-    return Array.from(this._map.keys());
+  clear(): void {
+    this._map.clear();
   }
 
   /**
@@ -52,24 +57,28 @@ export class Cache<T> {
   get(key: string): T | undefined {
     const tuple = this._map.get(key);
     if (!tuple) return;
-    if (!this._ttl) return tuple[0];
     this._map.delete(key);
-    if (Date.now() > tuple[1]) return;
-    this._map.set(key, [tuple[0], this._expiry]);
+    if (this._ttl) {
+      const now = Date.now();
+      if (now > tuple[1]) return;
+      tuple[1] = now + this._ttl;
+    }
+    this._map.set(key, tuple);
     return tuple[0];
   }
 
   /**
-   * Check if an item is exist and if it is not expired
+   * Check if the item exists and has not expired
    * @param key - The key to look up
    */
   has(key: string): boolean {
     const tuple = this._map.get(key);
     if (!tuple) return false;
-    if (!this._ttl) return true;
-    if (Date.now() > tuple[1]) {
-      this._map.delete(key);
-      return false;
+    if (this._ttl) {
+      if (Date.now() > tuple[1]) {
+        this._map.delete(key);
+        return false;
+      }
     }
     return true;
   }
@@ -81,16 +90,16 @@ export class Cache<T> {
    * @returns The value that was set
    */
   set(key: string, value: T): T {
-    if (this._map.has(key)) this._map.delete(key);
-    else if (this._map.size === this.maxEntries)
+    if (this._map.size === this.maxEntries)
       this._map.delete(this._map.keys().next().value as string);
-    this._map.set(key, [value, this._expiry]);
+    const expiresAt = this._ttl ? Date.now() + this._ttl : 0;
+    this._map.set(key, [value, expiresAt]);
     return value;
   }
 
   /**
    * Delete the key from the cache
-   * @param - The key of the item to remove from the cache
+   * @param key - The key of the item to remove from the cache
    */
   delete(key: string): boolean {
     return this._map.delete(key);

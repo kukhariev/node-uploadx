@@ -12,9 +12,19 @@ describe('Cache', () => {
   it('should limit size', () => {
     cache = new Cache(5, 60);
     fill();
-    expect(cache.get(`key-0`)).toBeUndefined();
-    expect(cache.get(`key-9`)).toBe(9);
-    expect(cache['_map'].size).toBe(5);
+    expect(cache.get('key-0')).toBeUndefined();
+    expect(cache.get('key-9')).toBe(9);
+    expect(cache.size).toBe(5);
+  });
+
+  it('should lru', () => {
+    cache = new Cache(5);
+    fill();
+    cache.get('key-9');
+    cache.set('key-10', 10);
+    cache.set('key-11', 11);
+    cache.set('key-12', 12);
+    expect(Array.from(cache.keys())).toEqual(['key-8', 'key-9', 'key-10', 'key-11', 'key-12']);
   });
 
   it('should expire', async () => {
@@ -22,8 +32,8 @@ describe('Cache', () => {
     fill();
     jest.useFakeTimers();
     jest.advanceTimersByTime(100_000);
-    expect(cache.get(`key-9`)).toBeUndefined();
-    expect(cache['_map'].size).toBe(4);
+    expect(cache.get('key-9')).toBeUndefined();
+    expect(cache.size).toBe(4);
     jest.useRealTimers();
   });
 
@@ -32,19 +42,21 @@ describe('Cache', () => {
     fill();
     jest.useFakeTimers();
     jest.advanceTimersByTime(100_000);
-    expect(cache.get(`key-9`)).toBe(9);
-    expect(cache['_map'].size).toBe(5);
+    expect(cache.get('key-9')).toBe(9);
+    expect(cache.size).toBe(5);
     jest.useRealTimers();
   });
 
-  it('should get keys', () => {
-    cache = new Cache(5, 60);
+  it('should prune', () => {
+    cache = new Cache(10, 60);
     fill();
-    expect(cache.keys()).toHaveLength(5);
+    expect(cache.size).toBe(10);
+    cache.maxEntries = 5;
+    expect(cache.prune()).toHaveLength(5);
     jest.useFakeTimers();
     jest.advanceTimersByTime(100_000);
-    expect(cache['_map'].size).toBe(5);
-    expect(cache.keys()).toHaveLength(0);
+    expect(cache.size).toBe(5);
+    expect(cache.prune()).toHaveLength(0);
     jest.useRealTimers();
   });
 });
