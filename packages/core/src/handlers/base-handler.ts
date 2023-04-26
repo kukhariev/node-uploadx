@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import * as http from 'http';
 import * as url from 'url';
 import {
   BaseStorage,
@@ -11,33 +10,36 @@ import {
   UserIdentifier
 } from '../storages';
 import {
+  IncomingMessage,
+  IncomingMessageWithBody,
+  ResponseBodyType,
+  ServerResponse,
+  UploadxResponse
+} from '../types';
+import {
   ErrorMap,
   ErrorResponses,
   ERRORS,
   fail,
   getBaseUrl,
   hash,
-  IncomingMessageWithBody,
   isUploadxError,
   isValidationError,
   Logger,
   pick,
-  ResponseBodyType,
   setHeaders,
-  UploadxError,
-  UploadxResponse
+  UploadxError
 } from '../utils';
 import { Cors } from './cors';
 
-export type AsyncHandler = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<any>;
 type Handlers = 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put';
+export type AsyncHandler = (req: IncomingMessage, res: ServerResponse) => Promise<any>;
 export type MethodHandler = {
   [h in Handlers]?: AsyncHandler;
 };
-type ReqEvent = { request: Pick<http.IncomingMessage, 'url' | 'headers' | 'method'> };
 
+type ReqEvent = { request: Pick<IncomingMessage, 'url' | 'headers' | 'method'> };
 export type UploadxEvent<TFile extends UploadxFile> = TFile & ReqEvent;
-
 export type UploadxErrorEvent = UploadxError & ReqEvent;
 
 export interface BaseHandler<TFile extends UploadxFile> extends EventEmitter {
@@ -126,9 +128,9 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     };
   }
 
-  handle = (req: http.IncomingMessage, res: http.ServerResponse): void => this.upload(req, res);
+  handle = (req: IncomingMessage, res: ServerResponse): void => this.upload(req, res);
 
-  upload = (req: http.IncomingMessage, res: http.ServerResponse, next?: () => void): void => {
+  upload = (req: IncomingMessage, res: ServerResponse, next?: () => void): void => {
     if (this.cors.preflight(req, res)) {
       res.writeHead(204, { 'Content-Length': 0 }).end();
       return;
@@ -189,7 +191,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
 
   getUserId: UserIdentifier = (req, _res) => req.user?.id || req.user?._id; // eslint-disable-line
 
-  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async options(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     this.send(res, { statusCode: 204 });
     return {} as TFile;
   }
@@ -197,7 +199,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Returns user uploads list
    */
-  get(req: http.IncomingMessage, res: http.ServerResponse): Promise<UploadList> {
+  get(req: IncomingMessage, res: ServerResponse): Promise<UploadList> {
     const userId = this.getUserId(req, res);
     return userId ? this.storage.list(hash(userId)) : fail(ERRORS.FILE_NOT_FOUND);
   }
@@ -205,10 +207,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Make response
    */
-  send(
-    res: http.ServerResponse,
-    { statusCode = 200, headers = {}, body = '' }: UploadxResponse
-  ): void {
+  send(res: ServerResponse, { statusCode = 200, headers = {}, body = '' }: UploadxResponse): void {
     setHeaders(res, headers);
     let data: string;
     if (typeof body !== 'string') {
@@ -226,7 +225,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Send Error to client
    */
-  sendError(res: http.ServerResponse, error: Error): void {
+  sendError(res: ServerResponse, error: Error): void {
     const httpError = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
       : isValidationError(error)
@@ -239,7 +238,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Get id from request
    */
-  getId(req: http.IncomingMessage & { originalUrl?: string }): string {
+  getId(req: IncomingMessage): string {
     const pathname = url.parse(req.url as string).pathname || '';
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
@@ -247,7 +246,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     return path.startsWith('/') ? '' : path;
   }
 
-  async getAndVerifyId(req: http.IncomingMessage, res: http.ServerResponse): Promise<string> {
+  async getAndVerifyId(req: IncomingMessage, res: ServerResponse): Promise<string> {
     const uid = this.getUserId(req, res) || '';
     const id = this.getId(req);
     if (id && id.startsWith(uid && hash(uid))) return id;
@@ -257,17 +256,13 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Build file url from request
    */
-  buildFileUrl(req: http.IncomingMessage & { originalUrl?: string }, file: TFile): string {
+  buildFileUrl(req: IncomingMessage, file: TFile): string {
     const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
     const relative = url.format({ pathname: `${pathname as string}/${file.id}`, query });
     return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
   }
 
-  protected finish(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-    response: UploadxResponse
-  ): void {
+  protected finish(req: IncomingMessage, res: ServerResponse, response: UploadxResponse): void {
     return this.send(res, response);
   }
 }

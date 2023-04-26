@@ -1,23 +1,13 @@
 import * as http from 'http';
 import { HttpError, HttpErrorBody } from './errors';
 import { getLastOne, isRecord } from './primitives';
-
-export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
-  body?: T;
-  _body?: boolean;
-}
-
-export type Headers = Record<string, number | string | string[]>;
-
-export type ResponseBody = string | Record<string, any>;
-export type ResponseBodyType = 'text' | 'json';
-export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
-
-export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
+import {
+  Headers,
+  IncomingMessageWithBody,
+  ResponseBody,
+  ResponseTuple,
+  UploadxResponse
+} from '../types';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';

@@ -1,7 +1,7 @@
-import * as http from 'http';
 import * as url from 'url';
 import { Checksum, FileInit, UploadxFile } from '../storages';
-import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, Headers, setHeaders } from '../utils';
+import { Headers, IncomingMessage, ServerResponse } from '../types';
+import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
 export function rangeParser(rangeHeader = ''): { start: number; size: number } {
@@ -20,7 +20,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Create File from request and send a file url to client
    */
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async post(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const metadata = await this.getMetadata(req);
     const config: FileInit = { metadata };
     config.userId = this.getUserId(req, res);
@@ -37,7 +37,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return file;
   }
 
-  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async patch(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadata = await this.getMetadata(req);
     const file = await this.storage.update({ id }, metadata);
@@ -52,7 +52,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Write a chunk to file or/and return chunk offset
    */
-  async put(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async put(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const contentRange = getHeader(req, 'content-range');
     const contentLength = +getHeader(req, 'content-length');
@@ -78,7 +78,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Delete upload
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async delete(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete({ id });
     const response = await this.storage.onDelete(file);
@@ -86,7 +86,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return file;
   }
 
-  getId(req: http.IncomingMessage): string {
+  getId(req: IncomingMessage): string {
     const { query } = url.parse(req.url || '', true);
     return (query.upload_id || query.prefix || super.getId(req)) as string;
   }
@@ -100,7 +100,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
    * Build file url from request
    */
   buildFileUrl(
-    req: http.IncomingMessage & { originalUrl?: string },
+    req: IncomingMessage & { originalUrl?: string },
     file: UploadxFile & { GCSUploadURI?: string }
   ): string {
     if (file.GCSUploadURI) return file.GCSUploadURI;
@@ -111,7 +111,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
   }
 
-  async getMetadata(req: http.IncomingMessage): Promise<Record<any, any>> {
+  async getMetadata(req: IncomingMessage): Promise<Record<any, any>> {
     const metadata = await getJsonBody(req, this.storage.maxMetadataSize).catch(err =>
       fail(ERRORS.BAD_REQUEST, err)
     );
@@ -120,7 +120,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return { ...query };
   }
 
-  extractChecksum(req: http.IncomingMessage): Checksum {
+  extractChecksum(req: IncomingMessage): Checksum {
     const contentMD5 = getHeader(req, 'content-md5');
     if (contentMD5) return { checksumAlgorithm: 'md5', checksum: contentMD5 };
     const [type, checksum] = getHeader(req, 'digest').split(/=(.*)/s);
@@ -137,7 +137,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
  */
 export function uploadx<TFile extends UploadxFile>(
   options: UploadxOptions<TFile> = {}
-): (req: http.IncomingMessage, res: http.ServerResponse) => void {
+): (req: IncomingMessage, res: ServerResponse) => void {
   return new Uploadx(options).handle;
 }
 
