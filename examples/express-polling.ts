@@ -1,8 +1,8 @@
 import { DiskFile, DiskStorage, Uploadx } from '@uploadx/core';
 import { copyFile } from 'cp-file';
-import * as express from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
 
 const PORT = process.env.PORT || 3002;
 

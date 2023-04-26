@@ -1,6 +1,6 @@
 import { Cors } from '../packages/core/src';
 import { Request, Response } from 'express';
-import * as httpMocks from 'node-mocks-http';
+import httpMocks from 'node-mocks-http';
 
 describe('CORS', () => {
   let cors: Cors;

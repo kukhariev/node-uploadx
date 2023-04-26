@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import { IncomingMessage } from 'http';
 import { vol } from 'memfs';
 import { join } from 'path';

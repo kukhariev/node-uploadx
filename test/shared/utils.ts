@@ -1,4 +1,4 @@
-import * as rimraf from 'rimraf';
+import rimraf from 'rimraf';
 import { BinaryLike, BinaryToTextEncoding, createHash } from 'crypto';
 
 export function cleanup(directory: string): Promise<any> {

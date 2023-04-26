@@ -1,6 +1,6 @@
 import type { BaseStorageOptions, File } from '../../packages/core/src';
 import { METAFILE_EXTNAME } from '../../packages/core/src';
-import * as path from 'path';
+import path from 'path';
 import { tmpdir } from 'os';
 import { Readable } from 'stream';
 import { hash } from './utils';

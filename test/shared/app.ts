@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import * as express from 'express';
+import express from 'express';
 import { userId } from './config';
 import { IncomingMessage } from 'http';
 

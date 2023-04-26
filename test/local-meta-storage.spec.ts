@@ -1,5 +1,5 @@
 import { LocalMetaStorage } from '../packages/core/src';
-import * as path from 'path';
+import path from 'path';
 import { metafile } from './shared';
 import { tmpdir } from 'os';
 

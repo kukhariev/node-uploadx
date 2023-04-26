@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import * as fs from 'fs';
+import fs from 'fs';
 import { join } from 'path';
-import * as request from 'supertest';
+import request from 'supertest';
 import { DiskStorage, uploadx, Uploadx } from '../packages/core/src';
 import { app, cleanup, metadata, storageOptions, testfile, testRoot, userId } from './shared';
 
