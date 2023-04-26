@@ -13,7 +13,7 @@
     "s3:direct": "tsnd -r tsconfig-paths/register -r dotenv/config s3-direct",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
     "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation",
-    "plain-nodejs": "tsnd node-http-server",
+    "plain-nodejs": "tsnd -r dotenv/config node-http-server",
     "server": "tsnd -r dotenv/config server"
   },
   "dependencies": {

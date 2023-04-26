@@ -1,45 +1,47 @@
-const { cors, multipart, tus, uploadx } = require('@uploadx/core');
-const express = require('express');
+// @ts-check
+const { cors, DiskStorage, Multipart, Tus, Uploadx } = require('@uploadx/core');
+const { createServer } = require('http');
+const url = require('url');
 
 const PORT = process.env.PORT || 3002;
-const opts = {
+const config = {
   directory: process.env.UPLOAD_DIR || 'upload',
   allowMIME: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
   maxUploadSize: process.env.MAX_UPLOAD_SIZE || '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },
-  logLevel: process.env.LOG_LEVEL || 'info',
-  onComplete: file => {
-    console.log('File upload complete: ', file);
-    return file;
+  logLevel: /** @type { 'info' } */ (process.env.LOG_LEVEL || 'info')
+};
+const path = '/files';
+const pathRegexp = new RegExp(`^${path}([/?]|$)`);
+const corsHandler = cors();
+const storage = new DiskStorage(config);
+const uploadx = new Uploadx({ storage });
+const tus = new Tus({ storage });
+const multipart = new Multipart({ storage });
+
+createServer((req, res) => {
+  const { pathname, query = { uploadType: '' } } = url.parse(req.url ?? '', true);
+  if (pathname === '/healthcheck') {
+    const healthcheck = {
+      memoryUsage: process.memoryUsage(),
+      uptime: process.uptime(),
+      message: 'status 👍',
+      timestamp: Date.now()
+    };
+    corsHandler(req, res, () => uploadx.send(res, { body: healthcheck }));
+  } else if (pathRegexp.test(pathname ?? '')) {
+    switch (query.uploadType) {
+      case 'multipart':
+        multipart.handle(req, res);
+        break;
+      case 'tus':
+        tus.handle(req, res);
+        break;
+      default:
+        uploadx.handle(req, res);
+        break;
+    }
+  } else {
+    corsHandler(req, res, () => uploadx.send(res, { body: 'Not Found', statusCode: 404 }));
   }
-};
-
-const app = express();
-
-function buildRedirectUrl(req) {
-  const { uploadType = 'uploadx' } = req.query;
-  return `/${uploadType}`;
-}
-
-const apiRedirect = (req, res, next) => {
-  res.redirect(308, buildRedirectUrl(req));
-  next();
-};
-
-app.get('/healthcheck', (req, res) => {
-  const healthcheck = {
-    memoryUsage: process.memoryUsage(),
-    uptime: process.uptime(),
-    message: 'OK',
-    timestamp: Date.now()
-  };
-  res.send(healthcheck);
-});
-
-app.use('/uploadx', uploadx(opts));
-app.use('/tus', tus(opts));
-app.use('/multipart', multipart({ ...opts, maxUploadSize: '100MB' }));
-
-app.use(cors(), apiRedirect);
-
-app.listen(PORT, () => console.log('listening on port:', PORT));
+}).listen(PORT);
