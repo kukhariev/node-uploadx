@@ -1,6 +1,6 @@
-import * as http from 'http';
 import * as multiparty from 'multiparty';
 import { FileInit, UploadxFile } from '../storages';
+import { IncomingMessage, ServerResponse } from '../types';
 import { setHeaders } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
@@ -12,7 +12,7 @@ interface MultipartyPart extends multiparty.Part {
 }
 
 export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async post(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
@@ -48,7 +48,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Delete upload
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async delete(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete({ id });
     this.send(res, { statusCode: 204 });
@@ -65,7 +65,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
  */
 export function multipart<TFile extends UploadxFile>(
   options: UploadxOptions<TFile> = {}
-): (req: http.IncomingMessage, res: http.ServerResponse) => void {
+): (req: IncomingMessage, res: ServerResponse) => void {
   return new Multipart(options).handle;
 }
 

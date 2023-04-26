@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { UploadxResponse } from './http';
+import { UploadxResponse } from '../types';
 
 export enum ERRORS {
   BAD_REQUEST = 'BadRequest',
