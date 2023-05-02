@@ -4,15 +4,18 @@ const { createServer } = require('http');
 const url = require('url');
 
 const PORT = process.env.PORT || 3002;
+const path = '/files';
+const pathRegexp = new RegExp(`^${path}([/?]|$)`);
+
 const config = {
+  path,
   directory: process.env.UPLOAD_DIR || 'upload',
   allowMIME: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
   maxUploadSize: process.env.MAX_UPLOAD_SIZE || '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },
   logLevel: /** @type { 'info' } */ (process.env.LOG_LEVEL || 'info')
 };
-const path = '/files';
-const pathRegexp = new RegExp(`^${path}([/?]|$)`);
+
 const corsHandler = cors();
 const storage = new DiskStorage(config);
 const uploadx = new Uploadx({ storage });
@@ -29,7 +32,7 @@ createServer((req, res) => {
       timestamp: Date.now()
     };
     corsHandler(req, res, () => uploadx.send(res, { body: healthcheck }));
-  } else if (pathRegexp.test(pathname ?? '')) {
+  } else if (pathname && pathRegexp.test(pathname)) {
     switch (query.uploadType) {
       case 'multipart':
         multipart.handle(req, res);
