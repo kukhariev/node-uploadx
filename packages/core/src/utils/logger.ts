@@ -54,7 +54,7 @@ export class BasicLogger implements Logger {
 
   write = (data: unknown[], level: Exclude<LogLevel, 'none'>): void => {
     if (PriorityOf[level] >= PriorityOf[this._logLevel]) {
-      const message = formatWithOptions({ depth: 1, maxStringLength: 80 }, ...data);
+      const message = formatWithOptions({ depth: 2, maxStringLength: 80 }, ...data);
       const timestamp = new Date().toISOString();
       this.logger[level](`${timestamp} ${level.toUpperCase()} ${this.label} ${message}`);
     }
