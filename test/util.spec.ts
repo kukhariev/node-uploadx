@@ -199,6 +199,18 @@ describe('utils', () => {
         c: [1, 2, 3]
       });
     });
+
+    it('deepMask', () => {
+      const mask = utils.deepMask(['password']);
+      const rez = mask({ user: { password: 'secret' } });
+      expect(rez).toMatchObject({ user: { password: '*****' } });
+    });
+
+    it('deepMask(fun)', () => {
+      const mask = utils.deepMask(['password'], v => (v as string).length);
+      const rez = mask({ user: { password: 'secret' } });
+      expect(rez).toMatchObject({ user: { password: 6 } });
+    });
   });
 
   describe('BasicLogger', () => {

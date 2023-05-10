@@ -129,3 +129,33 @@ export const memoize = <T, K>(fn: (val: T) => K): ((val: T) => K) => {
 };
 
 export const hash = memoize(fnv64);
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function deepMask(keysToMask: string[], replacement: string | ((v: any) => any) = '*****') {
+  const r = typeof replacement === 'string' ? () => replacement : replacement;
+  return function mask<T extends Record<string, any>>(obj: T): T {
+    const masked = { ...obj };
+    for (const key in masked) {
+      if (keysToMask.includes(key)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        masked[key] = r(masked[key]);
+      } else if (isRecord(masked[key])) {
+        masked[key] = mask(masked[key]);
+      }
+    }
+    return masked;
+  };
+}
+
+export function maskTokens(
+  obj: Record<string, unknown>,
+  keysToMask: string[]
+): Record<string, unknown> {
+  const masked = { ...obj };
+  for (const key of keysToMask) {
+    if (key in masked) {
+      masked[key] = '*****';
+    }
+  }
+  return masked;
+}
