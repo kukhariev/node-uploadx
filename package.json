@@ -33,7 +33,8 @@
     "prepare": "husky install",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
-    "test:watch": "jest --watchAll",
+    "test:serial": "jest --runInBand",
+    "test:watch": "jest --watch",
     "coverage": "jest --coverage"
   },
   "devDependencies": {
