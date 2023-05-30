@@ -1,23 +1,13 @@
 import * as http from 'http';
 import { HttpError, HttpErrorBody } from './errors';
 import { getLastOne, isRecord } from './primitives';
-
-export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
-  body?: T;
-  _body?: boolean;
-}
-
-export type Headers = Record<string, number | string | string[]>;
-
-export type ResponseBody = string | Record<string, any>;
-export type ResponseBodyType = 'text' | 'json';
-export type ResponseTuple<T = ResponseBody> = [statusCode: number, body?: T, headers?: Headers];
-
-export interface UploadxResponse<T = ResponseBody> extends Record<string, any> {
-  statusCode?: number;
-  headers?: Headers;
-  body?: T;
-}
+import {
+  Headers,
+  IncomingMessageWithBody,
+  ResponseBody,
+  ResponseTuple,
+  UploadxResponse
+} from '../types';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -41,14 +31,14 @@ typeis.hasBody = (req: http.IncomingMessage): number | false => {
 export function readBody(
   req: http.IncomingMessage,
   encoding = 'utf8' as BufferEncoding,
-  limit?: number
+  limit = Infinity
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.setEncoding(encoding);
     req.on('data', chunk => {
-      if (limit && body.length > limit) return reject('body length limit');
       body += chunk;
+      if (Buffer.byteLength(body) > limit) return reject('Content length mismatch');
     });
     req.once('end', () => resolve(body));
   });
@@ -59,15 +49,20 @@ export function readBody(
  * @param req - incoming metadata request
  * @param limit - optional limit on the size of the body
  */
-export async function getMetadata(
+export async function getJsonBody(
   req: IncomingMessageWithBody<Record<any, any>>,
   limit = 16777216
 ): Promise<Record<any, any>> {
-  if (!typeis(req, ['json'])) return {};
-  if (req.body) return { ...req.body };
-  if (typeis.hasBody(req) > limit) return Promise.reject('body length limit');
-  const raw = await readBody(req, 'utf8', limit);
-  return { ...JSON.parse(raw) } as Record<any, any>;
+  if (typeis(req, ['json'])) {
+    if (req.body) return { ...req.body };
+    const contentLength = typeis.hasBody(req);
+    if (contentLength) {
+      if (contentLength > limit) return Promise.reject('Content length limit exceeded');
+      const raw = await readBody(req, 'utf8', contentLength);
+      return { ...JSON.parse(raw) } as Record<any, any>;
+    }
+  }
+  return {} as Record<any, any>;
 }
 
 /**

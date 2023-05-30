@@ -1,14 +1,13 @@
 import { DiskFile, DiskStorage, Uploadx } from '@uploadx/core';
-import { copyFile } from 'cp-file';
+import { copyFile } from 'fs/promises';
 import * as express from 'express';
-import * as fs from 'fs';
 import * as path from 'path';
 
 const PORT = process.env.PORT || 3002;
 
 const app = express();
 
-type Moving = { percent: number; status: 'moving' | 'error' | 'done' };
+type Moving = { status: 'moving' | 'error' | 'done' };
 
 const processes = {} as Record<string, Moving>;
 
@@ -22,16 +21,12 @@ const onComplete: express.RequestHandler = (req, res) => {
   const moving = (processes[file.name] ??= {} as Moving);
   if (!moving.status) {
     moving.status = 'moving';
-    const source = path.resolve(uploadDirectory, file.name);
+    const source = storage.getFilePath(file.name);
     const destination = path.resolve(moveTo, file.originalName);
     void (async () => {
       try {
-        await copyFile(source, destination, {
-          onProgress: ({ percent }) => {
-            moving.percent = percent * 100;
-          }
-        });
-        await fs.promises.unlink(source);
+        await copyFile(source, destination);
+        await storage.delete(file);
         moving.status = 'done';
       } catch (e) {
         console.error(e);
@@ -41,8 +36,10 @@ const onComplete: express.RequestHandler = (req, res) => {
   }
   if (moving.status === 'error') {
     res.status(422).json({ ...file, moving });
+    delete processes[file.name];
   } else if (moving.status === 'done') {
     res.json({ ...file, moving });
+    delete processes[file.name];
   } else {
     res
       .status(202)

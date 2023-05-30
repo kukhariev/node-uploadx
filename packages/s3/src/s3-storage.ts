@@ -26,6 +26,7 @@ import {
   getFileStatus,
   hasContent,
   HttpError,
+  IncomingMessage,
   LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
@@ -34,7 +35,6 @@ import {
   toSeconds,
   updateSize
 } from '@uploadx/core';
-import * as http from 'http';
 import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
@@ -160,7 +160,7 @@ export class S3Storage extends BaseStorage<S3File> {
     return super.normalizeError(error);
   }
 
-  async create(req: http.IncomingMessage, config: FileInit): Promise<S3File> {
+  async create(req: IncomingMessage, config: FileInit): Promise<S3File> {
     const file = new S3File(config);
     file.name = this.namingFunction(file, req);
     await this.validate(file);

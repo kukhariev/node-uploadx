@@ -1,9 +1,8 @@
 import * as fs from 'fs';
 import { IncomingMessage } from 'http';
-import { vol } from 'memfs';
 import { join } from 'path';
 import * as utils from '../packages/core/src';
-import { testRoot } from './shared';
+import { cleanup, testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
@@ -11,13 +10,13 @@ jest.mock('fs');
 describe('utils', () => {
   const root = join(testRoot, 'fs-utils');
   const dir = join(root, '0', '1', '2');
-  const filepath = join(dir, '3', `file.ext`);
-  const filepath2 = join(dir, '3', `fi  le.ext.META`);
+  const filepath = join(dir, '3', 'file.ext');
+  const filepath2 = join(dir, '3', 'fi  le.ext.META');
 
   describe('fs', () => {
-    beforeEach(() => vol.reset());
+    beforeEach(async () => cleanup(root));
 
-    afterEach(() => vol.reset());
+    afterEach(async () => cleanup(root));
 
     it('ensureDir(dir)', async () => {
       await utils.ensureDir(dir);
@@ -81,12 +80,10 @@ describe('utils', () => {
       await utils.removeFile(filepath);
       expect(fs.existsSync(filepath)).toBe(false);
     });
-  });
 
-  describe('fs-stream', () => {
     it('getWriteStream(path, 0)', async () => {
-      await utils.ensureFile('filepath');
-      const stream = utils.getWriteStream('filepath', 0);
+      await utils.ensureFile(filepath);
+      const stream = utils.getWriteStream(filepath, 0);
       stream.close();
       expect(stream).toBeInstanceOf(fs.WriteStream);
     });
@@ -162,10 +159,12 @@ describe('utils', () => {
   describe('primitives', () => {
     it('fnv', () => {
       expect(utils.fnv('123456')).toBe('9995b6aa');
+      expect(utils.fnv('спутник')).toBe('5e1edd8c');
     });
 
     it('fnv64', () => {
       expect(utils.fnv64('123456')).toBe('f6e3ed7e0e67290a');
+      expect(utils.fnv64('спутник')).toBe('6251be44251f6e2c');
     });
 
     it('pick', () => {

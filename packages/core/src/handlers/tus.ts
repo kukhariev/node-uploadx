@@ -1,6 +1,6 @@
-import * as http from 'http';
 import { Checksum, FileInit, Metadata, UploadxFile } from '../storages';
-import { getHeader, Headers, setHeaders, typeis, UploadxResponse } from '../utils';
+import { Headers, IncomingMessage, ServerResponse, UploadxResponse } from '../types';
+import { getHeader, setHeaders, typeis } from '../utils';
 import { BaseHandler, UploadxOptions } from './base-handler';
 
 export const TUS_RESUMABLE = '1.0.0';
@@ -34,7 +34,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    *  Sends current server configuration
    */
-  async options(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async options(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const headers = {
       'Tus-Extension': this.extension.toString(),
       'Tus-Max-Size': this.storage.maxUploadSize,
@@ -47,7 +47,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Create a file and send url to client
    */
-  async post(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async post(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const metadataHeader = getHeader(req, 'upload-metadata', true);
     const metadata = parseMetadata(metadataHeader);
     const config: FileInit = { metadata };
@@ -71,7 +71,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Write a chunk to file
    */
-  async patch(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async patch(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const metadataHeader = getHeader(req, 'upload-metadata', true);
     const metadata = metadataHeader && parseMetadata(metadataHeader);
@@ -97,7 +97,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Return chunk offset
    */
-  async head(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async head(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const file = await this.storage.write({ id });
     const headers = this.buildHeaders(file, {
@@ -112,7 +112,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   /**
    * Delete upload
    */
-  async delete(req: http.IncomingMessage, res: http.ServerResponse): Promise<TFile> {
+  async delete(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const id = await this.getAndVerifyId(req, res);
     const [file] = await this.storage.delete({ id });
     this.send(res, { statusCode: 204 });
@@ -124,12 +124,12 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
     return headers;
   }
 
-  send(res: http.ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {
+  send(res: ServerResponse, { statusCode, headers = {}, body }: UploadxResponse): void {
     headers['Tus-Resumable'] = TUS_RESUMABLE;
     super.send(res, { statusCode, headers, body });
   }
 
-  extractChecksum(req: http.IncomingMessage): Checksum {
+  extractChecksum(req: IncomingMessage): Checksum {
     const [checksumAlgorithm, checksum] = getHeader(req, 'upload-checksum')
       .split(/\s+/)
       .filter(Boolean);
@@ -146,7 +146,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
  */
 export function tus<TFile extends UploadxFile>(
   options: UploadxOptions<TFile> = {}
-): (req: http.IncomingMessage, res: http.ServerResponse) => void {
+): (req: IncomingMessage, res: ServerResponse) => void {
   return new Tus(options).handle;
 }
 

@@ -1,5 +1,5 @@
-import * as http from 'http';
 import { join } from 'path';
+import { IncomingMessage } from '../types';
 import {
   accessCheck,
   ensureFile,
@@ -22,9 +22,9 @@ import {
   partMatch,
   updateSize
 } from './file';
-import { BaseStorage, BaseStorageOptions } from './storage';
-import { MetaStorage } from './meta-storage';
 import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
+import { MetaStorage } from './meta-storage';
+import { BaseStorage, BaseStorageOptions } from './storage';
 
 export class DiskFile extends File {}
 
@@ -78,7 +78,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     return accessCheck(this.directory);
   }
 
-  async create(req: http.IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
+  async create(req: IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file, req);
     file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;

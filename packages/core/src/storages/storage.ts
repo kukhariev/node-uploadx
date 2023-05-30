@@ -1,7 +1,7 @@
 import * as bytes from 'bytes';
-import * as http from 'http';
 import { setInterval } from 'timers';
 import { inspect } from 'util';
+import { IncomingMessage, UploadxResponse } from '../types';
 import {
   Cache,
   ErrorMap,
@@ -18,7 +18,6 @@ import {
   normalizeOnErrorResponse,
   toMilliseconds,
   typeis,
-  UploadxResponse,
   Validation,
   Validator,
   ValidatorConfig
@@ -324,7 +323,7 @@ export abstract class BaseStorage<TFile extends File> {
   /**
    *  Creates a new upload and saves its metadata
    */
-  abstract create(req: http.IncomingMessage, file: FileInit): Promise<TFile>;
+  abstract create(req: IncomingMessage, file: FileInit): Promise<TFile>;
 
   /**
    *  Write part and/or return status of an upload

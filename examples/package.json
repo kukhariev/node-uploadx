@@ -1,29 +1,24 @@
 {
   "name": "examples",
-  "version": "6.1.1",
+  "version": "6.1.3",
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
     "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
     "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
-    "fastify": "tsnd -r tsconfig-paths/register -r dotenv/config fastify",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
     "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
     "s3:direct": "tsnd -r tsconfig-paths/register -r dotenv/config s3-direct",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
     "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation",
-    "plain-nodejs": "tsnd node-http-server",
+    "plain-nodejs": "tsnd -r dotenv/config node-http-server",
     "server": "tsnd -r dotenv/config server"
   },
   "dependencies": {
-    "cp-file": "10.0.0",
     "dotenv": "16.0.3",
     "express": "4.18.2",
-    "fastify": "4.13.0",
-    "@fastify/middie": "8.1.0",
-    "node-uploadx": "^6.1.1",
-    "pino": "8.11.0",
+    "node-uploadx": "^6.1.3",
     "winston": "3.8.2"
   },
   "devDependencies": {

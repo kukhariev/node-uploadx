@@ -46,8 +46,7 @@ module.exports = {
       'error',
       {
         selector: 'typeParameter',
-        format: ['PascalCase'],
-        prefix: ['T', 'K']
+        format: ['PascalCase']
       }
     ],
     'jest/expect-expect': ['error', { assertFunctionNames: ['expect', 'request.**.expect'] }],
@@ -66,6 +65,7 @@ module.exports = {
     'prefer-template': 'error',
     'prefer-arrow-callback': 'warn',
     'linebreak-style': ['error', 'unix'],
+    'quotes':  ['error', 'single'],
     'no-console': 'error'
   },
   overrides: [

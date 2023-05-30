@@ -11,6 +11,7 @@ import {
   getHeader,
   hasContent,
   HttpError,
+  IncomingMessage,
   LocalMetaStorage,
   LocalMetaStorageOptions,
   MetaStorage,
@@ -18,7 +19,6 @@ import {
 } from '@uploadx/core';
 import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
-import * as http from 'http';
 import request from 'node-fetch';
 import { GCSConfig } from './gcs-config';
 import { GCSMetaStorage, GCSMetaStorageOptions } from './gcs-meta-storage';
@@ -146,7 +146,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     return this.authClient.request({ url: `${GCSConfig.storageAPI}/${this.bucket}` });
   }
 
-  async create(req: http.IncomingMessage, config: FileInit): Promise<GCSFile> {
+  async create(req: IncomingMessage, config: FileInit): Promise<GCSFile> {
     const file = new GCSFile(config);
     file.name = this.namingFunction(file, req);
     await this.validate(file);
