@@ -1,4 +1,4 @@
-import { DiskFile, uploadx } from '@uploadx/core';
+import { uploadx } from '@uploadx/core';
 import * as express from 'express';
 import { createLogger, format, transports } from 'winston';
 
@@ -22,8 +22,7 @@ const auth = (req: AuthRequest, res: express.Response, next: express.NextFunctio
 app.use(auth);
 
 const onComplete: express.RequestHandler = (req, res, next) => {
-  const file = req.body as DiskFile;
-  return res.json(file);
+  return res.json(req.body);
 };
 
 app.use(
