@@ -1,9 +1,8 @@
 import * as fs from 'fs';
 import { IncomingMessage } from 'http';
-import { vol } from 'memfs';
 import { join } from 'path';
 import * as utils from '../packages/core/src';
-import { testRoot } from './shared';
+import { cleanup, testRoot } from './shared';
 
 jest.mock('fs/promises');
 jest.mock('fs');
@@ -15,9 +14,9 @@ describe('utils', () => {
   const filepath2 = join(dir, '3', 'fi  le.ext.META');
 
   describe('fs', () => {
-    beforeEach(() => vol.reset());
+    beforeEach(async () => cleanup(root));
 
-    afterEach(() => vol.reset());
+    afterEach(async () => cleanup(root));
 
     it('ensureDir(dir)', async () => {
       await utils.ensureDir(dir);
@@ -81,12 +80,10 @@ describe('utils', () => {
       await utils.removeFile(filepath);
       expect(fs.existsSync(filepath)).toBe(false);
     });
-  });
 
-  describe('fs-stream', () => {
     it('getWriteStream(path, 0)', async () => {
-      await utils.ensureFile('filepath');
-      const stream = utils.getWriteStream('filepath', 0);
+      await utils.ensureFile(filepath);
+      const stream = utils.getWriteStream(filepath, 0);
       stream.close();
       expect(stream).toBeInstanceOf(fs.WriteStream);
     });
