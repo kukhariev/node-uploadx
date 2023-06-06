@@ -4,7 +4,7 @@ import { getHeader } from '../utils';
 export interface CorsConfig {
   allowedHeaders?: string[];
   allowedMethods?: string[];
-  allowOrigins?: string[];
+  allowOrigins?: (string | RegExp)[];
   credentials?: boolean;
   exposeHeaders?: string[];
   maxAge?: number;
@@ -13,18 +13,26 @@ export interface CorsConfig {
 export class Cors {
   allowedHeaders: string[];
   allowedMethods: string[];
-  allowOrigins: string[];
   credentials: boolean;
   exposeHeaders: string[];
   maxAge: number;
+  private _allowOrigins: (string | RegExp)[];
 
   constructor(config: CorsConfig = {}) {
     this.allowedHeaders = config.allowedHeaders || [];
     this.allowedMethods = config.allowedMethods || [];
-    this.allowOrigins = config.allowOrigins || [];
+    this._allowOrigins = config.allowOrigins || [];
     this.credentials = config.credentials ?? false;
     this.exposeHeaders = config.exposeHeaders || [];
     this.maxAge = config.maxAge ?? 600;
+  }
+
+  set allowOrigins(value: (string | RegExp)[]) {
+    this._allowOrigins = value.map(allowedOrigin => {
+      if (allowedOrigin === '*' || allowedOrigin instanceof RegExp) return allowedOrigin;
+      if (allowedOrigin.includes('*')) return new RegExp(allowedOrigin.replace(/\*/g, '.*'));
+      return allowedOrigin;
+    });
   }
 
   /**
@@ -75,12 +83,12 @@ export class Cors {
    * Check if origin allowed
    */
   isOriginAllowed(origin: string): boolean {
-    if (this.allowOrigins.length === 0) return true;
-    return this.allowOrigins.some(allowedOrigin => {
+    if (this._allowOrigins.length === 0) return true;
+    return this._allowOrigins.some(allowedOrigin => {
       return (
         allowedOrigin === origin ||
         allowedOrigin === '*' ||
-        new RegExp(allowedOrigin.replace('*', '.*')).test(origin)
+        (allowedOrigin instanceof RegExp && allowedOrigin.test(origin))
       );
     });
   }

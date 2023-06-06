@@ -82,6 +82,7 @@ describe('CORS', () => {
       [['https://*'], 'https://example.com'],
       [['https://*.com'], 'https://example.com'],
       [['http://*.com', 'https://*.com'], 'https://example.com'],
+      [[/https:\/\/.*\.com/], 'https://example.com'],
       [['http://example.com'], undefined]
     ])('allowOrigins: %p set Access-Control-Allow-Origin: %p', (allowOrigins, origin) => {
       cors.allowOrigins = allowOrigins;
