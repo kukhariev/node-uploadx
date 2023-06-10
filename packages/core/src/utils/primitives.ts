@@ -133,3 +133,7 @@ export const memoize = <T, K>(fn: (arg: T) => K): ((arg: T) => K) => {
 };
 
 export const hash = memoize(fnv64);
+
+export const toBoolean = (val?: unknown): boolean => {
+  return ['true', '1', 'y', 'yes'].includes(String(val).trim().toLowerCase());
+};

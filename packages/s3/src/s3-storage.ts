@@ -32,6 +32,7 @@ import {
   mapValues,
   MetaStorage,
   partMatch,
+  toBoolean,
   toSeconds,
   updateSize
 } from '@uploadx/core';
@@ -120,7 +121,7 @@ export class S3Storage extends BaseStorage<S3File> {
   checksumTypes = ['md5'];
   private readonly _partSize = PART_SIZE;
 
-  constructor(public config: S3StorageOptions) {
+  constructor(public config: S3StorageOptions = {}) {
     super(config);
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
@@ -132,11 +133,13 @@ export class S3Storage extends BaseStorage<S3File> {
     if (this.config.clientDirectUpload) {
       this.onCreate = async file => ({ body: file }); // TODO: remove hook
     }
-    this.client = new S3Client(config);
+    const clientConfig = { ...config };
+    clientConfig.logger = toBoolean(process.env.S3_DEBUG) ? this.logger : undefined;
+    this.client = new S3Client(clientConfig);
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
-      const metaConfig = { ...config, ...(config.metaStorageConfig || {}), logger: this.logger };
+      const metaConfig = { ...clientConfig, ...clientConfig.metaStorageConfig };
       this.meta =
         'directory' in metaConfig
           ? new LocalMetaStorage(metaConfig)
