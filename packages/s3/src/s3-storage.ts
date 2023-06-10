@@ -284,7 +284,7 @@ export class S3Storage extends BaseStorage<S3File> {
     file.partSize ??= this._partSize;
     const partsNum = ~~(file.size / this._partSize) + 1;
     const promises = [];
-    const expiresIn = ~~toSeconds(this.config.expiration?.maxAge || '6hrs');
+    const expiresIn = toSeconds(this.config.expiration?.maxAge || '6hrs');
     for (let i = 0; i < partsNum; i++) {
       const partCommandInput = {
         Bucket: this.bucket,

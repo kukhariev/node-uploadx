@@ -87,17 +87,18 @@ export function extendObject<T extends Record<any, any>>(target: T, ...sources: 
 /**
  * Convert a human-readable duration to ms
  */
-export function toMilliseconds(value: string | number | undefined): number | null {
+export function toMilliseconds(value: string | number | undefined): number | undefined {
   if (isNumber(value)) return value;
-  if (!value) return null;
+  if (!value) return undefined;
   return duration(value);
 }
 /**
  * Convert a human-readable duration to seconds
  */
-export function toSeconds(value: string | number): number {
+export function toSeconds(value: string | number): number | undefined {
   if (isNumber(value)) return value;
-  return duration(value, 'sec');
+  const s = duration(value, 'sec');
+  return s ? ~~s : s;
 }
 
 /**
