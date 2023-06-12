@@ -65,7 +65,7 @@ module.exports = {
     'prefer-template': 'error',
     'prefer-arrow-callback': 'warn',
     'linebreak-style': ['error', 'unix'],
-    'quotes':  ['error', 'single'],
+    'quotes': ['error', 'single'],
     'no-console': 'error'
   },
   overrides: [
@@ -77,7 +77,7 @@ module.exports = {
       }
     },
     {
-      files: ['examples/**/*.js'],
+      files: ['examples/**/*.{js,mjs}'],
       rules: {
         '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',

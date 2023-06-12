@@ -29,7 +29,7 @@
     "build": "tsc --build packages",
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf packages/*/lib upload files dist",
-    "lint": "eslint . --fix --ext .js,.ts",
+    "lint": "eslint . --fix --ext .js,.ts,.mjs",
     "prepare": "husky install",
     "prettier": "prettier --write \"**/*.{json,md}\"",
     "test": "jest",
@@ -68,6 +68,6 @@
   ],
   "lint-staged": {
     "*.{md,json}": "prettier --write",
-    "{packages,examples,test}/**/*.ts": "eslint --fix"
+    "{packages,examples,test}/**/*.{ts,js,mjs}": "eslint --fix"
   }
 }

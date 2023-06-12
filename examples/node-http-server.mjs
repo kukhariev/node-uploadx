@@ -1,6 +1,6 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const { DiskStorage, Uploadx, cors } = require('@uploadx/core');
+import { createServer } from 'http';
+import { parse } from 'url';
+import { cors, DiskStorage, Uploadx } from '@uploadx/core';
 
 const PORT = process.env.PORT || 3002;
 
