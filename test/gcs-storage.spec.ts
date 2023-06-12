@@ -7,8 +7,8 @@ import {
   buildContentRange,
   ClientError,
   GCSFile,
+  GCSMetaStorage,
   GCStorage,
-  GCStorageOptions,
   getRangeEnd
 } from '../packages/gcs/src';
 import { authRequest, deepClone, metafile, storageOptions, testfile } from './shared';
@@ -35,7 +35,20 @@ describe('GCStorage', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
-    storage = new GCStorage({ ...(storageOptions as GCStorageOptions), bucket: 'test-bucket' });
+    storage = new GCStorage({ ...storageOptions, bucket: 'test-bucket' });
+  });
+
+  describe('initialization', () => {
+    it('should set defaults', () => {
+      mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
+      storage = new GCStorage();
+      expect(storage.meta).toBeInstanceOf(GCSMetaStorage);
+      expect(storage.bucket).toBeDefined();
+    });
+
+    it('should share logger', () => {
+      expect(storage.logger).toBe(storage.meta.logger);
+    });
   });
 
   describe('.create()', () => {
@@ -64,7 +77,7 @@ describe('GCStorage', () => {
   });
 
   describe('.update()', () => {
-    it('should update changed metadata keys', async () => {
+    it('should update metadata keys', async () => {
       mockAuthRequest.mockResolvedValue(metafileResponse());
       const gcsFile = await storage.update(metafile, { metadata: { name: 'newname.mp4' } });
       expect(gcsFile.metadata.name).toBe('newname.mp4');
@@ -112,7 +125,7 @@ describe('GCStorage', () => {
       expect(gcsFile).toMatchSnapshot();
     });
 
-    it('should send normalized  error', async () => {
+    it('should send normalised error', async () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
       // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('Bad Request', { status: 400 }));

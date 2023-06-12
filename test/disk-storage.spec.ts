@@ -35,6 +35,19 @@ describe('DiskStorage', () => {
       storage = new DiskStorage(options);
       expect(storage.directory).toBe(directory);
     });
+
+    it('should share logger', () => {
+      storage = new DiskStorage();
+      expect(storage.logger).toBe(storage.meta.logger);
+    });
+
+    it('should share custom logger', () => {
+      const logger = console;
+      const consoleDebugMock = jest.spyOn(console, 'debug').mockImplementation();
+      storage = new DiskStorage({ logger });
+      expect(storage.logger).toBe(storage.meta.logger);
+      consoleDebugMock.mockRestore();
+    });
   });
 
   describe('.create()', () => {
