@@ -7,7 +7,7 @@ import {
   S3ClientConfig
 } from '@aws-sdk/client-s3';
 import { fromIni } from '@aws-sdk/credential-providers';
-import { File, MetaStorage, MetaStorageOptions, UploadList } from '@uploadx/core';
+import { File, MetaStorage, MetaStorageOptions, UploadList, toBoolean } from '@uploadx/core';
 
 const BUCKET_NAME = 'node-uploadx';
 export type S3MetaStorageOptions = S3ClientConfig &
@@ -25,7 +25,9 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
     keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
-    this.client = new S3Client(config);
+    const clientConfig = { ...config };
+    clientConfig.logger = toBoolean(process.env.S3_DEBUG) ? this.logger : undefined;
+    this.client = new S3Client(clientConfig);
   }
 
   async get(id: string): Promise<T> {
