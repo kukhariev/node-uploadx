@@ -139,7 +139,7 @@ export class S3Storage extends BaseStorage<S3File> {
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
-      const metaConfig = { ...clientConfig, ...clientConfig.metaStorageConfig };
+      const metaConfig = { ...config, ...config.metaStorageConfig };
       this.meta =
         'directory' in metaConfig
           ? new LocalMetaStorage(metaConfig)
