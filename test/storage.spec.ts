@@ -3,6 +3,19 @@ import { metafile, TestStorage } from './shared';
 describe('BaseStorage', () => {
   let storage;
 
+  it('should share logger', () => {
+    storage = new TestStorage();
+    expect(storage.logger).toBe(storage.meta.logger);
+  });
+
+  it('should share custom logger', () => {
+    const logger = console;
+    const consoleDebugMock = jest.spyOn(console, 'debug').mockImplementation();
+    storage = new TestStorage({ logger });
+    expect(storage.logger).toBe(storage.meta.logger);
+    consoleDebugMock.mockRestore();
+  });
+
   it('should set maxUploadSize', () => {
     storage = new TestStorage();
     expect(storage.maxUploadSize).toBe(5497558138880);

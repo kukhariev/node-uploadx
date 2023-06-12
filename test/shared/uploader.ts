@@ -14,9 +14,11 @@ export class TestUploader extends BaseHandler<File> {}
 export class TestStorage extends BaseStorage<File> {
   path = '/files';
   isReady = true;
-  meta = new MetaStorage<File>();
+  meta;
+
   constructor(config = {} as BaseStorageOptions<File>) {
     super(config);
+    this.meta = new MetaStorage<File>(config);
   }
 
   create(req: any, file: FileInit): Promise<File> {
