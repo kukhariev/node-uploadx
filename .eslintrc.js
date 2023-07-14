@@ -23,6 +23,8 @@ module.exports = {
   ],
   rules: {
     'prettier/prettier': 'warn',
+    '@typescript-eslint/no-unsafe-declaration-merging': 'off',
+    '@typescript-eslint/no-redundant-type-constituents': 'off',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/explicit-function-return-type': [

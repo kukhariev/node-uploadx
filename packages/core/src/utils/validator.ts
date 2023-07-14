@@ -34,7 +34,7 @@ export class Validator<T> {
     }
   }
 
-  async verify(t: T): Promise<void | never> {
+  async verify(t: T): Promise<void> {
     for (const [code, validator] of Object.entries(this._validators)) {
       if (!(await validator.isValid(t))) {
         return Promise.reject({
