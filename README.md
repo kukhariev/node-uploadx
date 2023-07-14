@@ -4,7 +4,7 @@
 [![commits since latest release][comm-image]][comm-url]
 
 Resumable upload middleware for [express](https://github.com/expressjs/express)
- and plain node.js.
+and plain node.js.
 Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 ## ✨ Features
