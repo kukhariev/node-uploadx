@@ -5,6 +5,7 @@ import {
   CompleteMultipartUploadOutput,
   CreateMultipartUploadCommand,
   ListPartsCommand,
+  ObjectCannedACL,
   Part,
   S3Client,
   S3ClientConfig,
@@ -61,7 +62,7 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
     /**
      *   Specifying access rules for uploaded files
      */
-    acl?: 'private' | 'public-read' | string;
+    acl?: ObjectCannedACL;
     /**
      * Force compatible client upload directly to S3 storage
      */
