@@ -116,7 +116,7 @@ describe('::Uploadx', () => {
 
   describe('PATCH', () => {
     it('update metadata and originalName', async () => {
-      const uri = (await create(file2)).header.location as string;
+      const uri = (await create(file2)).header.location;
       const res = await request(app)
         .patch(uri)
         .send({ metadata: { name: 'newname.mp4' } })
@@ -126,7 +126,7 @@ describe('::Uploadx', () => {
     });
 
     it('set non metadata', async () => {
-      const uri = (await create(file2)).header.location as string;
+      const uri = (await create(file2)).header.location;
       const res = await request(app)
         .patch(uri)
         .send({ custom: { property: 'updated' } })
@@ -137,7 +137,7 @@ describe('::Uploadx', () => {
 
   describe('PUT', () => {
     it('should 200 (simple request)', async () => {
-      const uri = (await create(file2)).header.location as string;
+      const uri = (await create(file2)).header.location;
       const res = await request(app)
         .put(uri)
         .set('Digest', `sha=${metadata.sha1}`)
@@ -148,7 +148,7 @@ describe('::Uploadx', () => {
     });
 
     it('should 200 (chunks)', async () => {
-      const uri = (await create(file1)).header.location as string;
+      const uri = (await create(file1)).header.location;
       function uploadChunks(): Promise<request.Response> {
         return new Promise(resolve => {
           let start = 0;
@@ -176,7 +176,7 @@ describe('::Uploadx', () => {
 
     it('should 308 (chunk)', async () => {
       let res = await create({ ...file2, size: 15, name: 'chunk.308' });
-      const uri = res.header.location as string;
+      const uri = res.header.location;
       const chunk = '12345';
       res = await request(app)
         .put(uri)
@@ -201,7 +201,7 @@ describe('::Uploadx', () => {
     it('should 409 (invalid range)', async () => {
       const res = await create({ ...file2, size: 15, name: 'range.409' });
       await request(app)
-        .put(res.header.location as string)
+        .put(res.header.location)
         .redirects(0)
         .set('content-type', 'application/octet-stream')
         .set('content-range', 'bytes 13-18/70')
@@ -212,7 +212,7 @@ describe('::Uploadx', () => {
     it('should 400 (invalid checksum algorithm)', async () => {
       const res = await create({ ...file2, name: 'invalid checksum' });
       await request(app)
-        .put(res.header.location as string)
+        .put(res.header.location)
         .set('Digest', 'crc=798797')
         .send(testfile.asBuffer)
         .expect(400);
@@ -220,10 +220,7 @@ describe('::Uploadx', () => {
 
     it('should 409 (invalid size)', async () => {
       const res = await create({ ...file2, size: 15, name: 'size.409' });
-      await request(app)
-        .put(res.header.location as string)
-        .send(testfile.asBuffer)
-        .expect(409);
+      await request(app).put(res.header.location).send(testfile.asBuffer).expect(409);
     });
 
     it('should 403 (no id)', async () => {
@@ -232,7 +229,7 @@ describe('::Uploadx', () => {
 
     it('should stream', async () => {
       let res = await request(app).post(path1).send({ name: 'stream' });
-      const uri = res.header.location as string;
+      const uri = res.header.location;
       await request(app).put(uri).redirects(0).set('content-range', 'bytes 0-5/*').send('012345');
       res = await request(app)
         .put(uri)
@@ -255,7 +252,7 @@ describe('::Uploadx', () => {
 
   describe('DELETE', () => {
     it('should 204', async () => {
-      const uri = (await create(file2)).header.location as string;
+      const uri = (await create(file2)).header.location;
       await request(app).delete(uri).expect(204);
     });
   });
@@ -275,7 +272,7 @@ describe('::Uploadx', () => {
 
   describe('onUpdate', () => {
     it('should return custom response', async () => {
-      const uri = (await request(app).post(path2).send(file1)).header.location as string;
+      const uri = (await request(app).post(path2).send(file1)).header.location;
       const res = await request(app).patch(uri).send({ custom: true });
       expect(res.text).toBe('updated');
     });
@@ -283,7 +280,7 @@ describe('::Uploadx', () => {
 
   describe('onComplete', () => {
     it('should return custom response', async () => {
-      const uri = (await request(app).post(path2).send(file1)).header.location as string;
+      const uri = (await request(app).post(path2).send(file1)).header.location;
       const res = await request(app).put(uri).send(testfile.asBuffer);
       expect(res.text).toBe('completed');
     });

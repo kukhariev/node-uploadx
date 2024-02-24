@@ -3,7 +3,7 @@ import { PassThrough } from 'stream';
 
 export class FileWriteStream extends PassThrough {
   get bytesWritten(): number {
-    return super.readableLength;
+    return this.readableLength;
   }
 
   close(): void {
