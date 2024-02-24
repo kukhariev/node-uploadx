@@ -38,7 +38,7 @@
     "@aws-sdk/s3-request-presigner": "^3.357.0"
   },
   "devDependencies": {
-    "aws-sdk-client-mock": "^2.1.1",
+    "aws-sdk-client-mock": "^3.0.1",
     "@aws-sdk/types": "^3.357.0"
   },
   "peerDependencies": {
