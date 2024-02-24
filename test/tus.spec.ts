@@ -42,7 +42,7 @@ describe('::Tus', () => {
   describe('POST', () => {
     it('should 201', async () => {
       const res = await create().expect('tus-resumable', TUS_RESUMABLE);
-      uri = res.header.location as string;
+      uri = res.header.location;
       expect(uri).toEqual(expect.stringContaining('/tus'));
       expect(exposedHeaders(res)).toEqual(
         expect.arrayContaining(['location', 'upload-expires', 'tus-resumable'])

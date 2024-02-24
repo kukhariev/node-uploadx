@@ -1,8 +1,8 @@
 import * as rimraf from 'rimraf';
 import { BinaryLike, BinaryToTextEncoding, createHash } from 'crypto';
 
-export function cleanup(directory: string): Promise<any> {
-  return new Promise(resolve => rimraf(directory, resolve));
+export function cleanup(directory: string): Promise<boolean> {
+  return rimraf.rimraf(directory);
 }
 
 export const hash = (

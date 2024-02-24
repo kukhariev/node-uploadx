@@ -229,8 +229,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     const httpError = isUploadxError(error)
       ? this._errorResponses[error.uploadxErrorCode]
       : isValidationError(error)
-      ? error
-      : this.storage.normalizeError(error);
+        ? error
+        : this.storage.normalizeError(error);
     const response = this.storage.onError(httpError);
     this.send(res, response);
   }
