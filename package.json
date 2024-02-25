@@ -25,7 +25,7 @@
     "npm": ">=7.0.0"
   },
   "scripts": {
-    "start": "npm run build & npm run server --workspace examples",
+    "start": "npm run build && npm run server --workspace examples",
     "build": "tsc --build packages",
     "build:watch": "tsc --build --watch packages",
     "clean": "tsc --build packages --clean && rimraf -g packages/*/lib upload files dist",
