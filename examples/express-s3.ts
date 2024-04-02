@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { LogLevel, uploadx } from '@uploadx/core';
+import { type LogLevel, uploadx } from '@uploadx/core';
 import { S3Storage } from '@uploadx/s3';
 
 const PORT = process.env.PORT || 3002;
@@ -18,6 +18,8 @@ const app = express();
 
 // The credentials are loaded from a shared credentials file
 const storage = new S3Storage({
+  maxUploadSize: '512MB',
+  allowMIME: ['image/*', 'video/*'],
   bucket: process.env.S3_BUCKET,
   endpoint: process.env.S3_ENDPOINT,
   forcePathStyle: true,
