@@ -122,10 +122,10 @@ export class GCStorage extends BaseStorage<GCSFile> {
     config.scopes ||= GCSConfig.authScopes;
     this.authClient = new GoogleAuth(config);
 
-    this.accessCheck().catch((err: ClientError) => {
-      this.isReady = false;
-      this.logger.error('Unable to open bucket: %O', err);
-    });
+    this.isReady = false;
+    this.accessCheck()
+      .then(() => (this.isReady = true))
+      .catch(err => this.logger.error('Storage access check failed: %O', err));
   }
 
   normalizeError(error: ClientError): HttpError {
