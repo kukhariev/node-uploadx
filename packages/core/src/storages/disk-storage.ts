@@ -64,10 +64,12 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       const metaConfig = { ...config, ...config.metaStorageConfig };
       this.meta = new LocalMetaStorage(metaConfig);
     }
-    this.accessCheck().catch(err => {
-      this.isReady = false;
-      this.logger.error('[error]: Could not write to directory: %O', err);
-    });
+    this.isReady = false;
+    this.accessCheck()
+      .then(() => (this.isReady = true))
+      .catch(err => {
+        this.logger.error('Storage access check failed: %O', err);
+      });
   }
 
   normalizeError(err: Error): HttpError {

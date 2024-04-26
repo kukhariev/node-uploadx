@@ -21,7 +21,11 @@ export async function ensureFile(path: string, overwrite = false): Promise<numbe
 }
 
 export async function accessCheck(dir: string): Promise<void> {
-  await fsp.mkdir(dir, { recursive: true });
+  try {
+    await fsp.mkdir(dir, { recursive: true });
+  } catch {
+    throw new Error(`Directory is not accessible: ${dir}`);
+  }
 }
 
 /**

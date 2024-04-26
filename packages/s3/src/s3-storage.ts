@@ -146,10 +146,10 @@ export class S3Storage extends BaseStorage<S3File> {
           ? new LocalMetaStorage(metaConfig)
           : new S3MetaStorage(metaConfig);
     }
-    this.accessCheck().catch((err: AWSError) => {
-      this.isReady = false;
-      this.logger.error('Unable to open bucket: %O', err);
-    });
+    this.isReady = false;
+    this.accessCheck()
+      .then(() => (this.isReady = true))
+      .catch(err => this.logger.error('Storage access check failed: %O', err));
   }
 
   normalizeError(error: AWSError): HttpError {
