@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { GCStorage, Uploadx } from 'node-uploadx';
 
 const PORT = process.env.PORT || 3002;

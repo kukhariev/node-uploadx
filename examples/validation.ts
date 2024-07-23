@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { DiskFile, DiskStorage, OnComplete, uploadx, UploadxResponse } from 'node-uploadx';
 
 const PORT = process.env.PORT || 3002;

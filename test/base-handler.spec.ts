@@ -1,6 +1,6 @@
 import { createRequest, createResponse } from 'node-mocks-http';
 import { testStorage, TestUploader } from './shared';
-import * as http from 'http';
+import http from 'http';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
