@@ -1,0 +1,474 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "version": "0.8.0",
+    "title": "Uploadx API",
+    "license": {
+      "name": "MIT"
+    },
+    "description": "Definition of resumable uploads protocol",
+    "contact": {
+      "name": "Oleg Kukhariev",
+      "url": "https://github.com/kukhariev"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3002/{basePath}",
+      "description": "Development server",
+      "variables": {
+        "basePath": {
+          "default": "files"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "summary": "Create upload",
+        "description": "Create upload",
+        "operationId": "create",
+        "tags": [],
+        "requestBody": {
+          "description": "Upload Metadata",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Upload metadata",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "example": "video.mp4"
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "mimetype",
+                    "example": "video/mp4"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "lastModified": {
+                    "type": "number",
+                    "example": 737537753543
+                  }
+                },
+                "required": ["name"],
+                "example": {
+                  "name": "video.mp4",
+                  "mimeType": "video/mp4",
+                  "size": 741,
+                  "lastModified": 1631750105530
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Upload-Content-Type",
+            "in": "header",
+            "description": "MIME type of the file",
+            "schema": {
+              "type": "string",
+              "format": "mimetype"
+            },
+            "example": "video/mp4"
+          },
+          {
+            "name": "X-Upload-Content-Length",
+            "in": "header",
+            "description": "Total size of file in bytes",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1000000
+          },
+          {
+            "name": "Content-Length",
+            "description": "Number of bytes in metadata",
+            "in": "header",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file already exists, send a resume request",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri",
+                  "example": "http://localhost:3002/files?uploadType=uploadx&upload_id=2b62dbec20048158af963572fbdf89c6"
+                },
+                "description": "Resumable URI"
+              },
+              "X-Upload-Expires": {
+                "schema": {
+                  "type": "string",
+                  "example": "2021-08-25T11:12:26.635Z",
+                  "format": "date-time"
+                },
+                "description": "Upload expiration date"
+              }
+            }
+          },
+          "201": {
+            "description": "Upload accepted, send the file contents",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri",
+                  "example": "http://localhost:3002/files?uploadType=uploadx&upload_id=2b62dbec20048158af963572fbdf89c6"
+                },
+                "description": "Resumable URI"
+              },
+              "X-Upload-Expires": {
+                "schema": {
+                  "type": "string",
+                  "example": "2021-08-25T11:12:26.635Z",
+                  "format": "date-time"
+                },
+                "description": "Upload expiration date"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "name": "ValidationError",
+                    "code": "InvalidFileName",
+                    "message": "Invalid file name"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "name": "ValidationError",
+                    "code": "RequestEntityTooLarge",
+                    "message": "Request entity too large"
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "name": "ValidationError",
+                    "code": "UnsupportedMediaType",
+                    "message": "Unsupported media type"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel upload",
+        "description": "Cancel upload",
+        "operationId": "cancel",
+        "tags": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UploadIDinQuery"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "options": {
+        "summary": "Options",
+        "description": "Options",
+        "operationId": "options",
+        "tags": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "x-internal": true
+      },
+      "put": {
+        "summary": "Uploading content",
+        "description": "Sending the contents of a file or receiving the current progress of an upload.",
+        "operationId": "content-upload",
+        "tags": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UploadIDinQuery"
+          },
+          {
+            "name": "Content-Range",
+            "description": "Which bytes of the file will be uploaded",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "example": "bytes 0-262143/1000000",
+              "pattern": "^bytes (0-\\d+|\\*)\\/\\d+"
+            }
+          },
+          {
+            "name": "Content-Length",
+            "description": "Number of bytes in a chunk",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "example": {
+                  "id": "2b62dbec20048158af963572fbdf89c6",
+                  "message": "Upload Complete"
+                }
+              }
+            }
+          },
+          "308": {
+            "description": "Resume Incomplete",
+            "headers": {
+              "Range": {
+                "schema": {
+                  "example": "bytes=0-262143",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Content range/length conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Upload has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "description": "Chunk content",
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List uploads",
+        "description": "List uploads",
+        "operationId": "list",
+        "tags": [],
+
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true,
+              "example": "videos/"
+            },
+            "description": "Filter uploads by prefix"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FileNotFound",
+                    "message": "Not found"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-internal": true
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "UploadIDinQuery": {
+        "name": "upload_id",
+        "in": "query",
+        "description": "Upload ID",
+        "schema": {
+          "type": "string"
+        }
+      }},
+    "schemas": {
+      "Error": {
+        "description": "Error",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 3
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "required": ["error"]
+      },
+      "UploadList": {
+        "description": "Uploads list",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "example": [],
+            "nullable": true,
+            "items": {}
+          },
+          "prefix": {
+            "type": "string",
+            "example": "videos/",
+            "nullable": true
+          }
+        },
+        "x-internal": true
+      }
+    },
+    "securitySchemes": {},
+    "responses": {
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
