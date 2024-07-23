@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { type LogLevel, uploadx } from '@uploadx/core';
 import { S3Storage } from '@uploadx/s3';
 

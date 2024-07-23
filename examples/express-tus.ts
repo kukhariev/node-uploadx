@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { DiskFile, DiskStorageOptions, tus } from '@uploadx/core';
 
 const PORT = process.env.PORT || 3002;
