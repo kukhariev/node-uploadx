@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "abort-controller": "^3.0.0",
-    "google-auth-library": "^8.0.0",
+    "google-auth-library": "^9.0.0",
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {
