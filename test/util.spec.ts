@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import { IncomingMessage } from 'http';
 import { join } from 'path';
 import * as utils from '../packages/core/src';
