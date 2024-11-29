@@ -147,8 +147,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       const lengthChecker = streamLength(part.contentLength || part.size - part.start);
       const checksumChecker = streamChecksum(part.checksum, part.checksumAlgorithm);
       const keepPartial = !part.checksum;
-      const failWithCode = (code?: ERRORS): void => {
+      const cleanupStreams = (): void => {
         dest.close();
+        lengthChecker.destroy();
+        checksumChecker.destroy();
+      };
+      const failWithCode = (code?: ERRORS): void => {
+        cleanupStreams();
         resolve([NaN, code]);
       };
       lengthChecker.on('error', () => failWithCode(ERRORS.FILE_CONFLICT));
@@ -158,7 +163,10 @@ export class DiskStorage extends BaseStorage<DiskFile> {
         .pipe(lengthChecker)
         .pipe(checksumChecker)
         .pipe(dest)
-        .on('error', reject)
+        .on('error', (err?: unknown): void => {
+          cleanupStreams();
+          reject(err);
+        })
         .on('finish', () => {
           return resolve([part.start + dest.bytesWritten]);
         });
