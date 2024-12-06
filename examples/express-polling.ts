@@ -21,10 +21,13 @@ const onComplete: express.RequestHandler = (req, res) => {
   const moving = (processes[file.name] ??= {} as Moving);
   if (!moving.status) {
     moving.status = 'moving';
-    const source = storage.getFilePath(file.name);
-    const destination = path.resolve(moveTo, file.originalName);
     void (async () => {
       try {
+        const source = storage.getFilePath(file.name);
+        const destination = path.resolve(moveTo, file.originalName);
+        if (!destination.startsWith(path.resolve(moveTo))) {
+          throw new Error(`Invalid destination path: ${destination}`);
+        }
         await copyFile(source, destination);
         await storage.delete(file);
         moving.status = 'done';
