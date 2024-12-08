@@ -14,12 +14,9 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    'plugin:jest/recommended',
-    'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:prettier/recommended',
-    'plugin:jest-formatting/recommended'
+    'plugin:prettier/recommended'
   ],
   rules: {
     'prettier/prettier': 'warn',
@@ -51,7 +48,6 @@ module.exports = {
         format: ['PascalCase']
       }
     ],
-    'jest/expect-expect': ['error', { assertFunctionNames: ['expect', 'request.**.expect'] }],
     'no-empty': 'off',
     'no-irregular-whitespace': 'error',
     'no-return-assign': 'error',
@@ -67,10 +63,24 @@ module.exports = {
     'prefer-template': 'error',
     'prefer-arrow-callback': 'warn',
     'linebreak-style': ['error', 'unix'],
-    'quotes':  ['error', 'single'],
+    quotes: ['error', 'single'],
     'no-console': 'error'
   },
   overrides: [
+    {
+      files: ['test/**'],
+      plugins: ['jest'],
+      extends: [
+        'plugin:jest/recommended',
+        'plugin:jest/style',
+        'plugin:jest-formatting/recommended'
+      ],
+      rules: {
+        '@typescript-eslint/unbound-method': 'off',
+        'jest/unbound-method': 'error',
+        'jest/expect-expect': ['error', { assertFunctionNames: ['expect', 'request.**.expect'] }]
+      }
+    },
     {
       files: ['examples/**/*.*'],
       rules: {
