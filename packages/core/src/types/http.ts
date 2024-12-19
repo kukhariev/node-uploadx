@@ -4,9 +4,7 @@ export type IncomingMessage = http.IncomingMessage & {
   originalUrl?: string;
 };
 
-export type ServerResponse = http.ServerResponse & {
-  req?: http.IncomingMessage;
-};
+export type ServerResponse = http.ServerResponse;
 
 export interface IncomingMessageWithBody<T = any> extends http.IncomingMessage {
   body?: T;
