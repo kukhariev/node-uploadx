@@ -90,14 +90,14 @@ export function extendObject<T extends Record<any, any>>(target: T, ...sources: 
 export function toMilliseconds(value: string | number | undefined): number | undefined {
   if (isNumber(value)) return value;
   if (!value) return undefined;
-  return duration(value);
+  return duration(value) || undefined;
 }
 /**
  * Convert a human-readable duration to seconds
  */
 export function toSeconds(value: string | number): number | undefined {
   if (isNumber(value)) return value;
-  const s = duration(value, 'sec');
+  const s = duration(value, 'sec') || undefined;
   return s ? ~~s : s;
 }
 

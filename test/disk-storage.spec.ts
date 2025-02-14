@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import { vol } from 'memfs';
 import { DiskStorage, fsp } from '../packages/core/src';
 import {

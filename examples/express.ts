@@ -1,5 +1,5 @@
 import { uploadx } from '@uploadx/core';
-import * as express from 'express';
+import express from 'express';
 import { createLogger, format, transports } from 'winston';
 
 type AuthRequest = express.Request & { user?: { id: string; email: string } };

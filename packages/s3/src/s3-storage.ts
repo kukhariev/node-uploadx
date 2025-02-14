@@ -1,4 +1,4 @@
-import * as bytes from 'bytes';
+import bytes from 'bytes';
 import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,

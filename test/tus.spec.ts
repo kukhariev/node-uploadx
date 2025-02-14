@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
-import * as request from 'supertest';
+import request from 'supertest';
 import { parseMetadata, serializeMetadata, tus, Tus, TUS_RESUMABLE } from '../packages/core/src';
 import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
 
