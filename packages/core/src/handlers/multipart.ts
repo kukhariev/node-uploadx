@@ -1,4 +1,4 @@
-import * as multiparty from 'multiparty';
+import multiparty from 'multiparty';
 import { FileInit, UploadxFile } from '../storages';
 import { IncomingMessage, ServerResponse } from '../types';
 import { setHeaders } from '../utils';

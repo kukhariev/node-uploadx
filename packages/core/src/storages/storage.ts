@@ -1,4 +1,4 @@
-import * as bytes from 'bytes';
+import bytes from 'bytes';
 import { setInterval } from 'timers';
 import { inspect } from 'util';
 import { IncomingMessage, UploadxResponse } from '../types';

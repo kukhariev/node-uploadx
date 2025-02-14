@@ -1,5 +1,5 @@
 import { LogLevel, uploadx } from '@uploadx/core';
-import * as express from 'express';
+import express from 'express';
 
 const PORT = process.env.PORT || 3002;
 

@@ -1,4 +1,4 @@
-import type * as http from 'http';
+import type http from 'http';
 
 export type IncomingMessage = http.IncomingMessage & {
   originalUrl?: string;

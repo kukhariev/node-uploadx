@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 // import { vol } from 'memfs';
-import * as request from 'supertest';
+import request from 'supertest';
 import { multipart, Multipart } from '../packages/core/src';
 import { app, cleanup, metadata, storageOptions, testfile, testRoot } from './shared';
 

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import * as url from 'url';
+import url from 'url';
 import {
   BaseStorage,
   DiskStorage,

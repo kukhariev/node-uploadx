@@ -1,4 +1,4 @@
-import * as http from 'http';
+import http from 'http';
 import { HttpError, HttpErrorBody } from './errors';
 import { getLastOne, isRecord } from './primitives';
 import {

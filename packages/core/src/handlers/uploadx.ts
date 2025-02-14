@@ -1,4 +1,4 @@
-import * as url from 'url';
+import url from 'url';
 import { Checksum, FileInit, UploadxFile } from '../storages';
 import { Headers, IncomingMessage, ServerResponse } from '../types';
 import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, setHeaders } from '../utils';
