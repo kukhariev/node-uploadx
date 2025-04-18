@@ -15,8 +15,7 @@ describe('::Tus', () => {
   app.use(basePath, tus(opts));
 
   function exposedHeaders(response: request.Response): string[] {
-    return response
-      .get('Access-Control-Expose-Headers')
+    return (response.get('Access-Control-Expose-Headers') || '')
       .split(',')
       .map(s => s.toLowerCase());
   }
