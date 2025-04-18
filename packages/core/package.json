@@ -33,11 +33,11 @@
   "dependencies": {
     "bytes": "^3.1.0",
     "multiparty": "^4.2.2",
-    "parse-duration": "^1.1.0"
+    "parse-duration": "^2.1.4"
   },
   "devDependencies": {
     "@types/bytes": "3.1.1",
-    "@types/multiparty": "0.0.33"
+    "@types/multiparty": "4.2.1"
   },
   "publishConfig": {
     "access": "public"
