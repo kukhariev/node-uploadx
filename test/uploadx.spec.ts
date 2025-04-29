@@ -34,8 +34,7 @@ describe('::Uploadx', () => {
   app.use(path1, uploadx(opts));
   app.use(path2, uploadx2.handle);
   function exposedHeaders(response: request.Response): string[] {
-    return response
-      .get('Access-Control-Expose-Headers')
+    return (response.get('Access-Control-Expose-Headers') || '')
       .split(',')
       .map(s => s.toLowerCase());
   }
