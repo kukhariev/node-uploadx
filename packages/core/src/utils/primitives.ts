@@ -1,5 +1,4 @@
 import { createHash, randomBytes } from 'crypto';
-import duration from 'parse-duration';
 import { isDeepStrictEqual } from 'util';
 import { Cache } from './cache';
 
@@ -90,14 +89,14 @@ export function extendObject<T extends Record<any, any>>(target: T, ...sources: 
 export function toMilliseconds(value: string | number | undefined): number | undefined {
   if (isNumber(value)) return value;
   if (!value) return undefined;
-  return duration(value) || undefined;
+  return durationToMs(value) || undefined;
 }
 /**
  * Convert a human-readable duration to seconds
  */
 export function toSeconds(value: string | number): number | undefined {
   if (isNumber(value)) return value;
-  const s = duration(value, 'sec') || undefined;
+  const s = Math.floor(durationToMs(value) / 1000) || undefined;
   return s ? ~~s : s;
 }
 
@@ -137,3 +136,56 @@ export const hash = memoize(fnv64);
 export const toBoolean = (val?: unknown): boolean => {
   return ['true', '1', 'y', 'yes'].includes(String(val).trim().toLowerCase());
 };
+
+export function durationToMs(input: string): number {
+  if (input.length > 50) {
+    throw new Error('Input string exceeds maximum length of 50 characters');
+  }
+
+  const durationRegex = /(\d+)\s*([a-zA-Z]+)/g;
+  const matches = Array.from(input.matchAll(durationRegex));
+
+  if (matches.length === 0) {
+    throw new Error('Invalid duration format');
+  }
+
+  const matchedString = matches.map(match => match[0]).join('');
+  if (matchedString.replace(/\s+/g, '') !== input.replace(/\s+/g, '')) {
+    throw new Error('Invalid duration format');
+  }
+
+  const unitMultipliers: { [key: string]: number } = {
+    s: 1000,
+    m: 60000,
+    h: 3600000,
+    d: 86400000,
+    w: 604800000,
+    M: 2592000000, // 30 days
+    y: 31536000000 // 365 days
+  };
+
+  let totalMs = 0;
+
+  for (const match of matches) {
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    let key: string;
+
+    if (unit === 'M' || unit.toLowerCase().startsWith('mo')) {
+      key = 'M';
+    } else {
+      key = unit[0].toLowerCase();
+    }
+
+    const multiplier = unitMultipliers[key];
+
+    if (!multiplier) {
+      throw new Error(`Invalid time unit: ${unit}`);
+    }
+
+    totalMs += value * multiplier;
+  }
+
+  return totalMs;
+}

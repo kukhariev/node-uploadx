@@ -32,8 +32,7 @@
   },
   "dependencies": {
     "bytes": "^3.1.0",
-    "multiparty": "^4.2.2",
-    "parse-duration": "^2.1.4"
+    "multiparty": "^4.2.2"
   },
   "devDependencies": {
     "@types/bytes": "3.1.1",
