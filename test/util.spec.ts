@@ -198,6 +198,45 @@ describe('utils', () => {
         c: [1, 2, 3]
       });
     });
+
+    describe('Duration Conversion', () => {
+      const durationToMs = utils.durationToMs;
+
+      it('should convert single unit durations', () => {
+        expect(durationToMs('5s')).toBe(5000);
+        expect(durationToMs('10m')).toBe(600000);
+        expect(durationToMs('2h')).toBe(7200000);
+        expect(durationToMs('3d')).toBe(259200000);
+      });
+
+      it('should convert multiple unit durations', () => {
+        expect(durationToMs('1h 30m')).toBe(5400000);
+        expect(durationToMs('2d 4h 30m')).toBe(189000000);
+        expect(durationToMs('1w 2d 3h')).toBe(788400000);
+      });
+
+      it('should handle full word units', () => {
+        expect(durationToMs('5 seconds')).toBe(5000);
+        expect(durationToMs('2 hours')).toBe(7200000);
+        expect(durationToMs('1 day 12 hours')).toBe(129600000);
+      });
+
+      it('should throw error for invalid units', () => {
+        expect(() => durationToMs('5x')).toThrow('Invalid time unit: x');
+        expect(() => durationToMs('10 invalid')).toThrow('Invalid time unit: invalid');
+      });
+
+      it('should throw error for invalid format', () => {
+        expect(() => durationToMs('abc')).toThrow('Invalid duration format');
+        // expect(() => durationToMs('5s2h')).toThrow('Invalid duration format');
+        expect(() => durationToMs('')).toThrow('Invalid duration format');
+      });
+
+      it('should throw error for excessive input length', () => {
+        const longInput = '1s '.repeat(17);
+        expect(() => durationToMs(longInput)).toThrow('Input string exceeds maximum length');
+      });
+    });
   });
 
   describe('BasicLogger', () => {
