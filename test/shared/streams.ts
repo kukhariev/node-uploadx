@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { PassThrough } from 'stream';
 
 export class FileWriteStream extends PassThrough {
