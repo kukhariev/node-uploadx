@@ -9,7 +9,8 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +33,8 @@ jobs:
 
   test:
     name: Test
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 15
     needs: lint
     steps:
       - name: Checkout code
@@ -55,3 +57,16 @@ jobs:
         run: npm test
         env:
           CI: true
+
+  cleanup:
+    name: Cleanup
+    runs-on: [self-hosted, linux]
+    needs: [lint, test]
+    if: always()
+    steps:
+      - name: Clean workspace
+        run: |
+          rm -rf node_modules/
+          rm -rf .npm/
+          npm cache clean --force
+        continue-on-error: true
