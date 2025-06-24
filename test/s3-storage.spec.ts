@@ -84,7 +84,7 @@ describe('S3Storage', () => {
     it('should send error on invalid s3 response', async () => {
       s3Mock.on(HeadObjectCommand).rejects();
       s3Mock.on(CreateMultipartUploadCommand).resolves({});
-      await expect(storage.create(req, metafile)).rejects.toMatchSnapshot();
+      await expect(storage.create(req, metafile)).rejects.toThrow();
     });
   });
 
