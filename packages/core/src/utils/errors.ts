@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 import { UploadxResponse } from '../types';
 
 export enum ERRORS {
@@ -72,19 +70,23 @@ export const ErrorMap = E_.errors;
 export class UploadxError extends Error {
   uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
   detail?: unknown;
+
+  constructor(uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR, message?: string, detail?: unknown) {
+    super(message || uploadxErrorCode);
+    this.name = 'UploadxError';
+    this.detail = detail;
+    if (Object.values(ERRORS).includes(uploadxErrorCode)) {
+      this.uploadxErrorCode = uploadxErrorCode;
+    }
+  }
 }
 
 export function isUploadxError(err: unknown): err is UploadxError {
   return !!(err as UploadxError).uploadxErrorCode;
 }
 
-export function fail(uploadxErrorCode: string, detail: unknown = ''): Promise<never> {
-  return Promise.reject({
-    name: 'UploadxError',
-    message: uploadxErrorCode,
-    uploadxErrorCode,
-    detail
-  });
+export function fail(uploadxErrorCode: ERRORS, detail: unknown = ''): Promise<never> {
+  return Promise.reject(new UploadxError(uploadxErrorCode, uploadxErrorCode, detail));
 }
 
 export interface HttpErrorBody {
