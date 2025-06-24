@@ -33,8 +33,8 @@ export type ErrorResponses<T extends string = string> = {
 
 class E_ {
   static errors: ErrorResponses = {};
-  @E_._buildErrorBody
-  private static _errors: Record<string, [number, string]> = {
+
+  private static _errors: Record<ERRORS, [number, string]> = {
     BadRequest: [400, 'Bad request'],
     FileConflict: [409, 'File conflict'],
     FileError: [500, 'Something went wrong writing the file'],
@@ -59,12 +59,12 @@ class E_ {
     FileLocked: [423, 'File locked']
   };
 
-  static _buildErrorBody = (target: typeof E_, _: string): void => {
-    (Object.keys(target._errors) as ERRORS[]).forEach(code => {
-      const [statusCode, message] = target._errors[code];
-      target.errors[code] = { code, message, statusCode };
+  static {
+    (Object.keys(E_._errors) as ERRORS[]).forEach(code => {
+      const [statusCode, message] = E_._errors[code];
+      E_.errors[code] = { code, message, statusCode };
     });
-  };
+  }
 }
 
 export const ErrorMap = E_.errors;
