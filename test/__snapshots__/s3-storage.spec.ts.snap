@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`S3Storage .create() should handle existing 1`] = `
 {
@@ -47,14 +47,6 @@ S3File {
 }
 `;
 
-exports[`S3Storage .create() should send error on invalid s3 response 1`] = `
-{
-  "detail": "s3 create multipart upload error",
-  "message": "FileError",
-  "name": "UploadxError",
-  "uploadxErrorCode": "FileError",
-}
-`;
 
 exports[`S3Storage .write() should request api and set status and bytesWritten 1`] = `
 {
