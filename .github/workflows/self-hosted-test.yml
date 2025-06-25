@@ -1,4 +1,4 @@
-name: Self-Hosted CI
+name: Check
 on:
   push:
     branches: [master, main, develop]
