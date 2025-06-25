@@ -103,7 +103,7 @@ Pull requests are welcome!
 
 [npm-image]: https://img.shields.io/npm/v/node-uploadx.svg
 [npm-url]: https://www.npmjs.com/package/node-uploadx
-[gha-image]: https://github.com/kukhariev/node-uploadx/workflows/CI/badge.svg
-[gha-url]: https://github.com/kukhariev/node-uploadx
+[gha-image]: https://github.com/kukhariev/node-uploadx/actions/workflows/self-hosted-test.yml/badge.svg
+[gha-url]: https://github.com/kukhariev/node-uploadx/actions/workflows/self-hosted-test.yml
 [comm-image]: https://img.shields.io/github/commits-since/kukhariev/node-uploadx/latest
 [comm-url]: https://github.com/kukhariev/node-uploadx/releases/latest
