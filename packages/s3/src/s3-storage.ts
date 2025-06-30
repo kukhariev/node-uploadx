@@ -10,6 +10,7 @@ import {
   S3Client,
   S3ClientConfig,
   UploadPartCommand,
+  UploadPartCommandInput,
   waitUntilBucketExists
 } from '@aws-sdk/client-s3';
 import { AbortController } from '@aws-sdk/abort-controller';
@@ -212,17 +213,18 @@ export class S3Storage extends BaseStorage<S3File> {
         if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
           return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
         }
-        const checksumMD5 = part.checksumAlgorithm === 'md5' ? part.checksum : '';
         const partNumber = file.Parts.length + 1;
-        const params = {
+        const params: UploadPartCommandInput = {
           Bucket: this.bucket,
           Key: file.name,
           UploadId: file.UploadId,
           PartNumber: partNumber,
           Body: part.body,
-          ContentLength: part.contentLength || 0,
-          ContentMD5: checksumMD5
+          ContentLength: part.contentLength || 0
         };
+        if (part.checksumAlgorithm === 'md5') {
+          params.ContentMD5 = part.checksum;
+        }
         const abortSignal = new AbortController().signal;
         part.body.on('error', _err => abortSignal.abort());
         const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
