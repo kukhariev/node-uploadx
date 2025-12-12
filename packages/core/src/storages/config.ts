@@ -18,7 +18,8 @@ export class ConfigHandler {
     path: '/files',
     validation: {},
     maxMetadataSize: '4MB',
-    logger: logger
+    logger: logger,
+    concurrency: 0
   };
 
   private _config = this.set(ConfigHandler.defaults);
