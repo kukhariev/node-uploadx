@@ -16,13 +16,13 @@
     "server": "tsnd -r dotenv/config server"
   },
   "dependencies": {
-    "dotenv": "16.4.5",
-    "express": "^4.19.2",
+    "dotenv": "17.3.1",
+    "express": "^5.2.1",
     "node-uploadx": "^6.1.9",
-    "winston": "3.13.1"
+    "winston": "3.19.0"
   },
   "devDependencies": {
-    "@types/express": "4.17.21",
+    "@types/express": "5.0.6",
     "ts-node-dev": "2.0.0"
   }
 }

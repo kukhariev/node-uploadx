@@ -17,8 +17,6 @@ app.use((req: Authorized<express.Request>, res, next) => {
   next();
 });
 
-app.on('error', console.error);
-
 process.on('uncaughtException', console.error);
 
 export { app, authRequest };
