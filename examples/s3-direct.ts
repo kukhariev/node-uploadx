@@ -10,6 +10,7 @@ const storage = new S3Storage({
   maxUploadSize: '512MB',
   allowMIME: ['image/*', 'video/*'],
   bucket: process.env.S3_BUCKET,
+  requestChecksumCalculation: 'WHEN_REQUIRED', // remove useless crc32 checksum headers
   endpoint: process.env.S3_ENDPOINT,
   forcePathStyle: true,
   clientDirectUpload: true, // send presigned urls to the client for upload directly to S3 storage
