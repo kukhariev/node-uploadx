@@ -1,6 +1,6 @@
-import { Readable } from 'stream';
-import { hash, isRecord, extendObject, uid } from '../utils';
 import { isAbsolute } from 'path';
+import { Readable } from 'stream';
+import { extendObject, isRecord, tokenize, uid } from '../utils';
 
 export function isExpired(file: File): boolean {
   if (!file.expiredAt) return false;
@@ -15,10 +15,10 @@ export function extractMimeType(meta: Metadata): string | undefined {
   return meta.mimeType || meta.contentType || meta.type || meta.filetype;
 }
 
-const generateFileId = (file: File): string => {
+export const generateFileId = (file: File): string => {
   const { originalName, size, userId, metadata } = file;
   const mtime = String(metadata.lastModified || Date.now());
-  return [userId, originalName, size, mtime].filter(Boolean).map(String).map(hash).join('-');
+  return [userId ?? '', originalName ?? '', size, mtime].map(String).map(tokenize).join('-');
 };
 
 export interface FileInit {

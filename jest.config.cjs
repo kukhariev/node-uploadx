@@ -14,5 +14,6 @@ module.exports = {
   },
   modulePathIgnorePatterns: ['<rootDir>/package.json'],
   collectCoverageFrom: ['packages/**/*.ts', '!**/lib/**', '!<rootDir>/test/shared/**'],
-  roots: ['<rootDir>/packages/', '<rootDir>/test/']
+  roots: ['<rootDir>/packages/', '<rootDir>/test/'],
+  setupFiles: ['<rootDir>/test/set-env.ts']
 };

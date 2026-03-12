@@ -22,12 +22,12 @@ import {
   ERRORS,
   fail,
   getBaseUrl,
-  hash,
   isUploadxError,
   isValidationError,
   Logger,
   pick,
   setHeaders,
+  tokenize,
   UploadxError
 } from '../utils';
 import { Cors } from './cors';
@@ -201,7 +201,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    */
   get(req: IncomingMessage, res: ServerResponse): Promise<UploadList> {
     const userId = this.getUserId(req, res);
-    return userId ? this.storage.list(hash(userId)) : fail(ERRORS.FILE_NOT_FOUND);
+    return userId ? this.storage.list(tokenize(userId)) : fail(ERRORS.FILE_NOT_FOUND);
   }
 
   /**
@@ -249,7 +249,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   async getAndVerifyId(req: IncomingMessage, res: ServerResponse): Promise<string> {
     const uid = this.getUserId(req, res) || '';
     const id = this.getId(req);
-    if (id && id.startsWith(uid && hash(uid))) return id;
+    if (id && id.startsWith(tokenize(uid))) return id;
     return fail(ERRORS.FORBIDDEN);
   }
 
