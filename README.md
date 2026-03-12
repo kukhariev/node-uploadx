@@ -92,6 +92,10 @@ Some available options: :
 | `logger`              |       `Logger`       |                  | _Custom logger injection_                                    |
 | `logLevel`            |      `LogLevel`      |     `"none"`     | _Set built-in logger severity level_                         |
 
+## Environment Variables
+
+`UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
+
 ## Contributing
 
 If you'd like to contribute, please fork the repository and make changes as you'd like.

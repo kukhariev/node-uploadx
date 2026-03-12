@@ -2,6 +2,8 @@ import { createHash, randomBytes } from 'crypto';
 import { isDeepStrictEqual } from 'util';
 import { Cache } from './cache';
 
+const UPLOADX_SECRET = process.env.UPLOADX_SECRET || 'UPLOADX_SECRET';
+
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
   const result = {} as Pick<T, K>;
   whitelist.forEach(key => (result[key] = obj[key]));
@@ -131,7 +133,9 @@ export const memoize = <T, K>(fn: (arg: T) => K): ((arg: T) => K) => {
   };
 };
 
-export const hash = memoize(fnv64);
+export const tokenize = memoize((str: string): string => {
+  return fnv64(str + UPLOADX_SECRET);
+});
 
 export const toBoolean = (val?: unknown): boolean => {
   return ['true', '1', 'y', 'yes'].includes(String(val).trim().toLowerCase());

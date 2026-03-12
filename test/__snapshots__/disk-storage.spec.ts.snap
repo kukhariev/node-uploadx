@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`DiskStorage .create() should reject on limits 1`] = `
 {
@@ -15,7 +15,7 @@ DiskFile {
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
   "expiredAt": "2022-02-02T01:00:00.000Z",
-  "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
+  "id": "2169982662e5e43-151a7a29ec945826-9c7055b69ea13e8b-53ef280e21757b98",
   "metadata": {
     "custom": "",
     "lastModified": 1635398061454,
@@ -36,7 +36,7 @@ exports[`DiskStorage .list() should return all user files 1`] = `
 [
   {
     "createdAt": 2022-02-02T00:00:00.000Z,
-    "id": "f7d13faa74e2475f-e8fed598250d10ea-7f59007b4b7cf67-120941ca7dc37b78",
+    "id": "2169982662e5e43-151a7a29ec945826-9c7055b69ea13e8b-53ef280e21757b98",
     "modifiedAt": 2022-02-02T00:00:00.000Z,
   },
 ]
