@@ -57,8 +57,8 @@ export function mapValues<T>(
 
 export function isEqual(a: object, b: object, ...keysToIgnore: string[]): boolean {
   return isDeepStrictEqual(
-    Object.entries(a).filter(e => !keysToIgnore.includes(e[0])),
-    Object.entries(b).filter(e => !keysToIgnore.includes(e[0]))
+    Object.fromEntries(Object.entries(a).filter(e => !keysToIgnore.includes(e[0]))),
+    Object.fromEntries(Object.entries(b).filter(e => !keysToIgnore.includes(e[0])))
   );
 }
 export function isNumber(x?: unknown): x is number {
@@ -112,7 +112,7 @@ export function toMilliseconds(value: string | number | undefined): number | und
 export function toSeconds(value: string | number): number | undefined {
   if (isNumber(value)) return value;
   const s = Math.floor(durationToMs(value) / 1000) || undefined;
-  return s ? ~~s : s;
+  return s;
 }
 
 /**

@@ -179,6 +179,7 @@ describe('utils', () => {
       expect(utils.isEqual({ a: 1, b: 2, c: 3 }, { a: 1, b: 2 }, 'c')).toBe(true);
       expect(utils.isEqual({ a: 1, b: 2, c: { k: 3 } }, { a: 1, b: 2, c: { k: 3 } })).toBe(true);
       expect(utils.isEqual({ a: 1, b: 2, c: { k: 3 } }, { a: 1, b: 2, c: { k: 4 } })).toBe(false);
+      expect(utils.isEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
     });
 
     it('memoize', () => {
