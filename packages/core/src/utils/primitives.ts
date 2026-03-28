@@ -61,8 +61,9 @@ export function isEqual(a: object, b: object, ...keysToIgnore: string[]): boolea
     Object.fromEntries(Object.entries(b).filter(e => !keysToIgnore.includes(e[0])))
   );
 }
+
 export function isNumber(x?: unknown): x is number {
-  return x === Number(x);
+  return typeof x === 'number' && !isNaN(x);
 }
 
 export function isRecord(x: unknown): x is Record<string, unknown> {
