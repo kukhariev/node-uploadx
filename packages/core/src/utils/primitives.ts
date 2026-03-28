@@ -99,21 +99,23 @@ export function extendObject<T extends Record<string, any>>(
   }
   return target;
 }
+
 /**
  * Convert a human-readable duration to ms
  */
-export function toMilliseconds(value: string | number | undefined): number | undefined {
+export function toMilliseconds(value?: string | number): number | undefined {
   if (isNumber(value)) return value;
   if (!value) return undefined;
-  return durationToMs(value) || undefined;
+  return durationToMs(value);
 }
+
 /**
  * Convert a human-readable duration to seconds
  */
-export function toSeconds(value: string | number): number | undefined {
-  if (isNumber(value)) return value;
-  const s = Math.floor(durationToMs(value) / 1000) || undefined;
-  return s;
+export function toSeconds(value?: string | number): number | undefined {
+  if (isNumber(value)) return Math.floor(value / 1000);
+  if (!value) return undefined;
+  return Math.floor(durationToMs(value) / 1000);
 }
 
 /**
@@ -158,6 +160,11 @@ export const toBoolean = (val?: unknown): boolean => {
 export function durationToMs(input: string): number {
   if (input.length > 50) {
     throw new Error('Input string exceeds maximum length of 50 characters');
+  }
+
+  const integerRegex = /^-?(0|[1-9]\d*)$/;
+  if (integerRegex.test(input)) {
+    return Number(input);
   }
 
   const durationRegex = /(\d+)\s*([a-zA-Z]+)/g;
