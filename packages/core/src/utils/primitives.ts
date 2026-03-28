@@ -65,25 +65,38 @@ export function isNumber(x?: unknown): x is number {
   return x === Number(x);
 }
 
-export function isRecord(x: unknown): x is Record<any, any> {
-  // return Object.prototype.toString.call(x) === '[object Object]';
+export function isRecord(x: unknown): x is Record<string, unknown> {
   return x !== null && typeof x === 'object' && !Array.isArray(x);
 }
 
-export function extendObject<T extends Record<any, any>>(target: T, ...sources: Partial<T[]>): T {
-  if (!sources.length) return target;
-  const source = sources.shift();
-  if (isRecord(source)) {
-    for (const key in source) {
-      if (isRecord(source[key])) {
-        if (!isRecord(target[key])) Object.assign(target, { [key]: {} });
-        extendObject(target[key] as any, source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * Recursively merges source objects into a target object, skipping unsafe keys.
+ * Mutates the target object.
+ */
+export function extendObject<T extends Record<string, any>>(
+  target: T,
+  ...sources: Array<Record<string, any>>
+): T {
+  for (const source of sources) {
+    if (!isRecord(source)) continue;
+
+    for (const key of Object.keys(source)) {
+      if (!UNSAFE_KEYS.has(key)) {
+        const value = source[key];
+        if (isRecord(value)) {
+          if (!isRecord(target[key])) {
+            (target as Record<string, any>)[key] = {};
+          }
+          extendObject(target[key], value);
+        } else {
+          (target as Record<string, any>)[key] = value;
+        }
       }
     }
   }
-  return extendObject(target, ...sources);
+  return target;
 }
 /**
  * Convert a human-readable duration to ms
