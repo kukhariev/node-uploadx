@@ -203,6 +203,10 @@ describe('utils', () => {
     describe('Duration Conversion', () => {
       const durationToMs = utils.durationToMs;
 
+      it('should convert ms', () => {
+        expect(durationToMs('500')).toBe(500);
+      });
+
       it('should convert single unit durations', () => {
         expect(durationToMs('5s')).toBe(5000);
         expect(durationToMs('10m')).toBe(600000);
@@ -236,6 +240,26 @@ describe('utils', () => {
       it('should throw error for excessive input length', () => {
         const longInput = '1s '.repeat(17);
         expect(() => durationToMs(longInput)).toThrow('Input string exceeds maximum length');
+      });
+
+      it('should convert to milliseconds', () => {
+        const toMilliseconds = utils.toMilliseconds;
+        expect(toMilliseconds(0)).toBe(0);
+        expect(toMilliseconds('0')).toBe(0);
+        expect(toMilliseconds(1500)).toBe(1500);
+        expect(toMilliseconds('5s')).toBe(5000);
+        expect(toMilliseconds(undefined)).toBeUndefined();
+        expect(toMilliseconds('')).toBeUndefined();
+      });
+
+      it('should convert to seconds', () => {
+        const toSeconds = utils.toSeconds;
+        expect(toSeconds(0)).toBe(0);
+        expect(toSeconds('0')).toBe(0);
+        expect(toSeconds(1500)).toBe(1);
+        expect(toSeconds('5s')).toBe(5);
+        expect(toSeconds(undefined)).toBeUndefined();
+        expect(toSeconds('')).toBeUndefined();
       });
     });
   });
