@@ -1,6 +1,6 @@
 {
   "name": "examples",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "private": true,
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
@@ -18,7 +18,7 @@
   "dependencies": {
     "dotenv": "17.3.1",
     "express": "^5.2.1",
-    "node-uploadx": "^6.2.0",
+    "node-uploadx": "^6.2.1",
     "winston": "3.19.0"
   },
   "devDependencies": {
