@@ -97,7 +97,6 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     if (part.size) updateSize(file, part.size);
     if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
     const path = this.getFilePath(file.name);
-    await this.lock(path);
     try {
       if (hasContent(part)) {
         if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
@@ -117,8 +116,6 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       return file;
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);
-    } finally {
-      await this.unlock(path);
     }
   }
 
