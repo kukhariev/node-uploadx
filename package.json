@@ -21,8 +21,8 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=14.18.20",
-    "npm": ">=7.0.0"
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "start": "npm run build && npm run server --workspace examples",
