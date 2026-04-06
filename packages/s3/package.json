@@ -20,7 +20,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=14.18.20"
+    "node": ">=20.0.0"
   },
   "files": [
     "lib/"
