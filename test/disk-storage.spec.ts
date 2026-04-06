@@ -1,6 +1,8 @@
 import fs from 'fs';
 import { vol } from 'memfs';
+import { Readable } from 'node:stream';
 import { DiskStorage, fsp } from '../packages/core/src';
+import { FilePart } from '../packages/core/src/storages/file';
 import {
   authRequest,
   deepClone,
@@ -127,16 +129,6 @@ describe('DiskStorage', () => {
       const write = storage.write({ ...metafile, start: metafile.size - 2, body: readStream });
       await expect(write).rejects.toHaveProperty('uploadxErrorCode', 'FileConflict');
     });
-
-    it('should support lock', async () => {
-      readStream.__mockSend();
-      const write = storage.write({ ...metafile, start: 0, body: readStream });
-      const write2 = storage.write({ ...metafile, start: 0, body: readStream });
-      await expect(Promise.all([write, write2])).rejects.toHaveProperty(
-        'uploadxErrorCode',
-        'FileLocked'
-      );
-    });
   });
 
   describe('.list()', () => {
@@ -183,5 +175,89 @@ describe('DiskStorage', () => {
       expect(list.items).toHaveLength(1);
       jest.useRealTimers();
     });
+  });
+});
+
+describe('DiskStorage - Parallel Upload Test', () => {
+  const TEST_DIR = 'test-uploads';
+  const fileName = 'parallel-test.bin';
+  const fileSize = 50 * 1024 * 1024; // 50 MB
+  const chunkCount = 5;
+  const chunkSize = fileSize / chunkCount;
+
+  const chunks: FilePart[] = [];
+
+  function generatePatternBuffer(size: number): Buffer {
+    const buffer = Buffer.alloc(size);
+    const wordsCount = Math.floor(size / 4);
+    for (let i = 0; i < wordsCount; i++) {
+      buffer.writeUInt32LE(i, i * 4);
+    }
+    return buffer;
+  }
+
+  let originalData: Buffer;
+  let storage: DiskStorage;
+  let fileId: string;
+
+  beforeAll(async () => {
+    vol.reset();
+    jest.useRealTimers();
+
+    storage = new DiskStorage({ directory: TEST_DIR });
+
+    const fileInit = {
+      originalName: fileName,
+      size: fileSize,
+      metadata: {}
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const file = await storage.create({} as any, fileInit);
+    fileId = file.id;
+    originalData = generatePatternBuffer(fileSize);
+
+    for (let i = 0; i < chunkCount; i++) {
+      const start = i * chunkSize;
+      const buffer = originalData.slice(start, start + chunkSize);
+
+      chunks.push({
+        id: fileId,
+        name: fileId,
+        size: fileSize,
+        start,
+        contentLength: buffer.length,
+        body: Readable.from(buffer)
+      });
+    }
+  }, 30000);
+
+  it('should upload chunks in parallel and complete on the last one', async () => {
+    // Upload all but last chunk in parallel (shuffled order)
+    const allButLast = chunks.slice(0, -1);
+    const shuffledChunks = [...allButLast].sort(() => Math.random() - 0.5);
+
+    await Promise.all(shuffledChunks.map(part => storage.write(part)));
+
+    // Upload the last chunk last to trigger completion
+    await storage.write(chunks[chunks.length - 1]);
+
+    const meta = await storage.getMeta(fileId);
+    expect(meta.status).toBe('completed');
+    expect(meta.bytesWritten).toBe(fileSize);
+
+    const filePath = storage.getFilePath(fileId);
+    const diskData = await fsp.readFile(filePath);
+    expect(Buffer.compare(diskData, originalData)).toBe(0);
+  }, 60000);
+
+  afterAll(async () => {
+    try {
+      await storage.delete({ id: fileId });
+    } catch {
+      // Ignore deletion errors
+    } finally {
+      vol.reset();
+    }
   });
 });

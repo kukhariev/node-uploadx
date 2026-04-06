@@ -11,7 +11,6 @@ import {
   HttpError,
   HttpErrorBody,
   isEqual,
-  Locker,
   Logger,
   LogLevel,
   normalizeHookResponse,
@@ -108,10 +107,6 @@ export interface BaseStorageOptions<T extends File> {
    */
   logLevel?: LogLevel;
 }
-
-const LOCK_TIMEOUT = 300; // seconds
-
-export const locker = new Locker(1000, LOCK_TIMEOUT);
 
 export abstract class BaseStorage<TFile extends File> {
   onCreate: (file: TFile) => Promise<UploadxResponse>;
@@ -283,21 +278,6 @@ export abstract class BaseStorage<TFile extends File> {
     updateMetadata(file, metadata);
     await this.saveMeta(file);
     return { ...file, status: 'updated' };
-  }
-
-  /**
-   * Prevent upload from being accessed by multiple requests
-   */
-  async lock(key: string): Promise<string> {
-    try {
-      return locker.lock(key);
-    } catch {
-      return fail(ERRORS.FILE_LOCKED);
-    }
-  }
-
-  async unlock(key: string): Promise<void> {
-    locker.unlock(key);
   }
 
   protected isUnsupportedChecksum(algorithm = ''): boolean {
