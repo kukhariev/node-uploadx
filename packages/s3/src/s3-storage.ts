@@ -207,40 +207,35 @@ export class S3Storage extends BaseStorage<S3File> {
     if (this.config.clientDirectUpload) return this.buildPresigned(file);
     file.Parts ??= await this._getParts(file);
     file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce((p, c) => p + c, 0);
-    await this.lock(part.id);
-    try {
-      if (hasContent(part)) {
-        if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
-          return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
-        }
-        const partNumber = file.Parts.length + 1;
-        const params: UploadPartCommandInput = {
-          Bucket: this.bucket,
-          Key: file.name,
-          UploadId: file.UploadId,
-          PartNumber: partNumber,
-          Body: part.body,
-          ContentLength: part.contentLength || 0
-        };
-        if (part.checksumAlgorithm === 'md5') {
-          params.ContentMD5 = part.checksum;
-        }
-        const abortSignal = new AbortController().signal;
-        part.body.on('error', _err => abortSignal.abort());
-        const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
-        const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
-        file.Parts = [...file.Parts, uploadPart];
-        file.bytesWritten += part.contentLength || 0;
+    if (hasContent(part)) {
+      if (this.isUnsupportedChecksum(part.checksumAlgorithm)) {
+        return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
       }
-      this.cache.set(file.id, file);
-      file.status = getFileStatus(file);
-      if (file.status === 'completed') {
-        const [completed] = await this._onComplete(file);
-        delete file.Parts;
-        file.uri = completed.Location;
+      const partNumber = file.Parts.length + 1;
+      const params: UploadPartCommandInput = {
+        Bucket: this.bucket,
+        Key: file.name,
+        UploadId: file.UploadId,
+        PartNumber: partNumber,
+        Body: part.body,
+        ContentLength: part.contentLength || 0
+      };
+      if (part.checksumAlgorithm === 'md5') {
+        params.ContentMD5 = part.checksum;
       }
-    } finally {
-      await this.unlock(part.id);
+      const abortSignal = new AbortController().signal;
+      part.body.on('error', _err => abortSignal.abort());
+      const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
+      const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
+      file.Parts = [...file.Parts, uploadPart];
+      file.bytesWritten += part.contentLength || 0;
+    }
+    this.cache.set(file.id, file);
+    file.status = getFileStatus(file);
+    if (file.status === 'completed') {
+      const [completed] = await this._onComplete(file);
+      delete file.Parts;
+      file.uri = completed.Location;
     }
     return file;
   }

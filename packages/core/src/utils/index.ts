@@ -2,7 +2,6 @@ export * from './cache';
 export * from './errors';
 export * from './fs';
 export * from './http';
-export * from './locker';
 export * from './logger';
 export * from './pipes';
 export * from './primitives';
