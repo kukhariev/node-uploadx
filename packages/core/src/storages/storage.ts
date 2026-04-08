@@ -209,7 +209,10 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   /**
-   * Retrieves upload metadata
+   * Retrieves upload metadata.
+   *
+   * @remarks
+   * Returns a shallow copy — nested user metadata objects remain shared with the cache.
    */
   async getMeta(id: string): Promise<TFile> {
     let file = this.cache.get(id);
@@ -221,7 +224,7 @@ export abstract class BaseStorage<TFile extends File> {
         return fail(ERRORS.FILE_NOT_FOUND);
       }
     }
-    return { ...file };
+    return { ...file, metadata: { ...file.metadata } };
   }
 
   checkIfExpired(file: TFile): Promise<TFile> {
