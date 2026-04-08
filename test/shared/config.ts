@@ -47,7 +47,7 @@ export const testfile = {
 export const metafile = {
   bytesWritten: null as number | null,
   name: 'userId/testfile.mp4',
-  metadata,
+  metadata: { ...metadata },
   originalName: 'testfile.mp4',
   contentType,
   size,
