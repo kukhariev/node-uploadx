@@ -67,12 +67,12 @@ export const ErrorMap = E_.errors;
 
 export class UploadxError extends Error {
   uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
-  detail?: unknown;
+  cause?: unknown;
 
-  constructor(uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR, message?: string, detail?: unknown) {
+  constructor(uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR, message?: string, cause?: unknown) {
     super(message || uploadxErrorCode);
     this.name = 'UploadxError';
-    this.detail = detail;
+    this.cause = cause;
     if (Object.values(ERRORS).includes(uploadxErrorCode)) {
       this.uploadxErrorCode = uploadxErrorCode;
     }
@@ -83,8 +83,8 @@ export function isUploadxError(err: unknown): err is UploadxError {
   return !!(err as UploadxError).uploadxErrorCode;
 }
 
-export function fail(uploadxErrorCode: ERRORS, detail: unknown = ''): Promise<never> {
-  return Promise.reject(new UploadxError(uploadxErrorCode, uploadxErrorCode, detail));
+export function fail(uploadxErrorCode: ERRORS, cause?: unknown): Promise<never> {
+  return Promise.reject(new UploadxError(uploadxErrorCode, uploadxErrorCode, cause));
 }
 
 export interface HttpErrorBody {
@@ -93,7 +93,7 @@ export interface HttpErrorBody {
   uploadxErrorCode?: string;
   name?: string;
   retryable?: boolean;
-  detail?: Record<string, any> | string;
+  cause?: Record<string, any> | string;
 }
 
 export interface HttpError<T = HttpErrorBody> extends UploadxResponse<T> {
