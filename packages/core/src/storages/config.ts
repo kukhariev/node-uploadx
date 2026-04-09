@@ -15,7 +15,6 @@ export class ConfigHandler {
     onError: ({ statusCode, body, headers, cause, ...rest }: HttpError) => {
       const payload = (body || rest) as Record<string, unknown>;
       const { cause: _c, ...noDetails } = payload;
-      void _c;
       return { statusCode, body: { error: noDetails }, headers };
     },
     path: '/files',
