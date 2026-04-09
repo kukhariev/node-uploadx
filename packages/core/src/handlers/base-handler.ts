@@ -177,15 +177,16 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         return;
       })
       .catch((error: Error) => {
+        const keys = Object.getOwnPropertyNames(error) as (keyof Error)[];
         const err = pick(error, [
           'name',
-          ...(Object.getOwnPropertyNames(error) as (keyof Error)[])
+          ...(isUploadxError(error) ? keys.filter(k => k !== 'stack') : keys)
         ]) as UploadxError;
         const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
         this.listenerCount('error') && this.emit('error', errorEvent);
         this.logger.error('[error]: %O', errorEvent);
         if ('aborted' in req && req['aborted']) return;
-        return this.sendError(res, error);
+        return this.sendError(res, err);
       });
   };
 
