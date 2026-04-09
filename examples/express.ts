@@ -32,12 +32,22 @@ app.use(
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
     logger,
-    onError: ({ statusCode, body }) => {
-      const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
+    onError: (error: unknown) => {
+      const isDev = process.env.NODE_ENV === 'development';
+      const e = error as Record<string, unknown>;
+      const b = (e.body ?? e) as Record<string, unknown>;
+
+      const errorResponse = {
+        error: {
+          code: b.code || b.uploadxErrorCode || 'InternalError',
+          message: b.message || 'An unexpected error occurred',
+          ...(isDev && b.cause ? { debug: b.cause } : {})
+        }
+      };
+
       return {
-        statusCode,
-        headers: { 'Content-Type': 'application/vnd.api+json' },
-        body: { errors }
+        statusCode: Number(e.statusCode) || 500,
+        body: errorResponse
       };
     }
   }),
