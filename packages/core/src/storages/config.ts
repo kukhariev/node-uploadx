@@ -12,8 +12,11 @@ export class ConfigHandler {
     onUpdate: (file: File) => file,
     onCreate: () => '',
     onDelete: () => '',
-    onError: ({ statusCode, body, headers }: HttpError) => {
-      return { statusCode, body: { error: body }, headers };
+    onError: ({ statusCode, body, headers, cause, ...rest }: HttpError) => {
+      const payload = (body || rest) as Record<string, unknown>;
+      const { cause: _c, ...noDetails } = payload;
+      void _c;
+      return { statusCode, body: { error: noDetails }, headers };
     },
     path: '/files',
     validation: {},
