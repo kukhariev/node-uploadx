@@ -13,7 +13,9 @@
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
     "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation",
     "plain-nodejs": "tsnd -r dotenv/config node-http-server",
-    "server": "tsnd -r dotenv/config server"
+    "server": "tsnd -r dotenv/config server",
+    "cluster:all": "concurrently --kill-others-on-fail -n node1,node2 \"tsx --env-file=multi-node/.env.node1 -r dotenv/config multi-node/upload-node.ts\" \"tsx --env-file=multi-node/.env.node2 -r dotenv/config multi-node/upload-node.ts\"",
+    "caddy": "caddy run --config multi-node/Caddyfile"
   },
   "dependencies": {
     "dotenv": "17.3.1",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@types/express": "5.0.6",
+    "concurrently": "^9.2.0",
     "ts-node-dev": "2.0.0"
   }
 }

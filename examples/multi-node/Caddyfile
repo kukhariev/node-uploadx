@@ -1,0 +1,26 @@
+# Caddyfile — Local Demo Load Balancer
+#
+# Routes to localhost:3000 and localhost:3001 with round-robin.
+
+{
+	http_port 3002
+}
+
+:3002 {
+	# Log all requests
+	log {
+		output stdout
+		format console
+	}
+
+	# Load balanced reverse proxy
+	reverse_proxy {
+		to localhost:3000 localhost:3001
+		lb_policy round_robin
+
+		# Health checks
+		health_uri /health
+		health_interval 10s
+		health_timeout 3s
+	}
+}
