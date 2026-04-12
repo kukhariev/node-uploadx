@@ -44,7 +44,8 @@ describe('BaseHandler', () => {
   it('should check user (custom)', async () => {
     uploader = new TestUploader({
       storage: testStorage,
-      userIdentifier: (_, res) => res.locals.user_id // eslint-disable-line
+      userIdentifier: (_req, res) =>
+        String((res as { locals?: { user_id?: string } }).locals?.user_id ?? '')
     });
     const res = createResponse({ locals: { user_id: '12345' } });
     const req = createRequest({ url: '/files' });
@@ -87,5 +88,42 @@ describe('BaseHandler', () => {
     ['/3/files/4', '']
   ])('nodejs: getId(%p) === %p', (url, id) => {
     expect(uploader.getId({ url } as http.IncomingMessage)).toBe(id);
+  });
+
+  interface MockReq extends http.IncomingMessage {
+    user?: { _id: string };
+  }
+
+  it('should emit error event with request context', async () => {
+    const res = createResponse();
+    const req = createRequest({ method: 'GET', url: '/files' }) as unknown as MockReq;
+
+    const testUploader = new TestUploader({
+      storage: testStorage,
+      userIdentifier: r => (r as MockReq).user?._id || ''
+    });
+    testStorage.isReady = true;
+
+    req.user = { _id: 'user123' };
+
+    const errorSpy = jest.fn<void, [unknown]>();
+    testUploader.on('error', errorSpy);
+    jest.spyOn(testUploader.storage, 'list').mockRejectedValue(new Error('Test Error'));
+
+    testUploader.handle(req as http.IncomingMessage, res);
+    await new Promise(setImmediate);
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    const event = errorSpy.mock.calls[0][0];
+    expect(event).toMatchObject({
+      message: 'Test Error',
+      request: {
+        method: 'GET',
+        url: '/files'
+      }
+    });
+    expect(event).toHaveProperty('request.headers');
+    expect(event).toHaveProperty('stack');
   });
 });
