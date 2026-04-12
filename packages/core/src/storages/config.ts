@@ -1,4 +1,4 @@
-import { HttpError, logger } from '../utils';
+import { HttpError } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -19,8 +19,7 @@ export class ConfigHandler {
     },
     path: '/files',
     validation: {},
-    maxMetadataSize: '4MB',
-    logger: logger
+    maxMetadataSize: '4MB'
   };
 
   private _config = this.set(ConfigHandler.defaults);

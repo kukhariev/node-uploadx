@@ -31,6 +31,7 @@
     "clean": "rimraf ./tsconfig.tsbuildinfo ./lib"
   },
   "dependencies": {
+    "@logtape/logtape": "^2.0.5",
     "bytes": "^3.1.0",
     "multiparty": "^4.2.2"
   },

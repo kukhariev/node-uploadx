@@ -26,7 +26,9 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     const keyFile = config.keyFile || process.env.S3_KEYFILE;
     keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
     const clientConfig = { ...config };
-    clientConfig.logger = toBoolean(process.env.S3_DEBUG) ? this.logger : undefined;
+    clientConfig.logger = toBoolean(process.env.S3_DEBUG)
+      ? (this.logger as unknown as S3ClientConfig['logger'])
+      : undefined;
     this.client = new S3Client(clientConfig);
   }
 

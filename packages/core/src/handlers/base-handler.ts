@@ -26,6 +26,7 @@ import {
   isValidationError,
   Logger,
   pick,
+  uploadxLogger,
   setHeaders,
   tokenize,
   UploadxError
@@ -90,7 +91,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     if (config.userIdentifier) {
       this.getUserId = config.userIdentifier;
     }
-    this.logger = this.storage.logger;
+    this.logger = uploadxLogger.getChild(this.constructor.name);
     this.assembleErrors();
     this.compose();
   }
@@ -116,7 +117,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       handler && this.registeredHandlers.set(method.toUpperCase(), handler);
       // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
-    this.logger.debug('Registered handlers: %s', [...this.registeredHandlers.keys()].join(', '));
+    this.logger.debug(`Registered handlers: ${[...this.registeredHandlers.keys()].join(', ')}`);
   }
 
   assembleErrors(customErrors = {}): void {
@@ -135,8 +136,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       res.writeHead(204, { 'Content-Length': 0 }).end();
       return;
     }
-    req.on('error', err => this.logger.error('[request error]: %O', err));
-    this.logger.debug('[request]: %s %s', req.method, req.url);
+    req.on('error', error => this.logger.error('Request error', { error }));
+    this.logger.debug('Request {method} {url}', { method: req.method, url: req.url });
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
       return this.sendError(res, { uploadxErrorCode: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
@@ -149,13 +150,12 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       .call(this, req, res)
       .then(async (file: TFile | UploadList): Promise<void> => {
         if ('status' in file && file.status) {
-          this.logger.debug(
-            '[%s]: %s: %d/%d',
-            file.status,
-            file.name,
-            file.bytesWritten,
-            file.size
-          );
+          this.logger.debug('Upload {status}: {name} {bytesWritten}/{size}', {
+            status: file.status,
+            name: file.name,
+            bytesWritten: file.bytesWritten,
+            size: file.size
+          });
           this.listenerCount(file.status) &&
             this.emit(file.status, { ...file, request: pick(req, ['headers', 'method', 'url']) });
           if (file.status === 'completed') {
@@ -178,15 +178,18 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       })
       .catch((error: Error) => {
         const keys = Object.getOwnPropertyNames(error) as (keyof Error)[];
-        const err = pick(error, [
+        const sanitizedError = pick(error, [
           'name',
           ...(isUploadxError(error) ? keys.filter(k => k !== 'stack') : keys)
         ]) as UploadxError;
-        const errorEvent = { ...err, request: pick(req, ['headers', 'method', 'url']) };
-        this.listenerCount('error') && this.emit('error', errorEvent);
-        this.logger.error('[error]: %O', errorEvent);
+        const errorPayload = {
+          ...sanitizedError,
+          request: pick(req, ['headers', 'method', 'url'])
+        };
+        this.listenerCount('error') && this.emit('error', errorPayload);
+        this.logger.error('{errorPayload.message} {*}', { errorPayload });
         if ('aborted' in req && req['aborted']) return;
-        return this.sendError(res, err);
+        return this.sendError(res, sanitizedError);
       });
   };
 
