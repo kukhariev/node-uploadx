@@ -1,4 +1,4 @@
-import { LogLevel, uploadx } from '@uploadx/core';
+import { uploadx } from '@uploadx/core';
 import express from 'express';
 
 const PORT = process.env.PORT || 3002;
@@ -12,7 +12,6 @@ const uploads = uploadx({
   useRelativeLocation: true,
   filename: file => file.originalName,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
-  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
   onComplete: file => {
     console.log('File upload complete: ', file);
     return file;

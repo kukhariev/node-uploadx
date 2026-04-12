@@ -8,6 +8,7 @@
     "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
+    "logtape": "tsnd -r tsconfig-paths/register -r dotenv/config express-logtape",
     "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
     "s3:direct": "tsnd -r tsconfig-paths/register -r dotenv/config s3-direct",
     "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
@@ -16,10 +17,10 @@
     "server": "tsnd -r dotenv/config server"
   },
   "dependencies": {
+    "@logtape/logtape": "^2.0.5",
     "dotenv": "17.3.1",
     "express": "^5.2.1",
-    "node-uploadx": "^6.2.1",
-    "winston": "3.19.0"
+    "node-uploadx": "^6.2.1"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
