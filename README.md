@@ -89,10 +89,15 @@ Some available options: :
 | `onDelete`            |      `OnDelete`      |                  | _Callback that is called when an upload is cancelled_        |
 | `onError`             |      `OnError`       |                  | _Customize error response_                                   |
 | `expiration`          | `ExpirationOptions`  |                  | _Configuring the cleanup of abandoned and completed uploads_ |
-| `logger`              |       `Logger`       |                  | _Custom logger injection_                                    |
 | `logLevel`            |      `LogLevel`      |     `"none"`     | _Set built-in logger severity level_                         |
 
-## Environment Variables
+## 📝 Logging
+
+The library uses [`@logtape/logtape`](https://logtape.org/) for structured logging. Set `logLevel` to enable it, or configure LogTape directly for advanced use cases.
+
+See [examples/express-logtape.ts](examples/express-logtape.ts) for a complete example.
+
+## 🔑 Environment Variables
 
 `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
 
