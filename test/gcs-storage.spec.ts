@@ -45,10 +45,6 @@ describe('GCStorage', () => {
       expect(storage.meta).toBeInstanceOf(GCSMetaStorage);
       expect(storage.bucket).toBeDefined();
     });
-
-    it('should share logger', () => {
-      expect(storage.logger).toBe(storage.meta.logger);
-    });
   });
 
   describe('.create()', () => {

@@ -18,7 +18,7 @@ export class TestStorage extends BaseStorage<File> {
 
   constructor(config = {} as BaseStorageOptions<File>) {
     super(config);
-    this.meta = new MetaStorage<File>(config);
+    this.meta = new MetaStorage<File>();
   }
 
   create(req: any, file: FileInit): Promise<File> {

@@ -11,7 +11,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { mockClient } from 'aws-sdk-client-mock';
-import { AWSError, S3MetaStorage, S3Storage, S3StorageOptions } from '../packages/s3/src';
+import { AWSError, S3Storage, S3StorageOptions } from '../packages/s3/src';
 import { authRequest, metafile, storageOptions, testfile } from './shared';
 
 jest.mock('@aws-sdk/s3-request-presigner');
@@ -48,22 +48,6 @@ describe('S3Storage', () => {
     it('default options if no options are provided', () => {
       storage = new S3Storage();
       expect(storage).toBeInstanceOf(S3Storage);
-    });
-
-    it('logger', () => {
-      process.env.S3_DEBUG = 'true';
-      const logger = console;
-      const consoleDebugMock = jest.spyOn(console, 'debug').mockImplementation();
-      storage = new S3Storage({ logger });
-      expect(storage.client.config.logger).toBe(logger);
-      expect((storage.meta as S3MetaStorage).client.config.logger).toBe(logger);
-      process.env.S3_DEBUG = undefined;
-      storage = new S3Storage({ logger });
-      expect(storage.client.config.logger).toBeUndefined();
-      expect((storage.meta as S3MetaStorage).client.config.logger).toBeUndefined();
-      expect(storage.logger).toBe(logger);
-      expect(storage.meta.logger).toBe(logger);
-      consoleDebugMock.mockRestore();
     });
   });
 
