@@ -1,4 +1,5 @@
 import type { File } from '../packages/core/src';
+import { resetSync } from '../packages/core/src/utils/logger';
 import { metafile, TestStorage } from './shared';
 
 describe('BaseStorage', () => {
@@ -86,12 +87,24 @@ describe('BaseStorage', () => {
     expect(storage.logger).not.toBe(storage.meta.logger);
   });
 
-  it('should configure logger via logLevel option', () => {
+  it('should log debug messages when logLevel is set', () => {
     const spy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-    storage = new TestStorage({ logLevel: 'debug' });
-    // Verify that debug logging is active
-    expect(spy).toHaveBeenCalled(); // this.logger.debug('configuration: {config}', { config });
-    expect(storage.config.logLevel).toBe('debug');
-    spy.mockRestore();
+    try {
+      storage = new TestStorage({ logLevel: 'debug' });
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+      resetSync();
+    }
+  });
+
+  it('should normalize error without leaking internals', () => {
+    const rawError = new Error('EACCES: permission denied, open /secret-location/meta.json');
+    const normalized = storage.normalizeError(rawError);
+    expect(normalized.statusCode).toBe(500);
+    expect(normalized.code).toBe('GenericUploadxError');
+    expect(normalized).not.toHaveProperty('stack');
+    expect(JSON.stringify(normalized)).not.toContain('EACCES');
+    expect(JSON.stringify(normalized)).not.toContain('secret-location');
   });
 });

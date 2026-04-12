@@ -126,4 +126,27 @@ describe('BaseHandler', () => {
     expect(event).toHaveProperty('request.headers');
     expect(event).toHaveProperty('stack');
   });
+
+  it('should not leak internal error details from storage.list()', async () => {
+    const res = createResponse();
+    const req = createRequest({ method: 'GET', url: '/files' }) as unknown as MockReq;
+    req.user = { _id: 'user123' };
+
+    jest
+      .spyOn(testStorage, 'list')
+      .mockRejectedValueOnce(
+        new Error('ENOENT: no such file or directory, scandir /secret-location')
+      );
+
+    uploader.handle(req as http.IncomingMessage, res);
+    await new Promise(setImmediate);
+
+    expect(res.statusCode).toBe(500);
+    const body = res._getJSONData() as { error?: { message?: string; code?: string } };
+    expect(body).toBeDefined();
+    expect(body.error?.code).toBe('GenericUploadxError');
+    expect(JSON.stringify(body)).not.toContain('ENOENT');
+    expect(JSON.stringify(body)).not.toContain('secret-location');
+    expect(JSON.stringify(body)).not.toContain('stack');
+  });
 });

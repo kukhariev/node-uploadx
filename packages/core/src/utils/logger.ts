@@ -2,6 +2,7 @@ import {
   configureSync,
   getLogger,
   getConsoleSink,
+  resetSync,
   type LogLevel as LogTapeLogLevel,
   type Logger as LogTapeLogger
 } from '@logtape/logtape';
@@ -59,4 +60,4 @@ export function configureSimpleLogger(logLevel: string | undefined): void {
 export const logger = uploadxLogger;
 
 // Re-export for library consumers who may need to create their own loggers
-export { configureSync, getConsoleSink, getLogger };
+export { configureSync, getConsoleSink, getLogger, resetSync };
