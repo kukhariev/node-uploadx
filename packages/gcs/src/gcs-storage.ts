@@ -125,7 +125,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch(err => this.logger.error('Storage access check failed: %O', err));
+      .catch(error => this.logger.error('Storage access check failed: {error.message}', { error }));
   }
 
   normalizeError(error: ClientError): HttpError {
@@ -171,7 +171,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     file.uri = res.headers.location as string;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = file.uri;
-      this.logger.debug('send uploadURI to client: %s', file.GCSUploadURI);
+      this.logger.debug('Send uploadURI to client', { uri: file.GCSUploadURI });
       file.status = 'created';
       return file;
     }
@@ -225,7 +225,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
         return range ? getRangeEnd(range) : 0;
       } else if (res.ok) {
         const data = (await res.json()) as Record<string, any>;
-        this.logger.debug('uploaded %O', data);
+        this.logger.debug('Upload completed', { data });
         return size;
       }
       const message = await res.text();
@@ -235,8 +235,8 @@ export class GCStorage extends BaseStorage<GCSFile> {
         config: { uri },
         name: 'FetchError'
       });
-    } catch (err) {
-      this.logger.error(uri, err);
+    } catch (error) {
+      this.logger.error('Upload chunk failed', { uri, error });
       return NaN;
     }
   }

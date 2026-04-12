@@ -1,5 +1,5 @@
 import { FileName } from './file';
-import { logger, Logger } from '../utils';
+import { Logger, uploadxLogger } from '../utils';
 
 /** @experimental */
 export interface UploadListEntry {
@@ -19,7 +19,6 @@ export interface UploadList {
 export interface MetaStorageOptions {
   prefix?: string;
   suffix?: string;
-  logger?: Logger;
 }
 
 /**
@@ -28,14 +27,13 @@ export interface MetaStorageOptions {
 export class MetaStorage<T> {
   prefix = '';
   suffix = '';
-  logger: Logger;
+  logger: Logger = uploadxLogger.getChild(this.constructor.name);
 
   constructor(config?: MetaStorageOptions) {
     this.prefix = config?.prefix || '';
     this.suffix = config?.suffix || METAFILE_EXTNAME;
     this.prefix && FileName.INVALID_PREFIXES.push(this.prefix);
     this.suffix && FileName.INVALID_SUFFIXES.push(this.suffix);
-    this.logger = config?.logger || logger;
   }
 
   /**

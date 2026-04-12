@@ -67,8 +67,8 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch(err => {
-        this.logger.error('Storage access check failed: %O', err);
+      .catch((error: unknown) => {
+        this.logger.error('Storage access check failed {error.message}', { error });
       });
   }
 

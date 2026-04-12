@@ -150,7 +150,7 @@ export class S3Storage extends BaseStorage<S3File> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch(err => this.logger.error('Storage access check failed: %O', err));
+      .catch(error => this.logger.error('Storage access check failed: {error.message}', { error }));
   }
 
   normalizeError(error: AWSError): HttpError {
@@ -327,8 +327,8 @@ export class S3Storage extends BaseStorage<S3File> {
     try {
       const params = { Bucket: this.bucket, Key: file.name, UploadId: file.UploadId };
       await this.client.send(new AbortMultipartUploadCommand(params));
-    } catch (err) {
-      this.logger.error('_abortMultipartUploadError: ', err);
+    } catch (error) {
+      this.logger.error('Abort multipart upload failed', { error });
     }
   }
 }
