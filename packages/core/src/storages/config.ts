@@ -19,7 +19,8 @@ export class ConfigHandler {
     },
     path: '/files',
     validation: {},
-    maxMetadataSize: '4MB'
+    maxMetadataSize: '4MB',
+    metaSyncInterval: '60s'
   };
 
   private _config = this.set(ConfigHandler.defaults);

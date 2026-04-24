@@ -101,11 +101,18 @@ export interface BaseStorageOptions<T extends File> {
    */
   expiration?: ExpirationOptions;
   /**
+   * Auto sync pending metadata to metastorage
+   * @defaultValue '30s'
+   */
+  metaSyncInterval?: number | string;
+  /**
    * Set built-in logger severity level
    * @defaultValue 'none'
    */
   logLevel?: LogLevel;
 }
+
+const PENDING_META_WARN_THRESHOLD = 100;
 
 export abstract class BaseStorage<TFile extends File> {
   onCreate: (file: TFile) => Promise<UploadxResponse>;
@@ -121,6 +128,7 @@ export abstract class BaseStorage<TFile extends File> {
   errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   logger: Logger = uploadxLogger.getChild(this.constructor.name);
+  protected pendingMetaIds = new Set<string>();
   protected namingFunction: (file: TFile, req: any) => string;
   protected validation = new Validator<TFile>();
   abstract meta: MetaStorage<TFile>;
@@ -143,9 +151,15 @@ export abstract class BaseStorage<TFile extends File> {
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
     this.cache = new Cache(1000, 300);
     this.logger.debug('configuration: {config}', { config });
+
     const purgeInterval = toMilliseconds(opts.expiration?.purgeInterval);
     if (purgeInterval) {
       this.startAutoPurge(purgeInterval);
+    }
+
+    const metaSyncInterval = toMilliseconds(opts.metaSyncInterval);
+    if (metaSyncInterval) {
+      this.startMetaSync(metaSyncInterval);
     }
 
     const size: Required<ValidatorConfig<TFile>> = {
@@ -192,9 +206,39 @@ export abstract class BaseStorage<TFile extends File> {
     this.updateTimestamps(file);
     const prev = { ...this.cache.get(file.id) };
     this.cache.set(file.id, file);
-    return isEqual(prev, file, 'bytesWritten', 'expiredAt')
-      ? this.meta.touch(file.id, file)
-      : this.meta.save(file.id, file);
+    if (isEqual(prev, file, 'bytesWritten', 'expiredAt')) {
+      this.pendingMetaIds.add(file.id);
+    } else {
+      await this.meta.save(file.id, file);
+      this.pendingMetaIds.delete(file.id);
+    }
+    return file;
+  }
+
+  /**
+   * Flush pending metadata to storage
+   */
+  async flushPendingMeta(): Promise<void> {
+    const size = this.pendingMetaIds.size;
+    if (size > PENDING_META_WARN_THRESHOLD) {
+      this.logger.warn(`High pending metadata backlog: ${size} items`);
+    } else if (size > 0) {
+      this.logger.debug(`Syncing ${size} pending metadata`);
+    }
+    for (const id of [...this.pendingMetaIds]) {
+      const file = this.cache.get(id);
+      if (file) {
+        try {
+          await this.meta.save(id, file);
+          this.pendingMetaIds.delete(id);
+        } catch (error) {
+          this.logger.error('Error saving metadata: {error}', { error });
+        }
+      } else {
+        this.pendingMetaIds.delete(id);
+      }
+    }
+    // this.pendingMetaIds.clear();
   }
 
   /**
@@ -202,6 +246,7 @@ export abstract class BaseStorage<TFile extends File> {
    */
   async deleteMeta(id: string): Promise<void> {
     this.cache.delete(id);
+    this.pendingMetaIds.delete(id);
     return this.meta.delete(id);
   }
 
@@ -238,6 +283,7 @@ export abstract class BaseStorage<TFile extends File> {
    * @param prefix - filter uploads
    */
   async purge(maxAge?: number | string, prefix?: string): Promise<PurgeList> {
+    await this.flushPendingMeta();
     const maxAgeMs = toMilliseconds(maxAge || this.config.expiration?.maxAge);
     const purged = { items: [], maxAgeMs, prefix } as PurgeList;
     if (maxAgeMs) {
@@ -285,11 +331,20 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startAutoPurge(purgeInterval: number): void {
-    if (purgeInterval >= 2147483647) throw Error('“purgeInterval” must be less than 2147483647 ms');
+    if (purgeInterval >= 2147483647) throw Error('"purgeInterval" must be less than 2147483647 ms');
     setInterval(
       () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
       purgeInterval
-    );
+    ).unref();
+  }
+
+  protected startMetaSync(metaSyncInterval: number): void {
+    if (metaSyncInterval >= 2147483647)
+      throw Error('"metaSyncInterval" must be less than 2147483647 ms');
+    setInterval(
+      () => void this.flushPendingMeta().catch(e => this.logger.error('sync error: {e}', { e })),
+      metaSyncInterval
+    ).unref();
   }
 
   protected updateTimestamps(file: TFile): TFile {
