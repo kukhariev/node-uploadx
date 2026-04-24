@@ -17,6 +17,7 @@ import {
   normalizeOnErrorResponse,
   uploadxLogger,
   toMilliseconds,
+  validateTimerInterval,
   typeis,
   Validation,
   Validator,
@@ -102,7 +103,7 @@ export interface BaseStorageOptions<T extends File> {
   expiration?: ExpirationOptions;
   /**
    * Auto sync pending metadata to metastorage
-   * @defaultValue '30s'
+   * @defaultValue '60s'
    */
   metaSyncInterval?: number | string;
   /**
@@ -331,7 +332,7 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startAutoPurge(purgeInterval: number): void {
-    if (purgeInterval >= 2147483647) throw Error('"purgeInterval" must be less than 2147483647 ms');
+    validateTimerInterval(purgeInterval, 'purgeInterval');
     setInterval(
       () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
       purgeInterval
@@ -339,8 +340,7 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startMetaSync(metaSyncInterval: number): void {
-    if (metaSyncInterval >= 2147483647)
-      throw Error('"metaSyncInterval" must be less than 2147483647 ms');
+    validateTimerInterval(metaSyncInterval, 'metaSyncInterval');
     setInterval(
       () => void this.flushPendingMeta().catch(e => this.logger.error('sync error: {e}', { e })),
       metaSyncInterval
