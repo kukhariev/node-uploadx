@@ -226,20 +226,41 @@ export abstract class BaseStorage<TFile extends File> {
     } else if (size > 0) {
       this.logger.debug(`Syncing ${size} pending metadata`);
     }
-    for (const id of [...this.pendingMetaIds]) {
+
+    let lastError: Error | undefined;
+    let errorCount = 0;
+    const pendingIds = [...this.pendingMetaIds];
+    for (const id of pendingIds) {
       const file = this.cache.get(id);
       if (file) {
         try {
           await this.meta.save(id, file);
           this.pendingMetaIds.delete(id);
         } catch (error) {
-          this.logger.error('Error saving metadata: {error}', { error });
+          lastError = error as Error;
+          errorCount++;
+          // Keep the id in pendingMetaIds for retry
         }
       } else {
+        this.logger.debug('Removing stale pending metadata ID {id} (file not in cache)', { id });
         this.pendingMetaIds.delete(id);
       }
     }
-    // this.pendingMetaIds.clear();
+
+    if (errorCount > 0) {
+      this.logger.error(
+        'Failed to save metadata for {errorCount} out of {total} file(s). Last error: {lastError}',
+        {
+          errorCount,
+          total: pendingIds.length,
+          lastError
+        }
+      );
+    }
+
+    if (lastError) {
+      throw lastError;
+    }
   }
 
   /**
@@ -334,7 +355,10 @@ export abstract class BaseStorage<TFile extends File> {
   protected startAutoPurge(purgeInterval: number): void {
     validateTimerInterval(purgeInterval, 'purgeInterval');
     setInterval(
-      () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
+      () =>
+        void this.purge().catch(error => {
+          this.logger.error('Auto-purge failed: {error}', { error });
+        }),
       purgeInterval
     ).unref();
   }
@@ -342,7 +366,10 @@ export abstract class BaseStorage<TFile extends File> {
   protected startMetaSync(metaSyncInterval: number): void {
     validateTimerInterval(metaSyncInterval, 'metaSyncInterval');
     setInterval(
-      () => void this.flushPendingMeta().catch(e => this.logger.error('sync error: {e}', { e })),
+      () =>
+        void this.flushPendingMeta().catch(error => {
+          this.logger.debug('Meta-sync iteration failed (error already logged)');
+        }),
       metaSyncInterval
     ).unref();
   }
