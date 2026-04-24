@@ -248,11 +248,25 @@ export abstract class BaseStorage<TFile extends File> {
             this.config.expiration?.rolling ? item.modifiedAt || item.createdAt : item.createdAt
           ) < before
       );
+      let errorCount = 0;
+      const total = expired.length;
       for (const { id, ...rest } of expired) {
         const [deleted] = await this.delete({ id });
+        if (deleted.status !== 'deleted') {
+          errorCount++;
+        }
         purged.items.push({ ...deleted, ...rest });
       }
-      purged.items.length && this.logger.info(`Purge: removed ${purged.items.length} uploads`);
+      const successCount = total - errorCount;
+      if (successCount > 0) {
+        this.logger.info(`Purge: removed ${successCount} uploads`);
+      }
+      if (errorCount > 0) {
+        this.logger.warn('Purge: {errorCount} out of {total} uploads had non‑deleted status', {
+          errorCount,
+          total
+        });
+      }
     }
     return purged;
   }
