@@ -15,9 +15,10 @@ import {
   LogLevel,
   normalizeHookResponse,
   normalizeOnErrorResponse,
-  uploadxLogger,
   toMilliseconds,
   typeis,
+  uploadxLogger,
+  validateTimerInterval,
   Validation,
   Validator,
   ValidatorConfig
@@ -299,11 +300,11 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startAutoPurge(purgeInterval: number): void {
-    if (purgeInterval >= 2147483647) throw Error('“purgeInterval” must be less than 2147483647 ms');
+    validateTimerInterval(purgeInterval, 'purgeInterval');
     setInterval(
       () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
       purgeInterval
-    );
+    ).unref();
   }
 
   protected updateTimestamps(file: TFile): TFile {
