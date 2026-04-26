@@ -15,9 +15,10 @@ import {
   LogLevel,
   normalizeHookResponse,
   normalizeOnErrorResponse,
-  uploadxLogger,
   toMilliseconds,
   typeis,
+  uploadxLogger,
+  validateTimerInterval,
   Validation,
   Validator,
   ValidatorConfig
@@ -248,11 +249,25 @@ export abstract class BaseStorage<TFile extends File> {
             this.config.expiration?.rolling ? item.modifiedAt || item.createdAt : item.createdAt
           ) < before
       );
+      let errorCount = 0;
+      const total = expired.length;
       for (const { id, ...rest } of expired) {
         const [deleted] = await this.delete({ id });
+        if (deleted.status !== 'deleted') {
+          errorCount++;
+        }
         purged.items.push({ ...deleted, ...rest });
       }
-      purged.items.length && this.logger.info(`Purge: removed ${purged.items.length} uploads`);
+      const successCount = total - errorCount;
+      if (successCount > 0) {
+        this.logger.info(`Purge: removed ${successCount} uploads`);
+      }
+      if (errorCount > 0) {
+        this.logger.warn('Purge: {errorCount} out of {total} uploads had non‑deleted status', {
+          errorCount,
+          total
+        });
+      }
     }
     return purged;
   }
@@ -285,11 +300,11 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startAutoPurge(purgeInterval: number): void {
-    if (purgeInterval >= 2147483647) throw Error('“purgeInterval” must be less than 2147483647 ms');
+    validateTimerInterval(purgeInterval, 'purgeInterval');
     setInterval(
       () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
       purgeInterval
-    );
+    ).unref();
   }
 
   protected updateTimestamps(file: TFile): TFile {

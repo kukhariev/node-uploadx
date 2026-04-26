@@ -174,6 +174,8 @@ describe('utils', () => {
     });
 
     it('isEqual', () => {
+      expect(utils.isEqual({ a: 1, b: 2 }, undefined)).toBe(false);
+      expect(utils.isEqual(undefined, undefined)).toBe(false);
       expect(utils.isEqual({ a: 1, b: 2 }, { a: 1, b: 2 })).toBe(true);
       expect(utils.isEqual({ a: 1, b: 2, c: 3 }, { a: 1, b: 2 })).toBe(false);
       expect(utils.isEqual({ a: 1, b: 2, c: 3 }, { a: 1, b: 2 }, 'c')).toBe(true);

@@ -55,7 +55,8 @@ export function mapValues<T>(
   return result;
 }
 
-export function isEqual(a: object, b: object, ...keysToIgnore: string[]): boolean {
+export function isEqual(a: unknown, b: unknown, ...keysToIgnore: string[]): boolean {
+  if (!a || !b) return false;
   return isDeepStrictEqual(
     Object.fromEntries(Object.entries(a).filter(e => !keysToIgnore.includes(e[0]))),
     Object.fromEntries(Object.entries(b).filter(e => !keysToIgnore.includes(e[0])))
@@ -107,6 +108,15 @@ export function toMilliseconds(value?: string | number): number | undefined {
   if (isNumber(value)) return value;
   if (!value) return undefined;
   return durationToMs(value);
+}
+
+export function validateTimerInterval(value: number, name: string): void {
+  const INT32_MAX = 2147483647;
+  if (value >= INT32_MAX) {
+    throw Error(
+      `"${name}" must be less than ${INT32_MAX} ms (${(INT32_MAX / 86400000).toFixed(2)} days)`
+    );
+  }
 }
 
 /**
