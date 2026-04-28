@@ -18,9 +18,7 @@ import {
   MetaStorage,
   partMatch
 } from '@uploadx/core';
-import { AbortController } from 'abort-controller';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
-import request from 'node-fetch';
 import { GCSConfig } from './gcs-config';
 import { GCSMetaStorage, GCSMetaStorageOptions } from './gcs-meta-storage';
 
@@ -169,7 +167,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
       url: this.uploadBaseURI
     };
     const res = await this.authClient.request(opts);
-    file.uri = res.headers.location as string;
+    file.uri = res.headers.get('location') as string;
     if (this.config.clientDirectUpload) {
       file.GCSUploadURI = file.uri;
       this.logger.debug('Send uploadURI to client', { uri: file.GCSUploadURI });
@@ -211,16 +209,17 @@ export class GCStorage extends BaseStorage<GCSFile> {
   protected async _write(part: Partial<FilePart> & GCSFile): Promise<number> {
     const { size, uri = '', body } = part;
     const contentRange = buildContentRange(part);
-    const options: Record<string, any> = { method: 'PUT' };
+    const options: RequestInit = { method: 'PUT' };
     if (body?.on) {
       const abortController = new AbortController();
       body.on('aborted', _ => abortController.abort());
       options.body = body;
       options.signal = abortController.signal;
+      options.duplex = 'half';
     }
     options.headers = { 'Content-Range': contentRange, Accept: 'application/json' };
     try {
-      const res = await request(uri, options);
+      const res = await fetch(uri, options);
       if (res.status === 308) {
         const range = res.headers.get('range');
         return range ? getRangeEnd(range) : 0;
