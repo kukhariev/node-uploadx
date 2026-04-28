@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { AbortSignal } from 'abort-controller';
 import { IncomingMessage } from 'http';
-import fetch from 'node-fetch';
 import { FilePart } from '../packages/core/src';
 import {
   buildContentRange,
@@ -13,9 +11,8 @@ import {
 } from '../packages/gcs/src';
 import { authRequest, deepClone, metafile, storageOptions, testfile } from './shared';
 
-jest.mock('node-fetch');
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
-const { Response } = jest.requireActual('node-fetch');
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 const mockAuthRequest = jest.fn();
 jest.mock('google-auth-library', () => ({
@@ -50,7 +47,9 @@ describe('GCStorage', () => {
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
       mockAuthRequest.mockRejectedValueOnce({ code: 404, detail: 'meta not found' }); // getMeta
-      mockAuthRequest.mockResolvedValueOnce({ headers: { location: uri } }); //
+      mockAuthRequest.mockResolvedValueOnce({
+        headers: new Headers({ location: uri })
+      }); //
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
       const gcsFile = await storage.create(req, metafile);
       expect(gcsFile).toMatchSnapshot();
@@ -59,7 +58,6 @@ describe('GCStorage', () => {
 
     it('should handle existing', async () => {
       mockAuthRequest.mockResolvedValue(metafileResponse());
-      // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('', { status: 308, headers: { Range: '0-5' } }));
       const gcsFile = await storage.create(req, metafile);
       expect(gcsFile).toMatchSnapshot();
@@ -102,7 +100,6 @@ describe('GCStorage', () => {
     it('should request api and set status and bytesWritten', async () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
       mockFetch.mockResolvedValueOnce(
-        // eslint-disable-next-line
         new Response('{"mediaLink":"http://api.com/123456789"}', { status: 200 })
       );
       const body = testfile.asReadable;
@@ -113,17 +110,20 @@ describe('GCStorage', () => {
         contentLength: metafile.size
       });
       expect(mockFetch).toHaveBeenCalledWith(uri, {
+        duplex: 'half',
         body,
         method: 'PUT',
-        headers: expect.objectContaining({ 'Content-Range': 'bytes 0-63/64' }),
-        signal: expect.any(AbortSignal)
+        headers: expect.objectContaining({
+          'Content-Range': 'bytes 0-63/64',
+          Accept: 'application/json'
+        }),
+        signal: expect.anything()
       });
       expect(gcsFile).toMatchSnapshot();
     });
 
     it('should send normalised error', async () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
-      // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('Bad Request', { status: 400 }));
       await expect(storage.write({ id: metafile.id, contentLength: 0 })).rejects.toEqual({
         code: 'GCS400',
@@ -135,7 +135,6 @@ describe('GCStorage', () => {
 
     it('should request api and set status and bytesWritten on resume', async () => {
       mockAuthRequest.mockResolvedValueOnce(metafileResponse());
-      // eslint-disable-next-line
       mockFetch.mockResolvedValueOnce(new Response('', { status: 308, headers: { Range: '0-5' } }));
       const gcsFile = await storage.write({ id: metafile.id, contentLength: 0 });
       expect(mockFetch).toMatchSnapshot();
