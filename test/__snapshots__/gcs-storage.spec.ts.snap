@@ -64,7 +64,7 @@ exports[`GCStorage .create() should request api and set status and uri 2`] = `
     ],
     [
       {
-        "body": "{"metadata":{"name":"testfile.mp4","size":64,"mimeType":"video/mp4","lastModified":1635398061454,"custom":"","sha1":"ZAPAntzKARqtb+j3B529GAOf3kI="}}",
+        "body": "{"metadata":{"name":"testfile.mp4","size":"64","mimeType":"video/mp4","lastModified":"1635398061454","custom":"","sha1":"ZAPAntzKARqtb+j3B529GAOf3kI="}}",
         "headers": {
           "Content-Type": "application/json; charset=utf-8",
           "Origin": "http://api.com",
