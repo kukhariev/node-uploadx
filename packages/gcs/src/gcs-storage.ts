@@ -14,6 +14,7 @@ import {
   IncomingMessage,
   LocalMetaStorage,
   LocalMetaStorageOptions,
+  mapValues,
   MetaStorage,
   partMatch
 } from '@uploadx/core';
@@ -161,7 +162,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     headers['X-Upload-Content-Type'] = file.contentType;
     origin && (headers['Origin'] = origin);
     const opts = {
-      body: JSON.stringify({ metadata: file.metadata }),
+      body: JSON.stringify({ metadata: mapValues(file.metadata, String) }),
       headers,
       method: 'POST' as const,
       params: { name: file.name, size: file.size, uploadType: 'resumable' },
