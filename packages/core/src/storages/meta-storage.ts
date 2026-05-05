@@ -1,5 +1,6 @@
-import { FileName } from './file';
+import { inspect } from 'util';
 import { Logger, uploadxLogger } from '../utils';
+import { FileName } from './file';
 
 /** @experimental */
 export interface UploadListEntry {
@@ -78,6 +79,14 @@ export class MetaStorage<T> {
 
   getIdFromMetaName(name: string): string {
     return name.slice(this.prefix.length, -this.suffix.length);
+  }
+
+  toString(): string {
+    return `[${this.constructor.name}: prefix="${this.prefix}", suffix="${this.suffix}"]`;
+  }
+
+  [inspect.custom](): string {
+    return this.toString();
   }
 }
 
