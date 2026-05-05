@@ -1,8 +1,8 @@
+import { tmpdir } from 'os';
 import { join } from 'path';
 import { accessCheck, fsp, getFiles, removeFile } from '../utils';
 import { File } from './file';
 import { MetaStorage, MetaStorageOptions, UploadList } from './meta-storage';
-import { tmpdir } from 'os';
 
 export interface LocalMetaStorageOptions extends MetaStorageOptions {
   /**
@@ -70,6 +70,10 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
       }
     }
     return { items: uploads };
+  }
+
+  toString(): string {
+    return `[${this.constructor.name}: directory="${this.directory}", prefix="${this.prefix}", suffix="${this.suffix}"]`;
   }
 
   private accessCheck(): Promise<void> {

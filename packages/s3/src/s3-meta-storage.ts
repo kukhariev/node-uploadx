@@ -78,4 +78,8 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
     }
     return { items, prefix };
   }
+
+  toString(): string {
+    return `[${this.constructor.name}: bucket="${this.bucket}", prefix="${this.prefix}", suffix="${this.suffix}"]`;
+  }
 }

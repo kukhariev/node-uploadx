@@ -10,13 +10,14 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   authClient: GoogleAuth;
   storageBaseURI: string;
   uploadBaseURI: string;
+  bucket: string;
 
   constructor(readonly config: GCSMetaStorageOptions = {}) {
     super(config);
     config.keyFile ||= process.env.GCS_KEYFILE;
-    const bucketName = config.bucket || process.env.GCS_BUCKET || GCSConfig.bucketName;
-    this.storageBaseURI = [GCSConfig.storageAPI, bucketName, 'o'].join('/');
-    this.uploadBaseURI = [GCSConfig.uploadAPI, bucketName, 'o'].join('/');
+    this.bucket = config.bucket || process.env.GCS_BUCKET || GCSConfig.bucketName;
+    this.storageBaseURI = [GCSConfig.storageAPI, this.bucket, 'o'].join('/');
+    this.uploadBaseURI = [GCSConfig.uploadAPI, this.bucket, 'o'].join('/');
     config.scopes ||= GCSConfig.authScopes;
     this.authClient = new GoogleAuth(config);
   }
@@ -68,5 +69,9 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
           createdAt: new Date(timeCreated)
         }))
     };
+  }
+
+  toString(): string {
+    return `[${this.constructor.name}: bucket="${this.bucket}", prefix="${this.prefix}", suffix="${this.suffix}"]`;
   }
 }
