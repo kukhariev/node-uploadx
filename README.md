@@ -132,12 +132,18 @@ See [express-logtape.ts](examples/express-logtape.ts) for a complete example.
 
 `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
 
-## Contributing
+## 🤝 Contributing
 
 If you'd like to contribute, please fork the repository and make changes as you'd like.
 Pull requests are welcome!
 
-## License
+## 🌐 Quick Links
+
+- [API Protocol](proto.md) - HTTP methods, headers, resumable flow
+- [Examples](examples/) - working examples
+- [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx) - client-side library
+
+## 📄 License
 
 [MIT](LICENSE)
 
