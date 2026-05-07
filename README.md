@@ -7,7 +7,7 @@ Resumable upload middleware for [express](https://github.com/expressjs/express)
 and plain node.js.
 Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
-## ✨ Features
+## Features
 
 - resumable simple/chunked uploads
 - can save files to local filesystem, S3, GCS
@@ -18,7 +18,7 @@ Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 - fixed/rolling expiration and cleanup
 - extensibility (custom storages, upload protocols, etc)
 
-## 🌩️ Installation Options
+## Installation Options
 
 ```sh
 # Core only (local storage)
@@ -32,7 +32,7 @@ npm install @uploadx/gcs   # Google Cloud Storage
 npm install node-uploadx
 ```
 
-## ♨️ Usage
+## Usage
 
 Express example:
 
@@ -57,7 +57,7 @@ app.listen(3003);
 
 Please navigate to the [examples](examples) for more.
 
-## 🛠️ Options
+## Options
 
 The `uploadx` function accepts either a storage instance or storage options:
 
@@ -110,7 +110,7 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `logLevel` Set built-in logger severity level. Default value: `"none"`
 
-## ☁️ Storage providers
+## Storage providers
 
 By default, `uploadx` uses DiskStorage (local filesystem) — just set the `directory` option. For cloud or S3‑compatible storage, install the corresponding package and pass a `storage` instance to the middleware.
 
@@ -122,30 +122,30 @@ By default, `uploadx` uses DiskStorage (local filesystem) — just set the `dire
 
 For configuration, authentication, and usage examples, see the respective package READMEs linked above.
 
-## 📝 Logging
+## Logging
 
 The library uses [`@logtape/logtape`](https://logtape.org/) for structured logging. Set `logLevel` to enable it, or configure LogTape directly for advanced use cases.
 
 See [express-logtape.ts](examples/express-logtape.ts) for a complete example.
 
-## 🔑 Environment Variables
+## Environment Variables
 
 `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
 
-## 🤝 Contributing
+## Contributing
 
 If you'd like to contribute, please fork the repository and make changes as you'd like.
 Pull requests are welcome!
 
-## 🌐 Quick Links
+## Quick Links
 
 - [API Protocol](proto.md) - HTTP methods, headers, resumable flow
 - [Examples](examples/) - working examples
 - [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx) - client-side library
 
-## 📄 License
+## License
 
-[MIT](LICENSE)
+MIT License — see [LICENSE](LICENSE) for details.
 
 [npm-image]: https://img.shields.io/npm/v/node-uploadx.svg
 [npm-url]: https://www.npmjs.com/package/node-uploadx
