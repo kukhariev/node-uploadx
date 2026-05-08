@@ -132,6 +132,27 @@ See [express-logtape.ts](examples/express-logtape.ts) for a complete example.
 
 `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
 
+## Project Structure
+
+This is a monorepo managed with npm workspaces:
+
+```
+node-uploadx/
+├── packages/
+│   ├── core/                 # @uploadx/core - core functionality
+│   ├── s3/                   # @uploadx/s3 - S3 storage provider
+│   ├── gcs/                  # @uploadx/gcs - Google Cloud Storage provider
+│   └── node-uploadx/         # All-in-one package
+├── examples/                 # Usage examples
+│   ├── express.ts
+│   ├── express-s3.ts
+│   ├── express-gcs.ts
+│   └── ...
+├── test/                     # Test suite
+├── README.md
+└── ...
+```
+
 ## Contributing
 
 If you'd like to contribute, please fork the repository and make changes as you'd like.
