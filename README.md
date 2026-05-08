@@ -3,14 +3,14 @@
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
 [![commits since latest release][comm-image]][comm-url]
 
-Resumable upload middleware for [express](https://github.com/expressjs/express)
-and plain node.js.
-Server-side part of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
+Resumable upload middleware for [Express](https://github.com/expressjs/express)
+and plain Node.js.
+Server-side component of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 ## Features
 
-- resumable simple/chunked uploads
-- can save files to local filesystem, S3, GCS
+- resumable simple and chunked uploads
+- can save files to the local filesystem, S3, GCS
 - saving added metadata along with files
 - logging and error handling
 - chunks checksum verification
@@ -55,7 +55,7 @@ app.use(
 app.listen(3003);
 ```
 
-Please navigate to the [examples](examples) for more.
+More examples (S3, GCS, plain Node.js, tus, logging, validation) are available in the [/examples](examples) folder.
 
 ## Options
 
@@ -84,7 +84,7 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `metaStorage` Provide custom meta storage
 
-- `metaStorageConfig` Configure metafiles storage
+- `metaStorageConfig` Configure metadata storage
 
 - `maxMetadataSize` Metadata size limit. Default value: `"4MB"`
 
@@ -96,13 +96,13 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `userIdentifier` Get user identity
 
-- `onCreate` Callback that is called when a new upload is created
+- `onCreate` Callback invoked when a new upload is created
 
-- `onUpdate` Callback that is called when an upload is updated
+- `onUpdate` Callback invoked when an upload is updated
 
-- `onComplete` Callback that is called when an upload is completed
+- `onComplete` Callback invoked when an upload is completed
 
-- `onDelete` Callback that is called when an upload is cancelled
+- `onDelete` Callback invoked when an upload is cancelled
 
 - `onError` Customize error response
 
