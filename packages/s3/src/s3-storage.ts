@@ -13,7 +13,6 @@ import {
   UploadPartCommandInput,
   waitUntilBucketExists
 } from '@aws-sdk/client-s3';
-import { AbortController } from '@aws-sdk/abort-controller';
 import { fromIni } from '@aws-sdk/credential-providers';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
@@ -223,8 +222,9 @@ export class S3Storage extends BaseStorage<S3File> {
       if (part.checksumAlgorithm === 'md5') {
         params.ContentMD5 = part.checksum;
       }
-      const abortSignal = new AbortController().signal;
-      part.body.on('error', _err => abortSignal.abort());
+      const controller = new AbortController();
+      const abortSignal = controller.signal;
+      part.body.on('error', _err => controller.abort());
       const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
       const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
       file.Parts = [...file.Parts, uploadPart];
