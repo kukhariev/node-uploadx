@@ -1,4 +1,3 @@
-import bytes from 'bytes';
 import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
@@ -14,6 +13,7 @@ import {
   waitUntilBucketExists
 } from '@aws-sdk/client-s3';
 import { fromIni } from '@aws-sdk/credential-providers';
+
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   BaseStorage,
@@ -37,12 +37,15 @@ import {
   toSeconds,
   updateSize
 } from '@uploadx/core';
+import bytes from 'bytes';
+import { PassThrough } from 'stream';
 import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
 
 const BUCKET_NAME = 'node-uploadx';
 const MIN_PART_SIZE = 5 * 1024 * 1024;
 const PART_SIZE = 16 * 1024 * 1024;
+const PART_TIMEOUT = 300_000;
 
 export class S3File extends File {
   Parts?: Part[];
@@ -211,24 +214,44 @@ export class S3Storage extends BaseStorage<S3File> {
         return fail(ERRORS.UNSUPPORTED_CHECKSUM_ALGORITHM);
       }
       const partNumber = file.Parts.length + 1;
+      const upstream = part.body;
+      const body = upstream.pipe(new PassThrough());
+      const controller = new AbortController();
+      const abortSignal = controller.signal;
+      const onUpstreamGone = (): void => {
+        controller.abort();
+        body.destroy();
+      };
+      upstream.once('error', onUpstreamGone);
+      upstream.once('abort', onUpstreamGone);
+      const timeoutId = setTimeout(() => {
+        this.logger.warn(`Upload part timeout: ${file.name}, part ${partNumber}`);
+        onUpstreamGone();
+      }, PART_TIMEOUT);
+
       const params: UploadPartCommandInput = {
         Bucket: this.bucket,
         Key: file.name,
         UploadId: file.UploadId,
         PartNumber: partNumber,
-        Body: part.body,
+        Body: body,
         ContentLength: part.contentLength || 0
       };
       if (part.checksumAlgorithm === 'md5') {
         params.ContentMD5 = part.checksum;
       }
-      const controller = new AbortController();
-      const abortSignal = controller.signal;
-      part.body.on('error', _err => controller.abort());
-      const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
-      const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
-      file.Parts = [...file.Parts, uploadPart];
-      file.bytesWritten += part.contentLength || 0;
+
+      try {
+        const { ETag } = await this.client.send(new UploadPartCommand(params), { abortSignal });
+        const uploadPart: Part = { PartNumber: partNumber, Size: part.contentLength, ETag };
+        file.Parts = [...file.Parts, uploadPart];
+        file.bytesWritten += part.contentLength || 0;
+      } finally {
+        clearTimeout(timeoutId);
+        upstream.removeListener('error', onUpstreamGone);
+        upstream.removeListener('abort', onUpstreamGone);
+        body.destroy();
+      }
     }
     this.cache.set(file.id, file);
     file.status = getFileStatus(file);
