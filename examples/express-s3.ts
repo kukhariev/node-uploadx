@@ -1,5 +1,5 @@
 import express from 'express';
-import { type LogLevel, uploadx } from '@uploadx/core';
+import { LogLevel, uploadx } from '@uploadx/core';
 import { S3Storage } from '@uploadx/s3';
 
 const PORT = process.env.PORT || 3002;
@@ -16,16 +16,12 @@ const app = express();
 //   metaStorageConfig: { directory: 'upload' }
 // });
 
-// The credentials are loaded from a shared credentials file
+// The credentials are loaded from a environment
 const storage = new S3Storage({
-  maxUploadSize: '512MB',
-  allowMIME: ['image/*', 'video/*'],
-  bucket: process.env.S3_BUCKET,
-  endpoint: process.env.S3_ENDPOINT,
-  forcePathStyle: true,
-  expiration: { maxAge: '1h', purgeInterval: '15min' },
-  onComplete: file => console.log('File upload complete: ', file),
-  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info'
+  bucket: 'my-bucket',
+  maxUploadSize: '5TB',
+  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
+  onComplete: file => console.log('File upload complete: ', file)
 });
 
 app.use('/files', uploadx({ storage }));

@@ -20,8 +20,7 @@ const app = express();
 const storage = new S3Storage({
   bucket: 'my-bucket',
   maxUploadSize: '512MB',
-  allowMIME: ['image/*', 'video/*'],
-  expiration: { maxAge: '1h', purgeInterval: '15min' }
+  allowMIME: ['image/*', 'video/*']
 });
 
 app.use('/files', uploadx({ storage }));
