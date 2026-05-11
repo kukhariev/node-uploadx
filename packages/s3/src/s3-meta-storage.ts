@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { fromIni } from '@aws-sdk/credential-providers';
 import { File, MetaStorage, MetaStorageOptions, UploadList, toBoolean } from '@uploadx/core';
+import { getEnv } from './s3-env';
 
 const BUCKET_NAME = 'node-uploadx';
 export type S3MetaStorageOptions = S3ClientConfig &
@@ -22,11 +23,20 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
 
   constructor(public config: S3MetaStorageOptions) {
     super(config);
-    this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
-    const keyFile = config.keyFile || process.env.S3_KEYFILE;
+    this.bucket = config.bucket || getEnv('BUCKET') || BUCKET_NAME;
+    const keyFile = config.keyFile || getEnv('KEYFILE');
     keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
     const clientConfig = { ...config };
-    clientConfig.logger = toBoolean(process.env.S3_DEBUG)
+    if (config.forcePathStyle === undefined) {
+      clientConfig.forcePathStyle = toBoolean(getEnv('FORCE_PATH_STYLE'));
+    }
+    if (!clientConfig.region) {
+      clientConfig.region = getEnv('REGION');
+    }
+    if (!clientConfig.endpoint) {
+      clientConfig.endpoint = getEnv('ENDPOINT');
+    }
+    clientConfig.logger = toBoolean(getEnv('DEBUG'))
       ? (this.logger as unknown as S3ClientConfig['logger'])
       : undefined;
     this.client = new S3Client(clientConfig);

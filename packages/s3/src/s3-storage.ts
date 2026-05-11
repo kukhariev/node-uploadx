@@ -41,6 +41,7 @@ import bytes from 'bytes';
 import { PassThrough } from 'stream';
 import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
+import { getEnv } from './s3-env';
 
 const BUCKET_NAME = 'node-uploadx';
 const MIN_PART_SIZE = 5 * 1024 * 1024;
@@ -127,8 +128,8 @@ export class S3Storage extends BaseStorage<S3File> {
 
   constructor(public config: S3StorageOptions = {}) {
     super(config);
-    this.bucket = config.bucket || process.env.S3_BUCKET || BUCKET_NAME;
-    const keyFile = config.keyFile || process.env.S3_KEYFILE;
+    this.bucket = config.bucket || getEnv('BUCKET') || BUCKET_NAME;
+    const keyFile = config.keyFile || getEnv('KEYFILE');
     keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
     this._partSize = bytes.parse(this.config.partSize || PART_SIZE);
     if (this._partSize < MIN_PART_SIZE) {
@@ -138,7 +139,16 @@ export class S3Storage extends BaseStorage<S3File> {
       this.onCreate = async file => ({ body: file }); // TODO: remove hook
     }
     const clientConfig = { ...config };
-    clientConfig.logger = toBoolean(process.env.S3_DEBUG) ? this.logger : undefined;
+    if (config.forcePathStyle === undefined) {
+      clientConfig.forcePathStyle = toBoolean(getEnv('FORCE_PATH_STYLE'));
+    }
+    if (!clientConfig.region) {
+      clientConfig.region = getEnv('REGION');
+    }
+    if (!clientConfig.endpoint) {
+      clientConfig.endpoint = getEnv('ENDPOINT');
+    }
+    clientConfig.logger = toBoolean(getEnv('DEBUG')) ? this.logger : undefined;
     this.client = new S3Client(clientConfig);
     if (config.metaStorage) {
       this.meta = config.metaStorage;

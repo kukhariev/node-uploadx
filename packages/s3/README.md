@@ -45,6 +45,7 @@ See `@uploadx/core` and [AWS SDK S3 Client](https://docs.aws.amazon.com/AWSJavaS
 
 - `S3_BUCKET` — S3 bucket name
 - `S3_ENDPOINT` — S3 endpoint URL
+- `S3_FORCE_PATH_STYLE` — Force path-style addressing (for S3-compatible storage)
 - `S3_REGION` — Region
 - `S3_KEYFILE` — Shared credentials file
 - `S3_DEBUG` — Enable S3 client logging (optional, for development)
@@ -64,7 +65,7 @@ See [AWS SDK credentials docs](https://docs.aws.amazon.com/sdk-for-javascript/v3
 ```bash
 S3_BUCKET=uploadx
 S3_ENDPOINT=https://s3.us-west-002.backblazeb2.com
-S3_DEBUG=false
+S3_FORCE_PATH_STYLE=true
 S3_KEYFILE=.s3-config
 ```
 
