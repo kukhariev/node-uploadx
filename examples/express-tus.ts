@@ -5,6 +5,7 @@ const PORT = process.env.PORT || 3002;
 
 const app = express();
 const opts: DiskStorageOptions = {
+  maxUploadSize: '5GB',
   allowMIME: ['image/*', 'video/*'],
   directory: process.env.UPLOAD_DIR || 'upload'
 };

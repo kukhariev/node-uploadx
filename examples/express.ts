@@ -1,4 +1,4 @@
-import { uploadx, getLogger } from '@uploadx/core';
+import { getLogger, LogLevel, uploadx } from '@uploadx/core';
 import express from 'express';
 
 type AuthRequest = express.Request & { user?: { id: string; email: string } };
@@ -23,11 +23,11 @@ const onComplete: express.RequestHandler = (req, res, next) => {
 app.use(
   '/files',
   uploadx.upload({
-    maxUploadSize: '1GB',
+    maxUploadSize: '5GB',
     directory: process.env.UPLOAD_DIR || 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
-    logLevel: 'debug',
+    logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
     onComplete: file => {
       appLogger.info(`File upload complete: ${file.name}`);
       return file;

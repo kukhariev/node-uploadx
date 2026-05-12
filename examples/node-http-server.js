@@ -9,7 +9,7 @@ const corsHandler = cors();
 const storage = new DiskStorage({
   directory: process.env.UPLOAD_DIR || 'upload',
   path: '/files',
-  maxUploadSize: '15GB',
+  maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*']
 });
 
