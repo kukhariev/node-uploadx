@@ -7,13 +7,12 @@ const app = express();
 
 const uploads = uploadx({
   directory: process.env.UPLOAD_DIR || 'upload',
-  maxUploadSize: '1GB',
+  maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*'],
-  useRelativeLocation: true,
   filename: file => file.originalName,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   onComplete: file => {
-    console.log('File upload complete: ', file);
+    console.log('File upload complete: ', file.originalName);
     return file;
   }
 });

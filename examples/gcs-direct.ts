@@ -10,7 +10,7 @@ const corsHandler = cors();
 // Don't forget to set GCS_BUCKET and GCS_KEYFILE environment variables
 const storage = new GCStorage({
   clientDirectUpload: true,
-  maxUploadSize: '15GB',
+  maxUploadSize: '5GB',
   allowMIME: ['video/*', 'image/*'],
   filename: file => file.originalName,
   metaStorage: new MetaStorage()

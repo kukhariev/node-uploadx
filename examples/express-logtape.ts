@@ -27,7 +27,7 @@ async function startApp() {
 
   const uploads = uploadx({
     directory: process.env.UPLOAD_DIR || 'upload',
-    maxUploadSize: '1GB',
+    maxUploadSize: '5GB',
     allowMIME: ['video/*', 'image/*'],
     useRelativeLocation: true,
     filename: file => file.originalName,
