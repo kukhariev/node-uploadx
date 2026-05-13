@@ -42,6 +42,11 @@ Thumbs.db
 
 # environment file
 .env
+*.env.local
+*.env.dev
+*.env.test
+*.env.prod
+
 
 # TypeScript cache
 *.tsbuildinfo
