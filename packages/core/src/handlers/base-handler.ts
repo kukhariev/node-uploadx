@@ -114,7 +114,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     const child = <typeof BaseHandler>this.constructor;
     (child.methods || BaseHandler.methods).forEach(method => {
       const handler = (this as MethodHandler)[method];
-      handler && this.registeredHandlers.set(method.toUpperCase(), handler);
+      handler && this.registeredHandlers.set(method.toUpperCase(), handler.bind(this));
       // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
     this.logger.debug(`Registered handlers: ${[...this.registeredHandlers.keys()].join(', ')}`);
@@ -146,8 +146,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       return this.sendError(res, { uploadxErrorCode: ERRORS.STORAGE_ERROR } as UploadxError);
     }
 
-    handler
-      .call(this, req, res)
+    handler(req, res)
       .then(async (file: TFile | UploadList): Promise<void> => {
         if ('status' in file && file.status) {
           this.logger.debug('Upload {status}: {name} {bytesWritten}/{size}', {
