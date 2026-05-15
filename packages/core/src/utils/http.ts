@@ -7,7 +7,8 @@ import {
   ResponseBody,
   ResponseTuple,
   UploadxResponse
-} from '../types';
+} from '../types/http';
+import { UploadxFile } from '../storages';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
   const contentType = req.headers['content-type'] || '';
@@ -169,4 +170,23 @@ export function normalizeOnErrorResponse(fn: (error: HttpError) => UploadxRespon
     }
     return fn({ body: error ?? 'unknown error', statusCode: 500 });
   };
+}
+
+/**
+ * Extracts UploadxFile from request after upload completes when next handler is provided.
+ * @example
+ * ```ts
+ * app.use('/files', uploadx.upload({ directory: '/tmp' }), (req, res) => {
+ *   const file = getUploadxFile(req);
+ *   return res.json(file);
+ * });
+ * // with type narrowing
+ * const s3File = getUploadxFile<S3File>(req);
+ * ```
+ */
+export function getUploadxFile<T extends UploadxFile = UploadxFile>(
+  req: IncomingMessageWithBody
+): T | undefined {
+  if (!req._body) return undefined;
+  return req.body as T;
 }
