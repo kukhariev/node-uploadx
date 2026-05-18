@@ -117,18 +117,15 @@ export function getBaseUrl(req: http.IncomingMessage): string {
 /**
  * Extracts host with port from a http or https request.
  */
-export function extractHost(
-  req: http.IncomingMessage & { host?: string; hostname?: string }
-): string {
-  return getHeader(req, 'host');
-  // return req.host || req.hostname || getHeader(req, 'host'); // for express v5 / fastify
+function extractHost(req: http.IncomingMessage & { host?: string }): string {
+  return req.host || getHeader(req, 'host');
 }
 
 /**
  * Extracts protocol from a http or https request.
  */
-export function extractProto(req: http.IncomingMessage): string {
-  return getHeader(req, 'x-forwarded-proto').toLowerCase();
+function extractProto(req: http.IncomingMessage & { protocol?: string }): string {
+  return req.protocol || getHeader(req, 'x-forwarded-proto').toLowerCase();
 }
 
 export function responseToTuple<T extends ResponseBody>(
