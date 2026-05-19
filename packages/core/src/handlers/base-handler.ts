@@ -262,7 +262,10 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   buildFileUrl(req: IncomingMessage, file: TFile): string {
     const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
     const relative = url.format({ pathname: `${pathname as string}/${file.id}`, query });
-    return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
+    if (this.storage.config.useRelativeLocation) return relative;
+    const { baseUrl } = this.storage.config;
+    const base = typeof baseUrl === 'function' ? baseUrl(req) : baseUrl || getBaseUrl(req);
+    return base + relative;
   }
 
   protected finish(req: IncomingMessage, res: ServerResponse, response: UploadxResponse): void {

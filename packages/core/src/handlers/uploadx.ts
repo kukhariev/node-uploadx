@@ -108,7 +108,10 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const { query, pathname } = url.parse(req.originalUrl || (req.url as string), true);
     query.upload_id = file.id;
     const relative = url.format({ pathname, query });
-    return this.storage.config.useRelativeLocation ? relative : getBaseUrl(req) + relative;
+    if (this.storage.config.useRelativeLocation) return relative;
+    const { baseUrl } = this.storage.config;
+    const base = typeof baseUrl === 'function' ? baseUrl(req) : baseUrl || getBaseUrl(req);
+    return base + relative;
   }
 
   async getMetadata(req: IncomingMessage): Promise<Record<any, any>> {
