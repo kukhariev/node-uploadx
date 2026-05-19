@@ -92,6 +92,8 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `useRelativeLocation` Use relative urls. Default value: `false`
 
+- `baseUrl` Base URL for upload endpoints. If not provided, it is determined from the request.
+
 - `filename` File naming function
 
 - `userIdentifier` Get user identity
@@ -130,7 +132,9 @@ See [express-logtape.ts](examples/express-logtape.ts) for a complete example.
 
 ## Environment Variables
 
-`UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
+- `UPLOADX_BASE_URL` - Overrides the base URL for upload links.
+
+- `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
 
 ## Project Structure
 

@@ -63,10 +63,12 @@ export interface BaseStorageOptions<T extends File> {
   maxUploadSize?: number | string;
   /** File naming function */
   filename?: (file: T, req: any) => string;
-  /** Get user identity */
   userIdentifier?: UserIdentifier;
   /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
+
+  /** Base URL for upload endpoints. If not provided, it is determined from the request. */
+  baseUrl?: string | ((req: any) => string);
   /** Callback function that is called when a new upload is created */
   onCreate?: OnCreate<T>;
   /** Callback function that is called when an upload is updated */

@@ -1,4 +1,5 @@
 export * from './cache';
+export * from './core-env';
 export * from './errors';
 export * from './fs';
 export * from './http';
