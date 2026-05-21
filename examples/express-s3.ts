@@ -19,7 +19,7 @@ const app = express();
 // The credentials are loaded from a environment
 const storage = new S3Storage({
   bucket: 'my-bucket',
-  maxUploadSize: '5TB',
+  maxFileSize: '5TB',
   logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
   onComplete: file => console.log('File upload complete: ', file)
 });

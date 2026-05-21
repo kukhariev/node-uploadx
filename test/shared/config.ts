@@ -10,9 +10,9 @@ export const userId = 'userId';
 export const testRoot = path.join(tmpdir(), 'files');
 
 export const storageOptions: BaseStorageOptions<File> = {
-  filename: file => `${file.userId || 'anonymous'}/${file.originalName}`,
-  maxUploadSize: '6GB',
-  allowMIME: ['video/*', 'image/*', 'application/octet-stream'],
+  namingFunction: file => `${file.userId || 'anonymous'}/${file.originalName}`,
+  maxFileSize: '6GB',
+  allowedMimeTypes: ['video/*', 'image/*', 'application/octet-stream'],
   useRelativeLocation: true,
   expiration: { maxAge: '1h' }
 };

@@ -7,8 +7,8 @@ const app = express();
 
 // The credentials are loaded from a shared credentials file or environment variables
 const storage = new S3Storage({
-  maxUploadSize: '5GB',
-  allowMIME: ['image/*', 'video/*'],
+  maxFileSize: '5GB',
+  allowedMimeTypes: ['image/*', 'video/*'],
   bucket: 'my-bucket',
   requestChecksumCalculation: 'WHEN_REQUIRED', // remove useless crc32 checksum headers
   forcePathStyle: true,

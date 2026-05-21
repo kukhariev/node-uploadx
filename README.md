@@ -45,9 +45,9 @@ const app = express();
 app.use(
   '/uploads',
   uploadx({
-    directory: './files',
-    maxUploadSize: '10GB',
-    allowMIME: ['video/*'],
+    uploadDir: './files',
+    maxFileSize: '10GB',
+    allowedMimeTypes: ['video/*'],
     onComplete: file => console.log('Upload complete: ', file)
   })
 );
@@ -65,22 +65,22 @@ The `uploadx` function accepts either a storage instance or storage options:
 import { uploadx, DiskStorage } from '@uploadx/core';
 
 // Option 1: Pass storage instance
-const storage = new DiskStorage({ directory: './uploads' });
+const storage = new DiskStorage({ uploadDir: './uploads' });
 app.use('/files', uploadx(storage));
 
 // Option 2: Pass options directly (creates storage automatically)
-app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
+app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 ```
 
 ### Storage Options
 
-- `directory` DiskStorage upload directory. Default value: `"files"`
+- `uploadDir` DiskStorage upload directory. Default value: `"files"`
 
-- `path` Node http base path. Default value: `"/files"`
+- `basePath` Node http base path. Default value: `"/files"`
 
-- `allowMIME` Allowed MIME types. Default value: `["*/*"]`
+- `allowedMimeTypes` Allowed MIME types. Default value: `["*/*"]`
 
-- `maxUploadSize` File size limit. Default value: `"5TB"`
+- `maxFileSize` File size limit. Default value: `"5TB"`
 
 - `metaStorage` Provide custom meta storage
 
@@ -94,7 +94,7 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `baseUrl` Base URL for upload endpoints. If not provided, it is determined from the request.
 
-- `filename` File naming function
+- `namingFunction` File naming function
 
 - `userIdentifier` Get user identity
 
@@ -112,13 +112,25 @@ app.use('/files', uploadx({ directory: './uploads', maxUploadSize: '10GB' }));
 
 - `logLevel` Set built-in logger severity level. Default value: `"none"`
 
+### Deprecated Options
+
+These old names still work but are deprecated:
+
+| Old             | New                |
+| --------------- | ------------------ |
+| `directory`     | `uploadDir`        |
+| `path`          | `basePath`         |
+| `allowMIME`     | `allowedMimeTypes` |
+| `maxUploadSize` | `maxFileSize`      |
+| `filename`      | `namingFunction`   |
+
 ## Storage providers
 
-By default, `uploadx` uses DiskStorage (local filesystem) — just set the `directory` option. For cloud or S3‑compatible storage, install the corresponding package and pass a `storage` instance to the middleware.
+By default, `uploadx` uses DiskStorage (local filesystem) — just set the `uploadDir` option. For cloud or S3‑compatible storage, install the corresponding package and pass a `storage` instance to the middleware.
 
 | Provider             | Package                                    | Description                             |
 | -------------------- | ------------------------------------------ | --------------------------------------- |
-| Local filesystem     | [`@uploadx/core`](packages/core/README.md) | Built-in. Saves files to `directory`.   |
+| Local filesystem     | [`@uploadx/core`](packages/core/README.md) | Built-in. Saves files to `uploadDir`.   |
 | AWS S3 / compatible  | [`@uploadx/s3`](packages/s3/README.md)     | Amazon S3, Backblaze B2 S3, MinIO, etc. |
 | Google Cloud Storage | [`@uploadx/gcs`](packages/gcs/README.md)   | GCS buckets.                            |
 

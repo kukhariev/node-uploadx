@@ -245,7 +245,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     const pathname = url.parse(req.url as string).pathname || '';
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
-      : `/${pathname}`.replace(`/${this.storage.path}/`, '');
+      : `/${pathname}`.replace(`/${this.storage.basePath}/`, '');
     return path.startsWith('/') ? '' : path;
   }
 

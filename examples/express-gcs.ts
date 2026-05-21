@@ -7,7 +7,7 @@ const app = express();
 
 const storage = new GCStorage({
   bucket: 'my-bucket',
-  maxUploadSize: '5GB',
+  maxFileSize: '5GB',
   onComplete: ({ uri = 'unknown', id }) => {
     console.log(`File upload complete, storage path: ${uri}`);
     // send gcs link to client

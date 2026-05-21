@@ -19,8 +19,8 @@ const app = express();
 
 const storage = new GCStorage({
   bucket: 'my-bucket',
-  maxUploadSize: '1GB',
-  allowMIME: ['image/*', 'video/*'],
+  maxFileSize: '1GB',
+  allowedMimeTypes: ['image/*', 'video/*'],
   onComplete: file => console.log('Upload complete:', file)
 });
 

@@ -19,8 +19,8 @@ const app = express();
 app.use(
   '/files',
   uploadx({
-    directory: './uploads',
-    maxUploadSize: '10GB',
+    uploadDir: './uploads',
+    maxFileSize: '10GB',
     onComplete: file => console.log('Upload complete:', file)
   })
 );

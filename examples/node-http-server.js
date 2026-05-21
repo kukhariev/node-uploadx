@@ -7,10 +7,10 @@ const PORT = process.env.PORT || 3002;
 const corsHandler = cors();
 
 const storage = new DiskStorage({
-  directory: process.env.UPLOAD_DIR || 'upload',
-  path: '/files',
-  maxUploadSize: '5GB',
-  allowMIME: ['video/*', 'image/*']
+  uploadDir: process.env.UPLOAD_DIR || 'upload',
+  basePath: '/files',
+  maxFileSize: '5GB',
+  allowedMimeTypes: ['video/*', 'image/*']
 });
 
 const uploadx = new Uploadx({ storage });

@@ -23,8 +23,8 @@ const onComplete: express.RequestHandler = (req, res, next) => {
 app.use(
   '/files',
   uploadx.upload({
-    maxUploadSize: '5GB',
-    directory: process.env.UPLOAD_DIR || 'upload',
+    maxFileSize: '5GB',
+    uploadDir: process.env.UPLOAD_DIR || 'upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
     logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',

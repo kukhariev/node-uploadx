@@ -22,7 +22,7 @@ const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file =
 };
 
 const storage = new DiskStorage({
-  directory: process.env.UPLOAD_DIR || 'upload',
+  uploadDir: process.env.UPLOAD_DIR || 'upload',
   onComplete,
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   validation: {
