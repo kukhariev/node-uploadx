@@ -32,15 +32,21 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   /**
    * Uploads directory
    * @defaultValue './files'
+   * @deprecated Use {@link uploadDir} instead
    */
   directory?: string;
+  /**
+   * Uploads directory
+   * @defaultValue './files'
+   */
+  uploadDir?: string;
   /**
    * Configuring metafile storage on the local disk
    * @example
    * ```ts
    * const storage = new DiskStorage({
-   *   directory: 'upload',
-   *   metaStorageConfig: { directory: '/tmp/upload-metafiles', prefix: '.' }
+   *   uploadDir: 'upload',
+   *   metaStorageConfig: { uploadDir: '/tmp/upload-metafiles', prefix: '.' }
    * });
    * ```
    */
@@ -57,7 +63,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
 
   constructor(public config: DiskStorageOptions = {}) {
     super(config);
-    this.directory = config.directory || this.path.replace(/^\//, '');
+    this.directory = config.uploadDir ?? (config.directory || this.basePath.replace(/^\//, ''));
     if (config.metaStorage) {
       this.meta = config.metaStorage;
     } else {
@@ -83,7 +89,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   async create(req: IncomingMessage, fileInit: FileInit): Promise<DiskFile> {
     const file = new DiskFile(fileInit);
     file.name = this.namingFunction(file, req);
-    file.size = Number.isNaN(file.size) ? this.maxUploadSize : file.size;
+    file.size = Number.isNaN(file.size) ? this.maxFileSize : file.size;
     await this.validate(file);
     const path = this.getFilePath(file.name);
     file.bytesWritten = await ensureFile(path).catch(err => fail(ERRORS.FILE_ERROR, err));

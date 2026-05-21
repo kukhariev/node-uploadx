@@ -60,7 +60,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
  * Basic express wrapper
  * @example
  * ```ts
- * app.use('/files', multipart({directory: '/tmp', maxUploadSize: '250GB'}));
+ * app.use('/files', multipart({uploadDir: '/tmp', maxFileSize: '250GB'}));
  * ```
  */
 export function multipart<TFile extends UploadxFile>(

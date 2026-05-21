@@ -18,7 +18,7 @@ jest.mock('fs');
 describe('DiskStorage', () => {
   jest.useFakeTimers({ doNotFake: ['setTimeout'] }).setSystemTime(new Date('2022-02-02'));
   const directory = 'ds-test';
-  const options = { ...storageOptions, directory };
+  const options = { ...storageOptions, uploadDir: directory };
   let storage: DiskStorage;
   let readStream: RequestReadStream;
   const req = authRequest();

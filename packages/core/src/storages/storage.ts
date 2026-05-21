@@ -57,12 +57,27 @@ export interface ExpirationOptions {
 }
 
 export interface BaseStorageOptions<T extends File> {
-  /** Allowed MIME types */
+  /**
+   * Allowed MIME types
+   * @deprecated Use {@link allowedMimeTypes} instead
+   */
   allowMIME?: string[];
-  /** File size limit */
+  /** Allowed MIME types */
+  allowedMimeTypes?: string[];
+  /**
+   * File size limit
+   * @deprecated Use {@link maxFileSize} instead
+   */
   maxUploadSize?: number | string;
-  /** File naming function */
+  /** File size limit */
+  maxFileSize?: number | string;
+  /**
+   * File naming function
+   * @deprecated Use {@link namingFunction} instead
+   */
   filename?: (file: T, req: any) => string;
+  /** File naming function */
+  namingFunction?: (file: T, req: any) => string;
   userIdentifier?: UserIdentifier;
   /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
@@ -79,8 +94,13 @@ export interface BaseStorageOptions<T extends File> {
   onDelete?: OnDelete<T>;
   /** Customize error response */
   onError?: OnError;
-  /** Node http base path */
+  /**
+   * Node http base path
+   * @deprecated Use {@link basePath} instead
+   */
   path?: string;
+  /** Node http base path */
+  basePath?: string;
   /** Upload validation options */
   validation?: Validation<T>;
   /** Limiting the size of custom metadata */
@@ -95,7 +115,7 @@ export interface BaseStorageOptions<T extends File> {
    * app.use(
    *   '/upload',
    *   uploadx.upload({
-   *     directory: 'upload',
+   *     uploadDir: 'upload',
    *     expiration: { maxAge: '6h', purgeInterval: '30min' },
    *     onComplete
    *   })
@@ -116,9 +136,9 @@ export abstract class BaseStorage<TFile extends File> {
   onComplete: (file: TFile) => Promise<UploadxResponse>;
   onDelete: (file: TFile) => Promise<UploadxResponse>;
   onError: (err: HttpError) => UploadxResponse;
-  maxUploadSize: number;
+  maxFileSize: number;
   maxMetadataSize: number;
-  path: string;
+  basePath: string;
   isReady = true;
   checksumTypes: string[] = [];
   errorResponses = {} as ErrorResponses;
@@ -135,14 +155,14 @@ export abstract class BaseStorage<TFile extends File> {
     }
     const configHandler = new ConfigHandler();
     const opts = configHandler.set(config);
-    this.path = opts.path;
+    this.basePath = opts.basePath;
     this.onCreate = normalizeHookResponse(opts.onCreate);
     this.onUpdate = normalizeHookResponse(opts.onUpdate);
     this.onComplete = normalizeHookResponse(opts.onComplete);
     this.onDelete = normalizeHookResponse(opts.onDelete);
     this.onError = normalizeOnErrorResponse(opts.onError);
-    this.namingFunction = opts.filename;
-    this.maxUploadSize = bytes.parse(opts.maxUploadSize);
+    this.namingFunction = opts.namingFunction;
+    this.maxFileSize = bytes.parse(opts.maxFileSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
     this.cache = new Cache(1000, 300);
     this.logger.debug('configuration: {config}', { config });
@@ -152,7 +172,7 @@ export abstract class BaseStorage<TFile extends File> {
     }
 
     const size: Required<ValidatorConfig<TFile>> = {
-      value: this.maxUploadSize,
+      value: this.maxFileSize,
       isValid(file) {
         return file.size <= this.value;
       },
@@ -160,7 +180,7 @@ export abstract class BaseStorage<TFile extends File> {
     };
 
     const mime: Required<ValidatorConfig<TFile>> = {
-      value: opts.allowMIME,
+      value: opts.allowedMimeTypes,
       isValid(file) {
         return !!typeis.is(file.contentType, this.value as string[]);
       },

@@ -18,8 +18,8 @@ describe('BaseStorage', () => {
     return storage.saveMeta(created);
   }
 
-  it('should set maxUploadSize', () => {
-    expect(storage.maxUploadSize).toBe(5497558138880);
+  it('should set maxFileSize', () => {
+    expect(storage.maxFileSize).toBe(5497558138880);
   });
 
   it('should validate', async () => {

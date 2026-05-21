@@ -8,10 +8,10 @@ const path = '/files';
 const pathRegexp = new RegExp(`^${path}([/?]|$)`);
 
 const config = {
-  path,
-  directory: process.env.UPLOAD_DIR || 'upload',
-  allowMIME: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
-  maxUploadSize: process.env.MAX_UPLOAD_SIZE || '2GB',
+  basePath: path,
+  uploadDir: process.env.UPLOAD_DIR || 'upload',
+  allowedMimeTypes: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
+  maxFileSize: process.env.MAX_UPLOAD_SIZE || '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },
   logLevel: /** @type { 'info' } */ (process.env.LOG_LEVEL || 'info')
 };

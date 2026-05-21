@@ -4,9 +4,9 @@ import { BaseStorageOptions } from './storage';
 
 export class ConfigHandler {
   static defaults: BaseStorageOptions<File> = {
-    allowMIME: ['*/*'],
-    maxUploadSize: '5TB',
-    filename: ({ id }: File): string => id,
+    allowedMimeTypes: ['*/*'],
+    maxFileSize: '5TB',
+    namingFunction: ({ id }: File): string => id,
     useRelativeLocation: false,
     baseUrl: getEnv('BASE_URL'),
     onComplete: (file: File) => file,
@@ -18,15 +18,33 @@ export class ConfigHandler {
       const { cause: _c, ...noDetails } = payload;
       return { statusCode, body: { error: noDetails }, headers };
     },
-    path: '/files',
+    basePath: '/files',
     validation: {},
     maxMetadataSize: '4MB'
+  };
+
+  private static aliasMap: Record<string, string> = {
+    allowMIME: 'allowedMimeTypes',
+    filename: 'namingFunction',
+    path: 'basePath',
+    maxUploadSize: 'maxFileSize'
   };
 
   private _config = this.set(ConfigHandler.defaults);
 
   set<T extends File>(config: BaseStorageOptions<T> = {}): Required<BaseStorageOptions<T>> {
-    return Object.assign(this._config ?? {}, config);
+    const normalized = { ...config } as Record<string, unknown>;
+    for (const [oldKey, newKey] of Object.entries(ConfigHandler.aliasMap)) {
+      if (oldKey in normalized) {
+        if (!(newKey in normalized)) {
+          normalized[newKey] = normalized[oldKey];
+        }
+        delete normalized[oldKey];
+      }
+    }
+    return Object.assign(this._config ?? {}, normalized) as unknown as Required<
+      BaseStorageOptions<T>
+    >;
   }
 
   get<T extends File>(): Required<BaseStorageOptions<T>> {

@@ -89,9 +89,9 @@ export class GCSFile extends File {
  *    keyFile: <PATH_TO_KEY_FILE>,
  *    metaStorage: new MetaStorage(),
  *    clientDirectUpload: true,
- *    maxUploadSize: '15GB',
- *    allowMIME: ['video/*', 'image/*'],
- *    filename: file => file.originalName
+ *    maxFileSize: '15GB',
+ *    allowedMimeTypes: ['video/*', 'image/*'],
+ *    namingFunction: file => file.originalName
  *  });
  * ```
  */

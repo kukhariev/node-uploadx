@@ -135,7 +135,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
  * Basic express wrapper
  * @example
  * ```ts
- * app.use('/files', uploadx({directory: '/tmp', maxUploadSize: '250GB'}));
+ * app.use('/files', uploadx({uploadDir: '/tmp', maxFileSize: '250GB'}));
  * ```
  */
 export function uploadx<TFile extends UploadxFile>(

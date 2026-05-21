@@ -26,11 +26,11 @@ async function startApp() {
   });
 
   const uploads = uploadx({
-    directory: process.env.UPLOAD_DIR || 'upload',
-    maxUploadSize: '5GB',
-    allowMIME: ['video/*', 'image/*'],
+    uploadDir: process.env.UPLOAD_DIR || 'upload',
+    maxFileSize: '5GB',
+    allowedMimeTypes: ['video/*', 'image/*'],
     useRelativeLocation: true,
-    filename: file => file.originalName,
+    namingFunction: file => file.originalName,
     expiration: { maxAge: '1h', purgeInterval: '10min' }
   });
 

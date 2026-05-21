@@ -37,7 +37,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
   async options(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     const headers = {
       'Tus-Extension': this.extension.toString(),
-      'Tus-Max-Size': this.storage.maxUploadSize,
+      'Tus-Max-Size': this.storage.maxFileSize,
       'Tus-Checksum-Algorithm': this.storage.checksumTypes.toString()
     };
     this.send(res, { statusCode: 204, headers });
@@ -141,7 +141,7 @@ export class Tus<TFile extends UploadxFile> extends BaseHandler<TFile> {
  * Basic express wrapper
  * @example
  * ```js
- * app.use('/files', tus({directory: '/tmp', maxUploadSize: '250GB'}));
+ * app.use('/files', tus({uploadDir: '/tmp', maxFileSize: '250GB'}));
  * ```
  */
 export function tus<TFile extends UploadxFile>(
