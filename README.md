@@ -144,9 +144,28 @@ See [express-logtape.ts](examples/express-logtape.ts) for a complete example.
 
 ## Environment Variables
 
-- `UPLOADX_BASE_URL` - Overrides the base URL for upload links.
+Use `fromEnv()` (from `@uploadx/core`) to load configuration from environment variables:
+
+```ts
+import { fromEnv, uploadx } from '@uploadx/core';
+
+app.use('/files', uploadx({ ...fromEnv() }));
+```
+
+| Variable             | Option             | Description                   |
+| -------------------- | ------------------ | ----------------------------- |
+| `BASE_URL`           | `baseUrl`          | Base URL for upload links     |
+| `MAX_FILE_SIZE`      | `maxFileSize`      | File size limit (e.g. `10GB`) |
+| `ALLOWED_MIME_TYPES` | `allowedMimeTypes` | Comma-separated MIME types    |
+| `BASE_PATH`          | `basePath`         | HTTP base path                |
+| `UPLOAD_DIR`         | `uploadDir`        | Upload directory              |
+| `LOG_LEVEL`          | `logLevel`         | Built-in console logger level |
+
+> **Note:** `UPLOADX_SECRET` is read directly from `process.env` and is **not** included in `fromEnv()`.
 
 - `UPLOADX_SECRET` - Secret for salting file/user IDs (set to random string in production).
+
+Variables with a custom prefix (e.g. `MY_APP_UPLOAD_DIR`) are supported by passing the prefix to `fromEnv('MY_APP_')`.
 
 ## Project Structure
 

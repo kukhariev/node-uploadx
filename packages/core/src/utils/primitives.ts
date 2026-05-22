@@ -1,9 +1,8 @@
 import { createHash, randomBytes } from 'crypto';
 import { isDeepStrictEqual } from 'util';
 import { Cache } from './cache';
-import { getEnv } from './core-env';
 
-const UPLOADX_SECRET = getEnv('UPLOADX_SECRET') || 'UPLOADX_SECRET';
+const UPLOADX_SECRET = process.env['UPLOADX_SECRET'] || 'UPLOADX_SECRET';
 
 export const pick = <T, K extends keyof T>(obj: T, whitelist: K[]): Pick<T, K> => {
   const result = {} as Pick<T, K>;
