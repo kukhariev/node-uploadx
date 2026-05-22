@@ -47,7 +47,6 @@ See `@uploadx/core` and [AWS SDK S3 Client](https://docs.aws.amazon.com/AWSJavaS
 - `S3_FORCE_PATH_STYLE` — Force path-style addressing (for S3-compatible storage)
 - `S3_REGION` — Region
 - `S3_KEYFILE` — Shared credentials file
-- `S3_DEBUG` — Enable S3 client logging (optional, for development)
 
 Standard AWS SDK credential providers are also supported, for example:
 

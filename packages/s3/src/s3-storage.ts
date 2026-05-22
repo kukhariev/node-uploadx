@@ -33,7 +33,6 @@ import {
   mapValues,
   MetaStorage,
   partMatch,
-  toBoolean,
   toSeconds,
   updateSize
 } from '@uploadx/core';
@@ -41,7 +40,6 @@ import bytes from 'bytes';
 import { PassThrough } from 'stream';
 import { AWSError } from './aws-error';
 import { S3MetaStorage, S3MetaStorageOptions } from './s3-meta-storage';
-import { getEnv } from './s3-env';
 
 const BUCKET_NAME = 'node-uploadx';
 const MIN_PART_SIZE = 5 * 1024 * 1024;
@@ -128,9 +126,10 @@ export class S3Storage extends BaseStorage<S3File> {
 
   constructor(public config: S3StorageOptions = {}) {
     super(config);
-    this.bucket = config.bucket || getEnv('BUCKET') || BUCKET_NAME;
-    const keyFile = config.keyFile || getEnv('KEYFILE');
-    keyFile && (config.credentials = fromIni({ configFilepath: keyFile }));
+    this.bucket = config.bucket || BUCKET_NAME;
+    if (config.keyFile) {
+      config.credentials = fromIni({ configFilepath: config.keyFile });
+    }
     this._partSize = bytes.parse(this.config.partSize || PART_SIZE);
     if (this._partSize < MIN_PART_SIZE) {
       throw new Error('Minimum allowed partSize value is 5MB');
@@ -139,16 +138,6 @@ export class S3Storage extends BaseStorage<S3File> {
       this.onCreate = async file => ({ body: file }); // TODO: remove hook
     }
     const clientConfig = { ...config };
-    if (config.forcePathStyle === undefined) {
-      clientConfig.forcePathStyle = toBoolean(getEnv('FORCE_PATH_STYLE'));
-    }
-    if (!clientConfig.region) {
-      clientConfig.region = getEnv('REGION');
-    }
-    if (!clientConfig.endpoint) {
-      clientConfig.endpoint = getEnv('ENDPOINT');
-    }
-    clientConfig.logger = toBoolean(getEnv('DEBUG')) ? this.logger : undefined;
     this.client = new S3Client(clientConfig);
     if (config.metaStorage) {
       this.meta = config.metaStorage;

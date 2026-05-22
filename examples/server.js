@@ -1,5 +1,5 @@
 // @ts-check
-const { cors, DiskStorage, Multipart, Tus, Uploadx } = require('@uploadx/core');
+const { cors, DiskStorage, Multipart, Tus, Uploadx, fromEnv } = require('@uploadx/core');
 const { createServer } = require('http');
 const url = require('url');
 
@@ -9,11 +9,11 @@ const pathRegexp = new RegExp(`^${path}([/?]|$)`);
 
 const config = {
   basePath: path,
-  uploadDir: process.env.UPLOAD_DIR || 'upload',
-  allowedMimeTypes: process.env.ALLOW_MIME?.split(',') || ['video/*', 'image/*'],
-  maxFileSize: process.env.MAX_UPLOAD_SIZE || '2GB',
+  uploadDir: './upload',
+  allowedMimeTypes: ['video/*', 'image/*'],
+  maxFileSize: '2GB',
   expiration: { maxAge: process.env.MAX_AGE || '1h', purgeInterval: '10min' },
-  logLevel: /** @type { 'info' } */ (process.env.LOG_LEVEL || 'info')
+  ...fromEnv()
 };
 
 const corsHandler = cors();

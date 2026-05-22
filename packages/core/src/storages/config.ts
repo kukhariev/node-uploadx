@@ -1,4 +1,4 @@
-import { getEnv, HttpError } from '../utils';
+import { HttpError } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -8,7 +8,6 @@ export class ConfigHandler {
     maxFileSize: '5TB',
     namingFunction: ({ id }: File): string => id,
     useRelativeLocation: false,
-    baseUrl: getEnv('BASE_URL'),
     onComplete: (file: File) => file,
     onUpdate: (file: File) => file,
     onCreate: () => '',

@@ -1,4 +1,4 @@
-import { getLogger, LogLevel, uploadx } from '@uploadx/core';
+import { getLogger, uploadx, fromEnv } from '@uploadx/core';
 import express from 'express';
 
 type AuthRequest = express.Request & { user?: { id: string; email: string } };
@@ -16,24 +16,22 @@ const auth = (req: AuthRequest, res: express.Response, next: express.NextFunctio
 
 app.use(auth);
 
-const onComplete: express.RequestHandler = (req, res, next) => {
-  return res.json(req.body);
-};
-
 app.use(
   '/files',
   uploadx.upload({
     maxFileSize: '5GB',
-    uploadDir: process.env.UPLOAD_DIR || 'upload',
+    uploadDir: './upload',
     expiration: { maxAge: '1h', purgeInterval: '10min' },
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
-    logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
     onComplete: file => {
       appLogger.info(`File upload complete: ${file.name}`);
       return file;
-    }
+    },
+    ...fromEnv()
   }),
-  onComplete
+  (req, res) => {
+    return res.json(req.body);
+  }
 );
 
 app.listen(PORT, () => appLogger.info('listening on port: {PORT}', { PORT }));

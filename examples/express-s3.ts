@@ -1,6 +1,6 @@
+import { uploadx } from '@uploadx/core';
+import { S3Storage, fromEnv } from '@uploadx/s3';
 import express from 'express';
-import { LogLevel, uploadx } from '@uploadx/core';
-import { S3Storage } from '@uploadx/s3';
 
 const PORT = process.env.PORT || 3002;
 const app = express();
@@ -20,8 +20,12 @@ const app = express();
 const storage = new S3Storage({
   bucket: 'my-bucket',
   maxFileSize: '5TB',
-  logLevel: <LogLevel>process.env.LOG_LEVEL || 'info',
-  onComplete: file => console.log('File upload complete: ', file)
+  ...fromEnv(),
+  onComplete: file => {
+    const message = `File upload complete: ${file.originalName}`;
+    console.log(message);
+    return message;
+  }
 });
 
 app.use('/files', uploadx({ storage }));
