@@ -8,15 +8,13 @@ import {
   ErrorResponses,
   ERRORS,
   fail,
-  HttpError,
-  HttpErrorBody,
   isEqual,
   Logger,
   LogLevel,
   normalizeHookResponse,
-  normalizeOnErrorResponse,
   toMilliseconds,
   typeis,
+  UploadxErrorResponse,
   uploadxLogger,
   validateTimerInterval,
   Validation,
@@ -37,7 +35,7 @@ export type OnComplete<TFile extends File, TBody = any> = (file: TFile) => Promi
 
 export type OnDelete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
 
-export type OnError<TBody = HttpErrorBody> = (error: HttpError<TBody>) => any;
+export type OnError = (error: UploadxErrorResponse) => UploadxResponse;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
 
@@ -135,7 +133,7 @@ export abstract class BaseStorage<TFile extends File> {
   onUpdate: (file: TFile) => Promise<UploadxResponse>;
   onComplete: (file: TFile) => Promise<UploadxResponse>;
   onDelete: (file: TFile) => Promise<UploadxResponse>;
-  onError: (err: HttpError) => UploadxResponse;
+  onError: OnError;
   maxFileSize: number;
   maxMetadataSize: number;
   basePath: string;
@@ -160,10 +158,11 @@ export abstract class BaseStorage<TFile extends File> {
     this.onUpdate = normalizeHookResponse(opts.onUpdate);
     this.onComplete = normalizeHookResponse(opts.onComplete);
     this.onDelete = normalizeHookResponse(opts.onDelete);
-    this.onError = normalizeOnErrorResponse(opts.onError);
+    this.onError = opts.onError ?? ((response: UploadxErrorResponse) => response);
     this.namingFunction = opts.namingFunction;
     this.maxFileSize = bytes.parse(opts.maxFileSize);
     this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
+    this.validation = new Validator<TFile>(undefined, this.errorResponses);
     this.cache = new Cache(1000, 300);
     this.logger.debug('configuration: {config}', { config });
     const purgeInterval = toMilliseconds(opts.expiration?.purgeInterval);
@@ -200,7 +199,7 @@ export abstract class BaseStorage<TFile extends File> {
     return this.validation.verify(file);
   }
 
-  normalizeError(error: Error): HttpError {
+  normalizeError(error: unknown): UploadxErrorResponse {
     return {
       message: 'Generic Uploadx Error',
       statusCode: 500,

@@ -6,11 +6,11 @@ import {
   ERRORS,
   fail,
   getWriteStream,
-  HttpError,
   removeFile,
   streamChecksum,
   streamLength,
-  truncateFile
+  truncateFile,
+  UploadxErrorResponse
 } from '../utils';
 import {
   File,
@@ -78,7 +78,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       });
   }
 
-  normalizeError(err: Error): HttpError {
+  normalizeError(err: Error): UploadxErrorResponse {
     return super.normalizeError(err);
   }
 

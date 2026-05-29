@@ -28,7 +28,7 @@ describe('BaseStorage', () => {
 
   it('should validate error', async () => {
     await expect(storage.validate({ ...metafile, name: '../file.ext' })).rejects.toHaveProperty(
-      'statusCode'
+      'uploadxErrorCode'
     );
   });
 

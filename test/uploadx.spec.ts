@@ -21,10 +21,12 @@ describe('::Uploadx', () => {
       onCreate: () => 'created',
       onUpdate: () => 'updated',
       onComplete: () => 'completed',
-      onError: ({ statusCode, body }) => {
-        const errors = [{ status: statusCode, title: body?.code, detail: body?.message }];
+      onError: response => {
+        const errors = [
+          { status: response.statusCode, title: response.code, detail: response.message }
+        ];
         return {
-          statusCode,
+          statusCode: response.statusCode,
           headers: { 'Content-Type': 'application/vnd.api+json' },
           body: { errors }
         };
@@ -321,7 +323,7 @@ describe('::Uploadx', () => {
         .send({ ...file2, size: 10e10 })
         .expect(413);
       expect(event).toHaveProperty('request.method', 'POST');
-      expect(event).toHaveProperty('code', 'RequestEntityTooLarge');
+      expect(event).toHaveProperty('uploadxErrorCode', 'RequestEntityTooLarge');
     });
   });
 });

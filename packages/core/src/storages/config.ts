@@ -1,4 +1,4 @@
-import { HttpError } from '../utils';
+import { UploadxErrorResponse } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -12,11 +12,7 @@ export class ConfigHandler {
     onUpdate: (file: File) => file,
     onCreate: () => '',
     onDelete: () => '',
-    onError: ({ statusCode, body, headers, cause, ...rest }: HttpError) => {
-      const payload = (body || rest) as Record<string, unknown>;
-      const { cause: _c, ...noDetails } = payload;
-      return { statusCode, body: { error: noDetails }, headers };
-    },
+    onError: (response: UploadxErrorResponse) => response,
     basePath: '/files',
     validation: {},
     maxMetadataSize: '4MB'

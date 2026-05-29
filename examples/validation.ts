@@ -5,12 +5,7 @@ const PORT = process.env.PORT || 3002;
 
 const app = express();
 
-type OnCompleteBody = {
-  message: string;
-  id: string;
-};
-
-const onComplete: OnComplete<DiskFile, UploadxResponse<OnCompleteBody>> = file => {
+const onComplete: OnComplete<DiskFile, UploadxResponse> = file => {
   const message = `File upload is finished, path: ${file.name}`;
   console.log(message);
   return {
@@ -27,10 +22,10 @@ const storage = new DiskStorage({
   expiration: { maxAge: '1h', purgeInterval: '10min' },
   validation: {
     mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
-    size: {
+    size2: {
       isValid(file) {
-        this.response = [412, { message: `The file size(${file.size}) is larger than 5GiB` }];
-        return file.size <= 5368709120;
+        this.response = [412, { message: `The file size (${file.size}) is larger than 1GiB` }];
+        return file.size <= 1024 * 1024 * 1024;
       }
     },
     mtime: {
