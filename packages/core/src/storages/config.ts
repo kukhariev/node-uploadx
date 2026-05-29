@@ -2,7 +2,7 @@ import { UploadxErrorResponse } from '../utils';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
-export class ConfigHandler {
+export class ConfigHandler<T extends File = File> {
   static defaults: BaseStorageOptions<File> = {
     allowedMimeTypes: ['*/*'],
     maxFileSize: '5TB',
@@ -25,9 +25,9 @@ export class ConfigHandler {
     maxUploadSize: 'maxFileSize'
   };
 
-  private _config = this.set(ConfigHandler.defaults);
+  private _config = { ...ConfigHandler.defaults } as BaseStorageOptions<T>;
 
-  set<T extends File>(config: BaseStorageOptions<T> = {}): Required<BaseStorageOptions<T>> {
+  set(config: Partial<BaseStorageOptions<T>> = {}): Required<BaseStorageOptions<T>> {
     const normalized = { ...config } as Record<string, unknown>;
     for (const [oldKey, newKey] of Object.entries(ConfigHandler.aliasMap)) {
       if (oldKey in normalized) {
@@ -37,12 +37,11 @@ export class ConfigHandler {
         delete normalized[oldKey];
       }
     }
-    return Object.assign(this._config ?? {}, normalized) as unknown as Required<
-      BaseStorageOptions<T>
-    >;
+    this._config = { ...this._config, ...normalized };
+    return this._config as Required<BaseStorageOptions<T>>;
   }
 
-  get<T extends File>(): Required<BaseStorageOptions<T>> {
-    return this._config as unknown as Required<BaseStorageOptions<T>>;
+  get(): BaseStorageOptions<T> {
+    return this._config;
   }
 }

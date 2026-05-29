@@ -3,9 +3,10 @@ import { Validator } from '../packages/core/src';
 describe('Validator', () => {
   type TestObj = { prop: number };
   let validation: Validator<TestObj>;
-  const responses = {};
+  let responses: Record<string, any>;
 
   beforeEach(() => {
+    responses = {};
     validation = new Validator<TestObj>(undefined, responses);
   });
 

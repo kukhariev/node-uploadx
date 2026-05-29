@@ -1,12 +1,6 @@
 import http from 'http';
 import { getLastOne, isRecord } from './primitives';
-import {
-  Headers,
-  IncomingMessageWithBody,
-  ResponseBody,
-  ResponseTuple,
-  UploadxResponse
-} from '../types/http';
+import { Headers, IncomingMessageWithBody, ResponseTuple, UploadxResponse } from '../types/http';
 import { UploadxFile } from '../storages';
 
 export const typeis = (req: http.IncomingMessage, types: string[]): string | false => {
@@ -49,20 +43,20 @@ export function readBody(
  * @param req - incoming metadata request
  * @param limit - optional limit on the size of the body
  */
-export async function getJsonBody(
+export async function getJsonBody<T = Record<string, any>>(
   req: IncomingMessageWithBody<Record<any, any>>,
   limit = 16777216
-): Promise<Record<any, any>> {
+): Promise<T> {
   if (typeis(req, ['json'])) {
-    if (req.body) return { ...req.body };
+    if (req.body) return { ...req.body } as T;
     const contentLength = typeis.hasBody(req);
     if (contentLength) {
       if (contentLength > limit) return Promise.reject('Content length limit exceeded');
       const raw = await readBody(req, 'utf8', contentLength);
-      return { ...JSON.parse(raw) } as Record<any, any>;
+      return { ...JSON.parse(raw) } as T;
     }
   }
-  return {} as Record<any, any>;
+  return {} as T;
 }
 
 /**
@@ -127,18 +121,14 @@ function extractProto(req: http.IncomingMessage & { protocol?: string }): string
   return req.protocol || getHeader(req, 'x-forwarded-proto').toLowerCase();
 }
 
-export function responseToTuple<T extends ResponseBody>(
-  response: UploadxResponse<T> | ResponseTuple<T>
-): ResponseTuple {
+export function responseToTuple(response: UploadxResponse | ResponseTuple): ResponseTuple {
   if (Array.isArray(response)) return response;
   const { statusCode = 200, headers, ...rest } = response;
   const body = response.body ? response.body : rest;
   return [statusCode, body, headers || {}];
 }
 
-export function tupleToResponse<T extends ResponseBody>(
-  response: ResponseTuple<T> | UploadxResponse<T>
-): UploadxResponse {
+export function tupleToResponse(response: ResponseTuple | UploadxResponse): UploadxResponse {
   if (!Array.isArray(response)) return response;
   const [statusCode, body, headers] = response;
   return { statusCode, body, headers };

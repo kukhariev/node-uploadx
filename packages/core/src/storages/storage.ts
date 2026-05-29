@@ -139,11 +139,11 @@ export abstract class BaseStorage<TFile extends File> {
   basePath: string;
   isReady = true;
   checksumTypes: string[] = [];
-  errorResponses = {} as ErrorResponses;
   cache: Cache<TFile>;
   logger: Logger = uploadxLogger.getChild(this.constructor.name);
+  protected validation;
   protected namingFunction: (file: TFile, req: any) => string;
-  protected validation = new Validator<TFile>();
+  private _errorResponses: ErrorResponses = {};
   abstract meta: MetaStorage<TFile>;
 
   protected constructor(public config: BaseStorageOptions<TFile>) {
@@ -151,7 +151,7 @@ export abstract class BaseStorage<TFile extends File> {
     if (config.logLevel) {
       configureSimpleLogger(config.logLevel);
     }
-    const configHandler = new ConfigHandler();
+    const configHandler = new ConfigHandler<TFile>();
     const opts = configHandler.set(config);
     this.basePath = opts.basePath;
     this.onCreate = normalizeHookResponse(opts.onCreate);
@@ -193,6 +193,14 @@ export abstract class BaseStorage<TFile extends File> {
     };
     this.validation.add({ size, mime, filename });
     this.validation.add({ ...opts.validation });
+  }
+
+  get errorResponses(): ErrorResponses {
+    return this._errorResponses;
+  }
+
+  set errorResponses(value: Partial<ErrorResponses>) {
+    Object.assign(this._errorResponses, value);
   }
 
   async validate(file: TFile): Promise<any> {
