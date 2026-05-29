@@ -23,13 +23,12 @@ import {
   fail,
   getBaseUrl,
   isUploadxError,
-  isValidationError,
   Logger,
   pick,
-  uploadxLogger,
   setHeaders,
   tokenize,
-  UploadxError
+  UploadxError,
+  uploadxLogger
 } from '../utils';
 import { Cors } from './cors';
 
@@ -79,8 +78,6 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   storage: BaseStorage<TFile>;
   registeredHandlers = new Map<string, AsyncHandler>();
   logger: Logger;
-  protected _errorResponses = {} as ErrorResponses;
-
   constructor(config: UploadxOptions<TFile> = {}) {
     super();
     this.cors = new Cors();
@@ -92,22 +89,11 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       this.getUserId = config.userIdentifier;
     }
     this.logger = uploadxLogger.getChild(this.constructor.name);
-    this.assembleErrors();
     this.compose();
   }
 
-  /**
-   *  Override error responses
-   *  @example
-   * ```ts
-   *  const uploadx = new Uploadx({ storage });
-   *  uploadx.errorResponses = {
-   *    FileNotFound: [404, { message: 'Not Found!' }]
-   *  }
-   * ```
-   */
   set errorResponses(value: Partial<ErrorResponses>) {
-    this.assembleErrors(value);
+    Object.assign(this.storage.errorResponses, value);
   }
 
   compose(): void {
@@ -118,15 +104,6 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
     this.logger.debug(`Registered handlers: ${[...this.registeredHandlers.keys()].join(', ')}`);
-  }
-
-  assembleErrors(customErrors = {}): void {
-    this._errorResponses = {
-      ...ErrorMap,
-      ...this._errorResponses,
-      ...this.storage.errorResponses,
-      ...customErrors
-    };
   }
 
   handle = (req: IncomingMessage, res: ServerResponse): void => this.upload(req, res);
@@ -140,10 +117,10 @@ export abstract class BaseHandler<TFile extends UploadxFile>
     this.logger.debug('Request {method} {url}', { method: req.method, url: req.url });
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
-      return this.sendError(res, { uploadxErrorCode: ERRORS.METHOD_NOT_ALLOWED } as UploadxError);
+      return this.sendError(res, new UploadxError(ERRORS.METHOD_NOT_ALLOWED));
     }
     if (!this.storage.isReady) {
-      return this.sendError(res, { uploadxErrorCode: ERRORS.STORAGE_ERROR } as UploadxError);
+      return this.sendError(res, new UploadxError(ERRORS.STORAGE_ERROR));
     }
 
     handler(req, res)
@@ -171,24 +148,19 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         }
         if (req.method === 'GET') {
           (req as IncomingMessageWithBody)['body'] = file;
-          next ? next() : this.send(res, { body: file });
+          next ? next() : this.send(res, { statusCode: 200, body: file });
         }
         return;
       })
       .catch((error: Error) => {
-        const keys = Object.getOwnPropertyNames(error) as (keyof Error)[];
-        const sanitizedError = pick(error, [
-          'name',
-          ...(isUploadxError(error) ? keys.filter(k => k !== 'stack') : keys)
-        ]) as UploadxError;
         const errorPayload = {
-          ...sanitizedError,
+          ...pick(error, Object.getOwnPropertyNames(error) as (keyof Error)[]),
           request: pick(req, ['headers', 'method', 'url'])
         };
-        this.listenerCount('error') && this.emit('error', errorPayload);
+        this.listenerCount('error') && this.emit('error', errorPayload as UploadxErrorEvent);
         this.logger.error('{errorPayload.message} {*}', { errorPayload });
         if ('aborted' in req && req['aborted']) return;
-        return this.sendError(res, sanitizedError);
+        return this.sendError(res, error);
       });
   };
 
@@ -228,13 +200,23 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   /**
    * Send Error to client
    */
-  sendError(res: ServerResponse, error: Error): void {
-    const httpError = isUploadxError(error)
-      ? { ...this._errorResponses[error.uploadxErrorCode], cause: error.cause }
-      : isValidationError(error)
-        ? error
-        : this.storage.normalizeError(error);
-    const response = this.storage.onError(httpError);
+  sendError(res: ServerResponse, error: unknown): void {
+    let info;
+    if (isUploadxError(error)) {
+      info = this.storage.errorResponses[error.uploadxErrorCode] ??
+        ErrorMap[error.uploadxErrorCode as ERRORS] ?? {
+          code: error.uploadxErrorCode,
+          message: error.message,
+          statusCode: 500,
+          cause: error.cause
+        };
+    } else {
+      info = this.storage.normalizeError(error);
+    }
+    const response = { ...this.storage.onError(info) };
+    if (!response.body) {
+      response.body = { error: { code: info.code, message: info.message } };
+    }
     this.send(res, response);
   }
 

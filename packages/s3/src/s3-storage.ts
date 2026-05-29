@@ -26,7 +26,6 @@ import {
   FileQuery,
   getFileStatus,
   hasContent,
-  HttpError,
   IncomingMessage,
   LocalMetaStorage,
   LocalMetaStorageOptions,
@@ -34,7 +33,8 @@ import {
   MetaStorage,
   partMatch,
   toSeconds,
-  updateSize
+  updateSize,
+  UploadxErrorResponse
 } from '@uploadx/core';
 import bytes from 'bytes';
 import { PassThrough } from 'stream';
@@ -135,7 +135,7 @@ export class S3Storage extends BaseStorage<S3File> {
       throw new Error('Minimum allowed partSize value is 5MB');
     }
     if (this.config.clientDirectUpload) {
-      this.onCreate = async file => ({ body: file }); // TODO: remove hook
+      this.onCreate = async file => ({ statusCode: 200, body: file }); // TODO: remove hook
     }
     const clientConfig = { ...config };
     this.client = new S3Client(clientConfig);
@@ -154,7 +154,7 @@ export class S3Storage extends BaseStorage<S3File> {
       .catch(error => this.logger.error('Storage access check failed: {error.message}', { error }));
   }
 
-  normalizeError(error: AWSError): HttpError {
+  normalizeError(error: AWSError): UploadxErrorResponse {
     if (error.$metadata) {
       return {
         message: error.message,

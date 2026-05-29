@@ -1,13 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`DiskStorage .create() should reject on limits 1`] = `
-{
-  "code": "RequestEntityTooLarge",
-  "message": "Request entity too large",
-  "name": "ValidationError",
-  "statusCode": 413,
-}
-`;
+exports[`DiskStorage .create() should reject on limits 1`] = `[UploadxError: Request entity too large]`;
 
 exports[`DiskStorage .create() should set status and bytesWritten 1`] = `
 DiskFile {

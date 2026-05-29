@@ -1,5 +1,4 @@
 import http from 'http';
-import { HttpError, HttpErrorBody } from './errors';
 import { getLastOne, isRecord } from './primitives';
 import {
   Headers,
@@ -150,22 +149,13 @@ export function normalizeHookResponse<T>(fn: (file: T) => Promise<UploadxRespons
     const response = await fn(file);
     if (isRecord(response)) {
       const { statusCode, headers, body, ...rest } = response;
-      return { statusCode, headers, body: body ?? rest };
+      return {
+        statusCode: typeof statusCode === 'number' ? statusCode : 200,
+        headers: (isRecord(headers) ? headers : {}) as Headers,
+        body: body ?? rest
+      };
     }
     return { body: response ?? '' };
-  };
-}
-
-/*
-@internal
- */
-export function normalizeOnErrorResponse(fn: (error: HttpError) => UploadxResponse) {
-  return (error: HttpError) => {
-    if (isRecord(error)) {
-      const { statusCode, headers, body, ...rest } = error;
-      return fn({ statusCode, headers, body: body ?? (rest as HttpErrorBody) });
-    }
-    return fn({ body: error ?? 'unknown error', statusCode: 500 });
   };
 }
 

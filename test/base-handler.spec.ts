@@ -1,6 +1,6 @@
+import * as http from 'http';
 import { createRequest, createResponse } from 'node-mocks-http';
 import { testStorage, TestUploader } from './shared';
-import * as http from 'http';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
@@ -66,6 +66,8 @@ describe('BaseHandler', () => {
           code: 'GenericUploadxError'
         }
       },
+      code: 'GenericUploadxError',
+      message: 'Generic Uploadx Error',
       headers: undefined
     });
   });

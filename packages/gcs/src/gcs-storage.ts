@@ -10,13 +10,13 @@ import {
   getFileStatus,
   getHeader,
   hasContent,
-  HttpError,
   IncomingMessage,
   LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
   MetaStorage,
-  partMatch
+  partMatch,
+  UploadxErrorResponse
 } from '@uploadx/core';
 import { GoogleAuth, GoogleAuthOptions } from 'google-auth-library';
 import { GCSConfig } from './gcs-config';
@@ -126,7 +126,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
       .catch(error => this.logger.error('Storage access check failed: {error.message}', { error }));
   }
 
-  normalizeError(error: ClientError): HttpError {
+  normalizeError(error: ClientError): UploadxErrorResponse {
     const statusCode = +error.code || 500;
     if (error.config) {
       return {

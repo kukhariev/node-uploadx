@@ -3,9 +3,10 @@ import { Validator } from '../packages/core/src';
 describe('Validator', () => {
   type TestObj = { prop: number };
   let validation: Validator<TestObj>;
+  const responses = {};
 
   beforeEach(() => {
-    validation = new Validator<TestObj>();
+    validation = new Validator<TestObj>(undefined, responses);
   });
 
   it('simple', async () => {
@@ -16,10 +17,8 @@ describe('Validator', () => {
       }
     });
     await expect(validation.verify(obj)).rejects.toMatchObject({
-      code: 'UnprocessableEntity',
-      message: 'Validation failed',
-      name: 'ValidationError',
-      statusCode: 422
+      uploadxErrorCode: 'UnprocessableEntity',
+      name: 'UploadxError'
     });
   });
 
@@ -31,10 +30,8 @@ describe('Validator', () => {
       }
     });
     await expect(validation.verify(obj)).rejects.toMatchObject({
-      code: 'UnprocessableEntity',
-      message: 'Validation failed',
-      name: 'ValidationError',
-      statusCode: 422
+      uploadxErrorCode: 'UnprocessableEntity',
+      name: 'UploadxError'
     });
   });
 
@@ -43,15 +40,12 @@ describe('Validator', () => {
     validation.add({
       custom: {
         isValid: p => p.prop > 20,
-        response: [400, 'error']
+        response: { code: 'ValidationErrorCustom', statusCode: 400, message: 'error' }
       }
     });
     await expect(validation.verify(obj)).rejects.toMatchObject({
-      body: 'error',
-      code: 'ValidationErrorCustom',
-      headers: undefined,
-      name: 'ValidationError',
-      statusCode: 400
+      uploadxErrorCode: 'ValidationErrorCustom',
+      name: 'UploadxError'
     });
   });
 
@@ -62,15 +56,26 @@ describe('Validator', () => {
         isValid(p) {
           return p.prop > 20;
         },
-        response: { statusCode: 400, body: 'error' }
+        response: { statusCode: 400, message: 'error' }
       }
     });
     await expect(validation.verify(obj)).rejects.toMatchObject({
-      body: 'error',
-      code: 'ValidationErrorCustom',
-      // headers: undefined,
-      name: 'ValidationError',
-      statusCode: 400
+      uploadxErrorCode: 'ValidationErrorCustom',
+      name: 'UploadxError'
+    });
+  });
+
+  it('tuple with body object', async () => {
+    const obj = { prop: 10 };
+    validation.add({
+      custom: {
+        isValid: p => p.prop > 20,
+        response: [415, { message: 'video only' }]
+      }
+    });
+    await expect(validation.verify(obj)).rejects.toMatchObject({
+      uploadxErrorCode: 'ValidationErrorCustom',
+      name: 'UploadxError'
     });
   });
 
@@ -82,18 +87,15 @@ describe('Validator', () => {
         isValid(p) {
           this.response = {
             statusCode: 400,
-            body: `prop: ${p.prop} less value: ${this.value as number}`
+            message: `prop: ${p.prop} less value: ${this.value as number}`
           };
           return p.prop > this.value;
         }
       }
     });
     await expect(validation.verify(obj)).rejects.toMatchObject({
-      body: 'prop: 10 less value: 20',
-      code: 'ValidationErrorCustom',
-      //FIXME:  headers: undefined,
-      name: 'ValidationError',
-      statusCode: 400
+      uploadxErrorCode: 'ValidationErrorCustom',
+      name: 'UploadxError'
     });
   });
 
@@ -101,7 +103,7 @@ describe('Validator', () => {
     expect(() => {
       validation.add({
         custom: {
-          response: [400, 'error']
+          response: { code: 'test', statusCode: 400, message: 'error' }
         }
       });
     }).toThrow();

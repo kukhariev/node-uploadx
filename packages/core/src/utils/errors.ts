@@ -1,4 +1,5 @@
-import { UploadxResponse } from '../types';
+import { ResponseTuple, UploadxResponse } from '../types';
+import { isRecord } from './primitives';
 
 export enum ERRORS {
   BAD_REQUEST = 'BadRequest',
@@ -24,8 +25,19 @@ export enum ERRORS {
   REQUEST_ABORTED = 'RequestAborted'
 }
 
+export interface UploadxErrorResponse extends UploadxResponse {
+  [key: string]: unknown;
+  statusCode: number;
+  code?: string;
+  message: string;
+  body?: Record<string, any>;
+  name?: string;
+  retryable?: boolean;
+  cause?: unknown;
+}
+
 export type ErrorResponses<T extends string = string> = {
-  [K in T]: HttpError;
+  [K in T]: UploadxErrorResponse;
 };
 
 class E_ {
@@ -66,16 +78,15 @@ class E_ {
 export const ErrorMap: ErrorResponses<ERRORS> = E_.errors;
 
 export class UploadxError extends Error {
-  uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR;
+  uploadxErrorCode: string = ERRORS.UNKNOWN_ERROR;
   cause?: unknown;
 
-  constructor(uploadxErrorCode: ERRORS = ERRORS.UNKNOWN_ERROR, message?: string, cause?: unknown) {
+  constructor(uploadxErrorCode: string = ERRORS.UNKNOWN_ERROR, message?: string, cause?: unknown) {
     super(message || uploadxErrorCode);
     this.name = 'UploadxError';
     this.cause = cause;
-    if (Object.values(ERRORS).includes(uploadxErrorCode)) {
-      this.uploadxErrorCode = uploadxErrorCode;
-    }
+    this.uploadxErrorCode = uploadxErrorCode;
+    delete this.stack;
   }
 }
 
@@ -83,21 +94,20 @@ export function isUploadxError(err: unknown): err is UploadxError {
   return !!(err as UploadxError)?.uploadxErrorCode;
 }
 
+export function normalizeErrorResponse(
+  response: ResponseTuple | UploadxErrorResponse
+): UploadxErrorResponse {
+  if (!Array.isArray(response)) {
+    const { statusCode = 500, headers, ...rest } = response;
+    return { ...rest, statusCode, headers } as UploadxErrorResponse;
+  }
+  const [statusCode, body = {}, headers] = response;
+  const b = isRecord(body) ? body : { message: body as string };
+  return { ...b, statusCode, headers } as UploadxErrorResponse;
+}
+
 export function fail(uploadxErrorCode: ERRORS, cause?: unknown): Promise<never> {
   const entry = ErrorMap[uploadxErrorCode];
-  const message = (entry as { message?: string })?.message;
+  const message = entry?.message;
   return Promise.reject(new UploadxError(uploadxErrorCode, message, cause));
-}
-
-export interface HttpErrorBody {
-  message: string;
-  code: string;
-  uploadxErrorCode?: string;
-  name?: string;
-  retryable?: boolean;
-  cause?: Record<string, any> | string;
-}
-
-export interface HttpError<T = HttpErrorBody> extends UploadxResponse<T> {
-  statusCode: number;
 }
