@@ -84,7 +84,6 @@ describe('errors', () => {
 
     it('should default to statusCode 500 for object without statusCode', () => {
       const response = { code: 'TestError', message: 'test message' };
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const result = normalizeErrorResponse(response as any);
 
       expect(result.statusCode).toBe(500);

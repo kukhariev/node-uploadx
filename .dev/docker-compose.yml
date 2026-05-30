@@ -8,7 +8,7 @@ services:
   gcs-emulator:
     image: fsouza/fake-gcs-server:1.52
     ports:
-      - "4443:4443" # Emulator API port
+      - '4443:4443' # Emulator API port
     command: -scheme http -port "4443" -external-url http://localhost:8081/gcs -cors-headers authorization,content-range,content-type,ngsw-bypass
     volumes:
       # - ../examples/uploads:/storage # Mount for local files
@@ -22,7 +22,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "8081:8081" # Proxy port
+      - '8081:8081' # Proxy port
     depends_on:
       - gcs-emulator
     networks:
@@ -49,8 +49,8 @@ services:
   minio:
     image: minio/minio:RELEASE.2024-09-09T16-59-28Z
     ports:
-      - "9000:9000" # S3 API port
-      - "9001:9001" # Web Console
+      - '9000:9000' # S3 API port
+      - '9001:9001' # Web Console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -58,7 +58,7 @@ services:
       - minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 10s
       timeout: 5s
       retries: 5

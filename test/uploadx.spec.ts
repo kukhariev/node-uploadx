@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import fs from 'fs';
 import { join } from 'path';
 import request from 'supertest';
@@ -154,7 +153,6 @@ describe('::Uploadx', () => {
         return new Promise(resolve => {
           let start = 0;
           const readable = testfile.asReadable;
-          // eslint-disable-next-line @typescript-eslint/no-misused-promises
           readable.on('data', async (chunk: { length: number }) => {
             readable.pause();
             const res = await request(app)

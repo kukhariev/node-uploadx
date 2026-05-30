@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import express from 'express';
 import { userId } from './config';
 import { IncomingMessage } from 'http';

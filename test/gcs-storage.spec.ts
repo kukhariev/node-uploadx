@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { IncomingMessage } from 'http';
 import { FilePart } from '../packages/core/src';
 import {
