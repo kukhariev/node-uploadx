@@ -24,6 +24,7 @@ exports[`GCStorage .create() should handle existing 1`] = `
 
 exports[`GCStorage .create() should request api and set status and uri 1`] = `
 GCSFile {
+  "GCSUploadURI": undefined,
   "bytesWritten": NaN,
   "contentType": "video/mp4",
   "createdAt": "2022-02-02T00:00:00.000Z",
@@ -82,7 +83,7 @@ exports[`GCStorage .create() should request api and set status and uri 2`] = `
     ],
     [
       {
-        "body": "{"bytesWritten":null,"name":"userId/testfile.mp4","metadata":{"name":"testfile.mp4","size":64,"mimeType":"video/mp4","lastModified":1635398061454,"custom":"","sha1":"ZAPAntzKARqtb+j3B529GAOf3kI="},"originalName":"testfile.mp4","contentType":"video/mp4","size":64,"userId":"userId","id":"2169982662e5e43-151a7a29ec945826-9c7055b69ea13e8b-53ef280e21757b98","uri":"http://api.com?upload_id=123456789","createdAt":"2022-02-02T00:00:00.000Z","expiredAt":"2022-02-02T01:00:00.000Z"}",
+        "body": "{"bytesWritten":null,"contentType":"video/mp4","originalName":"testfile.mp4","id":"2169982662e5e43-151a7a29ec945826-9c7055b69ea13e8b-53ef280e21757b98","metadata":{"name":"testfile.mp4","size":64,"mimeType":"video/mp4","lastModified":1635398061454,"custom":"","sha1":"ZAPAntzKARqtb+j3B529GAOf3kI="},"name":"userId/testfile.mp4","size":64,"userId":"userId","expiredAt":"2022-02-02T01:00:00.000Z","createdAt":"2022-02-02T00:00:00.000Z","uri":"http://api.com?upload_id=123456789"}",
         "headers": {
           "Content-Type": "application/json; charset=utf-8",
         },
