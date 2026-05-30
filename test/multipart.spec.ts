@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { join } from 'path';
 // import { vol } from 'memfs';
 import request from 'supertest';

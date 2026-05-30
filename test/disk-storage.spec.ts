@@ -199,7 +199,6 @@ describe('DiskStorage - Parallel Upload Test', () => {
       metadata: {}
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const file = await storage.create({} as any, fileInit);
     fileId = file.id;
     originalData = generatePatternBuffer(fileSize);
