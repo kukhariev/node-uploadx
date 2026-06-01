@@ -124,25 +124,25 @@ export class S3Storage extends BaseStorage<S3File> {
   checksumTypes = ['md5'];
   private readonly _partSize = PART_SIZE;
 
-  constructor(public config: S3StorageOptions = {}) {
-    super(config);
-    this.bucket = config.bucket || BUCKET_NAME;
-    if (config.keyFile) {
-      config.credentials = fromIni({ configFilepath: config.keyFile });
+  constructor(public options: S3StorageOptions = {}) {
+    super(options);
+    this.bucket = options.bucket || BUCKET_NAME;
+    if (options.keyFile) {
+      options.credentials = fromIni({ configFilepath: options.keyFile });
     }
-    this._partSize = bytes.parse(this.config.partSize || PART_SIZE);
+    this._partSize = bytes.parse(this.options.partSize || PART_SIZE);
     if (this._partSize < MIN_PART_SIZE) {
       throw new Error('Minimum allowed partSize value is 5MB');
     }
-    if (this.config.clientDirectUpload) {
+    if (this.options.clientDirectUpload) {
       this.onCreate = async file => ({ statusCode: 200, body: file }); // TODO: remove hook
     }
-    const clientConfig = { ...config };
+    const clientConfig = { ...options };
     this.client = new S3Client(clientConfig);
-    if (config.metaStorage) {
-      this.meta = config.metaStorage;
+    if (options.metaStorage) {
+      this.meta = options.metaStorage;
     } else {
-      const metaConfig = { ...config, ...config.metaStorageConfig };
+      const metaConfig = { ...options, ...options.metaStorageConfig };
       this.meta =
         'directory' in metaConfig
           ? new LocalMetaStorage(metaConfig)
@@ -182,7 +182,7 @@ export class S3Storage extends BaseStorage<S3File> {
       Key: file.name,
       ContentType: file.contentType,
       Metadata: mapValues(file.metadata, encodeURI),
-      ACL: this.config.acl
+      ACL: this.options.acl
     };
     const { UploadId } = await this.client.send(new CreateMultipartUploadCommand(params));
     if (!UploadId) {
@@ -190,12 +190,12 @@ export class S3Storage extends BaseStorage<S3File> {
     }
     file.UploadId = UploadId;
     file.bytesWritten = 0;
-    if (this.config.clientDirectUpload) {
+    if (this.options.clientDirectUpload) {
       file.partSize ??= this._partSize;
     }
     await this.saveMeta(file);
     file.status = 'created';
-    if (this.config.clientDirectUpload) return this.buildPresigned(file);
+    if (this.options.clientDirectUpload) return this.buildPresigned(file);
     return file;
   }
 
@@ -205,7 +205,7 @@ export class S3Storage extends BaseStorage<S3File> {
     if (file.status === 'completed') return file;
     if (part.size) updateSize(file, part.size);
     if (!partMatch(part, file)) return fail(ERRORS.FILE_CONFLICT);
-    if (this.config.clientDirectUpload) return this.buildPresigned(file);
+    if (this.options.clientDirectUpload) return this.buildPresigned(file);
     file.Parts ??= await this._getParts(file);
     file.bytesWritten = file.Parts.map(item => item.Size || 0).reduce((p, c) => p + c, 0);
     if (hasContent(part)) {
@@ -273,7 +273,7 @@ export class S3Storage extends BaseStorage<S3File> {
   }
 
   async update({ id }: FileQuery, metadata: Partial<S3File>): Promise<S3File> {
-    if (this.config.clientDirectUpload) {
+    if (this.options.clientDirectUpload) {
       const file = await this.getMeta(id);
       return this.buildPresigned({ ...file, ...metadata });
     }

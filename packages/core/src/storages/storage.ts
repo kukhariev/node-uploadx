@@ -145,27 +145,29 @@ export abstract class BaseStorage<TFile extends File> {
   protected namingFunction: (file: TFile, req: any) => string;
   private _errorResponses: ErrorResponses = {};
   abstract meta: MetaStorage<TFile>;
+  public config: Required<BaseStorageOptions<TFile>>;
 
-  protected constructor(public config: BaseStorageOptions<TFile>) {
+  protected constructor(public options: BaseStorageOptions<TFile>) {
     // Configure the logger if a logLevel is specified
-    if (config.logLevel) {
-      configureSimpleLogger(config.logLevel);
+    if (options.logLevel) {
+      configureSimpleLogger(options.logLevel);
     }
     const configHandler = new ConfigHandler<TFile>();
-    const opts = configHandler.set(config);
-    this.basePath = opts.basePath;
-    this.onCreate = normalizeHookResponse(opts.onCreate);
-    this.onUpdate = normalizeHookResponse(opts.onUpdate);
-    this.onComplete = normalizeHookResponse(opts.onComplete);
-    this.onDelete = normalizeHookResponse(opts.onDelete);
-    this.onError = opts.onError ?? ((response: UploadxErrorResponse) => response);
-    this.namingFunction = opts.namingFunction;
-    this.maxFileSize = bytes.parse(opts.maxFileSize);
-    this.maxMetadataSize = bytes.parse(opts.maxMetadataSize);
+    this.config = configHandler.set(options);
+    this.basePath = this.config.basePath;
+    this.onCreate = normalizeHookResponse(this.config.onCreate);
+    this.onUpdate = normalizeHookResponse(this.config.onUpdate);
+    this.onComplete = normalizeHookResponse(this.config.onComplete);
+    this.onDelete = normalizeHookResponse(this.config.onDelete);
+    this.onError = this.config.onError ?? ((response: UploadxErrorResponse) => response);
+    this.namingFunction = this.config.namingFunction;
+    this.maxFileSize = bytes.parse(this.config.maxFileSize);
+    this.maxMetadataSize = bytes.parse(this.config.maxMetadataSize);
     this.validation = new Validator<TFile>(undefined, this.errorResponses);
+
     this.cache = new Cache(1000, 300);
-    this.logger.debug('configuration: {config}', { config });
-    const purgeInterval = toMilliseconds(opts.expiration?.purgeInterval);
+    this.logger.debug('configuration: {options}', { options });
+    const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
     if (purgeInterval) {
       this.startAutoPurge(purgeInterval);
     }
@@ -179,7 +181,7 @@ export abstract class BaseStorage<TFile extends File> {
     };
 
     const mime: Required<ValidatorConfig<TFile>> = {
-      value: opts.allowedMimeTypes,
+      value: this.config.allowedMimeTypes,
       isValid(file) {
         return !!typeis.is(file.contentType, this.value as string[]);
       },
@@ -192,7 +194,7 @@ export abstract class BaseStorage<TFile extends File> {
       response: ErrorMap.InvalidFileName
     };
     this.validation.add({ size, mime, filename });
-    this.validation.add({ ...opts.validation });
+    this.validation.add({ ...this.config.validation });
   }
 
   get errorResponses(): ErrorResponses {
