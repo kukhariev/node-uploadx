@@ -102,23 +102,23 @@ export class GCStorage extends BaseStorage<GCSFile> {
   uploadBaseURI: string;
   meta: MetaStorage<GCSFile>;
 
-  constructor(public config: GCStorageOptions = {}) {
-    super(config);
-    if (config.metaStorage) {
-      this.meta = config.metaStorage;
+  constructor(public options: GCStorageOptions = {}) {
+    super(options);
+    if (options.metaStorage) {
+      this.meta = options.metaStorage;
     } else {
-      const metaConfig = { ...config, ...config.metaStorageConfig };
+      const metaConfig = { ...options, ...options.metaStorageConfig };
       this.meta =
         'directory' in metaConfig
           ? new LocalMetaStorage(metaConfig)
           : new GCSMetaStorage(metaConfig);
     }
 
-    this.bucket = config.bucket || GCSConfig.bucketName;
+    this.bucket = options.bucket || GCSConfig.bucketName;
     this.storageBaseURI = [GCSConfig.storageAPI, this.bucket, 'o'].join('/');
     this.uploadBaseURI = [GCSConfig.uploadAPI, this.bucket, 'o'].join('/');
-    config.scopes ||= GCSConfig.authScopes;
-    this.authClient = new GoogleAuth(config);
+    options.scopes ||= GCSConfig.authScopes;
+    this.authClient = new GoogleAuth(options);
 
     this.isReady = false;
     this.accessCheck()
@@ -167,7 +167,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     };
     const res = await this.authClient.request(opts);
     file.uri = res.headers.get('location') as string;
-    if (this.config.clientDirectUpload) {
+    if (this.options.clientDirectUpload) {
       file.GCSUploadURI = file.uri;
       this.logger.debug('Send uploadURI to client', { uri: file.GCSUploadURI });
       file.status = 'created';

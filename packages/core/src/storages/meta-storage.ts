@@ -30,9 +30,9 @@ export class MetaStorage<T> {
   suffix = '';
   logger: Logger = uploadxLogger.getChild(this.constructor.name);
 
-  constructor(config?: MetaStorageOptions) {
-    this.prefix = config?.prefix || '';
-    this.suffix = config?.suffix || METAFILE_EXTNAME;
+  constructor(options?: MetaStorageOptions) {
+    this.prefix = options?.prefix || '';
+    this.suffix = options?.suffix || METAFILE_EXTNAME;
     this.prefix && FileName.INVALID_PREFIXES.push(this.prefix);
     this.suffix && FileName.INVALID_SUFFIXES.push(this.suffix);
   }

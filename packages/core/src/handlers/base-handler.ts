@@ -78,15 +78,15 @@ export abstract class BaseHandler<TFile extends UploadxFile>
   storage: BaseStorage<TFile>;
   registeredHandlers = new Map<string, AsyncHandler>();
   logger: Logger;
-  constructor(config: UploadxOptions<TFile> = {}) {
+  constructor(options: UploadxOptions<TFile> = {}) {
     super();
     this.cors = new Cors();
     this.storage =
-      'storage' in config
-        ? config.storage
-        : (new DiskStorage(config) as unknown as BaseStorage<TFile>);
-    if (config.userIdentifier) {
-      this.getUserId = config.userIdentifier;
+      'storage' in options
+        ? options.storage
+        : (new DiskStorage(options) as unknown as BaseStorage<TFile>);
+    if (options.userIdentifier) {
+      this.getUserId = options.userIdentifier;
     }
     this.logger = uploadxLogger.getChild(this.constructor.name);
     this.compose();

@@ -61,13 +61,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   directory: string;
   meta: MetaStorage<DiskFile>;
 
-  constructor(public config: DiskStorageOptions = {}) {
-    super(config);
-    this.directory = config.uploadDir ?? (config.directory || this.basePath.replace(/^\//, ''));
-    if (config.metaStorage) {
-      this.meta = config.metaStorage;
+  constructor(public options: DiskStorageOptions = {}) {
+    super(options);
+    this.directory = options.uploadDir ?? (options.directory || this.basePath.replace(/^\//, ''));
+    if (options.metaStorage) {
+      this.meta = options.metaStorage;
     } else {
-      const metaConfig = { ...config, ...config.metaStorageConfig };
+      const metaConfig = { ...options, ...options.metaStorageConfig };
       this.meta = new LocalMetaStorage(metaConfig);
     }
     this.isReady = false;

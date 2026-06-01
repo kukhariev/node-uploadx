@@ -12,13 +12,13 @@ export class GCSMetaStorage<T extends File = File> extends MetaStorage<T> {
   uploadBaseURI: string;
   bucket: string;
 
-  constructor(readonly config: GCSMetaStorageOptions = {}) {
-    super(config);
-    this.bucket = config.bucket || GCSConfig.bucketName;
+  constructor(readonly options: GCSMetaStorageOptions = {}) {
+    super(options);
+    this.bucket = options.bucket || GCSConfig.bucketName;
     this.storageBaseURI = [GCSConfig.storageAPI, this.bucket, 'o'].join('/');
     this.uploadBaseURI = [GCSConfig.uploadAPI, this.bucket, 'o'].join('/');
-    config.scopes ||= GCSConfig.authScopes;
-    this.authClient = new GoogleAuth(config);
+    options.scopes ||= GCSConfig.authScopes;
+    this.authClient = new GoogleAuth(options);
   }
 
   /**

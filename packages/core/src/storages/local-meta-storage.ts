@@ -17,9 +17,9 @@ export interface LocalMetaStorageOptions extends MetaStorageOptions {
 export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
   readonly directory: string;
 
-  constructor(config?: LocalMetaStorageOptions) {
-    super(config);
-    this.directory = (config?.directory || join(tmpdir(), 'uploadx_meta')).replace(/\\/g, '/');
+  constructor(options?: LocalMetaStorageOptions) {
+    super(options);
+    this.directory = (options?.directory || join(tmpdir(), 'uploadx_meta')).replace(/\\/g, '/');
     this.accessCheck().catch(err => {
       this.logger.error('Metadata storage access check failed: {err}', { err });
     });

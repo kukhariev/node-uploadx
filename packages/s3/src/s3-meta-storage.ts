@@ -20,13 +20,13 @@ export class S3MetaStorage<T extends File = File> extends MetaStorage<T> {
   bucket: string;
   client: S3Client;
 
-  constructor(public config: S3MetaStorageOptions) {
-    super(config);
-    this.bucket = config.bucket || BUCKET_NAME;
-    if (config.keyFile) {
-      config.credentials = fromIni({ configFilepath: config.keyFile });
+  constructor(public options: S3MetaStorageOptions) {
+    super(options);
+    this.bucket = options.bucket || BUCKET_NAME;
+    if (options.keyFile) {
+      options.credentials = fromIni({ configFilepath: options.keyFile });
     }
-    this.client = new S3Client(config);
+    this.client = new S3Client(options);
   }
 
   async get(id: string): Promise<T> {

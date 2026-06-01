@@ -16,8 +16,8 @@ export class TestStorage extends BaseStorage<File> {
   isReady = true;
   meta;
 
-  constructor(config = {} as BaseStorageOptions<File>) {
-    super(config);
+  constructor(options = {} as BaseStorageOptions<File>) {
+    super(options);
     this.meta = new MetaStorage<File>();
   }
 
