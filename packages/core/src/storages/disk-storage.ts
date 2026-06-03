@@ -41,6 +41,12 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
    */
   uploadDir?: string;
   /**
+   * Metafiles storage directory.
+   * Overrides `metaStorageConfig.directory`.
+   * When not set, defaults to `uploadDir`.
+   */
+  metaDir?: string;
+  /**
    * Configuring metafile storage on the local disk
    * @example
    * ```ts
@@ -68,6 +74,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
       this.meta = options.metaStorage;
     } else {
       const metaConfig = { ...options, ...options.metaStorageConfig };
+      metaConfig.directory = options.metaDir ?? metaConfig.directory ?? this.directory;
       this.meta = new LocalMetaStorage(metaConfig);
     }
     this.isReady = false;
