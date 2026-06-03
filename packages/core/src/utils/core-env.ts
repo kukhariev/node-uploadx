@@ -6,6 +6,7 @@ const CORE_ENV = {
   ALLOWED_MIME_TYPES: 'ALLOWED_MIME_TYPES',
   BASE_PATH: 'BASE_PATH',
   UPLOAD_DIR: 'UPLOAD_DIR',
+  META_DIR: 'META_DIR',
   LOG_LEVEL: 'LOG_LEVEL'
 } as const;
 
@@ -37,8 +38,10 @@ export const commonFromEnv = (prefix = DEFAULT_PREFIX): Partial<DiskStorageOptio
 
 export const fromEnv = (prefix = DEFAULT_PREFIX): Partial<DiskStorageOptions> => {
   const uploadDir = getEnv(prefix, 'UPLOAD_DIR');
+  const metaDir = getEnv(prefix, 'META_DIR');
   return {
     ...commonFromEnv(prefix),
-    ...(uploadDir && { uploadDir })
+    ...(uploadDir && { uploadDir }),
+    ...(metaDir && { metaDir })
   };
 };

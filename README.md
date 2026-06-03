@@ -76,6 +76,8 @@ app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 
 - `uploadDir` DiskStorage upload directory. Default value: `"files"`
 
+- `metaDir` Metadata directory. Overrides `metaStorageConfig.directory`. Defaults to `uploadDir`.
+
 - `basePath` Node http base path. Default value: `"/files"`
 
 - `allowedMimeTypes` Allowed MIME types. Default value: `["*/*"]`
@@ -159,6 +161,7 @@ app.use('/files', uploadx({ ...fromEnv() }));
 | `ALLOWED_MIME_TYPES` | `allowedMimeTypes` | Comma-separated MIME types    |
 | `BASE_PATH`          | `basePath`         | HTTP base path                |
 | `UPLOAD_DIR`         | `uploadDir`        | Upload directory              |
+| `META_DIR`           | `metaDir`          | Metafiles directory           |
 | `LOG_LEVEL`          | `logLevel`         | Built-in console logger level |
 
 > **Note:** `UPLOADX_SECRET` is read directly from `process.env` and is **not** included in `fromEnv()`.
