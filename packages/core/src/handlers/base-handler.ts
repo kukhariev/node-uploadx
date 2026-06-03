@@ -103,7 +103,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       handler && this.registeredHandlers.set(method.toUpperCase(), handler.bind(this));
       // handler && this.cors.allowedMethods.push(method.toUpperCase());
     });
-    this.logger.debug(`Registered handlers: ${[...this.registeredHandlers.keys()].join(', ')}`);
+    this.logger.debug(`registered handlers: ${[...this.registeredHandlers.keys()].join(', ')}`);
   }
 
   handle = (req: IncomingMessage, res: ServerResponse): void => this.upload(req, res);
