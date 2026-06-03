@@ -25,16 +25,19 @@ import { ConfigHandler } from './config';
 import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
 
+/** Returns a unique user identifier.*/
 export type UserIdentifier = (req: any, res: any) => string;
 
-export type OnCreate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
+/** Called when a new upload is created. Return value sent as response; use `UploadxResponse` for full control. */
+export type OnCreate<T extends File = File> = (file: T) => unknown;
+/** Called when an upload is updated. Return value sent as response; use `UploadxResponse` for full control. */
+export type OnUpdate<T extends File = File> = (file: T) => unknown;
+/** Called when an upload is completed. Return value sent as response; use `UploadxResponse` for full control. */
+export type OnComplete<T extends File = File> = (file: T) => unknown;
+/** Called when an upload is cancelled. Return value sent as response; use `UploadxResponse` for full control. */
+export type OnDelete<T extends File = File> = (file: T) => unknown;
 
-export type OnUpdate<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
-
-export type OnComplete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
-
-export type OnDelete<TFile extends File, TBody = any> = (file: TFile) => Promise<TBody> | TBody;
-
+/** Called on upload errors. Return `UploadxResponse` to override the default error response. */
 export type OnError = (error: UploadxErrorResponse) => UploadxResponse;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
@@ -76,21 +79,22 @@ export interface BaseStorageOptions<T extends File> {
   filename?: (file: T, req: any) => string;
   /** File naming function */
   namingFunction?: (file: T, req: any) => string;
+  /** Returns a unique user identifier.*/
   userIdentifier?: UserIdentifier;
   /** Force relative URI in Location header */
   useRelativeLocation?: boolean;
 
   /** Base URL for upload endpoints. If not provided, it is determined from the request. */
   baseUrl?: string | ((req: any) => string);
-  /** Callback function that is called when a new upload is created */
+  /** Called when a new upload is created */
   onCreate?: OnCreate<T>;
-  /** Callback function that is called when an upload is updated */
+  /** Called when an upload is updated */
   onUpdate?: OnUpdate<T>;
-  /** Callback function that is called when an upload is completed */
+  /** Called when an upload is completed */
   onComplete?: OnComplete<T>;
-  /** Callback function that is called when an upload is cancelled */
+  /** Called when an upload is cancelled */
   onDelete?: OnDelete<T>;
-  /** Customize error response */
+  /** Called on upload errors. Return `UploadxResponse` to override the default error response. */
   onError?: OnError;
   /**
    * Node http base path

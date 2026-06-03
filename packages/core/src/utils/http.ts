@@ -134,7 +134,7 @@ export function tupleToResponse(response: ResponseTuple | UploadxResponse): Uplo
   return { statusCode, body, headers };
 }
 
-export function normalizeHookResponse<T>(fn: (file: T) => Promise<UploadxResponse>) {
+export function normalizeHookResponse<T>(fn: (file: T) => unknown) {
   return async (file: T) => {
     const response = await fn(file);
     if (isRecord(response)) {
