@@ -170,7 +170,7 @@ export abstract class BaseStorage<TFile extends File> {
     this.validation = new Validator<TFile>(undefined, this.errorResponses);
 
     this.cache = new Cache(1000, 300);
-    this.logger.debug('configuration: {options}', { options });
+    this.logger.debug('provided options: {options}', { options });
     const purgeInterval = toMilliseconds(this.config.expiration?.purgeInterval);
     if (purgeInterval) {
       this.startAutoPurge(purgeInterval);
