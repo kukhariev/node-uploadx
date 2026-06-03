@@ -1,11 +1,11 @@
 import express from 'express';
-import { DiskFile, DiskStorage, OnComplete, uploadx, UploadxResponse } from 'node-uploadx';
+import { DiskStorage, type OnComplete, uploadx } from 'node-uploadx';
 
 const PORT = process.env.PORT || 3002;
 
 const app = express();
 
-const onComplete: OnComplete<DiskFile, UploadxResponse> = file => {
+const onComplete: OnComplete = file => {
   const message = `File upload is finished, path: ${file.name}`;
   console.log(message);
   return {
