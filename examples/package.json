@@ -5,6 +5,7 @@
   "scripts": {
     "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
     "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
+    "redis": "tsnd -r tsconfig-paths/register -r dotenv/config express-redis",
     "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
     "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
     "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",

@@ -81,11 +81,23 @@ services:
         exit 0
     networks:
       - uploadx-network
+  # Redis for testing
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - uploadx-network
 
 volumes:
   minio-data:
     driver: local
   gcs-storage:
+    driver: local
+  redis-data:
     driver: local
 
 networks:

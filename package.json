@@ -43,6 +43,7 @@
     "@types/supertest": "6.0.3",
     "express": "^5.2.1",
     "husky": "9.1.7",
+    "ioredis-mock": "^8.13.1",
     "jest": "30.0.2",
     "lint-staged": "16.1.2",
     "memfs": "^4.17.2",
