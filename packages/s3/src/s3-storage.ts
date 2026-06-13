@@ -18,6 +18,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   BaseStorage,
   BaseStorageOptions,
+  createMetaStorage,
   ERRORS,
   fail,
   File,
@@ -27,7 +28,6 @@ import {
   getFileStatus,
   hasContent,
   IncomingMessage,
-  LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
   MetaStorage,
@@ -75,6 +75,11 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      */
     partSize?: number | string;
     /**
+     * Metafiles storage directory.
+     * When set, metafiles are stored locally instead of in S3.
+     */
+    metaDir?: string;
+    /**
      * Configure metafiles storage
      * @example
      * Using local metafiles
@@ -82,7 +87,7 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * const storage = new S3Storage({
      *   bucket: 'uploads',
      *   region: 'eu-west-3',
-     *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+     *   metaStorageOptions: { directory: '/tmp/upload-metafiles' }
      * })
      * ```
      * Using a separate bucket for metafiles
@@ -90,10 +95,12 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
      * const storage = new S3Storage({
      *   bucket: 'uploads',
      *   region: 'eu-west-3',
-     *   metaStorageConfig: { bucket: 'upload-metafiles' }
+     *   metaStorageOptions: { bucket: 'upload-metafiles' }
      * })
      * ```
      */
+    metaStorageOptions?: LocalMetaStorageOptions | S3MetaStorageOptions;
+    /** @deprecated Use {@link metaStorageOptions} instead */
     metaStorageConfig?: LocalMetaStorageOptions | S3MetaStorageOptions;
     /**
      * @deprecated Use standard auth providers
@@ -113,7 +120,7 @@ export type S3StorageOptions = BaseStorageOptions<S3File> &
  *    accessKeyId: <YOUR_ACCESS_KEY_ID>,
  *    secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
  *  },
- *  metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+ *  metaStorageOptions: { directory: '/tmp/upload-metafiles' }
  * });
  * ```
  */
@@ -139,15 +146,7 @@ export class S3Storage extends BaseStorage<S3File> {
     }
     const clientConfig = { ...options };
     this.client = new S3Client(clientConfig);
-    if (options.metaStorage) {
-      this.meta = options.metaStorage;
-    } else {
-      const metaConfig = { ...options, ...options.metaStorageConfig };
-      this.meta =
-        'directory' in metaConfig
-          ? new LocalMetaStorage(metaConfig)
-          : new S3MetaStorage(metaConfig);
-    }
+    this.meta = createMetaStorage(options, S3MetaStorage);
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))

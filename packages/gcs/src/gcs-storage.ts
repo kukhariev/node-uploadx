@@ -1,6 +1,7 @@
 import {
   BaseStorage,
   BaseStorageOptions,
+  createMetaStorage,
   ERRORS,
   fail,
   File,
@@ -11,7 +12,6 @@ import {
   getHeader,
   hasContent,
   IncomingMessage,
-  LocalMetaStorage,
   LocalMetaStorageOptions,
   mapValues,
   MetaStorage,
@@ -55,23 +55,30 @@ export interface GCStorageOptions extends BaseStorageOptions<GCSFile>, GoogleAut
    */
   clientDirectUpload?: boolean;
   /**
+   * Metafiles storage directory.
+   * When set, metafiles are stored locally instead of in GCS.
+   */
+  metaDir?: string;
+  /**
    * Configure metafiles storage
    * @example
    * ```ts
    * Using local metafiles
    * const storage = new GCStorage({
    *   bucket: 'uploads',
-   *   metaStorageConfig: { directory: '/tmp/upload-metafiles' }
+   *   metaStorageOptions: { directory: '/tmp/upload-metafiles' }
    * })
    * ```
    * Using a separate bucket for metafiles
    * ```ts
    * const storage = new GCStorage({
    *   bucket: 'uploads',
-   *   metaStorageConfig: { bucket: 'upload-metafiles' }
+   *   metaStorageOptions: { bucket: 'upload-metafiles' }
    * })
    * ```
    */
+  metaStorageOptions?: LocalMetaStorageOptions | GCSMetaStorageOptions;
+  /** @deprecated Use {@link metaStorageOptions} instead */
   metaStorageConfig?: LocalMetaStorageOptions | GCSMetaStorageOptions;
 }
 
@@ -104,15 +111,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
 
   constructor(public options: GCStorageOptions = {}) {
     super(options);
-    if (options.metaStorage) {
-      this.meta = options.metaStorage;
-    } else {
-      const metaConfig = { ...options, ...options.metaStorageConfig };
-      this.meta =
-        'directory' in metaConfig
-          ? new LocalMetaStorage(metaConfig)
-          : new GCSMetaStorage(metaConfig);
-    }
+    this.meta = createMetaStorage(options, GCSMetaStorage);
 
     this.bucket = options.bucket || GCSConfig.bucketName;
     this.storageBaseURI = [GCSConfig.storageAPI, this.bucket, 'o'].join('/');

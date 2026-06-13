@@ -12,6 +12,7 @@ import {
   truncateFile,
   UploadxErrorResponse
 } from '../utils';
+import { createMetaStorage } from './create-meta-storage';
 import {
   File,
   FileInit,
@@ -22,7 +23,7 @@ import {
   partMatch,
   updateSize
 } from './file';
-import { LocalMetaStorage, LocalMetaStorageOptions } from './local-meta-storage';
+import { LocalMetaStorageOptions } from './local-meta-storage';
 import { MetaStorage } from './meta-storage';
 import { BaseStorage, BaseStorageOptions } from './storage';
 
@@ -42,19 +43,23 @@ export type DiskStorageOptions = BaseStorageOptions<DiskFile> & {
   uploadDir?: string;
   /**
    * Metafiles storage directory.
-   * Overrides `metaStorageConfig.directory`.
+   * Overrides `metaStorageOptions.directory`.
    * When not set, defaults to `uploadDir`.
    */
   metaDir?: string;
   /**
-   * Configuring metafile storage on the local disk
+   * Configure metafile storage on the local disk
    * @example
    * ```ts
    * const storage = new DiskStorage({
    *   uploadDir: 'upload',
-   *   metaStorageConfig: { uploadDir: '/tmp/upload-metafiles', prefix: '.' }
+   *   metaStorageOptions: { directory: '/tmp/upload-metafiles', prefix: '.' }
    * });
    * ```
+   */
+  metaStorageOptions?: LocalMetaStorageOptions;
+  /**
+   * @deprecated Use {@link metaStorageOptions} instead
    */
   metaStorageConfig?: LocalMetaStorageOptions;
 };
@@ -70,13 +75,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
   constructor(public options: DiskStorageOptions = {}) {
     super(options);
     this.directory = options.uploadDir ?? (options.directory || this.basePath.replace(/^\//, ''));
-    if (options.metaStorage) {
-      this.meta = options.metaStorage;
-    } else {
-      const metaConfig = { ...options, ...options.metaStorageConfig };
-      metaConfig.directory = options.metaDir ?? metaConfig.directory ?? this.directory;
-      this.meta = new LocalMetaStorage(metaConfig);
-    }
+    this.meta = createMetaStorage({ ...options, uploadDir: this.directory });
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
