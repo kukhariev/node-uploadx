@@ -76,7 +76,7 @@ app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 
 - `uploadDir` DiskStorage upload directory. Default value: `"files"`
 
-- `metaDir` Metadata directory. Overrides `metaStorageConfig.directory`. Defaults to `uploadDir`.
+- `metaDir` Metadata directory. Overrides `metaStorageOptions.directory`. Defaults to `uploadDir`.
 
 - `basePath` Node http base path. Default value: `"/files"`
 
@@ -86,7 +86,7 @@ app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 
 - `metaStorage` Provide custom meta storage
 
-- `metaStorageConfig` Configure metadata storage
+- `metaStorageOptions` Configure metadata storage
 
 - `maxMetadataSize` Metadata size limit. Default value: `"4MB"`
 

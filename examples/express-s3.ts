@@ -13,7 +13,7 @@ const app = express();
 //     accessKeyId: <YOUR_ACCESS_KEY_ID>,
 //     secretAccessKey: <YOUR_SECRET_ACCESS_KEY>
 //   },
-//   metaStorageConfig: { directory: 'upload' }
+//   metaStorageOptions: { directory: 'upload' }
 // });
 
 // The credentials are loaded from a environment
