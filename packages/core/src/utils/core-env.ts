@@ -7,7 +7,8 @@ const CORE_ENV = {
   BASE_PATH: 'BASE_PATH',
   UPLOAD_DIR: 'UPLOAD_DIR',
   META_DIR: 'META_DIR',
-  LOG_LEVEL: 'LOG_LEVEL'
+  LOG_LEVEL: 'LOG_LEVEL',
+  EXPIRATION: 'EXPIRATION'
 } as const;
 
 type EnvKey = keyof typeof CORE_ENV;
@@ -27,12 +28,14 @@ export const commonFromEnv = (prefix = DEFAULT_PREFIX): Partial<DiskStorageOptio
     .map(mime => mime.trim())
     .filter(Boolean);
   const logLevel = getEnv(prefix, 'LOG_LEVEL') as DiskStorageOptions['logLevel'];
+  const expiration = getEnv(prefix, 'EXPIRATION');
   return {
     ...(baseUrl && { baseUrl }),
     ...(maxFileSize && { maxFileSize }),
     ...(basePath && { basePath }),
     ...(allowedMimeTypes?.length && { allowedMimeTypes }),
-    ...(logLevel && { logLevel })
+    ...(logLevel && { logLevel }),
+    ...(expiration && { expiration })
   };
 };
 
