@@ -3,6 +3,7 @@ import { setInterval } from 'timers';
 import { IncomingMessage, UploadxResponse } from '../types';
 import {
   Cache,
+  clamp,
   configureSimpleLogger,
   ErrorMap,
   ErrorResponses,
@@ -16,12 +17,12 @@ import {
   typeis,
   UploadxErrorResponse,
   uploadxLogger,
-  validateTimerInterval,
   Validation,
   Validator,
   ValidatorConfig
 } from '../utils';
 import { ConfigHandler } from './config';
+import { ExpirationInput, ExpirationOptions } from './expiration';
 import { File, FileInit, FileName, FilePart, FileQuery, isExpired, updateMetadata } from './file';
 import { MetaStorage, UploadList } from './meta-storage';
 
@@ -41,21 +42,6 @@ export type OnDelete<T extends File = File> = (file: T) => unknown;
 export type OnError = (error: UploadxErrorResponse) => UploadxResponse;
 
 export type PurgeList = UploadList & { maxAgeMs: number };
-
-export interface ExpirationOptions {
-  /**
-   * Age of the upload, after which it is considered expired and can be deleted
-   */
-  maxAge: number | string;
-  /**
-   * Auto purging interval for expired uploads
-   */
-  purgeInterval?: number | string;
-  /**
-   * Auto prolong expiring uploads
-   */
-  rolling?: boolean;
-}
 
 export interface BaseStorageOptions<T extends File> {
   /**
@@ -114,17 +100,16 @@ export interface BaseStorageOptions<T extends File> {
    *
    * @example
    * ```ts
-   * app.use(
-   *   '/upload',
-   *   uploadx.upload({
-   *     uploadDir: 'upload',
-   *     expiration: { maxAge: '6h', purgeInterval: '30min' },
-   *     onComplete
-   *   })
-   * );
+   * // Shorthand — `purgeInterval` is computed automatically
+   * { expiration: '6h' }
+   * ```
+   * @example
+   * ```ts
+   * // Full control
+   * { expiration: { maxAge: '6h', purgeInterval: '30min', rolling: true } }
    * ```
    */
-  expiration?: ExpirationOptions;
+  expiration?: ExpirationInput;
   /**
    * Set built-in logger severity level
    * @defaultValue 'none'
@@ -149,7 +134,9 @@ export abstract class BaseStorage<TFile extends File> {
   protected namingFunction: (file: TFile, req: any) => string;
   private _errorResponses: ErrorResponses = {};
   abstract meta: MetaStorage<TFile>;
-  public config: Required<BaseStorageOptions<TFile>>;
+  readonly config: Required<BaseStorageOptions<TFile>> & {
+    expiration: ExpirationOptions | undefined;
+  };
 
   protected constructor(public options: BaseStorageOptions<TFile>) {
     // Configure the logger if a logLevel is specified
@@ -157,7 +144,7 @@ export abstract class BaseStorage<TFile extends File> {
       configureSimpleLogger(options.logLevel);
     }
     const configHandler = new ConfigHandler<TFile>();
-    this.config = configHandler.set(options);
+    this.config = configHandler.set(options) as typeof this.config;
     this.basePath = this.config.basePath;
     this.onCreate = normalizeHookResponse(this.config.onCreate);
     this.onUpdate = normalizeHookResponse(this.config.onUpdate);
@@ -335,10 +322,18 @@ export abstract class BaseStorage<TFile extends File> {
   }
 
   protected startAutoPurge(purgeInterval: number): void {
-    validateTimerInterval(purgeInterval, 'purgeInterval');
+    const MAX_TIMER_INTERVAL = 2_147_483_647;
+    const MIN_PURGE_INTERVAL = 60_000;
+    const interval = clamp(purgeInterval, MIN_PURGE_INTERVAL, MAX_TIMER_INTERVAL);
+    if (interval !== purgeInterval) {
+      this.logger.warn('purgeInterval clamped from {value} to {clamped}', {
+        value: purgeInterval,
+        clamped: interval
+      });
+    }
     setInterval(
       () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
-      purgeInterval
+      interval
     ).unref();
   }
 

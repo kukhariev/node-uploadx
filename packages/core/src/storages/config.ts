@@ -1,4 +1,4 @@
-import { UploadxErrorResponse } from '../utils';
+import { normalizeExpiration } from './expiration';
 import { File } from './file';
 import { BaseStorageOptions } from './storage';
 
@@ -12,7 +12,7 @@ export class ConfigHandler<T extends File = File> {
     onUpdate: (file: File) => file,
     onCreate: () => '',
     onDelete: () => '',
-    onError: (response: UploadxErrorResponse) => response,
+    onError: response => response,
     basePath: '/files',
     validation: {},
     maxMetadataSize: '4MB'
@@ -38,6 +38,8 @@ export class ConfigHandler<T extends File = File> {
       }
     }
     this._config = { ...this._config, ...normalized };
+    const expiration = normalizeExpiration(this._config.expiration);
+    this._config.expiration = expiration;
     return this._config as Required<BaseStorageOptions<T>>;
   }
 

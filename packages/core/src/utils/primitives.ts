@@ -110,15 +110,6 @@ export function toMilliseconds(value?: string | number): number | undefined {
   return durationToMs(value);
 }
 
-export function validateTimerInterval(value: number, name: string): void {
-  const INT32_MAX = 2147483647;
-  if (value >= INT32_MAX) {
-    throw Error(
-      `"${name}" must be less than ${INT32_MAX} ms (${(INT32_MAX / 86400000).toFixed(2)} days)`
-    );
-  }
-}
-
 /**
  * Convert a human-readable duration to seconds
  */
@@ -126,6 +117,13 @@ export function toSeconds(value?: string | number): number | undefined {
   if (isNumber(value)) return Math.floor(value / 1000);
   if (!value) return undefined;
   return Math.floor(durationToMs(value) / 1000);
+}
+
+/**
+ * Clamps a value between a minimum and maximum bound
+ */
+export function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(value, max));
 }
 
 /**
