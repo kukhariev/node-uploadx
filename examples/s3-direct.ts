@@ -15,7 +15,7 @@ const storage = new S3Storage({
   forcePathStyle: true,
   clientDirectUpload: true, // send presigned urls to the client for upload directly to S3 storage
   partSize: '8MB', // optionally override part size
-  expiration: { maxAge: '1h', purgeInterval: '15min' },
+  expiration: '1h',
   logLevel: 'error',
   logger: logger
 });

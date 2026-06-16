@@ -31,7 +31,7 @@ async function startApp() {
     allowedMimeTypes: ['video/*', 'image/*'],
     useRelativeLocation: true,
     namingFunction: file => file.originalName,
-    expiration: { maxAge: '1h', purgeInterval: '10min' }
+    expiration: '1h'
   });
 
   app.use('/files', uploads);

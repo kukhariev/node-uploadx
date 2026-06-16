@@ -10,7 +10,7 @@ const uploads = uploadx({
   maxFileSize: '5GB',
   allowedMimeTypes: ['video/*', 'image/*'],
   namingFunction: file => file.originalName,
-  expiration: { maxAge: '1h', purgeInterval: '10min' },
+  expiration: '1h',
   onComplete: file => {
     console.log('File upload complete: ', file.originalName);
     return file;

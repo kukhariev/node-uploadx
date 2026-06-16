@@ -19,7 +19,7 @@ const onComplete: OnComplete = file => {
 const storage = new DiskStorage({
   uploadDir: process.env.UPLOAD_DIR || 'upload',
   onComplete,
-  expiration: { maxAge: '1h', purgeInterval: '10min' },
+  expiration: '1h',
   validation: {
     mime: { value: ['video/*'], response: [415, { message: 'video only' }] },
     size2: {

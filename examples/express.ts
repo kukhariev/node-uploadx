@@ -21,7 +21,7 @@ app.use(
   uploadx.upload({
     maxFileSize: '5GB',
     uploadDir: './upload',
-    expiration: { maxAge: '1h', purgeInterval: '10min' },
+    expiration: '1h',
     userIdentifier: (req: AuthRequest) => (req.user ? `${req.user.id}-${req.user.email}` : ''),
     onComplete: file => {
       appLogger.info(`File upload complete: ${file.name}`);
