@@ -154,15 +154,16 @@ import { fromEnv, uploadx } from '@uploadx/core';
 app.use('/files', uploadx({ ...fromEnv() }));
 ```
 
-| Variable             | Option             | Description                   |
-| -------------------- | ------------------ | ----------------------------- |
-| `BASE_URL`           | `baseUrl`          | Base URL for upload links     |
-| `MAX_FILE_SIZE`      | `maxFileSize`      | File size limit (e.g. `10GB`) |
-| `ALLOWED_MIME_TYPES` | `allowedMimeTypes` | Comma-separated MIME types    |
-| `BASE_PATH`          | `basePath`         | HTTP base path                |
-| `UPLOAD_DIR`         | `uploadDir`        | Upload directory              |
-| `META_DIR`           | `metaDir`          | Metafiles directory           |
-| `LOG_LEVEL`          | `logLevel`         | Built-in console logger level |
+| Variable             | Option             | Description                                |
+| -------------------- | ------------------ | ------------------------------------------ |
+| `ALLOWED_MIME_TYPES` | `allowedMimeTypes` | Comma-separated MIME types                 |
+| `BASE_PATH`          | `basePath`         | HTTP base path                             |
+| `BASE_URL`           | `baseUrl`          | Base URL for upload links                  |
+| `EXPIRATION`         | `expiration`       | Upload expiration age (e.g. `6h`, `30min`) |
+| `LOG_LEVEL`          | `logLevel`         | Built-in console logger level              |
+| `MAX_FILE_SIZE`      | `maxFileSize`      | File size limit (e.g. `10GB`)              |
+| `META_DIR`           | `metaDir`          | Metafiles directory                        |
+| `UPLOAD_DIR`         | `uploadDir`        | Upload directory                           |
 
 > **Note:** `UPLOADX_SECRET` is read directly from `process.env` and is **not** included in `fromEnv()`.
 

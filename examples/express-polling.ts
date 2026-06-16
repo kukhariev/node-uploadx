@@ -13,7 +13,7 @@ mkdir(destinationDir, { recursive: true }).catch(console.error);
 
 const storage = new DiskStorage({
   uploadDir: uploadDir,
-  expiration: { maxAge: '1h', purgeInterval: '10min' }
+  expiration: { maxAge: '1h', purgeInterval: '10min', rolling: true }
 });
 const upload = new Uploadx({ storage }).upload;
 

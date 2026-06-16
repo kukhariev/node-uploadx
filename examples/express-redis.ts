@@ -10,7 +10,7 @@ const uploads = uploadx({
   metaStorage: new RedisMetaStorage(),
   maxFileSize: '5GB',
   allowedMimeTypes: ['video/*', 'image/*'],
-  expiration: { maxAge: '30min', purgeInterval: '3min' },
+  expiration: { maxAge: '30min', purgeInterval: '5min', rolling: true },
   onComplete: file => {
     console.log('File upload complete: ', file.originalName);
     return file;
