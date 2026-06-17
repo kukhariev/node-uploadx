@@ -343,6 +343,14 @@ export abstract class BaseStorage<TFile extends File> {
     this.purgeTimeoutId = setTimeout(runPurge, interval).unref();
   }
 
+
+  protected stopAutoPurge(): void {
+    if (this.purgeTimeoutId) {
+      clearTimeout(this.purgeTimeoutId);
+      this.purgeTimeoutId = undefined;
+    }
+  }
+
   protected updateTimestamps(file: TFile): TFile {
     file.createdAt ??= new Date().toISOString();
     const maxAgeMs = toMilliseconds(this.config.expiration?.maxAge);
