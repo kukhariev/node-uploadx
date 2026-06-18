@@ -1,5 +1,4 @@
 import bytes from 'bytes';
-import { setInterval } from 'timers';
 import { IncomingMessage, UploadxResponse } from '../types';
 import {
   Cache,
@@ -137,6 +136,7 @@ export abstract class BaseStorage<TFile extends File> {
   readonly config: Required<BaseStorageOptions<TFile>> & {
     expiration: ExpirationOptions | undefined;
   };
+  private purgeTimeoutId?: NodeJS.Timeout;
 
   protected constructor(public options: BaseStorageOptions<TFile>) {
     // Configure the logger if a logLevel is specified
@@ -331,10 +331,24 @@ export abstract class BaseStorage<TFile extends File> {
         clamped: interval
       });
     }
-    setInterval(
-      () => void this.purge().catch(e => this.logger.error('purge error: {e}', { e })),
-      interval
-    ).unref();
+    const runPurge = (): void => {
+      this.purge()
+        .catch(e => this.logger.error('purge error: {e}', { e }))
+        .finally(() => {
+          if (this.purgeTimeoutId) {
+            this.purgeTimeoutId = setTimeout(runPurge, interval).unref();
+          }
+        });
+    };
+    this.purgeTimeoutId = setTimeout(runPurge, interval).unref();
+  }
+
+
+  protected stopAutoPurge(): void {
+    if (this.purgeTimeoutId) {
+      clearTimeout(this.purgeTimeoutId);
+      this.purgeTimeoutId = undefined;
+    }
   }
 
   protected updateTimestamps(file: TFile): TFile {

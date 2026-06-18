@@ -108,3 +108,22 @@ describe('BaseStorage', () => {
     expect(JSON.stringify(normalized)).not.toContain('secret-location');
   });
 });
+
+describe('autoPurge', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('stopAutoPurge stops the purge cycle', async () => {
+    jest.useFakeTimers();
+    const storage = new TestStorage({ expiration: '1h' });
+    const purgeSpy = jest.spyOn(storage, 'purge');
+    const purgeInterval = storage.config.expiration.purgeInterval as number;
+    await jest.advanceTimersByTimeAsync(purgeInterval);
+    expect(purgeSpy).toHaveBeenCalledTimes(1);
+    // @ts-expect-error - accessing protected method
+    storage.stopAutoPurge();
+    await jest.advanceTimersByTimeAsync(purgeInterval);
+    expect(purgeSpy).toHaveBeenCalledTimes(1);
+  });
+});

@@ -59,12 +59,14 @@ describe('expiration shorthand', () => {
   });
 
   it('should throw when purgeInterval is invalid', () => {
-    expect(
-      () => new TestStorage({ expiration: { maxAge: '1h', purgeInterval: 'abc' } })
-    ).toThrow('Invalid duration format');
+    expect(() => new TestStorage({ expiration: { maxAge: '1h', purgeInterval: 'abc' } })).toThrow(
+      'Invalid duration format'
+    );
   });
 
   it('should throw when object maxAge is invalid', () => {
-    expect(() => new TestStorage({ expiration: { maxAge: 'abc' } })).toThrow('Invalid duration format');
+    expect(() => new TestStorage({ expiration: { maxAge: 'abc' } })).toThrow(
+      'Invalid duration format'
+    );
   });
 });
