@@ -30,7 +30,6 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
     const headers = this.buildHeaders(file, { Location: this.buildFileUrl(req, file) });
     file.bytesWritten > 0 && (headers['Range'] = `bytes=0-${file.bytesWritten - 1}`);
     setHeaders(res, headers);
-    if (file.status === 'completed') return file;
     const response = await this.storage.onCreate(file);
     response.statusCode = file.bytesWritten > 0 ? 200 : 201;
     this.send(res, response);
