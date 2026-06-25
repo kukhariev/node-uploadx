@@ -1,4 +1,3 @@
-import url from 'url';
 import { Checksum, FileInit, UploadxFile } from '../storages';
 import { Headers, IncomingMessage, ServerResponse } from '../types';
 import { ERRORS, fail, getBaseUrl, getHeader, getJsonBody, setHeaders } from '../utils';
@@ -87,8 +86,8 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   }
 
   getId(req: IncomingMessage): string {
-    const { query } = url.parse(req.url || '', true);
-    return (query.upload_id || query.prefix || super.getId(req)) as string;
+    const params = new URL(req.url || '', 'http://localhost').searchParams;
+    return (params.get('upload_id') || params.get('prefix') || super.getId(req));
   }
 
   buildHeaders(file: UploadxFile, headers: Headers = {}): Headers {
@@ -105,9 +104,9 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
   ): string {
     if (file.GCSUploadURI) return file.GCSUploadURI;
 
-    const { query, pathname } = url.parse(req.originalUrl || (req.url as string), true);
-    query.upload_id = file.id;
-    const relative = url.format({ pathname, query });
+    const requestUrl = new URL(req.originalUrl || req.url || '', 'http://localhost');
+    requestUrl.searchParams.set('upload_id', file.id);
+    const relative = requestUrl.pathname + requestUrl.search;
     if (this.storage.config.useRelativeLocation) return relative;
     const { baseUrl } = this.storage.config;
     const base = typeof baseUrl === 'function' ? baseUrl(req) : baseUrl || getBaseUrl(req);
@@ -119,8 +118,8 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
       fail(ERRORS.BAD_REQUEST, err)
     );
     if (Object.keys(metadata).length) return metadata;
-    const { query } = url.parse(decodeURI(req.url || ''), true);
-    return { ...query };
+    const { searchParams } = new URL(req.url || '', 'http://localhost');
+    return Object.fromEntries(searchParams);
   }
 
   extractChecksum(req: IncomingMessage): Checksum {

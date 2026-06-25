@@ -1,5 +1,4 @@
 const { createServer } = require('http');
-const { parse } = require('url');
 const { DiskStorage, Uploadx, cors } = require('@uploadx/core');
 
 const PORT = process.env.PORT || 3002;
@@ -23,7 +22,7 @@ uploadx.on('completed', file => console.log('completed: ', file));
 uploadx.on('updated', file => console.log(' metadata updated: ', file));
 
 const server = createServer((req, res) => {
-  const { pathname } = parse(req.url || '');
+  const { pathname } = new URL(req.url || '', 'http://localhost');
   if (pathname === '/files') {
     uploadx.upload(req, res, () => {
       uploadx.send(res, { body: req.body, statusCode: 200 });
