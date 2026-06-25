@@ -343,7 +343,6 @@ export abstract class BaseStorage<TFile extends File> {
     this.purgeTimeoutId = setTimeout(runPurge, interval).unref();
   }
 
-
   protected stopAutoPurge(): void {
     if (this.purgeTimeoutId) {
       clearTimeout(this.purgeTimeoutId);

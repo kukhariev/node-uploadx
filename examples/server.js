@@ -1,7 +1,6 @@
 // @ts-check
 const { cors, DiskStorage, Multipart, Tus, Uploadx, fromEnv } = require('@uploadx/core');
 const { createServer } = require('http');
-const url = require('url');
 
 const PORT = process.env.PORT || 3002;
 const path = '/files';
@@ -23,7 +22,7 @@ const tus = new Tus({ storage });
 const multipart = new Multipart({ storage });
 
 createServer((req, res) => {
-  const { pathname, query = { uploadType: '' } } = url.parse(req.url ?? '', true);
+  const { pathname, searchParams } = new URL(req.url ?? '', 'http://localhost');
   if (pathname === '/healthcheck') {
     const healthcheck = {
       memoryUsage: process.memoryUsage(),
@@ -33,7 +32,7 @@ createServer((req, res) => {
     };
     corsHandler(req, res, () => uploadx.send(res, { body: healthcheck }));
   } else if (pathname && pathRegexp.test(pathname)) {
-    switch (query.uploadType) {
+    switch (searchParams.get('uploadType')) {
       case 'multipart':
         multipart.handle(req, res);
         break;

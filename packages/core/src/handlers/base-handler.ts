@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import url from 'url';
 import {
   BaseStorage,
   DiskStorage,
@@ -224,7 +223,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    * Get id from request
    */
   getId(req: IncomingMessage): string {
-    const pathname = url.parse(req.url as string).pathname || '';
+    const { pathname } = new URL(req.url || '', 'http://localhost');
     const path = req.originalUrl
       ? `/${pathname}`.replace('//', '')
       : `/${pathname}`.replace(`/${this.storage.basePath}/`, '');
@@ -242,8 +241,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    * Build file url from request
    */
   buildFileUrl(req: IncomingMessage, file: TFile): string {
-    const { query, pathname = '' } = url.parse(req.originalUrl || (req.url as string), true);
-    const relative = url.format({ pathname: `${pathname as string}/${file.id}`, query });
+    const requestUrl = new URL(req.originalUrl || req.url || '', 'http://localhost');
+    const relative = `${requestUrl.pathname}/${file.id}${requestUrl.search}`;
     if (this.storage.config.useRelativeLocation) return relative;
     const { baseUrl } = this.storage.config;
     const base = typeof baseUrl === 'function' ? baseUrl(req) : baseUrl || getBaseUrl(req);

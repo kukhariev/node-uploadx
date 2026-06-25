@@ -1,7 +1,6 @@
 import { cors, MetaStorage, Uploadx } from '@uploadx/core';
-import { GCStorage } from '@uploadx/gcs';
+import { fromEnv, GCStorage } from '@uploadx/gcs';
 import { createServer } from 'http';
-import { parse } from 'url';
 
 const PORT = process.env.PORT || 3002;
 
@@ -13,7 +12,8 @@ const storage = new GCStorage({
   maxFileSize: '5GB',
   allowedMimeTypes: ['video/*', 'image/*'],
   namingFunction: file => file.originalName,
-  metaStorage: new MetaStorage()
+  metaStorage: new MetaStorage(),
+  ...fromEnv()
 });
 
 const uploadx = new Uploadx({ storage });
@@ -22,7 +22,7 @@ uploadx.on('created', file =>
 );
 
 createServer((req, res) => {
-  const { pathname } = parse(req.url || '');
+  const { pathname } = new URL(req.url || '', 'http://localhost');
   if (pathname === '/files') {
     uploadx.handle(req, res);
   } else {
