@@ -76,18 +76,24 @@ describe('CORS', () => {
     });
 
     it.each([
-      [[], 'https://example.com'],
-      [['*'], 'https://example.com'],
-      [['https://example.com'], 'https://example.com'],
-      [['https://*'], 'https://example.com'],
-      [['https://*.com'], 'https://example.com'],
-      [['http://*.com', 'https://*.com'], 'https://example.com'],
-      [[/https:\/\/.*\.com/], 'https://example.com'],
-      [['http://example.com'], undefined]
-    ])('allowOrigins: %p set Access-Control-Allow-Origin: %p', (allowOrigins, origin) => {
-      cors.allowOrigins = allowOrigins;
-      cors.preflight(req, res);
-      expect(res.header('Access-Control-Allow-Origin')).toBe(origin);
-    });
+      [[], 'https://example.com', 'https://example.com'],
+      [['*'], 'https://example.com', 'https://example.com'],
+      [['https://example.com'], 'https://example.com', 'https://example.com'],
+      [['https://*'], 'https://example.com', 'https://example.com'],
+      [['https://*.com'], 'https://example.com', 'https://example.com'],
+      [['http://*.com', 'https://*.com'], 'https://example.com', 'https://example.com'],
+      [[/https:\/\/.*\.com/], 'https://example.com', 'https://example.com'],
+      [['http://example.com'], 'https://example.com', undefined],
+      [['https://*.example.com'], 'https://evil.com.example.com.evil', undefined],
+      [['https://*.example.com'], 'https://sub.example.com', 'https://sub.example.com']
+    ])(
+      'allowOrigins %p origin %s => %s',
+      (allowOrigins, testOrigin, expected) => {
+        cors.allowOrigins = allowOrigins;
+        req.headers.origin = testOrigin;
+        cors.preflight(req, res);
+        expect(res.header('Access-Control-Allow-Origin')).toBe(expected);
+      }
+    );
   });
 });

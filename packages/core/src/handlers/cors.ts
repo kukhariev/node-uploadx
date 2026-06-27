@@ -30,7 +30,10 @@ export class Cors {
   set allowOrigins(value: (string | RegExp)[]) {
     this._allowOrigins = value.map(allowedOrigin => {
       if (allowedOrigin === '*' || allowedOrigin instanceof RegExp) return allowedOrigin;
-      if (allowedOrigin.includes('*')) return new RegExp(allowedOrigin.replace(/\*/g, '.*'));
+      if (allowedOrigin.includes('*'))
+        return new RegExp(
+          `^${allowedOrigin.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`
+        );
       return allowedOrigin;
     });
   }
