@@ -17,7 +17,11 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
       form.on('field', (key, value) => {
-        Object.assign(config.metadata, key === 'metadata' ? JSON.parse(value) : { [key]: value });
+        try {
+          Object.assign(config.metadata, key === 'metadata' ? JSON.parse(value) : { [key]: value });
+        } catch {
+          config.metadata.raw = value;
+        }
       });
       form.on('error', error => reject(error));
       form.on('part', (part: MultipartyPart) => {

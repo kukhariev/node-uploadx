@@ -68,6 +68,16 @@ describe('::Multipart', () => {
         .expect(403)
         .catch(() => null); // FIXME: abort doesn't work?
     });
+
+    it('should save unparsable metadata as raw', async () => {
+      res = await request(app)
+        .post(basePath)
+        .set('Content-Type', 'multipart/formdata')
+        .field('metadata', 'not-valid-json')
+        .attach('file', testfile.asBuffer, testfile.name)
+        .expect(200);
+      expect(res.body.metadata.raw).toBe('not-valid-json');
+    });
   });
 
   describe('OPTIONS', () => {
