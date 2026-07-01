@@ -79,13 +79,13 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch(error => {
-        this.logger.error('Storage access check failed {error.message}', { error });
+      .catch(err => {
+        this.logger.error('Storage access check failed {err.message}', { err });
       });
   }
 
-  normalizeError(err: Error): UploadxErrorResponse {
-    return super.normalizeError(err);
+  normalizeError(error: Error): UploadxErrorResponse {
+    return super.normalizeError(error);
   }
 
   accessCheck(): Promise<void> {

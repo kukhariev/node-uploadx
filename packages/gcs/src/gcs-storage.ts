@@ -122,7 +122,7 @@ export class GCStorage extends BaseStorage<GCSFile> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch(error => this.logger.error('Storage access check failed: {error.message}', { error }));
+      .catch(err => this.logger.error('Storage access check failed: {err.message}', { err }));
   }
 
   normalizeError(error: ClientError): UploadxErrorResponse {
@@ -233,8 +233,8 @@ export class GCStorage extends BaseStorage<GCSFile> {
         config: { uri },
         name: 'FetchError'
       });
-    } catch (error) {
-      this.logger.error('Upload chunk failed', { uri, error });
+    } catch (err) {
+      this.logger.error('Upload chunk failed', { uri, err });
       return NaN;
     }
   }
