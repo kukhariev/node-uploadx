@@ -60,13 +60,24 @@ describe('::Multipart', () => {
       expect(res.header['location']).toBeDefined();
     });
 
-    it('should 403 (unsupported filetype)', async () => {
+    it('should 415 (unsupported media type)', async () => {
       await request(app)
         .post(basePath)
+        .attach('file', testfile.asBuffer, {
+          filename: 'test.json',
+          contentType: 'application/json'
+        })
+        .expect(415);
+    });
+
+    it('should save unparsable metadata as raw', async () => {
+      res = await request(app)
+        .post(basePath)
         .set('Content-Type', 'multipart/formdata')
-        .attach('file', 'package.json', 'package.json')
-        .expect(403)
-        .catch(() => null); // FIXME: abort doesn't work?
+        .field('metadata', 'not-valid-json')
+        .attach('file', testfile.asBuffer, testfile.name)
+        .expect(200);
+      expect(res.body.metadata.raw).toBe('not-valid-json');
     });
   });
 
