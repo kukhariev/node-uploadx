@@ -22,7 +22,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
       const config: FileInit = { metadata: {} };
       let rejected = false;
 
-      const onError = (error: Error): void => {
+      const onError = (error: unknown): void => {
         if (rejected) return;
         rejected = true;
         if (this.errorMode === 'drain' && req.readable && !req.destroyed) {
@@ -69,7 +69,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
             }
             return resolve(file);
           })
-          .catch((error: Error) => {
+          .catch(error => {
             part.destroy();
             onError(error);
           });

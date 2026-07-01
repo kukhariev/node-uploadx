@@ -40,7 +40,7 @@ export class RedisMetaStorage<T extends File = File> extends MetaStorage<T> {
       throw new Error('ioredis is not installed. Install it with: npm install ioredis');
     }
     this.client = new RedisCtor(redisOptions);
-    this.client.on('error', (error: Error) => {
+    this.client.on('error', error => {
       this.logger.error('Redis connection error', { error });
     });
   }
