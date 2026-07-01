@@ -112,7 +112,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       res.writeHead(204, { 'Content-Length': 0 }).end();
       return;
     }
-    req.on('error', error => this.logger.error('Request error', { error }));
+    req.on('error', err => this.logger.error('Request error', { err }));
     this.logger.debug('Request {method} {url}', { method: req.method, url: req.url });
     const handler = this.registeredHandlers.get(req.method as string);
     if (!handler) {
@@ -151,15 +151,15 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         }
         return;
       })
-      .catch(error => {
+      .catch(err => {
         const errorPayload = {
-          ...pick(error, Object.getOwnPropertyNames(error) as (keyof Error)[]),
+          ...pick(err, Object.getOwnPropertyNames(err) as (keyof Error)[]),
           request: pick(req, ['headers', 'method', 'url'])
         };
         this.listenerCount('error') && this.emit('error', errorPayload as UploadxErrorEvent);
         this.logger.error('{errorPayload.message} {*}', { errorPayload });
         if ('aborted' in req && req['aborted']) return;
-        return this.sendError(res, error);
+        return this.sendError(res, err);
       });
   };
 

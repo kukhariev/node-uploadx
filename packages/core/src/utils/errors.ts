@@ -90,8 +90,8 @@ export class UploadxError extends Error {
   }
 }
 
-export function isUploadxError(err: unknown): err is UploadxError {
-  return !!(err as UploadxError)?.uploadxErrorCode;
+export function isUploadxError(error: unknown): error is UploadxError {
+  return !!(error as UploadxError)?.uploadxErrorCode;
 }
 
 export function normalizeErrorResponse(

@@ -49,7 +49,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
           config.metadata.raw = value;
         }
       });
-      form.on('error', error => onError(error));
+      form.on('error', err => onError(err));
       form.on('part', (part: MultipartyPart) => {
         config.size = part.byteCount;
         config.originalName = part.filename;
@@ -69,9 +69,9 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
             }
             return resolve(file);
           })
-          .catch(error => {
+          .catch(err => {
             part.destroy();
-            onError(error);
+            onError(err);
           });
       });
 

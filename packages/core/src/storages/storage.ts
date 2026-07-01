@@ -333,7 +333,7 @@ export abstract class BaseStorage<TFile extends File> {
     }
     const runPurge = (): void => {
       this.purge()
-        .catch(e => this.logger.error('purge error: {e}', { e }))
+        .catch(err => this.logger.error('purge error: {err}', { err }))
         .finally(() => {
           if (this.purgeTimeoutId) {
             this.purgeTimeoutId = setTimeout(runPurge, interval).unref();
