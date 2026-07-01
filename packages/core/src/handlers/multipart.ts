@@ -12,10 +12,36 @@ interface MultipartyPart extends multiparty.Part {
 }
 
 export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
+  /** @experimental */
+  errorMode: 'drain' | 'abort' =
+    process.env['MULTIPART_ERROR_MODE'] === 'abort' ? 'abort' : 'drain';
+
   async post(req: IncomingMessage, res: ServerResponse): Promise<TFile> {
     return new Promise((resolve, reject) => {
       const form = new multiparty.Form();
       const config: FileInit = { metadata: {} };
+      let rejected = false;
+
+      const onError = (error: Error): void => {
+        if (rejected) return;
+        rejected = true;
+        if (this.errorMode === 'drain' && req.readable && !req.destroyed) {
+          form.removeAllListeners();
+          req.unpipe();
+
+          req.on('readable', () => {
+            while (req.read() !== null) {
+              /* drain */
+            }
+          });
+
+          req.once('close', () => reject(error));
+          req.once('end', () => reject(error));
+        } else {
+          reject(error);
+        }
+      };
+
       form.on('field', (key, value) => {
         try {
           Object.assign(config.metadata, key === 'metadata' ? JSON.parse(value) : { [key]: value });
@@ -23,7 +49,7 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
           config.metadata.raw = value;
         }
       });
-      form.on('error', error => reject(error));
+      form.on('error', error => onError(error));
       form.on('part', (part: MultipartyPart) => {
         config.size = part.byteCount;
         config.originalName = part.filename;
@@ -36,13 +62,17 @@ export class Multipart<TFile extends UploadxFile> extends BaseHandler<TFile> {
             this.storage.write({ start: 0, contentLength: part.byteCount, body: part, id })
           )
           .then(file => {
+            if (rejected) return;
             if (file.status === 'completed') {
               const headers = { Location: this.buildFileUrl(req, file) };
               setHeaders(res, headers);
             }
             return resolve(file);
           })
-          .catch(err => reject(err));
+          .catch((error: Error) => {
+            part.destroy();
+            onError(error);
+          });
       });
 
       form.parse(req);
