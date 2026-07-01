@@ -86,14 +86,11 @@ describe('CORS', () => {
       [['http://example.com'], 'https://example.com', undefined],
       [['https://*.example.com'], 'https://evil.com.example.com.evil', undefined],
       [['https://*.example.com'], 'https://sub.example.com', 'https://sub.example.com']
-    ])(
-      'allowOrigins %p origin %s => %s',
-      (allowOrigins, testOrigin, expected) => {
-        cors.allowOrigins = allowOrigins;
-        req.headers.origin = testOrigin;
-        cors.preflight(req, res);
-        expect(res.header('Access-Control-Allow-Origin')).toBe(expected);
-      }
-    );
+    ])('allowOrigins %p origin %s => %s', (allowOrigins, testOrigin, expected) => {
+      cors.allowOrigins = allowOrigins;
+      req.headers.origin = testOrigin;
+      cors.preflight(req, res);
+      expect(res.header('Access-Control-Allow-Origin')).toBe(expected);
+    });
   });
 });
