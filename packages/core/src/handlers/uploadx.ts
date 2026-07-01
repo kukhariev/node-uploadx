@@ -87,7 +87,7 @@ export class Uploadx<TFile extends UploadxFile> extends BaseHandler<TFile> {
 
   getId(req: IncomingMessage): string {
     const params = new URL(req.url || '', 'http://localhost').searchParams;
-    return (params.get('upload_id') || params.get('prefix') || super.getId(req));
+    return params.get('upload_id') || params.get('prefix') || super.getId(req);
   }
 
   buildHeaders(file: UploadxFile, headers: Headers = {}): Headers {
