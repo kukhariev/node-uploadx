@@ -151,7 +151,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
         }
         return;
       })
-      .catch((error: Error) => {
+      .catch(error => {
         const errorPayload = {
           ...pick(error, Object.getOwnPropertyNames(error) as (keyof Error)[]),
           request: pick(req, ['headers', 'method', 'url'])

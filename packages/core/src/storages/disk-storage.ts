@@ -79,7 +79,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
     this.isReady = false;
     this.accessCheck()
       .then(() => (this.isReady = true))
-      .catch((error: unknown) => {
+      .catch(error => {
         this.logger.error('Storage access check failed {error.message}', { error });
       });
   }
@@ -172,7 +172,7 @@ export class DiskStorage extends BaseStorage<DiskFile> {
         .pipe(lengthChecker)
         .pipe(checksumChecker)
         .pipe(dest)
-        .on('error', (err?: unknown): void => {
+        .on('error', err => {
           cleanupStreams();
           reject(err);
         })
