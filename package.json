@@ -64,7 +64,10 @@
     "examples"
   ],
   "lint-staged": {
-    "{packages,examples,test}/**/*.ts": "oxlint --fix && oxfmt",
+    "{packages,examples,test}/**/*.ts": [
+      "oxlint --fix",
+      "oxfmt"
+    ],
     "*.{md,json}": "oxfmt"
   }
 }
