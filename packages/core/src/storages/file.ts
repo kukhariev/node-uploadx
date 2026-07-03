@@ -113,11 +113,11 @@ export function getFileStatus(file: File): UploadxEventType {
 }
 
 export class FileName {
-  static INVALID_CHARS = ['"', '*', ':', '<', '>', '?', '\\', '|', '../'];
+  static INVALID_CHARS = ['"', '*', ':', '<', '>', '?', '\\', '|'];
   static INVALID_PREFIXES: string[] = [];
   static INVALID_SUFFIXES: string[] = [];
   static MAX_LENGTH = 255;
-  static MIN_LENGTH = 3;
+  static MIN_LENGTH = 1;
   static isValid(name: string): boolean {
     if (
       !name ||
@@ -126,14 +126,17 @@ export class FileName {
       isAbsolute(name)
     ) {
       return false;
-    } else {
-      const upperCase = name.toUpperCase();
-      return !(
-        FileName.INVALID_CHARS.filter(Boolean).some(chars => upperCase.includes(chars)) ||
-        FileName.INVALID_PREFIXES.filter(Boolean).some(chars => upperCase.startsWith(chars)) ||
-        FileName.INVALID_SUFFIXES.filter(Boolean).some(chars => upperCase.endsWith(chars))
-      );
     }
+    if (name.split('/').some(part => part === '.' || part === '..')) return false;
+    for (let i = 0; i < name.length; i++) {
+      if (name.charCodeAt(i) < 32 || name.charCodeAt(i) === 127) return false;
+    }
+    const upperCase = name.toUpperCase();
+    return !(
+      FileName.INVALID_CHARS.filter(Boolean).some(chars => upperCase.includes(chars)) ||
+      FileName.INVALID_PREFIXES.filter(Boolean).some(chars => upperCase.startsWith(chars)) ||
+      FileName.INVALID_SUFFIXES.filter(Boolean).some(chars => upperCase.endsWith(chars))
+    );
   }
 }
 
