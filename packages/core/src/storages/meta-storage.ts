@@ -32,7 +32,7 @@ export class MetaStorage<T> {
 
   constructor(options?: MetaStorageOptions) {
     this.prefix = options?.prefix ?? '';
-    this.suffix = options?.suffix ?? METAFILE_EXTNAME;
+    this.suffix = options?.suffix ?? '.META';
     this.prefix && FileName.INVALID_PREFIXES.push(this.prefix);
     this.suffix && FileName.INVALID_SUFFIXES.push(this.suffix);
   }
@@ -89,8 +89,3 @@ export class MetaStorage<T> {
     return this.toString();
   }
 }
-
-/**
- * @deprecated Use MetaStorage.suffix instead
- */
-export const METAFILE_EXTNAME = '.META';
