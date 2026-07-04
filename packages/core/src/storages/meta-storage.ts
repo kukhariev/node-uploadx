@@ -18,7 +18,17 @@ export interface UploadList {
 }
 
 export interface MetaStorageOptions {
+  /**
+   * Prefix added to the storage key (file path, Redis key, etc.).
+   * @default ''
+   */
   prefix?: string;
+
+  /**
+   * Suffix appended to the storage key.
+   * Prevents name collisions when storing metadata alongside binary files.
+   * @default '.META'
+   */
   suffix?: string;
 }
 
@@ -28,6 +38,7 @@ export interface MetaStorageOptions {
 export class MetaStorage<T> {
   prefix = '';
   suffix = '';
+
   logger: Logger = uploadxLogger.getChild(this.constructor.name);
 
   constructor(options?: MetaStorageOptions) {
