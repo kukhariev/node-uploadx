@@ -78,7 +78,7 @@ export class MetaStorage<T> {
   }
 
   getIdFromMetaName(name: string): string {
-    return name.slice(this.prefix.length, -this.suffix.length);
+    return name.slice(this.prefix.length, name.length - this.suffix.length);
   }
 
   toString(): string {

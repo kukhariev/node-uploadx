@@ -29,14 +29,9 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
    * Returns metafile path
    * @param id - upload id
    */
-  getMetaPath = (id: string): string => `${this.directory}/${this.prefix + id + this.suffix}`;
-
-  /**
-   * Returns upload id from metafile path
-   * @internal
-   */
-  getIdFromPath = (metaFilePath: string): string =>
-    metaFilePath.slice(`${this.directory}/${this.prefix}`.length, -this.suffix.length);
+  getMetaPath(id: string): string {
+    return `${this.directory}/${this.prefix + id + this.suffix}`;
+  }
 
   async save(id: string, file: T): Promise<T> {
     await fsp.writeFile(this.getMetaPath(id), JSON.stringify(file, null, 2));
@@ -74,6 +69,10 @@ export class LocalMetaStorage<T extends File = File> extends MetaStorage<T> {
 
   toString(): string {
     return `[${this.constructor.name}: directory="${this.directory}", prefix="${this.prefix}", suffix="${this.suffix}"]`;
+  }
+
+  private getIdFromPath(metaFilePath: string): string {
+    return this.getIdFromMetaName(metaFilePath.slice(`${this.directory}/`.length));
   }
 
   private accessCheck(): Promise<void> {

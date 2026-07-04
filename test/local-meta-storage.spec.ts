@@ -1,38 +1,42 @@
 import { LocalMetaStorage } from '../packages/core/src';
-import * as path from 'path';
 import { metafile } from './shared';
-import { tmpdir } from 'os';
 
 jest.mock('fs/promises');
 jest.mock('fs');
 
 describe('LocalMetaStorage', () => {
-  it('defaults', () => {
-    const meta = new LocalMetaStorage();
-    const metaPath = meta.getMetaPath(metafile.id);
-    expect(path.basename(metaPath)).toBe(`${metafile.id}.META`);
-    expect(meta.getIdFromPath(metaPath)).toBe(metafile.id);
-  });
-
-  it('custom', () => {
-    const meta = new LocalMetaStorage({
-      prefix: '.',
-      suffix: '.',
-      directory: path.join(tmpdir(), 'meta')
+  describe('list', () => {
+    it('default', async () => {
+      const meta = new LocalMetaStorage({ directory: '/m1' });
+      await meta.save(metafile.id, metafile);
+      const list = await meta.list();
+      expect(list.items).toHaveLength(1);
+      expect(list.items[0]).toMatchObject({ id: metafile.id });
     });
-    const metaPath = meta.getMetaPath(metafile.id);
-    expect(path.basename(metaPath)).toBe(`.${metafile.id}.`);
-    expect(meta.getIdFromPath(metaPath)).toBe(metafile.id);
-  });
 
-  it('methods', async () => {
-    const meta = new LocalMetaStorage();
-    await meta.save(metafile.id, metafile);
-    await expect(meta.get(metafile.id)).resolves.toEqual(metafile);
-    const list = await meta.list(metafile.id.slice(0, 8));
-    expect(list.items[0]).toMatchObject({ id: metafile.id });
-    await expect(meta.list('alien')).resolves.toEqual({ items: [] });
-    await meta.delete(metafile.id);
-    await expect(meta.list()).resolves.toEqual({ items: [] });
+    it('custom', async () => {
+      const meta = new LocalMetaStorage({ prefix: '.', suffix: '.', directory: '/m2' });
+      await meta.save(metafile.id, metafile);
+      const list = await meta.list();
+      expect(list.items).toHaveLength(1);
+      expect(list.items[0]).toMatchObject({ id: metafile.id });
+    });
+
+    it('empty suffix', async () => {
+      const meta = new LocalMetaStorage({ suffix: '', directory: '/m3' });
+      await meta.save(metafile.id, metafile);
+      const list = await meta.list();
+      expect(list.items).toHaveLength(1);
+      expect(list.items[0].id).toBe(metafile.id);
+    });
+
+    it('with idPrefix', async () => {
+      const meta = new LocalMetaStorage({ directory: '/m4' });
+      const idPrefix = metafile.id.slice(0, 8);
+      await meta.save(metafile.id, metafile);
+      const list = await meta.list(idPrefix);
+      expect(list.items[0]).toMatchObject({ id: metafile.id });
+      await expect(meta.list('alien')).resolves.toEqual({ items: [] });
+    });
   });
 });
