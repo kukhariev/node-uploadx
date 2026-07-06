@@ -40,7 +40,9 @@ describe('BaseStorage', () => {
 
   it('should check if not expired', async () => {
     storage = new TestStorage({ expiration: { maxAge: '1h' } });
-    expect(storage.checkIfExpired({ ...metafile, expiredAt: Date.now() + 1000 })).toBeTruthy();
+    expect(
+      await storage.checkIfExpired({ ...metafile, expiredAt: Date.now() + 1000 })
+    ).toBeTruthy();
   });
 
   it('should save meta and update cache', async () => {
