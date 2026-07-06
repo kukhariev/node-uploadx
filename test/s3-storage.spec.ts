@@ -129,7 +129,7 @@ describe('S3Storage', () => {
     });
   });
 
-  describe('delete()', () => {
+  describe('.delete()', () => {
     it('should set status', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(DeleteObjectCommand).resolves({});
@@ -200,7 +200,7 @@ describe('S3PresignedStorage', () => {
     });
   });
 
-  describe('update', () => {
+  describe('.update()', () => {
     it('should add partsUrls', async () => {
       s3Mock.on(HeadObjectCommand).resolves(metafileResponse);
       s3Mock.on(ListPartsCommand).resolves({ Parts: [] });

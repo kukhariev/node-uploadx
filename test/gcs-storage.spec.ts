@@ -10,15 +10,14 @@ import {
 } from '../packages/gcs/src';
 import { authRequest, deepClone, metafile, storageOptions, testfile } from './shared';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
 const mockAuthRequest = jest.fn();
 jest.mock('google-auth-library', () => ({
   GoogleAuth: jest.fn(() => ({ request: mockAuthRequest }))
 }));
 
 describe('GCStorage', () => {
+  const mockFetch = jest.fn();
+  const originalFetch = global.fetch;
   jest.useFakeTimers().setSystemTime(new Date('2022-02-02'));
   let storage: GCStorage;
   const uri = 'http://api.com?upload_id=123456789';
@@ -30,8 +29,14 @@ describe('GCStorage', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    global.fetch = mockFetch;
     mockAuthRequest.mockResolvedValueOnce({ bucket: 'ok' });
     storage = new GCStorage({ ...storageOptions, bucket: 'test-bucket' });
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+    global.fetch = originalFetch;
   });
 
   describe('initialization', () => {
@@ -46,9 +51,7 @@ describe('GCStorage', () => {
   describe('.create()', () => {
     it('should request api and set status and uri', async () => {
       mockAuthRequest.mockRejectedValueOnce({ code: 404, detail: 'meta not found' }); // getMeta
-      mockAuthRequest.mockResolvedValueOnce({
-        headers: new Headers({ location: uri })
-      }); //
+      mockAuthRequest.mockResolvedValueOnce({ headers: new Headers({ location: uri }) });
       mockAuthRequest.mockResolvedValueOnce('_saveOk');
       const gcsFile = await storage.create(req, metafile);
       expect(gcsFile).toMatchSnapshot();

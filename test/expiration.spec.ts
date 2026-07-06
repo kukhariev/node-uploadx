@@ -1,6 +1,6 @@
 import { TestStorage } from './shared';
 
-describe('expiration shorthand', () => {
+describe('expiration', () => {
   it('should normalize string shorthand to ExpirationOptions', () => {
     const s = new TestStorage({ expiration: '6h' });
     expect(s.config.expiration).toBeDefined();
