@@ -11,7 +11,7 @@ const storage = new DiskStorage({
   logLevel: 'debug',
   onError(response) {
     const { code, message } = response;
-    const page = (code || 'unknownerror').toLowerCase();
+    const page = (code || 'UnknownError').toLowerCase();
     const documentation_url = `http://example.com/api/v1/docs/upload/error/${page}`;
     const body = { message, documentation_url };
     return { ...response, body };
