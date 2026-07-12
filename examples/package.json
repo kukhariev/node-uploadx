@@ -3,20 +3,20 @@
   "version": "6.2.1",
   "private": true,
   "scripts": {
-    "basic": "tsnd -r tsconfig-paths/register -r dotenv/config express-basic",
-    "express": "tsnd -r tsconfig-paths/register -r dotenv/config express",
-    "redis": "tsnd -r tsconfig-paths/register -r dotenv/config express-redis",
-    "express-polling": "tsnd -r tsconfig-paths/register -r dotenv/config express-polling",
-    "gcs:direct": "tsnd -r tsconfig-paths/register -r dotenv/config gcs-direct",
-    "gcs": "tsnd -r tsconfig-paths/register -r dotenv/config express-gcs",
-    "logtape": "tsnd -r tsconfig-paths/register -r dotenv/config express-logtape",
-    "s3": "tsnd -r tsconfig-paths/register -r dotenv/config express-s3",
-    "s3:direct": "tsnd -r tsconfig-paths/register -r dotenv/config s3-direct",
-    "tus": "tsnd -r tsconfig-paths/register -r dotenv/config express-tus",
-    "validation": "tsnd -r tsconfig-paths/register -r dotenv/config validation",
-    "custom-error-responses": "tsnd -r tsconfig-paths/register -r dotenv/config custom-error-responses",
-    "plain-nodejs": "tsnd -r dotenv/config node-http-server",
-    "server": "tsnd -r dotenv/config server"
+    "basic": "tsx watch -r dotenv/config express-basic",
+    "express": "tsx watch -r dotenv/config express",
+    "redis": "tsx watch -r dotenv/config express-redis",
+    "express-polling": "tsx watch -r dotenv/config express-polling",
+    "gcs:direct": "tsx watch -r dotenv/config gcs-direct",
+    "gcs": "tsx watch -r dotenv/config express-gcs",
+    "logtape": "tsx watch -r dotenv/config express-logtape",
+    "s3": "tsx watch -r dotenv/config express-s3",
+    "s3:direct": "tsx watch -r dotenv/config s3-direct",
+    "tus": "tsx watch -r dotenv/config express-tus",
+    "validation": "tsx watch -r dotenv/config validation",
+    "custom-error-responses": "tsx watch -r dotenv/config custom-error-responses",
+    "plain-nodejs": "node --watch -r dotenv/config node-http-server",
+    "server": "node --watch -r dotenv/config server"
   },
   "dependencies": {
     "@logtape/logtape": "^2.0.5",
@@ -26,6 +26,6 @@
   },
   "devDependencies": {
     "@types/express": "5.0.6",
-    "ts-node-dev": "2.0.0"
+    "tsx": "^4.22.4"
   }
 }
