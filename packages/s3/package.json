@@ -29,7 +29,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc -b .",
-    "clean": "rimraf ./tsconfig.tsbuildinfo && rimraf ./lib"
+    "clean": "rimraf ./tsconfig.tsbuildinfo ./lib"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.485.0",
