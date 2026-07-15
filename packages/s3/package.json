@@ -1,6 +1,6 @@
 {
   "name": "@uploadx/s3",
-  "version": "6.2.1",
+  "version": "7.0.0",
   "description": "Uploadx S3 module",
   "keywords": [
     "resumable",
@@ -41,7 +41,7 @@
     "@aws-sdk/types": "^3.485.0"
   },
   "peerDependencies": {
-    "@uploadx/core": "^6.2.1"
+    "@uploadx/core": "^7.0.0"
   },
   "publishConfig": {
     "access": "public"
