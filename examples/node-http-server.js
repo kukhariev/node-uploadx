@@ -1,9 +1,7 @@
 const { createServer } = require('http');
-const { DiskStorage, Uploadx, cors } = require('@uploadx/core');
+const { DiskStorage, Uploadx } = require('@uploadx/core');
 
 const PORT = process.env.PORT || 3002;
-
-const corsHandler = cors();
 
 const storage = new DiskStorage({
   uploadDir: process.env.UPLOAD_DIR || 'upload',
@@ -22,16 +20,7 @@ uploadx.on('completed', file => console.log('completed: ', file));
 uploadx.on('updated', file => console.log(' metadata updated: ', file));
 
 const server = createServer((req, res) => {
-  const { pathname } = new URL(req.url || '', 'http://localhost');
-  if (pathname === '/files') {
-    uploadx.upload(req, res, () => {
-      uploadx.send(res, { body: req.body, statusCode: 200 });
-    });
-  } else {
-    corsHandler(req, res, () => {
-      uploadx.send(res, { body: 'Not Found', statusCode: 404 });
-    });
-  }
+  uploadx.handle(req, res);
 });
 
 server.listen(+PORT, () => console.log('listening on port:', PORT));

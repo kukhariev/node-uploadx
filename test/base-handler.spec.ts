@@ -18,13 +18,13 @@ describe('BaseHandler', () => {
   it('should check if storage not ready', () => {
     uploader.storage.isReady = false;
     const res = createResponse();
-    uploader.handle(createRequest({ method: 'OPTIONS' }), res);
+    uploader.handle(createRequest({ method: 'OPTIONS', url: '/files' }), res);
     expect(res.statusCode).toBe(503);
   });
 
   it('should check http method', () => {
     const res = createResponse();
-    uploader.handle(createRequest({ method: 'PATCH' }), res);
+    uploader.handle(createRequest({ method: 'PATCH', url: '/files' }), res);
     expect(res.statusCode).toBe(405);
   });
 
