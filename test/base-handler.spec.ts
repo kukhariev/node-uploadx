@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { createRequest, createResponse } from 'node-mocks-http';
-import { testStorage, TestUploader } from './shared';
+import { testStorage, TestStorage, TestUploader } from './shared';
 
 describe('BaseHandler', () => {
   let uploader: TestUploader;
@@ -90,6 +90,38 @@ describe('BaseHandler', () => {
     ['/3/files/4', '']
   ])('nodejs: getId(%p) === %p', (url, id) => {
     expect(uploader.getId({ url } as http.IncomingMessage)).toBe(id);
+  });
+
+  it('should reject path outside basePath (raw Node.js)', () => {
+    const res = createResponse();
+    const req = createRequest({ method: 'GET', url: '/wrong' });
+    delete (req as any).originalUrl;
+    uploader.handle(req, res);
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('should accept path matching basePath (raw Node.js)', () => {
+    const res = createResponse();
+    const req = createRequest({ method: 'PATCH', url: '/files' });
+    delete (req as any).originalUrl;
+    uploader.handle(req, res);
+    expect(res.statusCode).toBe(405);
+  });
+
+  it('should accept all paths when basePath is "/"', () => {
+    const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/' }) });
+    const res = createResponse();
+    const req = createRequest({ method: 'PATCH', url: '/anything' });
+    delete (req as any).originalUrl;
+    uploader2.handle(req, res);
+    expect(res.statusCode).toBe(405);
+  });
+
+  it('should skip basePath check when originalUrl is set', () => {
+    const res = createResponse();
+    const req = createRequest({ method: 'PATCH', url: '/api/other' });
+    uploader.handle(req, res);
+    expect(res.statusCode).toBe(405);
   });
 
   interface MockReq extends http.IncomingMessage {
