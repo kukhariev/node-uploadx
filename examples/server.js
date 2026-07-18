@@ -3,11 +3,9 @@ const { cors, DiskStorage, Multipart, Tus, Uploadx, fromEnv } = require('@upload
 const { createServer } = require('http');
 
 const PORT = process.env.PORT || 3002;
-const path = '/files';
-const pathRegexp = new RegExp(`^${path}([/?]|$)`);
 
 const config = {
-  basePath: path,
+  basePath: '/files',
   uploadDir: './upload',
   allowedMimeTypes: ['video/*', 'image/*'],
   maxFileSize: '2GB',
@@ -15,7 +13,6 @@ const config = {
   ...fromEnv()
 };
 
-const corsHandler = cors();
 const storage = new DiskStorage(config);
 const uploadx = new Uploadx({ storage });
 const tus = new Tus({ storage });
@@ -30,8 +27,8 @@ createServer((req, res) => {
       message: 'status 👍',
       timestamp: Date.now()
     };
-    corsHandler(req, res, () => uploadx.send(res, { body: healthcheck }));
-  } else if (pathname && pathRegexp.test(pathname)) {
+    cors()(req, res, () => uploadx.send(res, { body: healthcheck }));
+  } else {
     switch (searchParams.get('uploadType')) {
       case 'multipart':
         multipart.handle(req, res);
@@ -43,7 +40,5 @@ createServer((req, res) => {
         uploadx.handle(req, res);
         break;
     }
-  } else {
-    corsHandler(req, res, () => uploadx.send(res, { body: 'Not Found', statusCode: 404 }));
   }
 }).listen(PORT);

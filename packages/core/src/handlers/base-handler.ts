@@ -112,6 +112,13 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       res.writeHead(204, { 'Content-Length': 0 }).end();
       return;
     }
+    if (!req.originalUrl) {
+      const { pathname } = new URL(req.url || '', 'http://localhost');
+      const basePath = this.storage.basePath;
+      const match =
+        basePath === '/' || pathname === basePath || pathname.startsWith(`${basePath}/`);
+      if (!match) return this.sendError(res, new UploadxError(ERRORS.FILE_NOT_FOUND));
+    }
     req.on('error', err => this.logger.error('Request error', { err }));
     this.logger.debug('Request {method} {url}', { method: req.method, url: req.url });
     const handler = this.registeredHandlers.get(req.method as string);
