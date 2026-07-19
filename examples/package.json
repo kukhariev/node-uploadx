@@ -10,6 +10,9 @@
     "express": "tsx watch --env-file-if-exists .env express",
     "redis": "tsx watch --env-file-if-exists .env express-redis",
     "express-polling": "tsx watch --env-file-if-exists .env express-polling",
+    "koa": "tsx watch --env-file-if-exists .env koa",
+    "koa-tus": "tsx watch --env-file-if-exists .env koa-tus",
+    "koa-callback": "tsx watch --env-file-if-exists .env koa-callback",
     "gcs:direct": "tsx watch --env-file-if-exists .env gcs-direct",
     "gcs": "tsx watch --env-file-if-exists .env express-gcs",
     "logtape": "tsx watch --env-file-if-exists .env express-logtape",
@@ -24,10 +27,12 @@
   "dependencies": {
     "@logtape/logtape": "^2.0.5",
     "express": "^5.2.1",
+    "koa": "^3.2.1",
     "node-uploadx": "^7.0.0"
   },
   "devDependencies": {
-    "@types/express": "5.0.6",
+    "@types/express": "^5.0.6",
+    "@types/koa": "^3.0.3",
     "tsx": "^4.22.4"
   }
 }
