@@ -73,7 +73,7 @@ describe('BaseHandler', () => {
   });
 
   it.each([
-    ['/1/2', '1/2'],
+    ['/1/2', '2'],
     ['/3', '3'],
     ['/files', 'files'],
     ['/', '']
@@ -82,33 +82,36 @@ describe('BaseHandler', () => {
   });
 
   it.each([
-    ['/files/1/2', '1/2'],
+    ['/files/1/2', '2'],
     ['/files/3', '3'],
     ['/files/files', 'files'],
     ['/', ''],
-    ['/1/2', ''],
-    ['/3/files/4', '']
+    ['/1/2', '2'],
+    ['/3/files/4', '4']
   ])('nodejs: getId(%p) === %p', (url, id) => {
-    expect(uploader.getId({ url } as http.IncomingMessage)).toBe(id);
+    const nodeUploader = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
+    expect(nodeUploader.getId({ url } as http.IncomingMessage)).toBe(id);
   });
 
   it('should reject path outside basePath (raw Node.js)', () => {
+    const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
     const res = createResponse();
     const req = createRequest({ method: 'GET', url: '/wrong' });
     delete (req as any).originalUrl;
-    uploader.handle(req, res);
+    uploader2.handle(req, res);
     expect(res.statusCode).toBe(404);
   });
 
   it('should accept path matching basePath (raw Node.js)', () => {
+    const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
     const res = createResponse();
     const req = createRequest({ method: 'PATCH', url: '/files' });
     delete (req as any).originalUrl;
-    uploader.handle(req, res);
+    uploader2.handle(req, res);
     expect(res.statusCode).toBe(405);
   });
 
-  it('should accept all paths when basePath is "/"', () => {
+  it('should accept all paths when basePath is "/" (raw Node.js)', () => {
     const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/' }) });
     const res = createResponse();
     const req = createRequest({ method: 'PATCH', url: '/anything' });
@@ -117,10 +120,26 @@ describe('BaseHandler', () => {
     expect(res.statusCode).toBe(405);
   });
 
-  it('should skip basePath check when originalUrl is set', () => {
+  it('should skip basePath check when basePath is not set in options', () => {
     const res = createResponse();
     const req = createRequest({ method: 'PATCH', url: '/api/other' });
     uploader.handle(req, res);
+    expect(res.statusCode).toBe(405);
+  });
+
+  it('should reject path outside basePath when basePath is set (Express)', () => {
+    const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
+    const res = createResponse();
+    const req = createRequest({ method: 'GET', url: '/wrong' });
+    uploader2.handle(req, res);
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('should accept path matching basePath when basePath is set (Express)', () => {
+    const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
+    const res = createResponse();
+    const req = createRequest({ method: 'PATCH', url: '/files' });
+    uploader2.handle(req, res);
     expect(res.statusCode).toBe(405);
   });
 

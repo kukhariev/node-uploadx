@@ -231,10 +231,7 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    */
   getId(req: IncomingMessage): string {
     const { pathname } = new URL(req.url || '', 'http://localhost');
-    const path = req.originalUrl
-      ? `/${pathname}`.replace('//', '')
-      : `/${pathname}`.replace(`/${this.storage.basePath}/`, '');
-    return path.startsWith('/') ? '' : path;
+    return pathname.split('/').filter(Boolean).pop() ?? '';
   }
 
   async getAndVerifyId(req: IncomingMessage, res: ServerResponse): Promise<string> {
