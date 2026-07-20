@@ -112,8 +112,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
       res.writeHead(204, { 'Content-Length': 0 }).end();
       return;
     }
-    if (!req.originalUrl) {
-      const { pathname } = new URL(req.url || '', 'http://localhost');
+    if (this.storage.config.basePath) {
+      const { pathname } = new URL(req.originalUrl || req.url || '', 'http://localhost');
       const basePath = this.storage.basePath;
       const match =
         basePath === '/' || pathname === basePath || pathname.startsWith(`${basePath}/`);
