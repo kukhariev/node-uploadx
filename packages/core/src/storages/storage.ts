@@ -145,7 +145,7 @@ export abstract class BaseStorage<TFile extends File> {
     }
     const configHandler = new ConfigHandler<TFile>();
     this.config = configHandler.set(options) as typeof this.config;
-    this.basePath = this.config.basePath;
+    this.basePath = this.config.basePath || '/files';
     this.onCreate = normalizeHookResponse(this.config.onCreate);
     this.onUpdate = normalizeHookResponse(this.config.onUpdate);
     this.onComplete = normalizeHookResponse(this.config.onComplete);

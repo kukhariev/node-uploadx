@@ -13,7 +13,7 @@ export class ConfigHandler<T extends File = File> {
     onCreate: () => '',
     onDelete: () => '',
     onError: response => response,
-    basePath: '/files',
+    basePath: '',
     validation: {},
     maxMetadataSize: '4MB'
   };
