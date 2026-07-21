@@ -3,8 +3,7 @@
 [![npm version][npm-image]][npm-url] [![Build status][gha-image]][gha-url]
 [![commits since latest release][comm-image]][comm-url]
 
-Resumable upload middleware for [Express](https://github.com/expressjs/express)
-and plain Node.js.
+Resumable upload middleware for Express, Koa, Fastify, and plain Node.js.
 Server-side component of [ngx-uploadx](https://github.com/kukhariev/ngx-uploadx)
 
 ## Features
@@ -55,7 +54,7 @@ app.use(
 app.listen(3003);
 ```
 
-More examples (S3, GCS, plain Node.js, tus, logging, validation) are available in the [/examples](examples) folder.
+More examples (S3, GCS, Fastify, Koa, plain Node.js, tus, logging, validation, etc.) are available in the [/examples](examples) folder.
 
 ## Options
 

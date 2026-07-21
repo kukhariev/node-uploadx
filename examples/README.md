@@ -4,11 +4,10 @@ This directory contains working examples demonstrating various use cases of `nod
 
 ## Running Examples
 
-From the repository root, install dependencies and build `node-uploadx` packages first:
+From the repository root, install dependencies first:
 
 ```bash
 npm install
-npm run build
 ```
 
 Then navigate to the examples directory and run the desired script:
@@ -20,11 +19,23 @@ npm run basic
 # Express with default storage (local filesystem)
 npm run express
 
+# Fastify
+npm run fastify
+
+# Koa
+npm run koa
+
 # Express with S3 storage
 npm run s3
 
 # Express with GCS storage
 npm run gcs
+
+# Direct S3 upload
+npm run s3:direct
+
+# Direct GCS upload
+npm run gcs:direct
 
 # Plain Node.js server combining Uploadx, TUS and Multipart protocols
 npm run server
@@ -39,6 +50,9 @@ npm run redis
 npm run logtape
 npm run custom-error-responses
 npm run express-polling
+npm run fastify-tus
+
+npm run koa-node-server
 ```
 
 ## Example Descriptions
@@ -49,7 +63,7 @@ npm run express-polling
 | [`express-basic.ts`](express-basic.ts)                   | Minimal Express setup with local file storage                       |
 | [`express-s3.ts`](express-s3.ts)                         | Upload to AWS S3                                                    |
 | [`express-gcs.ts`](express-gcs.ts)                       | Upload to Google Cloud Storage                                      |
-| [`express-tus.ts`](express-tus.ts)                       | Using the tus resumable upload protocol                             |
+| [`express-tus.ts`](express-tus.ts)                       | Using the tus upload                                                |
 | [`express-polling.ts`](express-polling.ts)               | Polling-based upload implementation                                 |
 | [`express-redis.ts`](express-redis.ts)                   | Using Redis for metadata storage                                    |
 | [`express-logtape.ts`](express-logtape.ts)               | Logging with LogTape                                                |
@@ -57,6 +71,10 @@ npm run express-polling
 | [`validation.ts`](validation.ts)                         | File validation (type, size, custom rules)                          |
 | [`s3-direct.ts`](s3-direct.ts)                           | Direct S3 upload                                                    |
 | [`gcs-direct.ts`](gcs-direct.ts)                         | Direct GCS upload                                                   |
+| [`fastify.ts`](fastify.ts)                               | Fastify example                                                     |
+| [`fastify-tus.ts`](fastify-tus.ts)                       | Fastify with tus upload                                             |
+| [`koa.ts`](koa.ts)                                       | Koa example                                                         |
+| [`koa-node-server.ts`](koa-node-server.ts)               | Koa with Uploadx on a plain Node.js HTTP server                     |
 | [`node-http-server.js`](node-http-server.js)             | Plain Node.js HTTP server example                                   |
 | [`server.js`](server.js)                                 | Plain Node.js server combining Uploadx, TUS and Multipart protocols |
 
