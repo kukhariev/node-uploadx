@@ -61,7 +61,7 @@ export class RedisMetaStorage<T extends File = File> extends MetaStorage<T> {
   async touch(id: string, file: T): Promise<T> {
     const modifiedAt = new Date().toISOString();
     await this.client.hset(this.key(id), 'modifiedAt', modifiedAt);
-    return { ...file, modifiedAt } as T;
+    return { ...file, modifiedAt };
   }
 
   async get(id: string): Promise<T> {

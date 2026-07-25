@@ -1,14 +1,8 @@
-import {
-  createMetaStorage,
-  File,
-  LocalMetaStorage,
-  MetaStorage,
-  MetaStorageOptions
-} from '../packages/core/src';
+import { createMetaStorage, File, LocalMetaStorage, MetaStorage } from '../packages/core/src';
 
 class TestMetaStorage extends MetaStorage<File> {
   constructor(opts: Record<string, unknown>) {
-    super(opts as MetaStorageOptions);
+    super(opts);
   }
 }
 

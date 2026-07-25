@@ -163,7 +163,7 @@ describe('BaseHandler', () => {
     testUploader.on('error', errorSpy);
     jest.spyOn(testUploader.storage, 'list').mockRejectedValue(new Error('Test Error'));
 
-    testUploader.handle(req as http.IncomingMessage, res);
+    testUploader.handle(req, res);
     await new Promise(setImmediate);
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe('BaseHandler', () => {
         new Error('ENOENT: no such file or directory, scandir /secret-location')
       );
 
-    uploader.handle(req as http.IncomingMessage, res);
+    uploader.handle(req, res);
     await new Promise(setImmediate);
 
     expect(res.statusCode).toBe(500);

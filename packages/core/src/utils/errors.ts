@@ -99,7 +99,7 @@ export function normalizeErrorResponse(
 ): UploadxErrorResponse {
   if (!Array.isArray(response)) {
     const { statusCode = 500, headers, ...rest } = response;
-    return { ...rest, statusCode, headers } as UploadxErrorResponse;
+    return { ...rest, statusCode, headers };
   }
   const [statusCode, body = {}, headers] = response;
   const b = isRecord(body) ? body : { message: body as string };
