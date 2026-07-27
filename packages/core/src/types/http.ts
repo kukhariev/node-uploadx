@@ -2,6 +2,8 @@ import type http from 'http';
 
 export type IncomingMessage = http.IncomingMessage & {
   originalUrl?: string;
+  // external framework can set id via req.uploadId
+  uploadId?: string;
 };
 
 export type ServerResponse = http.ServerResponse;

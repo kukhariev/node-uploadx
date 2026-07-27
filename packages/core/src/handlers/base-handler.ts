@@ -230,6 +230,8 @@ export abstract class BaseHandler<TFile extends UploadxFile>
    * Get id from request
    */
   getId(req: IncomingMessage): string {
+    // external framework can set id via req.uploadId
+    if (req.uploadId) return req.uploadId;
     const { pathname } = new URL(req.url || '', 'http://localhost');
     return pathname.split('/').filter(Boolean).pop() ?? '';
   }

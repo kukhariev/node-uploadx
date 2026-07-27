@@ -93,6 +93,12 @@ describe('BaseHandler', () => {
     expect(nodeUploader.getId({ url } as http.IncomingMessage)).toBe(id);
   });
 
+  it('should use uploadId from request when set externally', () => {
+    const req = createRequest({ url: '/files/ignored' });
+    req.uploadId = 'custom-id';
+    expect(uploader.getId(req)).toBe('custom-id');
+  });
+
   it('should reject path outside basePath (raw Node.js)', () => {
     const uploader2 = new TestUploader({ storage: new TestStorage({ basePath: '/files' }) });
     const res = createResponse();
