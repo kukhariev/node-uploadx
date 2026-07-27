@@ -6,28 +6,36 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "basic": "tsx watch --env-file-if-exists .env express-basic",
     "express": "tsx watch --env-file-if-exists .env express",
-    "redis": "tsx watch --env-file-if-exists .env express-redis",
+    "express-basic": "tsx watch --env-file-if-exists .env express-basic",
+    "express-s3": "tsx watch --env-file-if-exists .env express-s3",
+    "express-gcs": "tsx watch --env-file-if-exists .env express-gcs",
+    "express-tus": "tsx watch --env-file-if-exists .env express-tus",
     "express-polling": "tsx watch --env-file-if-exists .env express-polling",
-    "gcs:direct": "tsx watch --env-file-if-exists .env gcs-direct",
-    "gcs": "tsx watch --env-file-if-exists .env express-gcs",
-    "logtape": "tsx watch --env-file-if-exists .env express-logtape",
-    "s3": "tsx watch --env-file-if-exists .env express-s3",
-    "s3:direct": "tsx watch --env-file-if-exists .env s3-direct",
-    "tus": "tsx watch --env-file-if-exists .env express-tus",
-    "validation": "tsx watch --env-file-if-exists .env validation",
+    "express-redis": "tsx watch --env-file-if-exists .env express-redis",
+    "express-logtape": "tsx watch --env-file-if-exists .env express-logtape",
     "custom-error-responses": "tsx watch --env-file-if-exists .env custom-error-responses",
-    "plain-nodejs": "node --watch --env-file-if-exists .env node-http-server",
+    "validation": "tsx watch --env-file-if-exists .env validation",
+    "s3-direct": "tsx watch --env-file-if-exists .env s3-direct",
+    "gcs-direct": "tsx watch --env-file-if-exists .env gcs-direct",
+    "fastify": "tsx watch --env-file-if-exists .env fastify",
+    "fastify-hijack": "tsx watch --env-file-if-exists .env fastify-hijack",
+    "fastify-tus": "tsx watch --env-file-if-exists .env fastify-tus",
+    "koa": "tsx watch --env-file-if-exists .env koa",
+    "koa-node-server": "tsx watch --env-file-if-exists .env koa-node-server",
+    "node-http-server": "node --watch --env-file-if-exists .env node-http-server",
     "server": "node --watch --env-file-if-exists .env server"
   },
   "dependencies": {
     "@logtape/logtape": "^2.0.5",
     "express": "^5.2.1",
+    "fastify": "^5.3.2",
+    "koa": "^3.2.1",
     "node-uploadx": "^7.0.0"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
+    "@types/koa": "^3.0.3",
     "tsx": "^4.22.4"
   }
 }
