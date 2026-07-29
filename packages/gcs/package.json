@@ -1,6 +1,6 @@
 {
   "name": "@uploadx/gcs",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "Uploadx GCS module",
   "keywords": [
     "resumable",
@@ -35,7 +35,7 @@
     "google-auth-library": "^10.6.2"
   },
   "peerDependencies": {
-    "@uploadx/core": "^7.0.0"
+    "@uploadx/core": "^7.0.1"
   },
   "publishConfig": {
     "access": "public"
