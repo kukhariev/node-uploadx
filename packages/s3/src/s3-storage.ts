@@ -304,7 +304,7 @@ export class S3Storage extends BaseStorage<S3File> {
 
   private async getPartsPresignedUrls(file: S3File): Promise<string[]> {
     file.partSize ??= this._partSize;
-    const partsNum = ~~(file.size / this._partSize) + 1;
+    const partsNum = Math.ceil(file.size / this._partSize);
     const promises = [];
     const expiresIn = toSeconds(this.config.expiration?.maxAge || '6hrs');
     for (let i = 0; i < partsNum; i++) {

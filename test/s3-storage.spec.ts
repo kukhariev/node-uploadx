@@ -198,6 +198,17 @@ describe('S3PresignedStorage', () => {
       expect(s3file.partsUrls?.length).toBe(1);
       expect(s3file.partSize).toBeGreaterThan(0);
     });
+
+    it('should not create extra part on exact size', async () => {
+      storage = new S3Storage({ ...options, partSize: '8MB' });
+      s3Mock.on(HeadObjectCommand).rejects();
+      s3Mock.on(CreateMultipartUploadCommand).resolves({ UploadId: '123456789' });
+      s3Mock.on(ListPartsCommand).resolves({ Parts: [] });
+      getSignedUrlMock.mockResolvedValue('https://api.s3.example.com?signed');
+      const file = { ...metafile, size: 2 * 8 * 1024 * 1024 };
+      const s3file = await storage.create(req, file);
+      expect(s3file.partsUrls?.length).toBe(2);
+    });
   });
 
   describe('.update()', () => {
