@@ -1,6 +1,6 @@
 {
   "name": "@uploadx/core",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "description": "Node.js resumable upload middleware",
   "keywords": [
     "resumable",
