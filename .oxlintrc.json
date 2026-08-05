@@ -10,24 +10,7 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": [
-    "**/dist/",
-    "**/lib/",
-    "**/scripts/",
-    "**/upload/",
-    "**/uploads/",
-    "**/files/",
-    "**/tmp/",
-    "**/temp/",
-    "**/node_modules/",
-    "**/*.example",
-    "**/*.json",
-    "**/coverage/",
-    "**/*.snap",
-    "**/*.config.js",
-    "**/*.config.cjs",
-    "**/*.config.mjs"
-  ],
+  "ignorePatterns": [],
   "rules": {
     "constructor-super": "error",
     "for-direction": "error",
