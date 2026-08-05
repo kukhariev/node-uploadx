@@ -15,21 +15,5 @@
   "insertPragma": false,
   "proseWrap": "preserve",
   "sortPackageJson": false,
-  "ignorePatterns": [
-    "package-lock.json",
-    "**/dist/",
-    "**/lib/",
-    "**/scripts/",
-    "**/upload/",
-    "**/uploads/",
-    "**/files/",
-    "**/tmp/",
-    "**/temp/",
-    "**/node_modules/",
-    "**/*.example",
-    "**/coverage/",
-    "**/*.snap",
-    ".idea",
-    ".vscode"
-  ]
+  "ignorePatterns": ["**/*.example", "**/*.snap", ".vscode"]
 }

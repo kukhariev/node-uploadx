@@ -66,6 +66,6 @@
       "oxlint --fix",
       "oxfmt"
     ],
-    "*.{md,json}": "oxfmt"
+    "*.{md,json}": "oxfmt --no-error-on-unmatched-pattern"
   }
 }
