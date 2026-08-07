@@ -127,6 +127,28 @@ These old names still work but are deprecated:
 | `maxUploadSize` | `maxFileSize`      |
 | `filename`      | `namingFunction`   |
 
+## Events
+
+Lifecycle events:
+
+- `created` New upload created
+- `part` Chunk written
+- `updated` Upload metadata updated
+- `completed` Upload finished
+- `deleted` Upload removed
+- `error` Upload error
+
+```ts
+import { Uploadx } from '@uploadx/core';
+
+const uploads = new Uploadx({ uploadDir: './files' });
+
+uploads.on('completed', file => console.log('Upload complete:', file));
+uploads.on('error', ({ request, message }) => console.error('error:', request.url, message));
+
+app.use('/files', uploads.handle);
+```
+
 ## Storage providers
 
 By default, `uploadx` uses DiskStorage (local filesystem) — just set the `uploadDir` option. For cloud or S3‑compatible storage, install the corresponding package and pass a `storage` instance to the middleware.
