@@ -99,6 +99,10 @@ app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 
 - `userIdentifier` Get user identity
 
+- `expiration` Configuring the cleanup of abandoned and completed uploads
+
+- `logLevel` Set built-in logger severity level. Default value: `"none"`
+
 - `onCreate` Callback invoked when a new upload is created
 
 - `onUpdate` Callback invoked when an upload is updated
@@ -109,9 +113,7 @@ app.use('/files', uploadx({ uploadDir: './uploads', maxFileSize: '10GB' }));
 
 - `onError` Customize error response
 
-- `expiration` Configuring the cleanup of abandoned and completed uploads
-
-- `logLevel` Set built-in logger severity level. Default value: `"none"`
+> **Note:** `onCreate`, `onUpdate`, `onDelete` are response hooks used only by the **Uploadx** middleware. `tus` and `multipart` call only `onComplete` and `onError`.
 
 ### Deprecated Options
 
