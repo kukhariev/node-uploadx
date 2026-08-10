@@ -14,6 +14,7 @@
     "express-polling": "tsx watch --env-file-if-exists .env express-polling",
     "express-redis": "tsx watch --env-file-if-exists .env express-redis",
     "express-logtape": "tsx watch --env-file-if-exists .env express-logtape",
+    "express-winston": "tsx watch --env-file-if-exists .env express-winston",
     "custom-error-responses": "tsx watch --env-file-if-exists .env custom-error-responses",
     "validation": "tsx watch --env-file-if-exists .env validation",
     "s3-direct": "tsx watch --env-file-if-exists .env s3-direct",
@@ -27,11 +28,13 @@
     "server": "node --watch --env-file-if-exists .env server"
   },
   "dependencies": {
+    "@logtape/adaptor-winston": "^2.0.9",
     "@logtape/logtape": "^2.0.5",
     "express": "^5.2.1",
     "fastify": "^5.3.2",
     "koa": "^3.2.1",
-    "node-uploadx": "^7.0.2"
+    "node-uploadx": "^7.0.2",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
