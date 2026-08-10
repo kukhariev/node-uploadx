@@ -28,6 +28,7 @@ npm run express-basic
 | [`express-polling.ts`](express-polling.ts)               | Polling-based upload implementation                                 |
 | [`express-redis.ts`](express-redis.ts)                   | Using Redis for metadata storage                                    |
 | [`express-logtape.ts`](express-logtape.ts)               | Logging with LogTape                                                |
+| [`express-winston.ts`](express-winston.ts)               | Winston integration for library logs                                |
 | [`custom-error-responses.ts`](custom-error-responses.ts) | Custom error handling and responses                                 |
 | [`validation.ts`](validation.ts)                         | File validation (type, size, custom rules)                          |
 | [`s3-direct.ts`](s3-direct.ts)                           | Direct S3 upload                                                    |
