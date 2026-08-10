@@ -16,8 +16,7 @@ const storage = new S3Storage({
   clientDirectUpload: true, // send presigned urls to the client for upload directly to S3 storage
   partSize: '8MB', // optionally override part size
   expiration: '1h',
-  logLevel: 'error',
-  logger: logger
+  logLevel: 'error'
 });
 
 app.use('/files', uploadx({ storage }));
