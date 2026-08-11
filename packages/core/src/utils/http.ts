@@ -111,7 +111,12 @@ export function getBaseUrl(req: http.IncomingMessage): string {
  * Extracts host with port from a http or https request.
  */
 function extractHost(req: http.IncomingMessage & { host?: string }): string {
-  return req.host || getHeader(req, 'host');
+  const headerHost = getHeader(req, 'host');
+  const host = req.host;
+  if (!host) return headerHost;
+  // Express 4 strips the port from req.host; restore it
+  // only when the Host header points to the same hostname
+  return headerHost.toLowerCase().startsWith(`${host.toLowerCase()}:`) ? headerHost : host;
 }
 
 /**
