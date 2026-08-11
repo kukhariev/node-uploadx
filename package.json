@@ -42,6 +42,7 @@
     "@types/supertest": "^7.2.0",
     "express": "^5.2.1",
     "husky": "^9.1.7",
+    "ioredis": "^5.11.1",
     "ioredis-mock": "^8.13.1",
     "jest": "^30.4.2",
     "lint-staged": "^16.4.0",
